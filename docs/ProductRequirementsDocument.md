@@ -78,8 +78,10 @@ $ pip install ddsim
 どれが良いか検討中
 * MPI並列化
 * MPI/OpenMPハイブリッド並列化
-* Hadoop, MapReduce
-* RDMA (Remote Direct Memory Access)
+
+> **Note**
+> 大辻さんからいただいたソフトウェアスタック解説図
+> ![サンマの塩焼き](images/MPI_software_stack.jpg) 
 
 ## 将来にむけたアイデア
 
@@ -89,4 +91,5 @@ $ pip install ddsim
 ## 変更履歴
 |日時|担当者|内容|
 |:---:|:---:|:---|
+|2022/7/7|yusuke-kimura|RDMAやHadoopの利用は現実的ではないことが判明したため、削除|
 |2022/7/4|yusuke-kimura|初版|
