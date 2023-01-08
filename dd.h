@@ -3,10 +3,12 @@
 #include "complex.h"
 #include "common.h"
 
+
+
 struct mNode;
 struct Worker;
 
-struct __attribute__ ((packed)) mEdge {
+struct mEdge {
 
     Qubit getVar() const;
     bool isTerminal() const;
@@ -19,10 +21,21 @@ struct __attribute__ ((packed)) mEdge {
     }
 
     Complex w;
-    Index n;
+    Index n{TERMINAL};
 };
 
 static_assert(std::is_aggregate_v<mEdge>);
+
+
+struct vEdge {
+
+
+};
+
+
+
+
+
 template<>
 struct std::hash<mEdge>{
     std::size_t operator()(const mEdge& v) const noexcept {
@@ -38,7 +51,7 @@ inline std::ostream& operator<<(std::ostream& os, const mEdge& c){
 
 }
 
-struct __attribute__ ((packed)) mNode {
+struct mNode {
     
 
     mEdge operator[](std::size_t i){
@@ -72,5 +85,23 @@ struct std::hash<mNode>{
     }
 };
 
+
+extern std::vector<mEdge> identityTable;
+
+
+struct Job;
+
 mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4> c);
-mEdge makeIdent(Worker* w, Qubit q);
+mEdge makeIdent(Worker* w, QubitCount q);
+mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c );
+
+
+mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
+
+
+// serial addition of jobs in the vector of the rang [start,end)
+mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end);
+
+
+

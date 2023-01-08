@@ -5,6 +5,7 @@ project(QDD)
 
 
 add_library(engine STATIC dd.cpp engine.cpp complex.cpp)
+target_include_directories(engine PUBLIC /Users/lsw/Code/oneTBB/build/install/include)
 
 
 

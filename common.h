@@ -3,6 +3,10 @@
 
 #include <utility>
 #include <array>
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
+#include <set>
 #ifndef LINE_SIZE
 #define LINE_SIZE 64
 #endif
@@ -17,7 +21,9 @@
 
 
 using Qubit = uint32_t;
+using QubitCount = uint32_t;
 using Index = std::size_t;
+using Controls = std::set<Qubit>;
 
 inline Index operator""_idx(unsigned long long int idx){
     return static_cast<Index>(idx);
@@ -51,7 +57,7 @@ constexpr std::size_t murmur_hash(std::size_t k){
     return k;
 }
 
-const size_t REGION_SIZE = 512;
+const std::size_t REGION_SIZE = 512;
 const uint64_t UT_INIT_SZ =   8 * REGION_SIZE;
 const uint64_t UT_MAX_SZ  =   16 * REGION_SIZE;
 

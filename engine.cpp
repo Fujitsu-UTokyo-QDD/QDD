@@ -1,15 +1,30 @@
 #include "engine.h"
+#include <cassert>
 
 
 NodeTable uniqueTable(8*NodeTable::region_size, 16*NodeTable::region_size);
 
+/*
 void JobQueue::push(Job* job){
     long long bottom = _bottom.load(std::memory_order_acquire);
     _jobs[bottom&MASK] = job;
     _bottom.store(bottom+1, std::memory_order_release); 
 }
-
-
+*/
+void JobQueue::push(Job* job){
+    while(true){
+        auto bot = _bottom.load();
+        Job* j = _jobs[bot];
+        _jobs[bot] = job;
+        if(_bottom.compare_exchange_weak(bot, bot+1)){
+            return;
+        }else{
+            _jobs[bot] = j;
+            continue;
+        }
+    }
+}
+/*
 Job* JobQueue::pop(){
     
     long long bottom = _bottom.load(std::memory_order_acquire);
@@ -43,7 +58,20 @@ Job* JobQueue::pop(){
     }
 
 }
+*/
+Job* JobQueue::pop(){
+   
+    auto bot = _bottom.load();
+    if(bot == 0) return nullptr;
+    Job* j = _jobs[bot - 1];
 
+    if(_bottom.compare_exchange_weak(bot, bot - 1)){
+        return j;
+    }else{
+        return nullptr;
+    }
+
+}
 
 Job* JobQueue::steal(){
     long long top = _top.load(std::memory_order_seq_cst);
@@ -93,3 +121,49 @@ Index Worker::uniquefy(const mNode& n){
     }));
    return uniqueTable.find_or_insert(n); 
 }
+
+
+void Worker::submit(Job* j){
+    _queue.push(j);
+}
+
+
+void Worker::run() {
+    
+    _thread = std::thread([this](){
+
+            while(!(*_stop)){
+                Job* j = _queue.pop();
+                if(j != nullptr){
+                    j->execute(this);
+                }else{
+                    //need to steal
+                    j = this->_eng->steal();
+                    if(j != nullptr){
+                        j->execute(this);
+                    }else {
+                        std::this_thread::yield();
+                    }
+                }
+                
+            }
+    
+            if(_queue.size() != 0) assert(false);
+            return;
+
+     });
+
+}
+
+Job* Engine::steal() {
+    return nullptr;
+}
+
+std::size_t Engine::next_worker() {
+    auto w = _current_worker.load();
+    _current_worker.store((_current_worker+1)%_total_worker);
+    return w;
+}
+
+
+

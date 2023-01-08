@@ -63,7 +63,7 @@ struct std::hash<Value>{
     }
 };
 
-struct Complex {
+struct  Complex {
     enum Source:uint8_t {
         Cache,
         Table,
@@ -175,7 +175,7 @@ public:
 
 private:
     
-    static const std::size_t ALLOCATION_SIZE = 512;
+    static const std::size_t ALLOCATION_SIZE = 2048;
     static_assert((ALLOCATION_SIZE&0x1) == 0);
 
     std::vector<Value*> available;

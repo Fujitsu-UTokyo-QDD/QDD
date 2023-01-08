@@ -6,7 +6,8 @@ std::pair<Value*, Value*> ComplexCache::request() {
     
     if(available.size() == 0){
         available.resize(ALLOCATION_SIZE);
-        std::generate_n(available.begin(), ALLOCATION_SIZE, [](){ return new Value();}); 
+        for(auto i = 0; i < ALLOCATION_SIZE; i++) available[i] = new Value();
+        //std::generate_n(available.begin(), ALLOCATION_SIZE, [](){ return new Value();}); 
     }
 
     assert(available.size() >= 2);
@@ -15,7 +16,7 @@ std::pair<Value*, Value*> ComplexCache::request() {
     available.pop_back();
     Value* i = available.back();
     available.pop_back();
-
+    assert(r != nullptr && i !=nullptr);
     return std::make_pair(r, i);
 
 
