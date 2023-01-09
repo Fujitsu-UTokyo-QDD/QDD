@@ -9,10 +9,9 @@ target_include_directories(engine PUBLIC /Users/lsw/Code/oneTBB/build/install/in
 
 
 
-find_package(TBB REQUIRED NO_DEFAULT_PATH PATHS /Users/lsw/Code/oneTBB/build/install/lib/cmake/TBB)
 
 
 
 add_executable(qdd main.cpp)
 
-target_link_libraries(qdd PRIVATE engine TBB::tbb)
+target_link_libraries(qdd PRIVATE engine)

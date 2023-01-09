@@ -8,12 +8,9 @@
 #include <functional>
 #include <thread>
 #include <unordered_map>
-#include "oneapi/tbb/parallel_reduce.h"
-#include "oneapi/tbb/blocked_range.h"
 #include <atomic>
 #include "queue.hpp"
 
-using namespace oneapi::tbb;
 
 
 /**
@@ -107,20 +104,7 @@ class Worker{
 
 };
 
-struct AddReduce {
-   const std::vector<Job*>& _jobs;
-   Engine* _eng;
-   mEdge sum;
 
-   AddReduce(const std::vector<Job*>& j, Engine* e):_jobs(j), _eng(e){};
-   AddReduce(const AddReduce& other, split): _jobs(other._jobs), _eng(other._eng){};
-   void operator()(const blocked_range<size_t>& r);
-   void join(const AddReduce& other);
-};
-
-struct MulReduct {
-
-};
 
 class Engine {
     public:
