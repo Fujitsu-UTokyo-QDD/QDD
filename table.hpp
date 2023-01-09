@@ -143,7 +143,7 @@ CHashTable<T, Hash, ValueEqual>::CHashTable(size_t initial_size, size_t max_size
 
 
     this->max_size = max_size; //allocate that much?
-    this->set_size(initial_size);
+    this->set_size(max_size);
 
     if(posix_memalign((void**)&hash, LINE_SIZE, max_size * key_size ) != 0){
         fprintf(stderr, "table_create: allocate memory for hash failed!\n");

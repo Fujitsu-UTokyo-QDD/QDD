@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include "oneapi/tbb/parallel_reduce.h"
 #include "oneapi/tbb/blocked_range.h"
+#include <atomic>
+#include "queue.hpp"
 
 using namespace oneapi::tbb;
 
@@ -69,7 +71,7 @@ class JobQueue {
         static const unsigned int MASK = MAX_JOBS - 1u;
 
         Job* _jobs[MAX_JOBS];
-        std::atomic_llong  _top, _bottom;
+        long _top{0}, _bottom{0};
 
 };
 
@@ -78,7 +80,7 @@ class Engine;
 class Worker{
     public:
 
-        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop){};
+        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(512){};
 
         void run();
 
@@ -98,7 +100,7 @@ class Worker{
         std::size_t _id;
 
         // worker local
-        JobQueue _queue;
+        LockFreeQueue<Job*> _queue;
         ComplexCache ccache;
         ComplexTable ctable;
         
@@ -152,16 +154,10 @@ class Engine {
                 next_round.push_back(this->submit(addSerial, jobs, i, i+grain_size));
             }
 
-            for(auto i = 0; i < next_round.size(); i += grain_size){
-                assert(next_round[i]->valid());
-                next_round[i]->getResult();
-            }
-            std::cout<<"before"<<std::endl;
+
             
             mEdge result = add(_workers[0], next_round[0]->getResult(), next_round[1]->getResult());
-            std::cout<<"after"<<std::endl;
             for(auto i = 2; i < next_round.size(); i++){
-                std::cout<<i<<std::endl;
                 result = add(_workers[next_worker()], result, next_round[i]->getResult());
             
             }

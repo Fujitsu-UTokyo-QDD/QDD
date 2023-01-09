@@ -35,12 +35,7 @@ auto benchmark(Engine* eng){
         Job* j = eng->submit(makeGate, g, NQUBITS, qubit_dist(rng),Controls{});
         jobs.push_back(j);
     }
-    for(auto i = 0; i < NGATES; i++){
-        assert(jobs[i]->valid());
-        jobs[i]->getResult();
-    }
-    
-    //jobs[10]->getResult().printMatrix(); 
+
     std::cout<<"all results should be available"<<std::endl; 
     auto result = eng->addReduce(jobs, NGATES/eng->worker_number());
     auto t2 = std::chrono::high_resolution_clock::now();

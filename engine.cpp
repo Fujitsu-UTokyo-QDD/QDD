@@ -2,7 +2,7 @@
 #include <cassert>
 
 
-NodeTable uniqueTable(8*NodeTable::region_size, 16*NodeTable::region_size);
+NodeTable uniqueTable(16*NodeTable::region_size, 32*NodeTable::region_size);
 
 /*
 void JobQueue::push(Job* job){
@@ -13,10 +13,11 @@ void JobQueue::push(Job* job){
 */
 void JobQueue::push(Job* job){
     while(true){
-        auto bot = _bottom.load();
+        long bot = _bottom;
+        long expected = bot + 1;
         Job* j = _jobs[bot];
         _jobs[bot] = job;
-        if(_bottom.compare_exchange_weak(bot, bot+1)){
+        if(__sync_bool_compare_and_swap(&_bottom, bot, expected)){
             return;
         }else{
             _jobs[bot] = j;
@@ -61,11 +62,12 @@ Job* JobQueue::pop(){
 */
 Job* JobQueue::pop(){
    
-    auto bot = _bottom.load();
+    long bot = _bottom;
+    long expected = bot - 1;
     if(bot == 0) return nullptr;
-    Job* j = _jobs[bot - 1];
+    Job* j = _jobs[expected];
 
-    if(_bottom.compare_exchange_weak(bot, bot - 1)){
+    if(__sync_bool_compare_and_swap(&_bottom, bot, expected)){
         return j;
     }else{
         return nullptr;
@@ -74,27 +76,15 @@ Job* JobQueue::pop(){
 }
 
 Job* JobQueue::steal(){
-    long long top = _top.load(std::memory_order_seq_cst);
-    long long bottom = _bottom.load(std::memory_order_seq_cst);
 
-    if(top < bottom){
-        Job* job = _jobs[top&MASK];
-        
-        long long expectedTop = top;
-        long long desiredTop= top + 1LL;
-        if(!_top.compare_exchange_weak(expectedTop, desiredTop, std::memory_order_acq_rel)){
-            job = nullptr;
-        }
-        return job;
-    }else{
-        return nullptr; 
-    }
+    return nullptr; 
+
 }
 
 
 std::size_t JobQueue::size() const {
-    long long bottom = _bottom.load();
-    long long top = _top.load();
+    long long bottom = _bottom;
+    long long top = _top;
     return bottom - top;
 }
 
@@ -124,7 +114,7 @@ Index Worker::uniquefy(const mNode& n){
 
 
 void Worker::submit(Job* j){
-    _queue.push(j);
+    while(!_queue.push(j));
 }
 
 
@@ -133,8 +123,8 @@ void Worker::run() {
     _thread = std::thread([this](){
 
             while(!(*_stop)){
-                Job* j = _queue.pop();
-                if(j != nullptr){
+                Job* j;
+                if(_queue.pop(j)){
                     j->execute(this);
                 }else{
                     //need to steal
