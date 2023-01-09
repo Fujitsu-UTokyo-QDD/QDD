@@ -84,7 +84,7 @@ class Worker{
         void submit(Job*);
 
         Complex getComplexFromCache(const double_pair&);
-        void returnComplexToCache(Complex&&);
+        void returnComplexToCache(Complex&);
 
         Complex getComplexFromTable(const double_pair&); 
 
@@ -104,6 +104,38 @@ class Worker{
 
 };
 
+struct Query{
+    mEdge lhs;
+    mEdge rhs;
+    bool available{false};
+    mEdge result;
+    inline bool operator==(const Query& other) const noexcept {
+        return (lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs);
+    }
+
+    void set_result(Worker* w ,const mEdge& r){
+
+       result = {w->getComplexFromCache(r.w.getValuePair()), r.n};
+       __atomic_store_n(&available, true, __ATOMIC_RELEASE);
+    }
+
+    bool load_result(Worker* w,mEdge& r){
+        bool a =  __atomic_load_n(&available, __ATOMIC_ACQUIRE);
+        if(a)
+            r = {w->getComplexFromCache(result.w.getValuePair()), r.n};
+        return a;
+    }
+};
+
+template<>
+struct std::hash<Query>{
+    std::size_t operator()(const Query& q) const noexcept {
+        std::size_t h1 = std::hash<mEdge>()(q.lhs);
+        std::size_t h2 = std::hash<mEdge>()(q.rhs);
+        std::size_t h = h1 + h2; 
+        return h;
+    }
+};
 
 
 class Engine {
@@ -170,8 +202,5 @@ class Engine {
         NodeTable* _uniqueTable;
         std::vector<Worker*> _workers;
 
-
-        
-
-
 };
+using OpTable = CHashTable<Query>;

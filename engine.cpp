@@ -2,7 +2,7 @@
 #include <cassert>
 
 
-NodeTable uniqueTable(16*NodeTable::region_size, 32*NodeTable::region_size);
+NodeTable uniqueTable(32*NodeTable::region_size, 64*NodeTable::region_size);
 
 /*
 void JobQueue::push(Job* job){
@@ -97,11 +97,14 @@ Complex Worker::getComplexFromCache(const double_pair& p){
     return ccache.getCached_v(p);
 }
 
-void Worker::returnComplexToCache(Complex && c){
-    ccache.returnCached(std::move(c));
+void Worker::returnComplexToCache(Complex & c){
+    ccache.returnCached(c);
 }
 
 Complex Worker::getComplexFromTable(const double_pair& p){
+    double r = p.first * p.first + p.second * p.second;
+    r = std::sqrt(r);
+    assert(r <= 1);
     return ctable.find_or_insert(p);
 }
 

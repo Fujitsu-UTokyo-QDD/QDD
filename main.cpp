@@ -16,8 +16,8 @@ auto benchmark(Engine* eng){
     GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
     std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 50;
-    const uint64_t NQUBITS = 8;
+    const std::size_t NGATES = 100;
+    const uint64_t NQUBITS = 10;
 
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -36,7 +36,6 @@ auto benchmark(Engine* eng){
         jobs.push_back(j);
     }
 
-    std::cout<<"all results should be available"<<std::endl; 
     auto result = eng->addReduce(jobs, NGATES/eng->worker_number());
     auto t2 = std::chrono::high_resolution_clock::now();
     
@@ -47,6 +46,8 @@ auto benchmark(Engine* eng){
 
 int main()
 {
+
+
     Engine eng(8, 20);
     benchmark(&eng);
     eng.terminate();

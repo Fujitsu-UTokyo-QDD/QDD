@@ -4,14 +4,22 @@
 #include <algorithm>
 
 std::vector<mEdge> identityTable;
+OpTable addTable(16* OpTable::region_size, 32*OpTable::region_size);
+OpTable mulTable(16* OpTable::region_size, 32*OpTable::region_size);
+
 
 static mEdge normalize(Worker* w, mNode& node){
 
+    auto d0 = node.children[0].w.getValuePair();
+    auto d1 = node.children[1].w.getValuePair();
+    auto d2 = node.children[2].w.getValuePair();
+    auto d3 = node.children[3].w.getValuePair();
     
     // check for redundant node
     const Complex& w0 = node.children[0].w;
     const Index n0 = node.children[0].n;
     if(std::all_of(node.children.begin(), node.children.end(), [&](const mEdge& e){ return e.w.isApproximatelyEqual(w0) && e.n == n0;} ) ){
+        
         return {w->getComplexFromCache(w0.getValuePair()), n0}; 
     }
     
@@ -23,31 +31,22 @@ static mEdge normalize(Worker* w, mNode& node){
     auto result = std::max_element(node.children.begin(), node.children.end(), [](const mEdge& lhs, const mEdge& rhs){
         return lhs.w < rhs.w;   
     });
-    Complex max_weight = result->w;
-    assert(!max_weight.isApproximatelyZero() && max_weight.mag2()!=0.0);
+    //Complex max_weight = w->getComplexFromCache(result->w.getValuePair());
+    double_pair d = result->w.getValuePair();
+    //assert(!max_weight.isApproximatelyZero() && max_weight.mag2()!=0.0);
     const std::size_t idx = std::distance(node.children.begin(), result);
-
     for(int i = 0; i < 4; i++){
-        double_pair r = Complex::div(node.children[i].w, max_weight);
-        // here we insert into the worker-local ComplexTable
+        double_pair r = Complex::div(node.children[i].w, d);
+        w->returnComplexToCache(node.children[i].w);
         node.children[i].w = w->getComplexFromTable(r);
     }
-    /*
-    for(auto it = node.children.begin(); it != node.children.end(); ++it){
-        if(!(it->w.src == Complex::Table && it->w.mag() <= 1.0)){
-            std::cout<<it->w.mag()<<std::endl;
-            std::cout<<it->w.src<<std::endl;
-            assert(false);
-        }
-    
-    }
-    */
+
 
     
     //write the node into the UniqueTable
     
     Index n = w->uniquefy(node);
-    return {w->getComplexFromCache(max_weight.getValuePair()), n};
+    return {w->getComplexFromCache(d), n};
     
 
 }
@@ -151,19 +150,16 @@ mEdge makeIdent(Worker* w, Qubit q){
     if(!identityTable[q].isTerminal()) {
         return identityTable[q];
     }
-    Index n = TERMINAL; 
-    Complex one = w->getComplexFromCache({1.0, 0.0});
 
-    Complex zero = w->getComplexFromCache({0.0, 0.0});
-    mEdge e; e.n = n;
+    mEdge e; e.n = TERMINAL;
     for(Qubit i = 0; i <= q; i++){
-       e = makeEdge(w, i, {{{one, e.n},{zero, TERMINAL},{zero, TERMINAL},{one, e.n}}}); 
-       if(i != q) w->returnComplexToCache(std::move(e.w));
+       e = makeEdge(w, i, {{{Complex::one, e.n},{Complex::zero, TERMINAL},{Complex::zero, TERMINAL},{Complex::one, e.n}}}); 
+       w->returnComplexToCache(e.w);
     }
+    
+    e.w = Complex::one;
 
 
-    w->returnComplexToCache(std::move(one));
-    w->returnComplexToCache(std::move(zero));
     identityTable[q] = e;
     return e;
 
@@ -180,8 +176,9 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
     
     auto it = c.begin();
     
-    mEdge zero = {w->getComplexFromCache({0.0, 0.0}), TERMINAL};
-    mEdge one = {w->getComplexFromCache({1.0, 0.0}), TERMINAL};
+    mEdge zero = {Complex::zero, TERMINAL};
+    mEdge one = {Complex::one, TERMINAL};
+
     Qubit z = 0;
     for(; z < target; z++){
         for(int b1 = 0; b1 < 2; b1++){
@@ -213,8 +210,6 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
        }
     }
 
-    w->returnComplexToCache(std::move(zero.w));
-    for(auto i = 0; i < 4; i++) w->returnComplexToCache(std::move(matrix_entries[i]));
     return e;
 
 }
@@ -234,7 +229,9 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         double_pair r = Complex::add(lhs.w, rhs.w);
         return {w->getComplexFromCache(r), TERMINAL};
     }
-
+    Query* q = addTable.get_data(addTable.find_or_insert({.lhs = lhs, .rhs = rhs}));
+    mEdge result;
+    if(q->load_result(w,result)) return result;
 
     mEdge x, y;
 
@@ -264,7 +261,11 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         edges[i] = add2(w, x, y, current_var - 1);
     }
 
-    return makeEdge(w, current_var, edges);
+    result =  makeEdge(w, current_var, edges);
+
+    q->set_result(w,result);
+
+    return result;
 
 
 }

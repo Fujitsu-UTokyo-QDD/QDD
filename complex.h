@@ -11,7 +11,9 @@
 struct Value {
     double v{0.0};
     Value* next{nullptr};
-
+    
+    static Value zero;
+    static Value one;
 
     static constexpr bool isApproximatelyEqual(double lhs, double rhs, double tol = std::numeric_limits<double>::epsilon()){
     double diff = std::fabs(lhs - rhs);
@@ -73,9 +75,13 @@ struct  Complex {
     Value* i{nullptr};
     
     Source src{Cache};
+
+    static Complex one;
+    static Complex zero;
     
     Complex() = default;
     Complex(Value* rr, Value* ii, Source ss):r(rr),i(ii), src(ss){};
+    Complex(Value* rr, Value* ii):r(rr), i(ii){};
 
     
 
@@ -115,6 +121,8 @@ struct  Complex {
     static double_pair sub(const Complex& lhs, const Complex& rhs);
     static double_pair mul(const Complex& lhs, const Complex& rhs);
     static double_pair div(const Complex& lhs, const Complex& rhs);
+    static double_pair div(const Complex& lhs, const double_pair& rhs);
+    static double_pair div(const double_pair& lhs, const double_pair& rhs);
 
 
     
@@ -156,31 +164,97 @@ inline std::ostream& operator<<(std::ostream& os, const Complex& c){
 }
 
 
-// thread local
+
+
+
 class ComplexCache {
-public:
-    
-    ~ComplexCache(){
-        for(auto it = available.begin(); it != available.end(); it++){
-            delete *it;
+    public:
+        ComplexCache(): allocationSize(ALLOCATION_SIZE) {
+            chunks.emplace_back(allocationSize);
+            allocations += allocationSize;
+            allocationSize *= GROWTH;
+            chunkIt = chunks[0].begin();
+            chunkEndIt = chunks[0].end();
         }
-    }
 
-    Complex getCached();
-    Complex getCached_1();
-    Complex getCached_0();
-    Complex getCached_v(const double_pair&);
-    void returnCached(Complex&&); 
+        ~ComplexCache() = default;
+
+        Complex getCachedComplex() {
+           if (available != nullptr) {
+                assert(available->next != nullptr);
+                auto entry = Complex{available, available->next, Complex::Cache};
+                available  = entry.i->next;
+                count += 2;
+                return entry;
+            }
+
+            // new chunk has to be allocated
+            if (chunkIt == chunkEndIt) {
+                chunks.emplace_back(allocationSize);
+                allocations += allocationSize;
+                allocationSize *= GROWTH;
+                chunkID++;
+                chunkIt    = chunks[chunkID].begin();
+                chunkEndIt = chunks[chunkID].end();
+            }
+
+            Complex c{};
+            c.r = &(*chunkIt);
+            ++chunkIt;
+            c.i = &(*chunkIt);
+            ++chunkIt;
+            count += 2;
+            return c; 
+        }
+
+        void returnCached(Complex& c) {
+            if(c.r == Complex::one.r || c.r == Complex::zero.r)
+                return;
+
+            c.i->next = available;
+            c.r->next = c.i;
+            available = c.r;
+            count -= 2;
+
+            c.r = c.i = nullptr;
+        }
+
+        void clear() {
+            available = nullptr;
+
+            while (chunkID > 0) {
+                chunks.pop_back();
+                chunkID--;
+            }
+            chunkIt        = chunks[0].begin();
+            chunkEndIt     = chunks[0].end();
+            allocationSize = ALLOCATION_SIZE * GROWTH;
+            allocations    = ALLOCATION_SIZE;
+
+            count     = 0;
+            peakCount = 0;
+        };
+
+        Complex getCached();
+        Complex getCached_0();
+        Complex getCached_1();
+        Complex getCached_v(const double_pair& p);
+
+    private:
+        static std::size_t ALLOCATION_SIZE;
+        static std::size_t GROWTH; 
+
+        Value* available;
+        std::vector<std::vector<Value>>  chunks;
+        std::size_t        chunkID;
+        typename std::vector<Value>::iterator  chunkIt;
+        typename std::vector<Value>::iterator  chunkEndIt;
+        std::size_t             allocationSize;
 
 
-private:
-    
-    static const std::size_t ALLOCATION_SIZE = 2048;
-    static_assert((ALLOCATION_SIZE&0x1) == 0);
-
-    std::vector<Value*> available;
-    
-    std::pair<Value*, Value*> request();
+        std::size_t allocations = 0;
+        std::size_t count = 0;
+        std::size_t peakCount = 0;
 
 };
 

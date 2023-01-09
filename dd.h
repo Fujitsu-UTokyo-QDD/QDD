@@ -66,6 +66,8 @@ struct mNode {
         return v== n.v && children == n.children;
     }
 
+
+
     Qubit v;
     std::array<mEdge, 4> children;
 
@@ -87,6 +89,7 @@ struct std::hash<mNode>{
 
 
 extern std::vector<mEdge> identityTable;
+
 
 
 struct Job;

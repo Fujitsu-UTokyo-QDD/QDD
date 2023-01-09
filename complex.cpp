@@ -1,78 +1,49 @@
 #include "complex.h"
+#include "common.h"
 #include <algorithm>
+#include <cstdio>
+#include <format>
 
+Value Value::zero{0.0};
+Value Value::one{1,0};
 
-std::pair<Value*, Value*> ComplexCache::request() {
-    
-    if(available.size() == 0){
-        available.resize(ALLOCATION_SIZE);
-        for(auto i = 0; i < ALLOCATION_SIZE; i++) available[i] = new Value();
-        //std::generate_n(available.begin(), ALLOCATION_SIZE, [](){ return new Value();}); 
-    }
+std::size_t ComplexCache::ALLOCATION_SIZE = 1024;
+std::size_t ComplexCache::GROWTH = 2;
 
-    assert(available.size() >= 2);
-
-    Value* r = available.back();
-    available.pop_back();
-    Value* i = available.back();
-    available.pop_back();
-    assert(r != nullptr && i !=nullptr);
-    return std::make_pair(r, i);
-
-
-}
+Complex Complex::one = Complex(&Value::one, &Value::zero);
+Complex Complex::zero = Complex(&Value::zero, &Value::zero);
 
 Complex ComplexCache::getCached() {
 
-    auto values = request();    
-
-    return {values.first, values.second, Complex::Source::Cache};
+    return this->getCachedComplex();
 
 }
 
 
 Complex ComplexCache::getCached_0() {
-
-    auto values = request();
-    values.first->v = 0.0;
-    values.second->v = 0.0;
-
-    return {values.first, values.second, Complex::Source::Cache};
+    Complex c = this->getCached();
+    c.r->v = 0.0;
+    c.i->v = 0.0;
+    return c;
 
 }
 
 Complex ComplexCache::getCached_1() {
+    Complex c = this->getCached();
+    c.r->v = 1.0;
+    c.i->v = 0.0;
+    return c;
 
-    auto values = request();
-    values.first->v = 1.0;
-    values.second->v = 0.0;
 
-    return {values.first, values.second, Complex::Source::Cache};
 
 }
 
 Complex ComplexCache::getCached_v(const double_pair& p) {
+    Complex c = this->getCached();
+    c.r->v = p.first;
+    c.i->v = p.second;
+    return c;
 
-    auto values = request();
-    values.first->v = p.first;
-    values.second->v = p.second;
-
-    return {values.first, values.second, Complex::Source::Cache};
-
-}
-
-
-void ComplexCache::returnCached(Complex && c){
-    Value* r = c.r;
-    Value* i = c.i;
-
-    r->v = i->v = 0.0;
-    r->next = i->next = nullptr;
-
-    available.push_back(r);
-    available.push_back(i);
-
-    c.r = c.i = nullptr;
 }
 
 
@@ -127,6 +98,23 @@ double_pair Complex::mul(const Complex& lhs, const Complex& rhs){
     return { lr * rr - li * ri, lr * ri + li * rr};
 }
 
+
+double_pair Complex::div( const double_pair& lhs, const double_pair& rhs){
+
+
+    const auto lr = lhs.first;
+    const auto li = lhs.second;
+    const auto rr = rhs.first;
+    const auto ri = rhs.second;
+
+    const auto rmag2 = rr * rr + ri * ri;
+    
+    const auto r = (lr*rr+li*ri)/rmag2;
+    const auto i = (li*rr-lr*ri)/rmag2;
+
+    return {r,i};
+}
+
 double_pair Complex::div( const Complex& lhs, const Complex& rhs){
     assert(!rhs.isApproximatelyZero() && rhs.mag2() != 0.0);
 
@@ -144,6 +132,20 @@ double_pair Complex::div( const Complex& lhs, const Complex& rhs){
     const auto ri = rhs.i->v;
 
     const auto rmag2 = rhs.mag2();
+
+    return {(lr*rr+li*ri)/rmag2,  (li*rr-lr*ri)/rmag2};
+}
+double_pair Complex::div( const Complex& lhs, const double_pair& rhs){
+    double rmag2 = rhs.first * rhs.first + rhs.second * rhs.second;
+    assert( rmag2 != 0.0);
+
+
+
+    const auto lr = lhs.r->v;
+    const auto li = lhs.i->v;
+    const auto rr = rhs.first;
+    const auto ri = rhs.second;
+
 
     return {(lr*rr+li*ri)/rmag2,  (li*rr-lr*ri)/rmag2};
 }
