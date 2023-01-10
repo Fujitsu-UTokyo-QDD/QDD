@@ -50,6 +50,19 @@ int main()
 
     Engine eng(8, 20);
     benchmark(&eng);
+
+
+
+//    mEdge e1 = eng.submit(makeGate, Hmat, 2, 1, Controls{}) -> getResult();
+//    e1.printMatrix();
+//    std::cout<<std::endl;
+//    mEdge e2 = eng.submit(makeGate, Hmat, 2, 0, Controls{}) -> getResult();
+//    std::cout<<"e2"<<std::endl;
+//    e2.printMatrix();
+//    std::cout<<std::endl;
+    //mEdge product = eng.submit(multiply, e1, e2)->getResult();
+    //product.printMatrix();
     eng.terminate();
 }
+
 

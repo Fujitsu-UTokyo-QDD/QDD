@@ -77,7 +77,7 @@ class Engine;
 class Worker{
     public:
 
-        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(512){};
+        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024){};
 
         void run();
 
@@ -107,10 +107,11 @@ class Worker{
 struct Query{
     mEdge lhs;
     mEdge rhs;
+    int32_t current_var;
     bool available{false};
     mEdge result;
     inline bool operator==(const Query& other) const noexcept {
-        return (lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs);
+        return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
     }
 
     void set_result(Worker* w ,const mEdge& r){
@@ -132,12 +133,25 @@ struct std::hash<Query>{
     std::size_t operator()(const Query& q) const noexcept {
         std::size_t h1 = std::hash<mEdge>()(q.lhs);
         std::size_t h2 = std::hash<mEdge>()(q.rhs);
-        std::size_t h = h1 + h2; 
+        std::size_t h3 = std::hash<int32_t>()(q.current_var);
+        std::size_t h = h1 + h2 + h3; 
         return h;
     }
 };
 
 
+class ComplexReturner {
+public:
+    ComplexReturner(Worker* w, const Complex& c): _w(w), _c(c){}
+
+    ~ComplexReturner(){
+        assert(_c.r != nullptr && _c.i != nullptr);
+        _w->returnComplexToCache(_c);
+    }
+private:
+    Complex _c;
+    Worker* _w;
+};
 class Engine {
     public:
     
@@ -170,18 +184,21 @@ class Engine {
                 next_round.push_back(this->submit(addSerial, jobs, i, i+grain_size));
             }
 
+            Job* j   = this->submit(addSerial, next_round, 0, next_round.size());
+            return j -> getResult();
 
             
-            mEdge result = add(_workers[0], next_round[0]->getResult(), next_round[1]->getResult());
-            for(auto i = 2; i < next_round.size(); i++){
-                result = add(_workers[next_worker()], result, next_round[i]->getResult());
+        }
+        mEdge mulReduce(const std::vector<Job*>& jobs, std::size_t grain_size){
+            grain_size = std::max(jobs.size()/_total_worker, grain_size);
+            std::vector<Job*> next_round;
             
+            for(auto i = 0; i < jobs.size(); i += grain_size){
+                next_round.push_back(this->submit(mulSerial, jobs, i, i+grain_size));
             }
 
-            //mEdge result = addSerial(_workers[0], next_round, 0, next_round.size());
-            //Job* j   = this->submit(addSerial, next_round, 0, next_round.size());
-            //return j -> getResult();
-            return result;
+            Job* j   = this->submit(mulSerial, next_round, 0, next_round.size());
+            return j -> getResult();
 
             
         }

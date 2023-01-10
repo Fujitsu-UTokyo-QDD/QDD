@@ -144,6 +144,7 @@ struct  Complex {
 };
 
 
+
 template<>
 struct std::hash<Complex>{
     std::size_t operator()(const Complex& v) const noexcept {
@@ -210,6 +211,7 @@ class ComplexCache {
         void returnCached(Complex& c) {
             if(c.r == Complex::one.r || c.r == Complex::zero.r)
                 return;
+            assert(available != c.r && available != c.i);
 
             c.i->next = available;
             c.r->next = c.i;

@@ -4,8 +4,8 @@
 #include <algorithm>
 
 std::vector<mEdge> identityTable;
-OpTable addTable(16* OpTable::region_size, 32*OpTable::region_size);
-OpTable mulTable(16* OpTable::region_size, 32*OpTable::region_size);
+OpTable addTable(16* OpTable::region_size, 128*OpTable::region_size);
+OpTable mulTable(16* OpTable::region_size, 128*OpTable::region_size);
 
 
 static mEdge normalize(Worker* w, mNode& node){
@@ -37,7 +37,7 @@ static mEdge normalize(Worker* w, mNode& node){
     const std::size_t idx = std::distance(node.children.begin(), result);
     for(int i = 0; i < 4; i++){
         double_pair r = Complex::div(node.children[i].w, d);
-        w->returnComplexToCache(node.children[i].w);
+        //w->returnComplexToCache(node.children[i].w);
         node.children[i].w = w->getComplexFromTable(r);
     }
 
@@ -154,7 +154,7 @@ mEdge makeIdent(Worker* w, Qubit q){
     mEdge e; e.n = TERMINAL;
     for(Qubit i = 0; i <= q; i++){
        e = makeEdge(w, i, {{{Complex::one, e.n},{Complex::zero, TERMINAL},{Complex::zero, TERMINAL},{Complex::one, e.n}}}); 
-       w->returnComplexToCache(e.w);
+       ComplexReturner r(w, e.w);
     }
     
     e.w = Complex::one;
@@ -185,6 +185,7 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
             for(int b0 = 0; b0 < 2; b0++){
                 std::size_t i = (b1<<1) | b0; 
                 if(it != c.end() && *it == z){
+                    ComplexReturner r(w, edges[i].w);
                     //positive control 
                     if(z == 0)
                         edges[i] = makeEdge(w, z, { (b1 == b0)? one : zero , zero, zero, edges[i]});
@@ -192,6 +193,7 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
                         edges[i] = makeEdge(w, z, { (b1 == b0)? makeIdent(w, z-1) : zero , zero, zero, edges[i]});
 
                 }else{
+                    ComplexReturner r(w, edges[i].w);
                     edges[i] = makeEdge(w, z, {edges[i], zero, zero, edges[i]});
                 }
             }
@@ -200,12 +202,20 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
     }
 
     auto e = makeEdge(w, z, edges);
+    {
+        ComplexReturner r0(w, edges[0].w);
+        ComplexReturner r1(w, edges[1].w);
+        ComplexReturner r2(w, edges[2].w);
+        ComplexReturner r3(w, edges[3].w);
+    }
 
     for( z = z+1 ; z < q; z++){
        if(it != c.end() && *it == z){
+           ComplexReturner r(w, e.w);
            e = makeEdge(w, z, {makeIdent(w, z-1), zero, zero, e});
            ++it;
        }else{
+           ComplexReturner r(w, e.w);
             e = makeEdge(w, z, {e, zero, zero, e}); 
        }
     }
@@ -229,7 +239,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         double_pair r = Complex::add(lhs.w, rhs.w);
         return {w->getComplexFromCache(r), TERMINAL};
     }
-    Query* q = addTable.get_data(addTable.find_or_insert({.lhs = lhs, .rhs = rhs}));
+    Query* q = addTable.get_data(addTable.find_or_insert({.lhs = lhs, .rhs = rhs, .current_var = current_var}));
     mEdge result;
     if(q->load_result(w,result)) return result;
 
@@ -282,7 +292,6 @@ mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
 }
 
 mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end){
-    //std::cout<<"enter add serial" <<std::endl; 
     end = std::min(jobs.size(), end);
 
     mEdge result = jobs[start]->getResult();
@@ -291,7 +300,83 @@ mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std:
        result = add(w, result, jobs[i]->getResult()); 
     }
 
-    //std::cout<<"leave serial "<< start<<std::endl;
+    return result;
+
+}
+
+mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
+    if(current_var == -1) {
+        assert(lhs.isTerminal() && rhs.isTerminal());
+        double_pair r = Complex::mul(lhs.w, rhs.w);
+        return {w->getComplexFromCache(r), TERMINAL};
+    }
+
+    mEdge x, y;
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
+
+    std::array<mEdge, 4 > edges;
+    for(auto i = 0; i < 4; i++){
+        std::size_t row = i >> 1;
+        std::size_t col = i & 0x1;
+        
+        std::array<mEdge, 2> product;
+        for(auto k = 0; k < 2; k++){
+            if(lv == current_var && !lhs.isTerminal()){
+                x = lnode->getEdge((row<<1) | k);
+                double_pair xv = Complex::mul(lhs.w, x.w);
+                x.w = w->getComplexFromCache(xv);
+            }else{
+                x = lhs; 
+            }
+
+
+            if(rv == current_var && !rhs.isTerminal()){
+                y = rnode->getEdge((k<<1) | col);
+                double_pair yv = Complex::mul(rhs.w, y.w);
+                y.w = w->getComplexFromCache(yv);
+            
+            }else{
+                y = rhs;     
+            }
+            
+            product[k] = multiply2(w, x, y, current_var - 1); 
+            
+        }
+
+        edges[i] = add2(w, product[0], product[1], current_var - 1);
+    }
+
+    mEdge result = makeEdge(w, current_var, edges);
+    return result;
+    
+}
+
+
+mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
+    if(lhs.isTerminal() && rhs.isTerminal()){
+        double_pair d = Complex::mul(lhs.w, rhs.w);
+        return {w->getComplexFromCache(d), TERMINAL};
+    }
+
+
+    Qubit root = rootVar(lhs, rhs);
+    return multiply2(w, lhs, rhs, root);
+
+}
+
+mEdge mulSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end){
+    end = std::min(jobs.size(), end);
+
+    mEdge result = jobs[start]->getResult();
+
+    for(auto i = start+1; i < end; i++){
+       //result = multiply(w, result, jobs[i]->getResult()); 
+    }
+
     return result;
 
 }

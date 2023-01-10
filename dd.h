@@ -106,5 +106,6 @@ mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
 // serial addition of jobs in the vector of the rang [start,end)
 mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end);
 
+mEdge mulSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end);
 
 
