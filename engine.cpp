@@ -2,7 +2,7 @@
 #include <cassert>
 
 
-NodeTable uniqueTable(32*NodeTable::region_size, 64*NodeTable::region_size);
+NodeTable uniqueTable(32*NodeTable::region_size, 128*NodeTable::region_size);
 
 /*
 void JobQueue::push(Job* job){

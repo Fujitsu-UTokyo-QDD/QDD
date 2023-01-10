@@ -104,13 +104,13 @@ class Worker{
 
 };
 
-struct Query{
+struct AddQuery{
     mEdge lhs;
     mEdge rhs;
     int32_t current_var;
     bool available{false};
     mEdge result;
-    inline bool operator==(const Query& other) const noexcept {
+    inline bool operator==(const AddQuery& other) const noexcept {
         return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
     }
 
@@ -122,15 +122,17 @@ struct Query{
 
     bool load_result(Worker* w,mEdge& r){
         bool a =  __atomic_load_n(&available, __ATOMIC_ACQUIRE);
-        if(a)
-            r = {w->getComplexFromCache(result.w.getValuePair()), r.n};
+        if(a){
+            r.w = w->getComplexFromCache(result.w.getValuePair());
+            r.n = result.n;
+        }
         return a;
     }
 };
 
 template<>
-struct std::hash<Query>{
-    std::size_t operator()(const Query& q) const noexcept {
+struct std::hash<AddQuery>{
+    std::size_t operator()(const AddQuery& q) const noexcept {
         std::size_t h1 = std::hash<mEdge>()(q.lhs);
         std::size_t h2 = std::hash<mEdge>()(q.rhs);
         std::size_t h3 = std::hash<int32_t>()(q.current_var);
@@ -140,6 +142,40 @@ struct std::hash<Query>{
 };
 
 
+struct MulQuery{
+    Index lhs;
+    Index rhs;
+    int32_t current_var;
+    bool available{false};
+    Index result;
+    inline bool operator==(const MulQuery& other) const noexcept {
+        return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
+    }
+
+    void set_result(Worker* w ,const Index& r){
+        result = r;
+       __atomic_store_n(&available, true, __ATOMIC_RELEASE);
+    }
+
+    bool load_result(Worker* w,Index& r){
+        bool a =  __atomic_load_n(&available, __ATOMIC_ACQUIRE);
+        if(a){
+            r = result;
+        }
+        return a;
+    }
+};
+
+template<>
+struct std::hash<MulQuery>{
+    std::size_t operator()(const MulQuery& q) const noexcept {
+        std::size_t h1 = std::hash<Index>()(q.lhs);
+        std::size_t h2 = std::hash<Index>()(q.rhs);
+        std::size_t h3 = std::hash<int32_t>()(q.current_var);
+        std::size_t h = h1 + h2 + h3; 
+        return h;
+    }
+};
 class ComplexReturner {
 public:
     ComplexReturner(Worker* w, const Complex& c): _w(w), _c(c){}
@@ -220,4 +256,5 @@ class Engine {
         std::vector<Worker*> _workers;
 
 };
-using OpTable = CHashTable<Query>;
+using AddTable = CHashTable<AddQuery>;
+using MulTable = CHashTable<MulQuery>;

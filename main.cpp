@@ -16,7 +16,7 @@ auto benchmark(Engine* eng){
     GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
     std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 100;
+    const std::size_t NGATES = 50;
     const uint64_t NQUBITS = 10;
 
     std::mt19937_64 rng;
@@ -36,7 +36,7 @@ auto benchmark(Engine* eng){
         jobs.push_back(j);
     }
 
-    auto result = eng->addReduce(jobs, NGATES/eng->worker_number());
+    auto result = eng->mulReduce(jobs, NGATES/eng->worker_number());
     auto t2 = std::chrono::high_resolution_clock::now();
     
     duration<double, std::milli> ms = t2 - t1;
@@ -52,16 +52,17 @@ int main()
     benchmark(&eng);
 
 
-
-//    mEdge e1 = eng.submit(makeGate, Hmat, 2, 1, Controls{}) -> getResult();
-//    e1.printMatrix();
-//    std::cout<<std::endl;
-//    mEdge e2 = eng.submit(makeGate, Hmat, 2, 0, Controls{}) -> getResult();
-//    std::cout<<"e2"<<std::endl;
-//    e2.printMatrix();
-//    std::cout<<std::endl;
-    //mEdge product = eng.submit(multiply, e1, e2)->getResult();
-    //product.printMatrix();
+/*
+    mEdge e1 = eng.submit(makeGate, Hmat, 4, 1, Controls{0, 2}) -> getResult();
+    e1.printMatrix();
+    std::cout<<std::endl;
+    mEdge e2 = eng.submit(makeGate, Hmat, 4, 0, Controls{1}) -> getResult();
+    std::cout<<"e2"<<std::endl;
+    e2.printMatrix();
+    std::cout<<std::endl;
+    mEdge product = eng.submit(multiply, e1, e2)->getResult();
+    product.printMatrix();
+    */
     eng.terminate();
 }
 

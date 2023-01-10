@@ -4,8 +4,8 @@
 #include <algorithm>
 
 std::vector<mEdge> identityTable;
-OpTable addTable(16* OpTable::region_size, 128*OpTable::region_size);
-OpTable mulTable(16* OpTable::region_size, 128*OpTable::region_size);
+AddTable addTable(16* AddTable::region_size, 256*AddTable::region_size);
+MulTable mulTable(16* MulTable::region_size, 128*MulTable::region_size);
 
 
 static mEdge normalize(Worker* w, mNode& node){
@@ -239,7 +239,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         double_pair r = Complex::add(lhs.w, rhs.w);
         return {w->getComplexFromCache(r), TERMINAL};
     }
-    Query* q = addTable.get_data(addTable.find_or_insert({.lhs = lhs, .rhs = rhs, .current_var = current_var}));
+    AddQuery* q = addTable.get_data(addTable.find_or_insert({.lhs = lhs, .rhs = rhs, .current_var = current_var}));
     mEdge result;
     if(q->load_result(w,result)) return result;
 
@@ -310,6 +310,12 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
         double_pair r = Complex::mul(lhs.w, rhs.w);
         return {w->getComplexFromCache(r), TERMINAL};
     }
+    MulQuery* q = mulTable.get_data(mulTable.find_or_insert({.lhs = lhs.n, .rhs = rhs.n, .current_var = current_var}));
+    Index n;
+    if(q->load_result(w,n)){
+        double_pair p = Complex::mul(lhs.w, rhs.w);
+        return {w->getComplexFromCache(p), n};
+    }
 
     mEdge x, y;
 
@@ -351,6 +357,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
     }
 
     mEdge result = makeEdge(w, current_var, edges);
+    q->set_result(w, result.n);
     return result;
     
 }
@@ -374,7 +381,7 @@ mEdge mulSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std:
     mEdge result = jobs[start]->getResult();
 
     for(auto i = start+1; i < end; i++){
-       //result = multiply(w, result, jobs[i]->getResult()); 
+       result = multiply(w, result, jobs[i]->getResult()); 
     }
 
     return result;

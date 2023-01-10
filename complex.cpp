@@ -2,7 +2,6 @@
 #include "common.h"
 #include <algorithm>
 #include <cstdio>
-#include <format>
 
 Value Value::zero{0.0};
 Value Value::one{1,0};
