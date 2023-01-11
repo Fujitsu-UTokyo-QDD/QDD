@@ -99,7 +99,6 @@ class Worker{
         // worker local
         LockFreeQueue<Job*> _queue;
         ComplexCache ccache;
-        ComplexTable ctable;
         
 
 };
@@ -110,6 +109,14 @@ struct AddQuery{
     int32_t current_var;
     bool available{false};
     mEdge result;
+
+    bool removed{false};
+
+    AddQuery(const mEdge& l, const mEdge& r, int32_t var):lhs(l),rhs(r), current_var(var){}
+
+    AddQuery(const AddQuery& other): lhs(other.lhs), rhs(other.rhs), current_var(other.current_var){}
+
+    ~AddQuery(){}
     inline bool operator==(const AddQuery& other) const noexcept {
         return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
     }
@@ -127,6 +134,11 @@ struct AddQuery{
             r.n = result.n;
         }
         return a;
+    }
+
+    bool is_removed() const {
+        bool r = __atomic_load_n(&removed, __ATOMIC_ACQUIRE);
+        return r;
     }
 };
 
@@ -148,6 +160,16 @@ struct MulQuery{
     int32_t current_var;
     bool available{false};
     Index result;
+
+    bool removed{false};
+
+
+    MulQuery(const Index& l, const Index& r, int32_t var):lhs(l), rhs(r), current_var(var){}
+
+    MulQuery(const MulQuery& other):lhs(other.lhs), rhs(other.rhs), current_var(other.current_var){}
+
+    ~MulQuery(){ }
+
     inline bool operator==(const MulQuery& other) const noexcept {
         return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
     }
@@ -163,6 +185,12 @@ struct MulQuery{
             r = result;
         }
         return a;
+    }
+
+
+    bool is_removed() const {
+        bool r = __atomic_load_n(&removed, __ATOMIC_ACQUIRE);
+        return r;
     }
 };
 
@@ -256,5 +284,10 @@ class Engine {
         std::vector<Worker*> _workers;
 
 };
-using AddTable = CHashTable<AddQuery>;
-using MulTable = CHashTable<MulQuery>;
+
+
+
+using AddTable = LockFreeMap<AddQuery>;
+using MulTable = LockFreeMap<MulQuery>;
+
+

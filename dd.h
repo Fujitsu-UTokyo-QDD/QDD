@@ -68,10 +68,26 @@ struct mNode {
 
 
 
+
     Qubit v;
     std::array<mEdge, 4> children;
 
 };
+
+struct compare_node_ut{
+    bool operator()(const mNode& lhs, const mNode& rhs)const {
+        if (lhs.v != rhs.v) return false;
+        for(int i = 0; i < 4; i++){
+            const mEdge& e1 = lhs.children[i];
+            const mEdge& e2 = rhs.children[i];
+            if(e1.n != e2.n) return false;
+            if(!e1.w.objectEqual(e2.w)) return false;
+        }
+        return true;
+    }
+
+};
+
 
 static_assert(std::is_aggregate_v<mNode>);
 

@@ -1,6 +1,7 @@
 #include "engine.h"
 #include <cassert>
 
+ComplexTable ctable;
 
 NodeTable uniqueTable(32*NodeTable::region_size, 128*NodeTable::region_size);
 
@@ -102,9 +103,7 @@ void Worker::returnComplexToCache(Complex & c){
 }
 
 Complex Worker::getComplexFromTable(const double_pair& p){
-    double r = p.first * p.first + p.second * p.second;
-    r = std::sqrt(r);
-    //assert(r <= 1);
+
     return ctable.find_or_insert(p);
 }
 

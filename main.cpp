@@ -5,6 +5,8 @@
 #include "dd.h"
 #include <random>
 #include <chrono>
+#include "lockfree_hashmap.hpp"
+#include <bitset>
 
 
 using std::chrono::high_resolution_clock;
@@ -16,7 +18,7 @@ auto benchmark(Engine* eng){
     GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
     std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 50;
+    const std::size_t NGATES = 30;
     const uint64_t NQUBITS = 10;
 
     std::mt19937_64 rng;
@@ -43,27 +45,74 @@ auto benchmark(Engine* eng){
     std::cout<<ms.count()<<" ms"<<std::endl;
     return;
 }
+struct Bar {
+    double i;
 
-int main()
+    inline bool operator==(const Bar& other) const noexcept {
+        return i == other.i;
+    }
+};
+
+int test()
 {
 
 
-    Engine eng(8, 20);
+    
+    LockFreeMap<Bar> map;
+
+
+
+
+    std::random_device rd;
+    std::mt19937 e2(rd());
+    std::uniform_real_distribution<> dist(0,1);
+
+    constexpr std::size_t num = 100000;
+    double vals[num];
+    Bar* ans[num];
+    for(auto i = 0; i < num; i++){
+        vals[i]=dist(e2);
+    }
+
+     
+    std::vector<std::thread> threads1;
+    std::vector<std::thread> threads2;
+    int nthread = 10;
+    std::size_t step = num/nthread;
+    for(int i = 0; i < nthread; i++){
+        threads1.emplace_back([ &](int ii){
+            for(auto t = ii * step; t < (ii+1)*step; t++){  
+                Bar* b = map.find_or_insert(double_to_bits(vals[t]), { .i = vals[t]});
+                ans[t] = b;
+            }
+        }, i);
+    }
+
+    for(int i = 0; i < nthread; i++){
+        threads1[i].join();
+    }
+    for(int i = 0; i < nthread; i++){
+        threads2.emplace_back([&](int ii){
+            for(auto t = ii * step; t < (ii+1)*step; t++){  
+                Bar* b = map.find_or_insert(double_to_bits(vals[t]), { .i = vals[t]});
+                assert(b == ans[t]);
+                assert(b->i == vals[t]);
+            }
+        }, i);
+    }
+    for(int i = 0; i < nthread; i++){
+        threads2[i].join();
+    }
+
+    std::cout<<"success"<<std::endl;
+
+    return 0;    
+}
+int main(){
+    Engine eng(8,20);
     benchmark(&eng);
-
-
-/*
-    mEdge e1 = eng.submit(makeGate, Hmat, 4, 1, Controls{0, 2}) -> getResult();
-    e1.printMatrix();
-    std::cout<<std::endl;
-    mEdge e2 = eng.submit(makeGate, Hmat, 4, 0, Controls{1}) -> getResult();
-    std::cout<<"e2"<<std::endl;
-    e2.printMatrix();
-    std::cout<<std::endl;
-    mEdge product = eng.submit(multiply, e1, e2)->getResult();
-    product.printMatrix();
-    */
-    eng.terminate();
+    //test();
+    return 0;
 }
 
 

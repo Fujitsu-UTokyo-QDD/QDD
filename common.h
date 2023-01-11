@@ -64,6 +64,7 @@ const uint64_t UT_MAX_SZ  =   16 * REGION_SIZE;
 constexpr double SQRT2 = 0.707106781186547524400844362104849039284835937688474036588L;
 constexpr double mSQRT2 = -0.707106781186547524400844362104849039284835937688474036588L;
 
+static_assert(sizeof(double) == sizeof(unsigned long long));
 
 
 struct c{

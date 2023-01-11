@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include "common.h"
+#include "lockfree_hashmap.hpp"
 
 struct Value {
     double v{0.0};
@@ -261,6 +262,7 @@ class ComplexCache {
 };
 
 // thread local
+/*
 class ComplexTable {
     public:
         Complex find_or_insert(const double_pair&);
@@ -269,3 +271,18 @@ class ComplexTable {
         Value* find_or_insert(double);
         std::unordered_map<double, Value*> map;
 };
+*/
+//global
+class ComplexTable {
+    public:
+        Complex find_or_insert(const double_pair&);
+    private:
+       Value* find_or_insert(double);
+       LockFreeMap<Value> _map; 
+};
+
+
+extern ComplexTable ctable;
+
+
+

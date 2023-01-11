@@ -37,6 +37,7 @@ public:
     }
 
     size_t find_or_insert( const T& value, int* created = nullptr);
+    size_t find_or_overwrite( const T& value);
 
     T* get_data(size_t index){
         if(index >= this->table_size){
@@ -268,7 +269,7 @@ template<typename T, typename Hash, typename ValueEqual>
                 // Claim data bucket and write data
                 cidx = this->claim_data_bucket();
                 if(cidx == 0 || cidx >= this->table_size){
-                    fprintf(stderr, "claim data bucket from an invalid index\n");
+                    fprintf(stderr, "claim data bucket from an invalid index: %zu, %zu\n", cidx, total_region);
                     exit(1);
                 }
                 
@@ -316,8 +317,71 @@ template<typename T, typename Hash, typename ValueEqual>
 }
 
 
+template<typename T, typename Hash, typename ValueEqual>
+    size_t CHashTable<T, Hash, ValueEqual>::find_or_overwrite(const T& d)
+{
+    uint64_t hash_rehash = Hash()(d);
 
-using NodeTable = CHashTable<mNode>;
+    const uint64_t hash = hash_rehash & HASH_MASK;
+    assert((hash&INDEX_MASK) == 0);
+    uint64_t idx;
+    size_t cidx = 0;
+
+    idx = hash_rehash % this->table_size;
+
+    
+    volatile uint64_t *bucket = this->hash + idx;
+    uint64_t v = *bucket;
+
+    if (v == 0) {
+        cidx = this->claim_data_bucket();
+        if(cidx == 0 || cidx >= this->table_size){
+            fprintf(stderr, "claim data bucket from an invalid index: %zu, %lld\n", cidx, total_region);
+            exit(1);
+        }
+
+        assert((cidx & HASH_MASK) == 0);
+        assert((cidx&INDEX_MASK) == cidx);
+        
+        T *d_ptr = (this->data) + cidx;
+        new(d_ptr)T(d); //call the copy ctor
+        while (!cas(bucket, v, hash | cidx)) {
+            v = * bucket;
+        } 
+        return cidx;
+    }
+
+    if (hash == (v & HASH_MASK)) {
+        uint64_t d_idx = v & INDEX_MASK;
+        T *d_ptr = (this->data) + d_idx;
+   
+        if (ValueEqual()(d, *d_ptr)) {
+            
+            if (cidx != 0) this->release_data_bucket(cidx);
+            return d_idx;
+        }
+        
+    }
+    if(cidx == 0) cidx = this->claim_data_bucket();
+    if(cidx == 0 || cidx >= this->table_size){
+        fprintf(stderr, "claim data bucket from an invalid index: %zu\n", cidx);
+        exit(1);
+    }
+    
+    T *d_ptr = (this->data) + cidx;
+    new(d_ptr)T(d); //call the copy ctor
+    while(!cas(bucket, v, hash | cidx)) {
+        v =*bucket;
+    } 
+    return cidx;
+    
+
+
+
+
+}
+
+using NodeTable = CHashTable<mNode, std::hash<mNode>, compare_node_ut>;
 extern NodeTable uniqueTable;
 
 

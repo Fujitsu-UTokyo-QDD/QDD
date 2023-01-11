@@ -46,7 +46,7 @@ Complex ComplexCache::getCached_v(const double_pair& p) {
 }
 
 
-
+/*
 Value* ComplexTable::find_or_insert(double val){
     Value* v = new Value{ .v = val, .next = nullptr};
 
@@ -67,7 +67,22 @@ Complex ComplexTable::find_or_insert(const double_pair& p){
     
     return {r, i, Complex::Source::Table};
 }
+*/
 
+Value* ComplexTable::find_or_insert(double val){
+
+    Value* v = _map.find_or_insert(double_to_bits(val), {.v = val});
+
+    return v;
+}
+
+
+Complex ComplexTable::find_or_insert(const double_pair& p){
+    Value* r = find_or_insert(p.first);
+    Value* i = find_or_insert(p.second);
+
+    return {r, i, Complex::Source::Table};
+}
 
 double_pair Complex::add(const Complex& lhs, const Complex& rhs){
     
@@ -149,8 +164,4 @@ double_pair Complex::div( const Complex& lhs, const double_pair& rhs){
     return {(lr*rr+li*ri)/rmag2,  (li*rr-lr*ri)/rmag2};
 }
 
-ComplexTable::~ComplexTable(){
-    for(auto it = map.begin(); it != map.end(); it++){
-        delete it->second;
-    }
-}
+
