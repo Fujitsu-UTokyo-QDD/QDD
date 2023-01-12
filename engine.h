@@ -11,6 +11,7 @@
 #include <atomic>
 #include "queue.hpp"
 #include "sem_queue.h"
+#include <chrono>
 
 
 
@@ -76,10 +77,11 @@ class JobQueue {
 class Engine;
 
 class Worker{
+    friend class Engine;
     public:
 
       //  Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024){};
-    Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop){};
+    Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), timer(std::chrono::microseconds::zero()){};
 
         void run();
 
@@ -99,6 +101,9 @@ class Worker{
         //LockFreeQueue<Job*> _queue;
         SemQueue _queue;
         ComplexCache ccache;
+
+        std::chrono::microseconds timer;
+        int executed{0};
         
 
 };
@@ -288,6 +293,12 @@ class Engine {
         std::size_t worker_number() const { return _total_worker;}
         void terminate() {
             _stop = true;
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(2000ms);
+
+            for(Worker* w: _workers){
+                std::cout<<"t: "<<w->timer.count()<<" ms, "<<w->executed<<std::endl;
+            }
         }
 
         Job* steal();

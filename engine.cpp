@@ -141,17 +141,18 @@ void Worker::run() {
 void Worker::run() {
     
     _thread = std::thread([this](){
-        int counter = 0;
             while(!(*_stop)){
                 Job* j;
                 if(_queue.pop(j)){
+                    auto t1 = std::chrono::high_resolution_clock::now(); 
                     j->execute(this);
-                    counter++;
+                    auto t2 = std::chrono::high_resolution_clock::now(); 
+                    timer += std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+                    executed++;
                 }
                 
             }
     
-            std::cout<<counter<<std::endl;
             return;
 
      });
