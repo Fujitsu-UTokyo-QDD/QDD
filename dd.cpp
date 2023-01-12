@@ -9,35 +9,29 @@ MulTable mulTable;
 
 static mEdge normalize(Worker* w, mNode& node){
 
-    auto d0 = node.children[0].w.getValuePair();
-    auto d1 = node.children[1].w.getValuePair();
-    auto d2 = node.children[2].w.getValuePair();
-    auto d3 = node.children[3].w.getValuePair();
+
     
     // check for redundant node
-    const Complex& w0 = node.children[0].w;
+    const std_complex& w0 = node.children[0].w;
     const Index n0 = node.children[0].n;
-    if(std::all_of(node.children.begin(), node.children.end(), [&](const mEdge& e){ return e.w.isApproximatelyEqual(w0) && e.n == n0;} ) ){
+    if(std::all_of(node.children.begin(), node.children.end(), [&](const mEdge& e){ return e.w == w0 && e.n == n0;} ) ){
         
-        return {w->getComplexFromCache(w0.getValuePair()), n0}; 
+        return {w0, n0}; 
     }
     
     // check for all zero weights
-    if(std::all_of(node.children.begin(), node.children.end(), [](const mEdge& e){ return e.w.isApproximatelyZero();})){
-        return {w->getComplexFromCache({0.0,0.0}), TERMINAL};
+    if(std::all_of(node.children.begin(), node.children.end(), [](const mEdge& e){ return std::norm(e.w) == 0.0;})){
+        return {{0.0,0.0}, TERMINAL};
     }
 
     auto result = std::max_element(node.children.begin(), node.children.end(), [](const mEdge& lhs, const mEdge& rhs){
-        return lhs.w < rhs.w;   
+            return std::norm(lhs.w) < std::norm(rhs.w);
     });
-    //Complex max_weight = w->getComplexFromCache(result->w.getValuePair());
-    double_pair d = result->w.getValuePair();
-    //assert(!max_weight.isApproximatelyZero() && max_weight.mag2()!=0.0);
+    std_complex d = result->w;
     const std::size_t idx = std::distance(node.children.begin(), result);
     for(int i = 0; i < 4; i++){
-        double_pair r = Complex::div(node.children[i].w, d);
-        //w->returnComplexToCache(node.children[i].w);
-        node.children[i].w = w->getComplexFromTable(r);
+        std_complex r = node.children[i].w/d;
+        node.children[i].w = r;
     }
 
 
@@ -45,24 +39,20 @@ static mEdge normalize(Worker* w, mNode& node){
     //write the node into the UniqueTable
     
     Index n = w->uniquefy(node);
-    return {w->getComplexFromCache(d), n};
+    return {d, n};
     
 
 }
 
 mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4> c){
     
-    //safety check
-    std::for_each(c.begin(), c.end(), [](const mEdge& e){
-        assert(e.w.src == Complex::Cache);
-    });
+
     
     mNode node{ .v = q, .children = c };
 
     
     mEdge e =  normalize(w, node); 
 
-    assert(e.w.src == Complex::Cache);
     return e;
 }
 mNode* mEdge::getNode() const {
@@ -77,19 +67,11 @@ bool mEdge::isTerminal() const {
     return n == 0;
 }
 
-static double_pair mul(const double_pair& lhs, const double_pair& rhs) {
-    
-    const auto lr = lhs.first;
-    const auto li = lhs.second;
-    const auto rr = rhs.first;
-    const auto ri = rhs.second;
 
-    return { lr * rr - li * ri, lr * ri + li * rr};
-}
 
-static void printMatrix2(const mEdge& edge, size_t col, size_t row, double_pair w, uint64_t left,  double_pair** m){
+static void printMatrix2(const mEdge& edge, size_t col, size_t row, const std_complex& w, uint64_t left,  std_complex** m){
     
-    double_pair wp = mul(edge.w.getValuePair(), w);  
+    std_complex wp = edge.w * w;
     
     if(edge.isTerminal() && left == 0){
         m[row][col] = wp;
@@ -122,16 +104,15 @@ void mEdge::printMatrix() const {
     Qubit q = this->getVar();   
     std::size_t dim = 1 << (q+1);
 
-    double_pair** matrix = new double_pair*[dim];
-    for(std::size_t i = 0; i < dim; i++) matrix[i] = new double_pair[dim];
+    std_complex** matrix = new std_complex*[dim];
+    for(std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
 
 
     printMatrix2(*this, 0, 0, {1.0,0.0}, q+1, matrix);
 
     for(size_t i = 0 ; i < dim; i++){
         for(size_t j = 0; j < dim; j++){
-            //std::cout<<matrix[i][j].first<<"+"<<matrix[i][j].second<<"i ";
-            std::cout<<matrix[i][j].first<<" ";
+            std::cout<<matrix[i][j]<<" ";
         }
         std::cout<<"\n";
 
@@ -152,13 +133,9 @@ mEdge makeIdent(Worker* w, Qubit q){
 
     mEdge e; e.n = TERMINAL;
     for(Qubit i = 0; i <= q; i++){
-       e = makeEdge(w, i, {{{Complex::one, e.n},{Complex::zero, TERMINAL},{Complex::zero, TERMINAL},{Complex::one, e.n}}}); 
-       ComplexReturner r(w, e.w);
+       e = makeEdge(w, i, {{{{1.0,0.0}, e.n},{{0.0,0.0}, TERMINAL},{{0.0,0.0}, TERMINAL},{{1.0,0.0}, e.n}}}); 
     }
     
-    e.w = Complex::one;
-
-
     identityTable[q] = e;
     return e;
 
@@ -167,16 +144,13 @@ mEdge makeIdent(Worker* w, Qubit q){
 
 mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c){
     std::array<mEdge, 4> edges;
-    std::array<Complex, 4> matrix_entries;
-    for(auto i = 0; i < 4; i++) {
-        matrix_entries[i] = w->getComplexFromCache({g[i].r, g[i].i});
-    }
-    for(auto i = 0; i < 4; i++) edges[i] = mEdge{matrix_entries[i], TERMINAL}; 
+
+    for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].r, g[i].i}, TERMINAL}; 
     
     auto it = c.begin();
     
-    mEdge zero = {Complex::zero, TERMINAL};
-    mEdge one = {Complex::one, TERMINAL};
+    mEdge zero = {{0.0,0.0}, TERMINAL};
+    mEdge one = {{1.0, 0.0}, TERMINAL};
 
     Qubit z = 0;
     for(; z < target; z++){
@@ -184,7 +158,6 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
             for(int b0 = 0; b0 < 2; b0++){
                 std::size_t i = (b1<<1) | b0; 
                 if(it != c.end() && *it == z){
-                    ComplexReturner r(w, edges[i].w);
                     //positive control 
                     if(z == 0)
                         edges[i] = makeEdge(w, z, { (b1 == b0)? one : zero , zero, zero, edges[i]});
@@ -192,7 +165,6 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
                         edges[i] = makeEdge(w, z, { (b1 == b0)? makeIdent(w, z-1) : zero , zero, zero, edges[i]});
 
                 }else{
-                    ComplexReturner r(w, edges[i].w);
                     edges[i] = makeEdge(w, z, {edges[i], zero, zero, edges[i]});
                 }
             }
@@ -201,20 +173,13 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
     }
 
     auto e = makeEdge(w, z, edges);
-    {
-        ComplexReturner r0(w, edges[0].w);
-        ComplexReturner r1(w, edges[1].w);
-        ComplexReturner r2(w, edges[2].w);
-        ComplexReturner r3(w, edges[3].w);
-    }
+
 
     for( z = z+1 ; z < q; z++){
        if(it != c.end() && *it == z){
-           ComplexReturner r(w, e.w);
            e = makeEdge(w, z, {makeIdent(w, z-1), zero, zero, e});
            ++it;
        }else{
-           ComplexReturner r(w, e.w);
             e = makeEdge(w, z, {e, zero, zero, e}); 
        }
     }
@@ -235,8 +200,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
-        double_pair r = Complex::add(lhs.w, rhs.w);
-        return {w->getComplexFromCache(r), TERMINAL};
+        return {lhs.w + rhs.w, TERMINAL};
     }
 
     AddQuery query(lhs, rhs, current_var);
@@ -258,15 +222,13 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     for(auto i = 0; i < 4; i++){
         if(lv == current_var && !lhs.isTerminal()){
             x = lnode->getEdge(i);
-            double_pair xv = Complex::mul(lhs.w, x.w);
-            x.w = w->getComplexFromCache(xv);
+            x.w = lhs.w * x.w;
         }else{
             x = lhs;
         }
         if(rv == current_var && !rhs.isTerminal()){
             y = rnode->getEdge(i);
-            double_pair yv = Complex::mul(rhs.w, y.w);
-            y.w = w->getComplexFromCache(yv);
+            y.w = rhs.w * y.w;
         }else{
             y = rhs;
         }
@@ -285,8 +247,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
-        double_pair d = Complex::add(lhs.w, rhs.w);
-        return {w->getComplexFromCache(d), TERMINAL};
+        return {lhs.w + rhs.w, TERMINAL};
     }
 
 
@@ -310,16 +271,14 @@ mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std:
 mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
-        double_pair r = Complex::mul(lhs.w, rhs.w);
-        return {w->getComplexFromCache(r), TERMINAL};
+        return {lhs.w * rhs.w, TERMINAL};
     }
 
     MulQuery query(lhs.n,  rhs.n, current_var);
     MulQuery* q = mulTable.find_or_overwrite(std::hash<MulQuery>()(query), query);
     Index n;
     if(q->load_result(w,n)){
-        double_pair p = Complex::mul(lhs.w, rhs.w);
-        return {w->getComplexFromCache(p), n};
+        return {lhs.w * rhs.w, n};
     }
 
     mEdge x, y;
@@ -338,8 +297,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
         for(auto k = 0; k < 2; k++){
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((row<<1) | k);
-                double_pair xv = Complex::mul(lhs.w, x.w);
-                x.w = w->getComplexFromCache(xv);
+                x.w = lhs.w * x.w;
             }else{
                 x = lhs; 
             }
@@ -347,8 +305,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
 
             if(rv == current_var && !rhs.isTerminal()){
                 y = rnode->getEdge((k<<1) | col);
-                double_pair yv = Complex::mul(rhs.w, y.w);
-                y.w = w->getComplexFromCache(yv);
+                y.w = rhs.w * y.w;
             
             }else{
                 y = rhs;     
@@ -371,8 +328,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
 
 mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
-        double_pair d = Complex::mul(lhs.w, rhs.w);
-        return {w->getComplexFromCache(d), TERMINAL};
+        return {lhs.w * rhs.w, TERMINAL};
     }
 
 

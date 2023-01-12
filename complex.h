@@ -282,7 +282,6 @@ class ComplexTable {
 };
 
 
-extern ComplexTable ctable;
 
 
 

@@ -68,8 +68,8 @@ static_assert(sizeof(double) == sizeof(unsigned long long));
 
 
 struct c{
-    double r;
-    double i;
+    float r;
+    float i;
 };
 
 

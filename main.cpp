@@ -18,7 +18,7 @@ auto benchmark(Engine* eng){
     GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
     std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 50;
+    const std::size_t NGATES = 30;
     const uint64_t NQUBITS = 10;
 
     std::mt19937_64 rng;

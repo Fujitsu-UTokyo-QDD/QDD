@@ -1,9 +1,9 @@
 #pragma once
 
-#include "complex.h"
 #include "common.h"
+#include <complex>
 
-
+using std_complex = std::complex<float>;
 
 struct mNode;
 struct Worker;
@@ -20,7 +20,7 @@ struct mEdge {
         return w == e.w && n == e.n;
     }
 
-    Complex w;
+    std_complex w;
     Index n{TERMINAL};
 };
 
@@ -33,13 +33,21 @@ struct vEdge {
 };
 
 
+template<>
+struct std::hash<std_complex>{
+    std::size_t operator()(const std_complex& v) const noexcept {
+        auto h1 = std::hash<float>()(v.real());
+        auto h2 = std::hash<float>()(v.imag());
+        return hash_combine(h1,h2);
+    }
+};
 
 
 
 template<>
 struct std::hash<mEdge>{
     std::size_t operator()(const mEdge& v) const noexcept {
-        auto h1 = std::hash<Complex>()(v.w);
+        auto h1 = std::hash<std_complex>()(v.w);
         auto h2 = std::hash<Index>()(v.n);
         return hash_combine(h1,h2);
     }
@@ -76,14 +84,7 @@ struct mNode {
 
 struct compare_node_ut{
     bool operator()(const mNode& lhs, const mNode& rhs)const {
-        if (lhs.v != rhs.v) return false;
-        for(int i = 0; i < 4; i++){
-            const mEdge& e1 = lhs.children[i];
-            const mEdge& e2 = rhs.children[i];
-            if(e1.n != e2.n) return false;
-            if(!e1.w.objectEqual(e2.w)) return false;
-        }
-        return true;
+        return (lhs.v == rhs.v) && (lhs.children == rhs.children);
     }
 
 };

@@ -1,7 +1,6 @@
 #include "engine.h"
 #include <cassert>
 
-ComplexTable ctable;
 
 NodeTable uniqueTable(32*NodeTable::region_size, 128*NodeTable::region_size);
 
@@ -94,18 +93,9 @@ bool JobQueue::empty() const {
 }
 
 
-Complex Worker::getComplexFromCache(const double_pair& p){
-    return ccache.getCached_v(p);
-}
 
-void Worker::returnComplexToCache(Complex & c){
-    ccache.returnCached(c);
-}
 
-Complex Worker::getComplexFromTable(const double_pair& p){
 
-    return ctable.find_or_insert(p);
-}
 
 Index Worker::uniquefy(const mNode& n){
     assert(std::all_of(n.children.begin(), n.children.end(), [](const mEdge& e){

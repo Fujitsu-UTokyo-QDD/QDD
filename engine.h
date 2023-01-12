@@ -85,10 +85,7 @@ class Worker{
 
         void submit(Job*);
 
-        Complex getComplexFromCache(const double_pair&);
-        void returnComplexToCache(Complex&);
 
-        Complex getComplexFromTable(const double_pair&); 
 
         Index uniquefy(const mNode& n);
 
@@ -126,14 +123,14 @@ struct AddQuery{
 
     void set_result(Worker* w ,const mEdge& r){
 
-       result = {w->getComplexFromCache(r.w.getValuePair()), r.n};
+       result = {r.w, r.n};
        __atomic_store_n(&available, true, __ATOMIC_RELEASE);
     }
 
     bool load_result(Worker* w,mEdge& r){
         bool a =  __atomic_load_n(&available, __ATOMIC_ACQUIRE);
         if(a){
-            r.w = w->getComplexFromCache(result.w.getValuePair());
+            r.w = result.w;
             r.n = result.n;
         }
         return a;
