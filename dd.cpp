@@ -255,8 +255,8 @@ mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     return add2(w, lhs, rhs, root);
 }
 
-mEdge addSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end){
-    end = std::min(jobs.size(), end);
+mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end){
+    //end = std::min(jobs.size(), end);
 
     mEdge result = jobs[start]->getResult();
 
@@ -337,8 +337,8 @@ mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 }
 
-mEdge mulSerial(Worker* w, const std::vector<Job*> jobs, std::size_t start, std::size_t end){
-    end = std::min(jobs.size(), end);
+mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end){
+    //end = std::min(jobs.size(), end);
 
     mEdge result = jobs[start]->getResult();
 

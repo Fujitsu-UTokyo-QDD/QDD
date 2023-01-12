@@ -204,18 +204,7 @@ struct std::hash<MulQuery>{
         return h;
     }
 };
-class ComplexReturner {
-public:
-    ComplexReturner(Worker* w, const Complex& c): _w(w), _c(c){}
 
-    ~ComplexReturner(){
-        assert(_c.r != nullptr && _c.i != nullptr);
-        _w->returnComplexToCache(_c);
-    }
-private:
-    Complex _c;
-    Worker* _w;
-};
 class Engine {
     public:
     
@@ -240,28 +229,57 @@ class Engine {
                return j;
             }
         
-        mEdge addReduce(const std::vector<Job*>& jobs, std::size_t grain_size){
+        mEdge addReduce(std::vector<Job*>& jobs, std::size_t grain_size){
+
             grain_size = std::max(jobs.size()/_total_worker, grain_size);
             std::vector<Job*> next_round;
-            
-            for(auto i = 0; i < jobs.size(); i += grain_size){
-                next_round.push_back(this->submit(addSerial, jobs, i, i+grain_size));
+
+            std::size_t i = 0;
+            std::size_t njobs = jobs.size();
+
+            while(njobs >= grain_size){
+                njobs = 0;
+                auto total_size = jobs.size();
+                for(; i < total_size; i += grain_size){
+                    next_round.push_back(this->submit(addSerial, jobs, i+0, std::min(total_size,i+grain_size)));
+                    njobs++;
+                }
+
+                i = std::min(i, jobs.size());
+                
+                jobs.insert(jobs.end(), next_round.begin(), next_round.end());
+                next_round.clear();
             }
 
-            Job* j   = this->submit(addSerial, next_round, 0, next_round.size());
+
+            Job* j   = this->submit(addSerial, jobs, i, jobs.size());
             return j -> getResult();
 
             
         }
-        mEdge mulReduce(const std::vector<Job*>& jobs, std::size_t grain_size){
+        mEdge mulReduce(std::vector<Job*>& jobs, std::size_t grain_size){
             grain_size = std::max(jobs.size()/_total_worker, grain_size);
             std::vector<Job*> next_round;
-            
-            for(auto i = 0; i < jobs.size(); i += grain_size){
-                next_round.push_back(this->submit(mulSerial, jobs, i, i+grain_size));
+
+            std::size_t i = 0;
+            std::size_t njobs = jobs.size();
+
+            while(njobs >= grain_size){
+                njobs = 0;
+                auto total_size = jobs.size();
+                for(; i < total_size; i += grain_size){
+                    next_round.push_back(this->submit(mulSerial, jobs, i+0, std::min(total_size,i+grain_size)));
+                    njobs++;
+                }
+
+                i = std::min(i, jobs.size());
+                
+                jobs.insert(jobs.end(), next_round.begin(), next_round.end());
+                next_round.clear();
             }
 
-            Job* j   = this->submit(mulSerial, next_round, 0, next_round.size());
+
+            Job* j   = this->submit(mulSerial, jobs, i, jobs.size());
             return j -> getResult();
 
             

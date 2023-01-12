@@ -38,7 +38,7 @@ auto benchmark(Engine* eng){
         jobs.push_back(j);
     }
 
-    auto result = eng->mulReduce(jobs, NGATES/eng->worker_number());
+    auto result = eng->mulReduce(jobs, 5);
     auto t2 = std::chrono::high_resolution_clock::now();
     
     duration<double, std::milli> ms = t2 - t1;

@@ -98,9 +98,7 @@ bool JobQueue::empty() const {
 
 
 Index Worker::uniquefy(const mNode& n){
-    assert(std::all_of(n.children.begin(), n.children.end(), [](const mEdge& e){
-        return e.w.src == Complex::Table;
-    }));
+
    return uniqueTable.find_or_insert(n); 
 }
 
