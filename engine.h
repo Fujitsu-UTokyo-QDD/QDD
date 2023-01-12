@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <atomic>
 #include "queue.hpp"
+#include "sem_queue.h"
 
 
 
@@ -77,7 +78,8 @@ class Engine;
 class Worker{
     public:
 
-        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024){};
+      //  Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024){};
+    Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop){};
 
         void run();
 
@@ -97,7 +99,8 @@ class Worker{
         std::size_t _id;
 
         // worker local
-        LockFreeQueue<Job*> _queue;
+        //LockFreeQueue<Job*> _queue;
+        SemQueue _queue;
         ComplexCache ccache;
         
 

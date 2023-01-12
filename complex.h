@@ -29,7 +29,7 @@ struct Value {
     }
 
     static constexpr bool isApproximatelyEqual(const Value* lhs, const Value* rhs){
-    return lhs == rhs || isApproximatelyEqual(lhs->v, rhs->v);
+        return lhs == rhs || isApproximatelyEqual(lhs->v, rhs->v);
     }
 
     static constexpr bool isApproximatelyZero(double v, double tol = std::numeric_limits<double>::epsilon()){

@@ -119,15 +119,16 @@ void Worker::submit(Job* j){
     while(!_queue.push(j));
 }
 
-
+/*
 void Worker::run() {
     
     _thread = std::thread([this](){
-
+        int counter = 0;
             while(!(*_stop)){
                 Job* j;
                 if(_queue.pop(j)){
                     j->execute(this);
+                    counter++;
                 }else{
                     //need to steal
                     j = this->_eng->steal();
@@ -141,12 +142,33 @@ void Worker::run() {
             }
     
             if(_queue.size() != 0) assert(false);
+            std::cout<<counter<<std::endl;
             return;
 
      });
 
 }
+*/
 
+void Worker::run() {
+    
+    _thread = std::thread([this](){
+        int counter = 0;
+            while(!(*_stop)){
+                Job* j;
+                if(_queue.pop(j)){
+                    j->execute(this);
+                    counter++;
+                }
+                
+            }
+    
+            std::cout<<counter<<std::endl;
+            return;
+
+     });
+
+}
 Job* Engine::steal() {
     return nullptr;
 }

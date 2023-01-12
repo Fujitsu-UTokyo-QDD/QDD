@@ -40,10 +40,12 @@ public:
     size_t find_or_overwrite( const T& value);
 
     T* get_data(size_t index){
+/*
         if(index >= this->table_size){
             fprintf(stderr,"get data from invalid index\n");
             exit(1);
         }
+        */
         return this->data + index;
     }
     
