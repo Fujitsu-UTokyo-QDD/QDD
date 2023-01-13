@@ -2,11 +2,12 @@
 
 #include <atomic>
 #include <cstddef>
+#include <semaphore>
 
 template <typename T> class LockFreeQueue
 {
 public:
-  explicit LockFreeQueue(size_t capacity)
+  explicit LockFreeQueue(size_t capacity): _sem(0)
   {
     _capacityMask = capacity - 1;
     for(size_t i = 1; i <= sizeof(void*) * 4; i <<= 1)
@@ -22,6 +23,7 @@ public:
 
     _tail.store(0, std::memory_order_relaxed);
     _head.store(0, std::memory_order_relaxed);
+
   }
 
   ~LockFreeQueue()
@@ -54,11 +56,14 @@ public:
     }
     new (&node->data)T(data);
     node->head.store(tail, std::memory_order_release);
+    _sem.release();
     return true;
   }
 
   bool pop(T& result)
   {
+    using namespace std::chrono_literals;
+    if(!_sem.try_acquire_for(1ms)) return false;
     Node* node;
     size_t head = _head.load(std::memory_order_relaxed);
     for(;;)
@@ -87,6 +92,7 @@ private:
   size_t _capacityMask;
   Node* _queue;
   size_t _capacity;
+  std::counting_semaphore<128> _sem;
   char cacheLinePad1[64];
   std::atomic<size_t> _tail;
   char cacheLinePad2[64];
