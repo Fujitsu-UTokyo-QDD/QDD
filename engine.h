@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <atomic>
 #include "queue.hpp"
-#include "sem_queue.h"
 #include <chrono>
+#include "chase_lev_queue.hpp"
 
 
 
@@ -325,6 +325,8 @@ class Engine {
         const std::size_t _total_worker;
         std::vector<Worker*> _workers;
 
+
+        CLQueue<Job*> _all_jobs;
 };
 
 
