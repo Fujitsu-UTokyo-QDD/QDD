@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include "common.h"
 #include "dd.h"
+#include "engine.h"
 
-static thread_local int64_t my_region = -1; 
 
 /*
  * CL_MASK and CL_MASK_R are for the probe sequence calculation.
@@ -36,7 +36,7 @@ public:
         free(bucket_bitmap);
     }
 
-    size_t find_or_insert( const T& value, int* created = nullptr);
+    size_t find_or_insert( Worker* w, const T& value, int* created = nullptr);
     size_t find_or_overwrite( const T& value);
 
     T* get_data(size_t index){
@@ -84,7 +84,7 @@ private:
         }
     }
 
-    size_t claim_data_bucket();
+    size_t claim_data_bucket(Worker* w);
 
     void release_data_bucket(size_t index);
 
@@ -201,31 +201,32 @@ void CHashTable<T, Hash, ValueEqual>::release_data_bucket(size_t index){
 }
 
 template<typename T, typename Hash, typename ValueEqual>
-size_t CHashTable<T, Hash, ValueEqual>::claim_data_bucket(){
+size_t CHashTable<T, Hash, ValueEqual>::claim_data_bucket(Worker* w){
     
 
-    if(my_region == -1 ){
-        my_region = request_region();
+    if(w->get_region<T>() == -1 ){
+        w->get_region<T>() = request_region();
     }
 
-    int64_t start_region = my_region;
+    const int64_t start_region = w->get_region<T>();
+    int64_t& current_region = w->get_region<T>();
     for(;;){
-       uint64_t* ptr = this->bucket_bitmap + (my_region*8);
+       uint64_t* ptr = this->bucket_bitmap + (current_region*8);
        int i = 0;
        for(;i<8;){
             uint64_t v = *ptr;
             if(v != 0xFFFFFFFFFFFFFFFFLL){
                 int j = __builtin_clzll(~v);
                 *ptr |=(0x8000000000000000LL>>j);
-                uint64_t idx =(8*my_region + i)*64 + j; 
+                uint64_t idx =(8*current_region + i)*64 + j; 
                 return idx; 
             }
             i++;
             ptr++;
        }
 find_region:
-       my_region = request_region();
-       if(my_region == start_region){
+       current_region = request_region();
+       if(current_region == start_region){
         /**
          * 
          * 
@@ -237,8 +238,8 @@ find_region:
             resize();
        } 
 
-       ptr = this->region_bitmap + (my_region/64);
-       uint64_t mask = 0x8000000000000000LL >> (my_region&63);
+       ptr = this->region_bitmap + (current_region/64);
+       uint64_t mask = 0x8000000000000000LL >> (current_region&63);
        uint64_t v;
 reload:
        v = *ptr;
@@ -250,7 +251,7 @@ reload:
 }
     
 template<typename T, typename Hash, typename ValueEqual>
-    size_t CHashTable<T, Hash, ValueEqual>::find_or_insert(const T& d,  int* created)
+    size_t CHashTable<T, Hash, ValueEqual>::find_or_insert(Worker* w, const T& d,  int* created)
 {
     uint64_t hash_rehash = Hash()(d);
 
@@ -269,7 +270,7 @@ template<typename T, typename Hash, typename ValueEqual>
         if (v == 0) {
             if (cidx == 0) {
                 // Claim data bucket and write data
-                cidx = this->claim_data_bucket();
+                cidx = this->claim_data_bucket(w);
                 if(cidx == 0 || cidx >= this->table_size){
                     fprintf(stderr, "claim data bucket from an invalid index: %zu, %zu\n", cidx, total_region);
                     exit(1);
@@ -383,8 +384,11 @@ template<typename T, typename Hash, typename ValueEqual>
 
 }
 
-using NodeTable = CHashTable<mNode, std::hash<mNode>, compare_node_ut>;
-extern NodeTable uniqueTable;
+using mNodeTable = CHashTable<mNode, std::hash<mNode>, compare_node_ut<mNode>>;
+extern mNodeTable m_uniqueTable;
+
+using vNodeTable = CHashTable<vNode, std::hash<vNode>, compare_node_ut<vNode>>;
+extern vNodeTable v_uniqueTable;
 
 
 

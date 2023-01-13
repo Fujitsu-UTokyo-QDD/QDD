@@ -37,12 +37,18 @@ auto benchmark(Engine* eng){
         Job* j = eng->submit(makeGate, g, NQUBITS, qubit_dist(rng),Controls{});
         jobs.push_back(j);
     }
-
+    /*
+    for(auto j: jobs){
+        j->getResult();
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout<<"makeGate: "<< duration<double, std::micro>(t2-t1).count()<<std::endl;
+    */
     auto result = eng->mulReduce(jobs, 5);
     auto t2 = std::chrono::high_resolution_clock::now();
     
-    duration<double, std::milli> ms = t2 - t1;
-    std::cout<<ms.count()<<" ms"<<std::endl;
+    duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()<<" macro sec"<<std::endl;
     return;
 }
 struct Bar {
@@ -109,7 +115,7 @@ int test()
     return 0;    
 }
 int main(){
-    Engine eng(8,20);
+    Engine eng(5,20);
     benchmark(&eng);
     eng.terminate();
     return 0;

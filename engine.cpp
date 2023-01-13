@@ -1,8 +1,10 @@
 #include "engine.h"
 #include <cassert>
+#include "table.hpp"
 
 
-NodeTable uniqueTable(32*NodeTable::region_size, 128*NodeTable::region_size);
+mNodeTable m_uniqueTable(32*mNodeTable::region_size, 256*mNodeTable::region_size);
+vNodeTable v_uniqueTable(32*vNodeTable::region_size, 128*vNodeTable::region_size);
 
 /*
 void JobQueue::push(Job* job){
@@ -99,7 +101,7 @@ bool JobQueue::empty() const {
 
 Index Worker::uniquefy(const mNode& n){
 
-   return uniqueTable.find_or_insert(n); 
+   return m_uniqueTable.find_or_insert(this, n); 
 }
 
 
@@ -147,7 +149,9 @@ void Worker::run() {
                     auto t1 = std::chrono::high_resolution_clock::now(); 
                     j->execute(this);
                     auto t2 = std::chrono::high_resolution_clock::now(); 
-                    timer += std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+                    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+                    timer += d;
+                    //if(_id == 2) std::cout<<"task"<<executed<<":  "<< d.count()<<std::endl; 
                     executed++;
                 }
                 

@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <semaphore>
+#include <chrono>
 
 class Job;
 
@@ -15,7 +16,8 @@ class SemQueue{
             return true;
         }
         bool pop( Job* &result){
-            _sem.acquire();
+            using namespace std::chrono_literals; 
+            if(!_sem.try_acquire_for(1ms)) return false;
             result = _jobs.front();
             _jobs.pop_front();
             return true;

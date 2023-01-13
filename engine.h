@@ -3,7 +3,6 @@
 #include <type_traits>
 #include "complex.h"
 #include "dd.h"
-#include "table.hpp"
 #include <future>
 #include <functional>
 #include <thread>
@@ -80,26 +79,33 @@ class Worker{
     friend class Engine;
     public:
 
-      //  Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024){};
-    Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), timer(std::chrono::microseconds::zero()){};
+        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024), timer(std::chrono::microseconds::zero()), _mregion(-1), _vregion(-1){};
+    //Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), timer(std::chrono::microseconds::zero()), _mregion(-1), _vregion(-1){};
 
         void run();
 
         void submit(Job*);
 
+        template<typename T>
+        int64_t& get_region();
 
 
         Index uniquefy(const mNode& n);
 
-    private:
         Engine* _eng;
         bool* _stop;
         std::thread _thread;
         std::size_t _id;
 
+        int64_t _mregion;
+        int64_t _vregion;
+
+        int64_t addCacheHit{0};
+        int64_t mulCacheHit{0};
+
         // worker local
-        //LockFreeQueue<Job*> _queue;
-        SemQueue _queue;
+        LockFreeQueue<Job*> _queue;
+        //SemQueue _queue;
         ComplexCache ccache;
 
         std::chrono::microseconds timer;
@@ -107,6 +113,15 @@ class Worker{
         
 
 };
+
+template<>
+inline int64_t& Worker::get_region<mNode>(){
+    return _mregion;
+}
+template<>
+inline int64_t& Worker::get_region<vNode>(){
+    return _vregion;
+}
 
 struct AddQuery{
     mEdge lhs;
@@ -210,11 +225,12 @@ struct std::hash<MulQuery>{
     }
 };
 
+
 class Engine {
     public:
     
-        Engine(std::size_t workers, QubitCount q, NodeTable* unique = &uniqueTable)
-            :_total_worker(workers), _uniqueTable(unique), _current_worker(0), _stop(false){ 
+        Engine(std::size_t workers, QubitCount q)
+            :_total_worker(workers),  _current_worker(0), _stop(false){ 
             identityTable.resize(q);
             for(auto i = 0; i < _total_worker; i++) {
                 Worker* w = new Worker(this, i, &_stop);
@@ -236,7 +252,6 @@ class Engine {
         
         mEdge addReduce(std::vector<Job*>& jobs, std::size_t grain_size){
 
-            grain_size = std::max(jobs.size()/_total_worker, grain_size);
             std::vector<Job*> next_round;
 
             std::size_t i = 0;
@@ -263,7 +278,6 @@ class Engine {
             
         }
         mEdge mulReduce(std::vector<Job*>& jobs, std::size_t grain_size){
-            grain_size = std::max(jobs.size()/_total_worker, grain_size);
             std::vector<Job*> next_round;
 
             std::size_t i = 0;
@@ -283,21 +297,21 @@ class Engine {
                 next_round.clear();
             }
 
-
             Job* j   = this->submit(mulSerial, jobs, i, jobs.size());
             return j -> getResult();
-
             
         }
 
         std::size_t worker_number() const { return _total_worker;}
         void terminate() {
             _stop = true;
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(2000ms);
+            for(Worker* w: _workers ){
+                w->_thread.join();
+            }
 
             for(Worker* w: _workers){
-                std::cout<<"t: "<<w->timer.count()<<" ms, "<<w->executed<<std::endl;
+                std::cout<<"t"<<w->_id<<": " <<w->timer.count()<<" ms, "<<w->executed<<std::endl;
+                std::cout<<"addhit: "<<w->addCacheHit<<", mulhit: "<<w->mulCacheHit<<std::endl;
             }
         }
 
@@ -309,7 +323,6 @@ class Engine {
         bool _stop;
         std::atomic_long _current_worker;
         const std::size_t _total_worker;
-        NodeTable* _uniqueTable;
         std::vector<Worker*> _workers;
 
 };

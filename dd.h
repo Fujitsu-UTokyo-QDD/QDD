@@ -8,6 +8,42 @@ using std_complex = std::complex<float>;
 
 struct mNode;
 struct Worker;
+struct vNode;
+
+struct vEdge {
+
+    Qubit getVar() const;
+    bool isTerminal() const;
+    vNode* getNode() const;
+
+    void printVector() const;
+
+    inline bool operator==(const vEdge& e) const noexcept {
+        return w == e.w && n == e.n;
+    }
+
+    std_complex w;
+    Index n{TERMINAL};
+
+
+};
+
+struct vNode {
+
+    vEdge operator[](std::size_t i){
+        return children[i]; 
+    }
+
+    vEdge getEdge(std::size_t i){
+        return this->operator[](i);
+    }
+
+    inline bool operator==(const vNode& n) const noexcept{
+        return v== n.v && children == n.children;
+    }
+    Qubit v;
+    std::array<vEdge, 2> children;
+};
 
 struct mEdge {
 
@@ -15,7 +51,10 @@ struct mEdge {
     bool isTerminal() const;
     mNode* getNode() const;
     
+    vEdge get_column(std::size_t col) const;
     void printMatrix() const;
+
+
 
     inline bool operator==(const mEdge& e) const noexcept {
         return w == e.w && n == e.n;
@@ -28,10 +67,6 @@ struct mEdge {
 static_assert(std::is_aggregate_v<mEdge>);
 
 
-struct vEdge {
-
-
-};
 
 
 template<>
@@ -83,8 +118,9 @@ struct mNode {
 
 };
 
+template<typename T>
 struct compare_node_ut{
-    bool operator()(const mNode& lhs, const mNode& rhs)const {
+    bool operator()(const T& lhs, const T& rhs)const {
         return (lhs.v == rhs.v) && (lhs.children == rhs.children);
     }
 
