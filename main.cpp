@@ -22,44 +22,7 @@ using std::chrono::milliseconds;
 using namespace oneapi::tbb;
 
 
-auto benchmark_dense(Engine* eng){
-    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
-    std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 50;
-    const uint64_t NQUBITS = 10;
-
-    std::mt19937_64 rng;
-    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
-    rng.seed(ss);
-
-    std::uniform_int_distribution<int> qubit_dist(0, NQUBITS-1);
-    std::uniform_int_distribution<int> gate_dist(0, gates->size() - 1 );
-
-    std::vector<Job*> jobs;
-    Controls  c = {};
-    for(std::size_t i = 0; i < NGATES; i++){
-        std::vector<mEdge> single_gate;
-        for(auto j = 0; j < NQUBITS; j++ ){
-            auto g = gates[gate_dist(rng)];
-            Job* job = eng->submit(makeGate, g, 1,0, Controls{});
-            single_gate.push_back(job->getResult());
-        }
-        mEdge e = single_gate[0];
-        for(auto j = 1; j < NQUBITS -1; j++) e = eng->submit(kronecker, e, single_gate[j])->getResult();
-        Job* j = eng->submit(kronecker, e, single_gate[NQUBITS-1]);
-        jobs.push_back(j);
-    }
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto result = eng->mulReduce(jobs, 5);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    
-    duration<double, std::micro> ms = t2 - t1;
-    std::cout<<ms.count()<<" macro sec"<<std::endl;
-    return;
-}
 
 auto benchmark(Engine* eng){
     GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
@@ -219,11 +182,84 @@ void test_basic(){
 }
 
 
+void test_kronecker(){
+
+    //GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
+    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
+
+    mEdge e1 = makeGate(nullptr, gates[1], 1, 0, Controls{});
+    mEdge e2 = makeGate(nullptr, gates[2], 1, 0, Controls{});
+    mEdge e3 = makeGate(nullptr, gates[3], 1, 0, Controls{});
+    mEdge result = kronecker(nullptr, e1, e2);
+    result = kronecker(nullptr, result, e3);
+    result.printMatrix();
+
+
+    return;
+
+
+}
+
+static mEdge make_dense(QubitCount q, int seed = 0){
+    
+    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
+    std::mt19937_64 rng;
+    rng.seed(seed);
+
+    std::uniform_int_distribution<int> gate_dist(0, gates->size() - 1 );
+    
+    std::vector<mEdge> gate_queue;
+    for(auto i = 0; i < q; i++){
+       gate_queue.push_back(makeGate(nullptr, gates[gate_dist(rng)], 1, 0, Controls{})) ;
+    }
+    mEdge result = kronecker(nullptr, gate_queue[0], gate_queue[1]);
+
+    for(auto i = 2; i < q; i++){
+        result = kronecker(nullptr, result, gate_queue[i]);
+    }
+
+    return result;
+
+}
+
+auto benchmark_dense(){
+
+    std::vector<mEdge> gate_queue;
+    const std::size_t NGATES = 100;
+    const uint64_t NQUBITS = 10;
+
+
+    Controls  c = {};
+    for(auto i = 0; i < NGATES; i++){
+        gate_queue.emplace_back(make_dense(NQUBITS, i));
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto r1 = std::async(std::launch::async, [&](){
+        auto result = multiply(nullptr, gate_queue[0], gate_queue[1]);
+        for(auto i = 2; i < NGATES/2; i++){
+            result = multiply(nullptr, result, gate_queue[i]);
+        }
+        return result;
+        });
+
+    auto result = multiply(nullptr, gate_queue[NGATES/2], gate_queue[NGATES/2+1]);
+    for(auto i = NGATES/2+2; i < NGATES; i++){
+        result = multiply(nullptr, result, gate_queue[i]);
+    }
+
+    result = multiply(nullptr, result, r1.get());
+    auto t2 = std::chrono::high_resolution_clock::now();
+    
+    duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()<<" macro sec"<<std::endl;
+    return;
+}
+
+
 int main(){
 
-    test_basic();
-
- 
+    benchmark_dense(); 
     return 0;
 }
 
