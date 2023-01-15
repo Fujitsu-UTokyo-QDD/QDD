@@ -65,7 +65,7 @@ auto benchmark(Engine* eng){
 
     std::vector<mEdge> gate_queue;
     const std::size_t NGATES = 50;
-    const uint64_t NQUBITS = 10;
+    const uint64_t NQUBITS = 3;
 
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -171,8 +171,8 @@ void test_basic(){
     GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
 
     std::vector<mEdge> gate_queue;
-    const std::size_t NGATES = 10;
-    const uint64_t NQUBITS = 3;
+    const std::size_t NGATES = 100;
+    const uint64_t NQUBITS = 10;
 
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -200,7 +200,6 @@ void test_basic(){
 
     duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()<<" micro sec"<<std::endl;
-    result.printMatrix();
     return;
 
 

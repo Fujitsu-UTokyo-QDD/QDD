@@ -8,7 +8,7 @@ add_library(CLQueue INTERFACE "chase_lev_queue.hpp")
 target_compile_features(CLQueue INTERFACE cxx_std_20)
 
 find_package(TBB REQUIRED)
-add_library(engine STATIC dd.cpp engine.cpp complex.cpp epoch.cpp)
+add_library(engine STATIC dd.cpp engine.cpp  epoch.cpp)
 target_link_libraries(engine PUBLIC TBB::tbb  CLQueue)
 
 

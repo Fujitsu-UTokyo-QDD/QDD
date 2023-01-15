@@ -4,7 +4,81 @@
 #include <complex>
 #include <vector>
 
-using std_complex = std::complex<float>;
+
+
+struct Complex{
+    float r; 
+    float i;
+
+    Complex& operator+=(const Complex& rhs) noexcept{
+        r += rhs.r;
+        i += rhs.i;
+        return *this;
+    }
+    Complex& operator-=(const Complex& rhs) noexcept{
+        r -= rhs.r;
+        i -= rhs.i;
+        return *this;
+    }
+    Complex& operator*=(const Complex& rhs) noexcept{
+        float a = r, b = i;
+        float p = rhs.r, q = rhs.i;
+
+        r = (a*p - b*q);
+        i = (a*q + b*p);
+        return *this;
+    }
+    Complex& operator/=(const Complex& rhs) noexcept{
+
+        float mag = rhs.r*rhs.r + rhs.i*rhs.i;
+        float a = r, b = i;
+        float p = rhs.r, q = rhs.i;
+        r = (a*p+b*q)/mag;
+        i = (b*p-a*q)/mag;
+        return *this;
+    }
+
+    bool operator==(const Complex& rhs) const noexcept {
+        return r == rhs.r && i == rhs.i;
+    }
+
+    float real() const noexcept { return r;}
+    float imag() const noexcept { return i;}
+};
+
+inline Complex operator+(Complex lhs, const Complex& rhs) noexcept{
+
+    lhs += rhs;
+    return lhs;
+}
+inline Complex operator-(Complex lhs, const Complex& rhs) noexcept{
+    lhs -= rhs;
+    return lhs;
+
+}
+inline Complex operator*(Complex lhs, const Complex& rhs) noexcept{
+    lhs *= rhs;
+    return lhs;
+
+}
+inline Complex operator/(Complex lhs, const Complex& rhs) noexcept{
+    lhs /= rhs;
+    return lhs;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Complex& c) noexcept {
+    return os<<"("<<c.r<<" , "<<c.i<<")";
+}
+
+inline float norm(const Complex& c){
+    return std::sqrt(c.r*c.r + c.i*c.i);
+}
+
+
+//using std_complex = std::complex<float>;
+using std_complex = Complex;
+
+
 
 struct mNode;
 struct Worker;

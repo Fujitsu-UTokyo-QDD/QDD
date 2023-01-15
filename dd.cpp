@@ -29,13 +29,13 @@ static mEdge normalize(Worker* w,  const mEdge& e){
     }
     */
     // check for all zero weights
-    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return std::norm(e.w) == 0.0;})){
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return norm(e.w) == 0.0;})){
         mUnique.returnNode(e.n);
         return mEdge::zero;
     }
 
     auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const mEdge& lhs, const mEdge& rhs){
-            return std::norm(lhs.w) < std::norm(rhs.w);
+            return norm(lhs.w) < norm(rhs.w);
     });
 
     
@@ -168,7 +168,6 @@ mEdge makeIdent(Worker* w, Qubit q){
 
     mEdge e = makeEdge(w, 0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
     for(Qubit i = 1; i <= q; i++){
-        assert(e.w == std_complex(1.0,0.0));
        e = makeEdge(w, i, {{e,mEdge::zero,mEdge::zero,e}}); 
     }
     
