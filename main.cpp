@@ -9,6 +9,7 @@
 #include <bitset>
 #include <oneapi/tbb/enumerable_thread_specific.h>
 #include <oneapi/tbb.h>
+#include <future>
 
 
 
@@ -184,7 +185,6 @@ void test_basic(){
 
     Controls  c = {};
     for(std::size_t i = 0; i < NGATES; i++){
-        std::cout<<i<<std::endl;
         auto g = gates[gate_dist(rng)];
         auto e = makeGate(nullptr, g, NQUBITS, qubit_dist(rng), c);
         //e.printMatrix();
@@ -192,10 +192,23 @@ void test_basic(){
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto result = multiply(nullptr, gate_queue[0], gate_queue[1]);
-    for(auto i = 2; i < NGATES; i++){
-        result = multiply(nullptr, result, gate_queue[i]);
-    }
+    auto r1 = std::async(std::launch::async, [&](){
+        auto result = multiply(nullptr, gate_queue[0], gate_queue[1]);
+        for(auto i = 2; i < NGATES/2; i++){
+            result = multiply(nullptr, result, gate_queue[i]);
+        }
+        return result;
+        });
+
+    auto r2 = std::async(std::launch::async, [&](){
+        auto result = multiply(nullptr, gate_queue[NGATES/2], gate_queue[NGATES/2+1]);
+        for(auto i = NGATES/2+2; i < NGATES; i++){
+            result = multiply(nullptr, result, gate_queue[i]);
+        }
+        return result;
+            });
+
+    auto result = multiply(nullptr, r1.get(), r2.get());
     auto t2 = std::chrono::high_resolution_clock::now();
 
     duration<double, std::micro> ms = t2 - t1;
