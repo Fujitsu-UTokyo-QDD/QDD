@@ -20,7 +20,7 @@
 #endif
 
 
-using Qubit = uint32_t;
+using Qubit = int32_t;
 using QubitCount = uint32_t;
 using Index = std::size_t;
 using Controls = std::set<Qubit>;

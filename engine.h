@@ -24,7 +24,7 @@ class Job{
     public:
 
         template<typename F, typename... Args>
-        Job(F&& f, Args&&... args){
+        Job(std::size_t p, F&& f, Args&&... args){
             using namespace std::placeholders;
             using return_type = std::invoke_result_t<F, Worker*, Args...>;
             static_assert(std::is_same_v<return_type, mEdge>);
@@ -33,12 +33,11 @@ class Job{
             task = std::move(pt);
             result = task.get_future();
             
-            _worker = nullptr;
+            _parent = p;
         }
 
         void execute( Worker* w) {
-           _worker = w;
-           task(_worker);
+           task(w);
         }
 
         bool valid(){
@@ -51,27 +50,12 @@ class Job{
     private:
         std::packaged_task<mEdge(Worker*)> task;
         std::shared_future<mEdge> result;
-        Worker* _worker;
+
+        std::size_t _parent;
 
 };
 
-class JobQueue {
-    public:
 
-        void push(Job* job);
-        Job* pop();
-        Job* steal();
-        std::size_t size() const;
-        bool empty() const;
-
-    private:
-        static const unsigned int MAX_JOBS = 1024u;
-        static const unsigned int MASK = MAX_JOBS - 1u;
-
-        Job* _jobs[MAX_JOBS];
-        long _top{0}, _bottom{0};
-
-};
 
 class Engine;
 
@@ -84,11 +68,15 @@ class Worker{
 
         void run();
 
-        void submit(Job*);
 
         template<typename T>
         int64_t& get_region();
 
+
+        template<typename F, typename... Args>
+            Job* submit(F&& f, Args&&... args){
+
+            }
 
         Index uniquefy(const mNode& n);
 
@@ -106,7 +94,6 @@ class Worker{
         // worker local
         LockFreeQueue<Job*> _queue;
         //SemQueue _queue;
-        ComplexCache ccache;
 
         std::chrono::microseconds timer;
         int executed{0};
@@ -123,7 +110,7 @@ inline int64_t& Worker::get_region<vNode>(){
     return _vregion;
 }
 
-struct AddQuery{
+struct Query{
     mEdge lhs;
     mEdge rhs;
     int32_t current_var;
@@ -132,12 +119,12 @@ struct AddQuery{
 
     bool removed{false};
 
-    AddQuery(const mEdge& l, const mEdge& r, int32_t var):lhs(l),rhs(r), current_var(var){}
+    Query(const mEdge& l, const mEdge& r, int32_t var):lhs(l),rhs(r), current_var(var){}
 
-    AddQuery(const AddQuery& other): lhs(other.lhs), rhs(other.rhs), current_var(other.current_var){}
+    Query(const Query& other): lhs(other.lhs), rhs(other.rhs), current_var(other.current_var){}
 
-    ~AddQuery(){}
-    inline bool operator==(const AddQuery& other) const noexcept {
+    ~Query(){}
+    inline bool operator==(const Query& other) const noexcept {
         return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
     }
 
@@ -163,8 +150,8 @@ struct AddQuery{
 };
 
 template<>
-struct std::hash<AddQuery>{
-    std::size_t operator()(const AddQuery& q) const noexcept {
+struct std::hash<Query>{
+    std::size_t operator()(const Query& q) const noexcept {
         std::size_t h1 = std::hash<mEdge>()(q.lhs);
         std::size_t h2 = std::hash<mEdge>()(q.rhs);
         std::size_t h3 = std::hash<int32_t>()(q.current_var);
@@ -174,56 +161,7 @@ struct std::hash<AddQuery>{
 };
 
 
-struct MulQuery{
-    Index lhs;
-    Index rhs;
-    int32_t current_var;
-    bool available{false};
-    Index result;
 
-    bool removed{false};
-
-
-    MulQuery(const Index& l, const Index& r, int32_t var):lhs(l), rhs(r), current_var(var){}
-
-    MulQuery(const MulQuery& other):lhs(other.lhs), rhs(other.rhs), current_var(other.current_var){}
-
-    ~MulQuery(){ }
-
-    inline bool operator==(const MulQuery& other) const noexcept {
-        return ((lhs == other.lhs && rhs == other.rhs) || (lhs == other.rhs && rhs == other.lhs)) && (current_var && other.current_var);
-    }
-
-    void set_result(Worker* w ,const Index& r){
-        result = r;
-       __atomic_store_n(&available, true, __ATOMIC_RELEASE);
-    }
-
-    bool load_result(Worker* w,Index& r){
-        bool a =  __atomic_load_n(&available, __ATOMIC_ACQUIRE);
-        if(a){
-            r = result;
-        }
-        return a;
-    }
-
-
-    bool is_removed() const {
-        bool r = __atomic_load_n(&removed, __ATOMIC_ACQUIRE);
-        return r;
-    }
-};
-
-template<>
-struct std::hash<MulQuery>{
-    std::size_t operator()(const MulQuery& q) const noexcept {
-        std::size_t h1 = std::hash<Index>()(q.lhs);
-        std::size_t h2 = std::hash<Index>()(q.rhs);
-        std::size_t h3 = std::hash<int32_t>()(q.current_var);
-        std::size_t h = h1 + h2 + h3; 
-        return h;
-    }
-};
 
 
 class Engine {
@@ -233,7 +171,7 @@ class Engine {
             :_total_worker(workers),  _current_worker(0), _stop(false){ 
             identityTable.resize(q);
             for(auto i = 0; i < _total_worker; i++) {
-                Worker* w = new Worker(this, i, &_stop);
+                Worker* w = new Worker(this, i+1, &_stop);
                 _workers.push_back(w);
                 w->run();
             }
@@ -241,13 +179,22 @@ class Engine {
         
         template<typename F, typename... Args>
             Job* submit(F&& f, Args&&... args){
-               Job* j = new Job( std::forward<F>(f), std::forward<Args>(args)...); 
-
-               auto next = next_worker();
-
-               _workers[next]->submit(j);
+               Job* j = new Job( 0, std::forward<F>(f), std::forward<Args>(args)...); 
+                
+                std::unique_lock lk(_job_queue_lock);
+                _all_jobs.emplace(j);
 
                return j;
+            }
+
+            void submit(Job* j){
+                std::unique_lock lk(_job_queue_lock);
+                _all_jobs.emplace(j);
+                return;
+            }
+
+            std::optional<Job*> request() {
+                return _all_jobs.steal();
             }
         
         mEdge addReduce(std::vector<Job*>& jobs, std::size_t grain_size){
@@ -304,6 +251,7 @@ class Engine {
 
         std::size_t worker_number() const { return _total_worker;}
         void terminate() {
+            while(!_all_jobs.empty()){}
             _stop = true;
             for(Worker* w: _workers ){
                 w->_thread.join();
@@ -325,13 +273,13 @@ class Engine {
         const std::size_t _total_worker;
         std::vector<Worker*> _workers;
 
-
+        std::mutex _job_queue_lock;
         CLQueue<Job*> _all_jobs;
 };
 
 
 
-using AddTable = LockFreeMap<AddQuery>;
-using MulTable = LockFreeMap<MulQuery>;
+using AddTable = LockFreeMap<Query>;
+using MulTable = LockFreeMap<Query>;
 
 

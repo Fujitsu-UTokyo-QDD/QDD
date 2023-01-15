@@ -203,6 +203,7 @@ T* LockFreeMap<T>::find_or_insert(uint64_t key, const T& val){
     }//end for
 
     assert(false);
+    return nullptr;
     
 }
 
@@ -259,11 +260,12 @@ T* LockFreeMap<T>::find_or_overwrite(uint64_t key, const T& val){
     }//end for
 
     assert(false);
+    return nullptr;
     
 }
 template<typename T>
 LockFreeMap<T>::~LockFreeMap(){
-    clear_data(head);
+ //   clear_data(head);
 
 
 }

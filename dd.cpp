@@ -4,108 +4,100 @@
 #include <algorithm>
 #include "table.hpp"
 
+
+mNodeTable mUnique(20);
+
 std::vector<mEdge> identityTable;
 AddTable addTable;
 MulTable mulTable;
 
-static mEdge normalize(Worker* w, mNode& node){
 
+mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
+mEdge mEdge::zero{{0.0,0.0}, mNode::terminal};
 
-    
-    // check for redundant node
-    const std_complex& w0 = node.children[0].w;
-    const Index n0 = node.children[0].n;
-    std_complex max_weight = node.children[0].w; 
-    auto max_weight_norm = std::norm(max_weight);
-    std::size_t max_idx = 0;
-    bool all_equal = true;
-    bool all_zero = true;
-    
-    std::size_t idx = 0;
-    std::for_each(node.children.begin(), node.children.end(), [&](const mEdge&e){
-        all_zero &= std::norm(e.w) == 0;
-        all_equal &= (e.w == w0 && e.n == n0);
+mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 
-        if(std::norm(e.w) > max_weight_norm) {
-            max_weight = e.w;
-            max_idx = idx;
-        }
-
-        idx++;
-
-    });
-    assert(idx == 4);
-
-    if(all_zero) return {{0.0,0.0}, TERMINAL};
-    else if(all_equal) return {w0, n0};
+static mEdge normalize(Worker* w,  const mEdge& e){
     /*
-    if(std::all_of(node.children.begin(), node.children.end(), [&](const mEdge& e){ return e.w == w0 && e.n == n0;} ) ){
-        
-        return {w0, n0}; 
+
+    const mEdge& e0 = e.n->children[0]; 
+
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [&](const mEdge& e){ return e == e0;} ) ){
+        mNode* n = e0.n;
+        mUnique.returnNode(e.n);
+        return {e.w * e0.w ,  n}; 
     }
-    
+    */
     // check for all zero weights
-    if(std::all_of(node.children.begin(), node.children.end(), [](const mEdge& e){ return std::norm(e.w) == 0.0;})){
-        return {{0.0,0.0}, TERMINAL};
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return std::norm(e.w) == 0.0;})){
+        mUnique.returnNode(e.n);
+        return mEdge::zero;
     }
 
-    auto result = std::max_element(node.children.begin(), node.children.end(), [](const mEdge& lhs, const mEdge& rhs){
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const mEdge& lhs, const mEdge& rhs){
             return std::norm(lhs.w) < std::norm(rhs.w);
     });
 
     
     std_complex max_weight = result->w;
-    const std::size_t idx = std::distance(node.children.begin(), result);
-    */
+    const std::size_t idx = std::distance(e.n->children.begin(), result);
+    
 
     for(int i = 0; i < 4; i++){
-        std_complex r = node.children[i].w/max_weight;
-        node.children[i].w = r;
+        std_complex r = e.n->children[i].w/max_weight;
+        e.n->children[i].w = r;
     }
 
 
-    
-    //write the node into the UniqueTable
-    
-    Index n = w->uniquefy(node);
-    return {max_weight, n};
+    mNode* n = mUnique.lookup(e.n);
+    return {max_weight * e.w, n};
     
 
 }
 
-mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4> c){
+mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c){
     
 
     
-    mNode node{ .v = q, .children = c };
+
+    mNode* node = mUnique.getNode();
+    node->v = q;
+    node->children = c;
+
+    for(int i = 0; i < 4; i++){
+        assert(&node->children[i] != &mEdge::one && (&node->children[i] != &mEdge::zero));
+    }
 
     
-    mEdge e =  normalize(w, node); 
+    mEdge e =  normalize(w, {{1.0,0.0}, node}); 
+
+    assert(e.getVar() == q || e.isTerminal());
 
     return e;
 }
+
 mNode* mEdge::getNode() const {
-    return m_uniqueTable.get_data(n);
+    return n;
 }
 
 vNode* vEdge::getNode() const {
-    return v_uniqueTable.get_data(n);
+    return nullptr;
 }
 
 Qubit mEdge::getVar() const {
-    return this->getNode()->v;
+    return n->v;
 }
 
 Qubit vEdge::getVar() const {
-    return this->getNode()->v;
+    return 0;
 }
 
 bool mEdge::isTerminal() const {
-    return n == TERMINAL;
+    return n == mNode::terminal;
 }
 
 bool vEdge::isTerminal() const {
-    return n == TERMINAL;
+    return false;
 }
 
 
@@ -128,12 +120,13 @@ static void printMatrix2(const mEdge& edge, size_t col, size_t row, const std_co
         }
         return;
     }
-
-    mNode* node = m_uniqueTable.get_data(edge.n);
+    
+    mNode* node = edge.getNode();
     printMatrix2(node->getEdge(0), (col<<1)|0, (row<<1)|0, wp, left-1, m);
     printMatrix2(node->getEdge(1), (col<<1)|1, (row<<1)|0, wp, left-1, m);
     printMatrix2(node->getEdge(2), (col<<1)|0, (row<<1)|1, wp, left-1, m);
     printMatrix2(node->getEdge(3), (col<<1)|1, (row<<1)|1, wp, left-1, m);
+    
     
 
 }
@@ -158,6 +151,7 @@ void mEdge::printMatrix() const {
         std::cout<<"\n";
 
     }
+    std::cout<<std::endl;
 
     for(size_t i = 0; i < dim; i++){
         delete[] matrix[i];
@@ -172,9 +166,10 @@ mEdge makeIdent(Worker* w, Qubit q){
         return identityTable[q];
     }
 
-    mEdge e; e.n = TERMINAL;
-    for(Qubit i = 0; i <= q; i++){
-       e = makeEdge(w, i, {{{{1.0,0.0}, e.n},{{0.0,0.0}, TERMINAL},{{0.0,0.0}, TERMINAL},{{1.0,0.0}, e.n}}}); 
+    mEdge e = makeEdge(w, 0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
+    for(Qubit i = 1; i <= q; i++){
+        assert(e.w == std_complex(1.0,0.0));
+       e = makeEdge(w, i, {{e,mEdge::zero,mEdge::zero,e}}); 
     }
     
     identityTable[q] = e;
@@ -186,12 +181,11 @@ mEdge makeIdent(Worker* w, Qubit q){
 mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c){
     std::array<mEdge, 4> edges;
 
-    for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].r, g[i].i}, TERMINAL}; 
+    for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].r, g[i].i}, mNode::terminal}; 
     
     auto it = c.begin();
     
-    mEdge zero = {{0.0,0.0}, TERMINAL};
-    mEdge one = {{1.0, 0.0}, TERMINAL};
+
 
     Qubit z = 0;
     for(; z < target; z++){
@@ -201,12 +195,12 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
                 if(it != c.end() && *it == z){
                     //positive control 
                     if(z == 0)
-                        edges[i] = makeEdge(w, z, { (b1 == b0)? one : zero , zero, zero, edges[i]});
+                        edges[i] = makeEdge(w, z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
                     else
-                        edges[i] = makeEdge(w, z, { (b1 == b0)? makeIdent(w, z-1) : zero , zero, zero, edges[i]});
+                        edges[i] = makeEdge(w, z, { (b1 == b0)? makeIdent(w, z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
 
                 }else{
-                    edges[i] = makeEdge(w, z, {edges[i], zero, zero, edges[i]});
+                    edges[i] = makeEdge(w, z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
                 }
             }
         }
@@ -218,10 +212,10 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
 
     for( z = z+1 ; z < q; z++){
        if(it != c.end() && *it == z){
-           e = makeEdge(w, z, {makeIdent(w, z-1), zero, zero, e});
+           e = makeEdge(w, z, {makeIdent(w, z-1), mEdge::zero, mEdge::zero, e});
            ++it;
        }else{
-            e = makeEdge(w, z, {e, zero, zero, e}); 
+            e = makeEdge(w, z, {e, mEdge::zero, mEdge::zero, e}); 
        }
     }
 
@@ -241,14 +235,15 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w + rhs.w, TERMINAL};
+        return {lhs.w + rhs.w, mNode::terminal};
     }
 
-    AddQuery query(lhs, rhs, current_var);
-    AddQuery* q = addTable.find_or_overwrite(std::hash<AddQuery>()(query), query);
+    Query query(lhs, rhs, current_var);
+    Query* q = addTable.find_or_overwrite(std::hash<Query>()(query), query);
     mEdge result;
     if(q->load_result(w,result)) {
-        w->addCacheHit++;
+        if(w!=nullptr)
+            w->addCacheHit++;
         return result;
     }
 
@@ -289,7 +284,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
-        return {lhs.w + rhs.w, TERMINAL};
+        return {lhs.w + rhs.w, mNode::terminal};
     }
 
 
@@ -313,15 +308,21 @@ mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w * rhs.w, TERMINAL};
+        return {lhs.w * rhs.w, mNode::terminal};
     }
 
-    MulQuery query(lhs.n,  rhs.n, current_var);
-    MulQuery* q = mulTable.find_or_overwrite(std::hash<MulQuery>()(query), query);
-    Index n;
-    if(q->load_result(w,n)){
-        w->mulCacheHit++;
-        return {lhs.w * rhs.w, n};
+    mEdge lcopy = lhs;
+    mEdge rcopy = rhs;
+    lcopy.w = {1.0,0.0};
+    rcopy.w = {1.0, 0.0};
+
+    Query query(lcopy,  rcopy, current_var);
+    Query* q = mulTable.find_or_overwrite(std::hash<Query>()(query), query);
+    mEdge result;
+    if(q->load_result(w,result)){
+        if(w!= nullptr)
+            w->mulCacheHit++;
+        return {result.w * lhs.w * rhs.w, result.n};
     }
 
     mEdge x, y;
@@ -340,7 +341,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
         for(auto k = 0; k < 2; k++){
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((row<<1) | k);
-                x.w = lhs.w * x.w;
+                //x.w = lhs.w * x.w;
             }else{
                 x = lhs; 
             }
@@ -348,7 +349,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
 
             if(rv == current_var && !rhs.isTerminal()){
                 y = rnode->getEdge((k<<1) | col);
-                y.w = rhs.w * y.w;
+                //y.w = rhs.w * y.w;
             
             }else{
                 y = rhs;     
@@ -361,17 +362,17 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
         edges[i] = add2(w, product[0], product[1], current_var - 1);
     }
 
-    mEdge result = makeEdge(w, current_var, edges);
+    result = makeEdge(w, current_var, edges);
 
-    q->set_result(w, result.n);
-    return result;
+    q->set_result(w, result);
+    return {result.w * lhs.w * rhs.w, result.n};
     
 }
 
 
 mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
-        return {lhs.w * rhs.w, TERMINAL};
+        return {lhs.w * rhs.w, mNode::terminal};
     }
 
 
@@ -394,6 +395,7 @@ mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 }
 
 
+
 static void printVector2(const vEdge& e, std::size_t i, const std_complex& w, uint64_t left, std_complex* m){
     
     const std_complex ww = w * e.w;
@@ -409,14 +411,45 @@ static void printVector2(const vEdge& e, std::size_t i, const std_complex& w, ui
 
         return;
     }
-    
+    /* 
     vNode* node = v_uniqueTable.get_data(e.n);
     printVector2(node->getEdge(0), (i<<1)|0, ww, left-1, m );
     printVector2(node->getEdge(1), (i<<1)|1, ww, left-1, m );
-
+*/
 
 
 }
+mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
+    if (lhs.isTerminal()){
+        return {lhs.w * rhs.w, rhs.n};
+    }
+
+    std::array<mEdge, 4> edges;
+    mEdge x;
+    mNode* lnode = lhs.getNode();
+
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    for(auto i = 0; i < 4; i++){
+        x = lnode->getEdge(i);
+        x.w = lhs.w * x.w;
+        edges[i] = kronecker2(w, x, rhs);
+    }
+
+    mEdge ret = makeEdge(w,  lv + rv + 1, edges);
+    return ret;
+}
+
+mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
+   if(lhs.isTerminal() && rhs.isTerminal()){
+        return {lhs.w * rhs.w, mNode::terminal};
+   }
+
+   return kronecker2(w, lhs, rhs);
+
+}
+
 
 
 void vEdge::printVector() const {

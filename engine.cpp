@@ -3,143 +3,40 @@
 #include "table.hpp"
 
 
-mNodeTable m_uniqueTable(32*mNodeTable::region_size, 256*mNodeTable::region_size);
-vNodeTable v_uniqueTable(32*vNodeTable::region_size, 128*vNodeTable::region_size);
-
-/*
-void JobQueue::push(Job* job){
-    long long bottom = _bottom.load(std::memory_order_acquire);
-    _jobs[bottom&MASK] = job;
-    _bottom.store(bottom+1, std::memory_order_release); 
-}
-*/
-void JobQueue::push(Job* job){
-    while(true){
-        long bot = _bottom;
-        long expected = bot + 1;
-        Job* j = _jobs[bot];
-        _jobs[bot] = job;
-        if(__sync_bool_compare_and_swap(&_bottom, bot, expected)){
-            return;
-        }else{
-            _jobs[bot] = j;
-            continue;
-        }
-    }
-}
-/*
-Job* JobQueue::pop(){
-    
-    long long bottom = _bottom.load(std::memory_order_acquire);
-    bottom = std::max(0LL, bottom - 1);
-    _bottom.store(bottom, std::memory_order_release);
-
-    long long top = _top.load();
-
-    if(top <= bottom){
-    
-        Job* job = _jobs[bottom&MASK];
-        if(top != bottom)
-        {
-            return job;
-            
-        }else{
-            //there is only one job(or none) left
-            //so we have to compete with other steals' action on top
-            long long expectedTop = top;
-            long long desiredTop= top + 1LL;
-            if(!_top.compare_exchange_weak(expectedTop, desiredTop, std::memory_order_acq_rel)){
-                job = nullptr;
-            }
-
-            _bottom.store(top + 1LL, std::memory_order_release);
-            return job;
-        }
-    }else{
-        _bottom.store(top, std::memory_order_release);
-        return nullptr;
-    }
-
-}
-*/
-Job* JobQueue::pop(){
-   
-    long bot = _bottom;
-    long expected = bot - 1;
-    if(bot == 0) return nullptr;
-    Job* j = _jobs[expected];
-
-    if(__sync_bool_compare_and_swap(&_bottom, bot, expected)){
-        return j;
-    }else{
-        return nullptr;
-    }
-
-}
-
-Job* JobQueue::steal(){
-
-    return nullptr; 
-
-}
-
-
-std::size_t JobQueue::size() const {
-    long long bottom = _bottom;
-    long long top = _top;
-    return bottom - top;
-}
-
-bool JobQueue::empty() const {
-    return size() == 0;
-}
-
-
-
 
 
 
 Index Worker::uniquefy(const mNode& n){
 
-   return m_uniqueTable.find_or_insert(this, n); 
+   //return m_uniqueTable.find_or_insert(this, n); 
 }
 
 
-void Worker::submit(Job* j){
-    while(!_queue.push(j));
-}
 
-/*
+
+
 void Worker::run() {
     
     _thread = std::thread([this](){
-        int counter = 0;
             while(!(*_stop)){
-                Job* j;
-                if(_queue.pop(j)){
-                    j->execute(this);
-                    counter++;
-                }else{
-                    //need to steal
-                    j = this->_eng->steal();
-                    if(j != nullptr){
-                        j->execute(this);
-                    }else {
-                        std::this_thread::yield();
-                    }
+                if(auto job = _eng->request()){
+                    auto t1 = std::chrono::high_resolution_clock::now(); 
+                    job.value()->execute(this); 
+                    auto t2 = std::chrono::high_resolution_clock::now(); 
+                    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+                    timer += d;
+                    executed++;
                 }
                 
             }
     
-            if(_queue.size() != 0) assert(false);
-            std::cout<<counter<<std::endl;
             return;
 
      });
 
 }
-*/
 
+/*
 void Worker::run() {
     
     _thread = std::thread([this](){
@@ -162,6 +59,7 @@ void Worker::run() {
      });
 
 }
+*/
 Job* Engine::steal() {
     return nullptr;
 }
