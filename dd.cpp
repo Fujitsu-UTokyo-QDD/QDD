@@ -16,6 +16,7 @@ mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
 mEdge mEdge::zero{{0.0,0.0}, mNode::terminal};
 
 mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
+vNode vNode::terminalNode{.v = -1, .children = {}};
 
 static mEdge normalize(Worker* w,  const mEdge& e){
     /*
@@ -97,6 +98,7 @@ bool mEdge::isTerminal() const {
 }
 
 bool vEdge::isTerminal() const {
+    return n == vNode::terminal;
 }
 
 

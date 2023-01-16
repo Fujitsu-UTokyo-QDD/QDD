@@ -115,6 +115,10 @@ struct vNode {
     inline bool operator==(const vNode& n) const noexcept{
         return v== n.v && children == n.children;
     }
+
+    static vNode       terminalNode;
+    constexpr static vNode*   terminal{&terminalNode};
+
     Qubit v;
     std::array<vEdge, 2> children;
 };
