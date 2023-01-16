@@ -146,7 +146,7 @@ struct mEdge {
     }
 
     std_complex w;
-    mNode*    n;
+    mNode*    n{nullptr};
 };
 
 static_assert(std::is_aggregate_v<mEdge>);

@@ -4,11 +4,12 @@
 #include <algorithm>
 #include "table.hpp"
 
+#define SUBTASK_THRESHOLD 5
 
 mNodeTable mUnique(20);
 vNodeTable vUnique(20);
 
-std::vector<mEdge> identityTable;
+std::vector<mEdge> identityTable(20);
 AddTable addTable;
 MulTable mulTable;
 
@@ -60,16 +61,7 @@ static mEdge normalize(Worker* w,  const mEdge& e){
 }
 
 static vEdge normalize(Worker* w,  const vEdge& e){
-    /*
 
-    const mEdge& e0 = e.n->children[0]; 
-
-    if(std::all_of(e.n->children.begin(), e.n->children.end(), [&](const mEdge& e){ return e == e0;} ) ){
-        mNode* n = e0.n;
-        mUnique.returnNode(e.n);
-        return {e.w * e0.w ,  n}; 
-    }
-    */
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
         vUnique.returnNode(e.n);
@@ -225,7 +217,7 @@ void mEdge::printMatrix() const {
 
 
 mEdge makeIdent(Worker* w, Qubit q){
-    if(!identityTable[q].isTerminal()) {
+    if(identityTable[q].n != nullptr) {
         return identityTable[q];
     }
 
@@ -320,8 +312,6 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     Query* q = addTable.find_or_overwrite(std::hash<Query>()(query), query);
     mEdge result;
     if(q->load_result(w,result)) {
-        if(w!=nullptr)
-            w->addCacheHit++;
         return result;
     }
 
@@ -333,6 +323,8 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     mNode* rnode = rhs.getNode();
 
     std::array<mEdge, 4> edges;
+
+    Job* jobs[2];
 
     for(auto i = 0; i < 4; i++){
         if(lv == current_var && !lhs.isTerminal()){
@@ -348,8 +340,26 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
             y = rhs;
         }
 
+       if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(add2, x, y, current_var - 1); 
+       else{
         edges[i] = add2(w, x, y, current_var - 1);
+       }
     }
+
+    if(current_var >= SUBTASK_THRESHOLD){
+        while(!jobs[0]->available()){
+            w->run_pending();
+        }
+        while(!jobs[1]->available()){
+            w->run_pending();
+        }
+
+        edges[0] = jobs[0]->getResult();
+        edges[1] = jobs[1]->getResult();
+    
+    }
+
+
 
     result =  makeEdge(w, current_var, edges);
     
@@ -383,6 +393,46 @@ mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 
 }
 
+mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var);
+
+static mEdge product_for_entry(Worker* w, const mEdge& lhs, const mEdge& rhs, int i, int32_t current_var){
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
+    mEdge x,y;
+
+    std::size_t row = i >> 1;
+    std::size_t col = i & 0x1;
+    
+    std::array<mEdge, 2> product;
+    for(auto k = 0; k < 2; k++){
+        if(lv == current_var && !lhs.isTerminal()){
+            x = lnode->getEdge((row<<1) | k);
+            //x.w = lhs.w * x.w;
+        }else{
+            x = lhs; 
+        }
+
+
+        if(rv == current_var && !rhs.isTerminal()){
+            y = rnode->getEdge((k<<1) | col);
+            //y.w = rhs.w * y.w;
+        
+        }else{
+            y = rhs;     
+        }
+
+        
+        product[k] = multiply2(w, x, y, current_var - 1); 
+        
+    }
+
+    mEdge result = add2(w, product[0], product[1], current_var - 1);
+    return result;
+
+}
+
 mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
@@ -398,8 +448,6 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
     Query* q = mulTable.find_or_overwrite(std::hash<Query>()(query), query);
     mEdge result;
     if(q->load_result(w,result)){
-        if(w!= nullptr)
-            w->mulCacheHit++;
         return {result.w * lhs.w * rhs.w, result.n};
     }
 
@@ -410,7 +458,10 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
     mNode* lnode = lhs.getNode();
     mNode* rnode = rhs.getNode();
 
+
     std::array<mEdge, 4 > edges;
+
+
     for(auto i = 0; i < 4; i++){
         std::size_t row = i >> 1;
         std::size_t col = i & 0x1;
@@ -432,6 +483,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
             }else{
                 y = rhs;     
             }
+
             
             product[k] = multiply2(w, x, y, current_var - 1); 
             

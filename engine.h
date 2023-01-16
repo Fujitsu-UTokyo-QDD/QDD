@@ -11,7 +11,8 @@
 #include <chrono>
 #include <iostream>
 #include "lockfree_hashmap.hpp"
-#include "chase_lev_queue.hpp"
+#include <random>
+#include "wsq.hpp"
 
 
 
@@ -30,8 +31,7 @@ class Job{
             using return_type = std::invoke_result_t<F, Worker*, Args...>;
             static_assert(std::is_same_v<return_type, mEdge>);
 
-            auto pt = std::packaged_task<mEdge(Worker*)>(std::bind(std::forward<F>(f), _1, std::forward<Args>(args)...));
-            task = std::move(pt);
+            task = std::packaged_task<mEdge(Worker*)>(std::bind(std::forward<F>(f), _1, std::forward<Args>(args)...));
             result = task.get_future();
             
             _parent = p;
@@ -48,9 +48,15 @@ class Job{
         mEdge getResult() {
             return result.get();
         }
+
+        bool available() const {
+            using namespace std::chrono_literals;
+            if(result.wait_for(0s) == std::future_status::ready) return true;
+            else return false;
+        }
     private:
         std::packaged_task<mEdge(Worker*)> task;
-        std::shared_future<mEdge> result;
+        std::future<mEdge> result;
 
         std::size_t _parent;
 
@@ -64,52 +70,46 @@ class Worker{
     friend class Engine;
     public:
 
-        Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), _queue(1024), timer(std::chrono::microseconds::zero()), _mregion(-1), _vregion(-1){};
-    //Worker(Engine* eng, std::size_t id,  bool* stop): _eng(eng), _id(id),  _stop(stop), timer(std::chrono::microseconds::zero()), _mregion(-1), _vregion(-1){};
+        Worker(Engine* eng, std::size_t id,std::size_t total ,  bool* stop): _eng(eng), _id(id),  _stop(stop), worker_dist(0, total-1) {
+            rng.seed(_id);
+        };
 
         void run();
 
 
-        template<typename T>
-        int64_t& get_region();
-
-
         template<typename F, typename... Args>
             Job* submit(F&& f, Args&&... args){
-
+               Job* j = new Job( _id, std::forward<F>(f), std::forward<Args>(args)...); 
+                _local_jobs.push(j);
+                return j;
             }
 
-        Index uniquefy(const mNode& n);
+        void run_pending(){
+            if(auto j = _local_jobs.pop()){
+                j.value()->execute(this);
+            }
+
+            return;
+        }
 
         Engine* _eng;
         bool* _stop;
         std::thread _thread;
         std::size_t _id;
+        WorkStealingQueue<Job*> _local_jobs;
 
-        int64_t _mregion;
-        int64_t _vregion;
 
-        int64_t addCacheHit{0};
-        int64_t mulCacheHit{0};
-
-        // worker local
-        LockFreeQueue<Job*> _queue;
-        //SemQueue _queue;
-
-        std::chrono::microseconds timer;
+        std::chrono::microseconds timer{std::chrono::microseconds::zero()};
         int executed{0};
+
+        //pick victim
+        std::mt19937_64 rng;
+        std::uniform_int_distribution<int> worker_dist;
         
 
 };
 
-template<>
-inline int64_t& Worker::get_region<mNode>(){
-    return _mregion;
-}
-template<>
-inline int64_t& Worker::get_region<vNode>(){
-    return _vregion;
-}
+
 
 struct Query{
     mEdge lhs;
@@ -170,112 +170,44 @@ class Engine {
     
         Engine(std::size_t workers, QubitCount q)
             :_total_worker(workers),  _current_worker(0), _stop(false){ 
-            identityTable.resize(q);
             for(auto i = 0; i < _total_worker; i++) {
-                Worker* w = new Worker(this, i+1, &_stop);
+                Worker* w = new Worker(this, i+1, _total_worker, &_stop);
                 _workers.push_back(w);
-                w->run();
+            }
+            for(auto i = 0; i < _total_worker; i++) {
+                _workers[i]->run();
             }
         }
         
         template<typename F, typename... Args>
             Job* submit(F&& f, Args&&... args){
                Job* j = new Job( 0, std::forward<F>(f), std::forward<Args>(args)...); 
-                
-                std::unique_lock lk(_job_queue_lock);
-                _all_jobs.emplace(j);
-
+               _local_jobs.push(j); 
                return j;
             }
 
-            void submit(Job* j){
-                std::unique_lock lk(_job_queue_lock);
-                _all_jobs.emplace(j);
-                return;
-            }
-
-            std::optional<Job*> request() {
-                return _all_jobs.steal();
-            }
-        
-        mEdge addReduce(std::vector<Job*>& jobs, std::size_t grain_size){
-
-            std::vector<Job*> next_round;
-
-            std::size_t i = 0;
-            std::size_t njobs = jobs.size();
-
-            while(njobs >= grain_size){
-                njobs = 0;
-                auto total_size = jobs.size();
-                for(; i < total_size; i += grain_size){
-                    next_round.push_back(this->submit(addSerial, jobs, i+0, std::min(total_size,i+grain_size)));
-                    njobs++;
-                }
-
-                i = std::min(i, jobs.size());
-                
-                jobs.insert(jobs.end(), next_round.begin(), next_round.end());
-                next_round.clear();
-            }
-
-
-            Job* j   = this->submit(addSerial, jobs, i, jobs.size());
-            return j -> getResult();
-
-            
-        }
-        mEdge mulReduce(std::vector<Job*>& jobs, std::size_t grain_size){
-            std::vector<Job*> next_round;
-
-            std::size_t i = 0;
-            std::size_t njobs = jobs.size();
-
-            while(njobs >= grain_size){
-                njobs = 0;
-                auto total_size = jobs.size();
-                for(; i < total_size; i += grain_size){
-                    next_round.push_back(this->submit(mulSerial, jobs, i+0, std::min(total_size,i+grain_size)));
-                    njobs++;
-                }
-
-                i = std::min(i, jobs.size());
-                
-                jobs.insert(jobs.end(), next_round.begin(), next_round.end());
-                next_round.clear();
-            }
-
-            Job* j   = this->submit(mulSerial, jobs, i, jobs.size());
-            return j -> getResult();
-            
-        }
 
         std::size_t worker_number() const { return _total_worker;}
+
         void terminate() {
-            while(!_all_jobs.empty()){}
             _stop = true;
             for(Worker* w: _workers ){
                 w->_thread.join();
             }
 
-            for(Worker* w: _workers){
-                std::cout<<"t"<<w->_id<<": " <<w->timer.count()<<" ms, "<<w->executed<<std::endl;
-                std::cout<<"addhit: "<<w->addCacheHit<<", mulhit: "<<w->mulCacheHit<<std::endl;
-            }
+
         }
 
-        Job* steal();
+        std::optional<Job*> steal(std::size_t target);
     private:
 
-        std::size_t next_worker();
         
         bool _stop;
         std::atomic_long _current_worker;
         const std::size_t _total_worker;
         std::vector<Worker*> _workers;
+        WorkStealingQueue<Job*> _local_jobs;
 
-        std::mutex _job_queue_lock;
-        CLQueue<Job*> _all_jobs;
 };
 
 

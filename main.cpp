@@ -10,6 +10,7 @@
 #include <oneapi/tbb/enumerable_thread_specific.h>
 #include <oneapi/tbb.h>
 #include <future>
+#include <cstdlib>
 
 
 
@@ -54,7 +55,6 @@ auto benchmark(Engine* eng){
     auto t2 = std::chrono::high_resolution_clock::now();
     std::cout<<"makeGate: "<< duration<double, std::micro>(t2-t1).count()<<std::endl;
     */
-    auto result = eng->mulReduce(jobs, 5);
     auto t2 = std::chrono::high_resolution_clock::now();
     
     duration<double, std::micro> ms = t2 - t1;
@@ -265,10 +265,37 @@ void test_vec(){
     return;
 }
 
-int main(){
-    test_vec();
-    // test_basic();
-    return 0;
+struct F {
+    int a;
+    F(){ std::cout<<"default"<<std::endl;}
+    F(int aa):a(aa) {std::cout<<"user"<<std::endl;}
+    F(const F& f):a(f.a) {std::cout<<"copy"<<std::endl;}
+    F(F&& f):a(f.a) {std::cout<<"move"<<std::endl;}
+};
+
+template<typename F, typename... Args>
+void foo(F&& f, Args&&... args){
+    std::cout<<"enter foo"<<std::endl; 
+    auto t = std::bind(f, std::forward<Args>(args)...);
+    t();
+}
+
+int main(int argc, char* argv[]){
+    int nthreads;
+    if(argc > 1) nthreads = std::atoi(argv[1]);
+    else nthreads = 4;
+    std::cout<<"Use "<<nthreads<<" threads"<<std::endl;
+    Engine eng(nthreads, 20);
+    mEdge e1 = make_dense(10, 0);
+    mEdge e2 = make_dense(10, 1);
+    Job* j = eng.submit(add, e1, e2);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    mEdge result = j->getResult();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    
+    duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()<<" macro sec"<<std::endl;
+    eng.terminate();
 }
 
 
