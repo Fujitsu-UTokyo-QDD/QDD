@@ -167,6 +167,8 @@ extern mNodeTable mUnique;
 
 
 
+using vNodeTable = CHashTable<vNode>;
+extern vNodeTable vUnique;
 
 
 

@@ -86,6 +86,9 @@ struct vNode;
 
 struct vEdge {
 
+    static vEdge one;
+    static vEdge zero;
+
     Qubit getVar() const;
     bool isTerminal() const;
     vNode* getNode() const;
@@ -121,6 +124,7 @@ struct vNode {
 
     Qubit v;
     std::array<vEdge, 2> children;
+    vNode*   next{nullptr};
 };
 
 struct mEdge {
@@ -163,6 +167,15 @@ struct std::hash<std_complex>{
 template<>
 struct std::hash<mEdge>{
     std::size_t operator()(const mEdge& e) const noexcept {
+        auto h1 = std::hash<std_complex>()(e.w);
+        auto h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
+        return hash_combine(h1,h2);
+    }
+};
+
+template<>
+struct std::hash<vEdge>{
+    std::size_t operator()(const vEdge& e) const noexcept {
         auto h1 = std::hash<std_complex>()(e.w);
         auto h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
         return hash_combine(h1,h2);
@@ -220,6 +233,16 @@ struct std::hash<mNode>{
     }
 };
 
+template<>
+struct std::hash<vNode>{
+    std::size_t operator()(const vNode& n) const noexcept {
+        std::size_t h = 0; // don't hash the Qubit since each qubit has its own uniqueTable
+        for(const vEdge& e: n.children){
+            h = hash_combine(h, std::hash<vEdge>()(e));
+        }
+        return h;
+    }
+};
 
 extern std::vector<mEdge> identityTable;
 
@@ -242,4 +265,5 @@ mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 
 mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end);
 
-
+vEdge makeZeroState(Worker *w, QubitCount q);
+vEdge makeOneState(Worker *w, QubitCount q);

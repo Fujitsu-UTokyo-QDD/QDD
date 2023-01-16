@@ -6,6 +6,7 @@
 
 
 mNodeTable mUnique(20);
+vNodeTable vUnique(20);
 
 std::vector<mEdge> identityTable;
 AddTable addTable;
@@ -14,9 +15,11 @@ MulTable mulTable;
 
 mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
 mEdge mEdge::zero{{0.0,0.0}, mNode::terminal};
+vEdge vEdge::one{{1.0, 0.0}, vNode::terminal};
+vEdge vEdge::zero{{0.0,0.0}, vNode::terminal};
 
 mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
-vNode vNode::terminalNode{.v = -1, .children = {}};
+vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 
 static mEdge normalize(Worker* w,  const mEdge& e){
     /*
@@ -56,6 +59,44 @@ static mEdge normalize(Worker* w,  const mEdge& e){
 
 }
 
+static vEdge normalize(Worker* w,  const vEdge& e){
+    /*
+
+    const mEdge& e0 = e.n->children[0]; 
+
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [&](const mEdge& e){ return e == e0;} ) ){
+        mNode* n = e0.n;
+        mUnique.returnNode(e.n);
+        return {e.w * e0.w ,  n}; 
+    }
+    */
+    // check for all zero weights
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
+        vUnique.returnNode(e.n);
+        return vEdge::zero;
+    }
+
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
+            return norm(lhs.w) < norm(rhs.w);
+    });
+
+    
+    std_complex max_weight = result->w;
+    const std::size_t idx = std::distance(e.n->children.begin(), result);
+    
+
+    for(int i = 0; i < 2; i++){
+        std_complex r = e.n->children[i].w/max_weight;
+        e.n->children[i].w = r;
+    }
+
+
+    vNode* n = vUnique.lookup(e.n);
+    return {max_weight * e.w, n};
+    
+
+}
+
 mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c){
     
 
@@ -71,6 +112,27 @@ mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c){
 
     
     mEdge e =  normalize(w, {{1.0,0.0}, node}); 
+
+    assert(e.getVar() == q || e.isTerminal());
+
+    return e;
+}
+
+vEdge makeEdge(Worker* w, Qubit q, const std::array<vEdge, 2>& c){
+    
+
+    
+
+    vNode* node = vUnique.getNode();
+    node->v = q;
+    node->children = c;
+
+    for(int i = 0; i < 2; i++){
+        assert(&node->children[i] != &vEdge::one && (&node->children[i] != &vEdge::zero));
+    }
+
+    
+    vEdge e =  normalize(w, {{1.0,0.0}, node}); 
 
     assert(e.getVar() == q || e.isTerminal());
 
@@ -176,6 +238,22 @@ mEdge makeIdent(Worker* w, Qubit q){
     return e;
 
 
+}
+
+vEdge makeZeroState(Worker *w, QubitCount q){
+    vEdge e = makeEdge(w, 0, {vEdge::one, vEdge::zero});
+    for(Qubit i = 1; i < q; i++){
+       e = makeEdge(w, i, {{e,vEdge::zero}}); 
+    }
+    return e;
+}
+
+vEdge makeOneState(Worker *w, QubitCount q){
+    vEdge e = makeEdge(w, 0, {vEdge::zero, vEdge::one});
+    for(Qubit i = 1; i < q; i++){
+       e = makeEdge(w, i, {{vEdge::zero, e}}); 
+    }
+    return e;
 }
 
 mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c){
@@ -396,10 +474,25 @@ mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 
 
 
-static void printVector2(const vEdge& e, std::size_t i, const std_complex& w, uint64_t left, std_complex* m){
+static void printVector2(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std_complex* m){
+        
+    std_complex wp = edge.w * w;
     
+    if(edge.isTerminal() && left == 0){
+        m[row] = wp;
+        return;
+    }else if (edge.isTerminal()){
+        row = row << left;
 
-
+        for(std::size_t i = 0; i < (1<<left); i++){
+            m[row|i] = wp;  
+        }
+        return;
+    }
+    
+    vNode* node = edge.getNode();
+    printVector2(node->getEdge(0), (row<<1)|0, wp, left-1, m);
+    printVector2(node->getEdge(1), (row<<1)|1, wp, left-1, m);
 
 }
 mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
@@ -436,7 +529,25 @@ mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 
 void vEdge::printVector() const {
+    if(this->isTerminal()) {
+        std::cout<<this->w<<std::endl;
+        return;
+    }
+    Qubit q = this->getVar();   
+    std::size_t dim = 1 << (q+1);
 
+    std_complex* vector = new std_complex[dim];
+
+    printVector2(*this, 0, {1.0,0.0}, q+1, vector);
+
+    for(size_t i = 0 ; i < dim; i++){
+        std::cout<<vector[i]<<" ";
+        std::cout<<"\n";
+
+    }
+    std::cout<<std::endl;
+
+    delete[] vector;
 }
 
 vEdge mEdge::get_column(std::size_t col)  const {
