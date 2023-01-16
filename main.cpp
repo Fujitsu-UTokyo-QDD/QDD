@@ -256,10 +256,18 @@ auto benchmark_dense(){
     return;
 }
 
+void test_vec(){
+    auto v1 = makeZeroState(nullptr, 4);
+    v1.printVector();
+    std::cout << std::endl;
+    auto v2 = makeOneState(nullptr, 2);
+    v2.printVector();
+    return;
+}
 
 int main(){
-
-    test_basic(); 
+    test_vec();
+    // test_basic();
     return 0;
 }
 
