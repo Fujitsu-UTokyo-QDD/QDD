@@ -81,7 +81,7 @@ mNode* mEdge::getNode() const {
 }
 
 vNode* vEdge::getNode() const {
-    return nullptr;
+    return n;
 }
 
 Qubit mEdge::getVar() const {
@@ -89,7 +89,7 @@ Qubit mEdge::getVar() const {
 }
 
 Qubit vEdge::getVar() const {
-    return 0;
+    return n->v;
 }
 
 bool mEdge::isTerminal() const {
@@ -97,7 +97,6 @@ bool mEdge::isTerminal() const {
 }
 
 bool vEdge::isTerminal() const {
-    return false;
 }
 
 
@@ -397,24 +396,7 @@ mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, st
 
 static void printVector2(const vEdge& e, std::size_t i, const std_complex& w, uint64_t left, std_complex* m){
     
-    const std_complex ww = w * e.w;
-    if(e.isTerminal() && left == 0){
-        m[i] = ww;
-        return;
-    }else if(e.isTerminal()){
-        i = i << left;
 
-        for(auto b = 0; b < (1<<left); b++){
-            m[i|b] = ww;
-        }
-
-        return;
-    }
-    /* 
-    vNode* node = v_uniqueTable.get_data(e.n);
-    printVector2(node->getEdge(0), (i<<1)|0, ww, left-1, m );
-    printVector2(node->getEdge(1), (i<<1)|1, ww, left-1, m );
-*/
 
 
 }
@@ -452,25 +434,9 @@ mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 
 void vEdge::printVector() const {
-    if(this->isTerminal()){
-        std::cout<<this->w<<std::endl;
-        return;
-    }
-    Qubit q = this->getVar();   
-    std::size_t dim = 1 << (q+1);
 
-    std_complex* matrix = new std_complex[dim];
-    
-    printVector2(*this, 0, {1.0,0.0}, q+1, matrix);
-    
-    for(auto i = 0; i < dim; i++){
-        std::cout<<matrix[i]<<std::endl;
-    }
-
-    delete[] matrix;
 }
 
 vEdge mEdge::get_column(std::size_t col)  const {
-    return vEdge();
 
 }

@@ -97,7 +97,7 @@ struct vEdge {
     }
 
     std_complex w;
-    Index n{TERMINAL};
+    vNode* n;
 
 
 };

@@ -259,7 +259,7 @@ auto benchmark_dense(){
 
 int main(){
 
-    benchmark_dense(); 
+    test_basic(); 
     return 0;
 }
 

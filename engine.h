@@ -10,8 +10,8 @@
 #include "queue.hpp"
 #include <chrono>
 #include <iostream>
-#include "chase_lev_queue.hpp"
 #include "lockfree_hashmap.hpp"
+#include "chase_lev_queue.hpp"
 
 
 
