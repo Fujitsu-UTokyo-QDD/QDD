@@ -286,11 +286,17 @@ int main(int argc, char* argv[]){
     else nthreads = 4;
     std::cout<<"Use "<<nthreads<<" threads"<<std::endl;
     Engine eng(nthreads, 20);
-    mEdge e1 = make_dense(10, 0);
-    mEdge e2 = make_dense(10, 1);
-    Job* j = eng.submit(add, e1, e2);
+
+    int ntests = 100;
+    std::vector<mEdge> gates;
+    for(int i = 0; i < ntests ;i++){
+        gates.emplace_back(make_dense(8, i));
+    }
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    mEdge result = j->getResult();
+    for(auto i = 0; i < ntests; i+=2){
+        auto res = eng.submit(multiply, gates[i], gates[i+1])->getResult();
+    }
     auto t2 = std::chrono::high_resolution_clock::now();
     
     duration<double, std::micro> ms = t2 - t1;

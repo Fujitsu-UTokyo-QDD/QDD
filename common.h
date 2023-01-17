@@ -19,6 +19,9 @@
 #define cas(ptr, old, new) (__sync_bool_compare_and_swap((ptr),(old),(new)))
 #endif
 
+const std::size_t NBUCKETS = 32768;
+const std::size_t INITIAL_ALLOCATION_SIZE = 2048;
+const std::size_t GROWTH_FACTOR = 2;
 
 using Qubit = int32_t;
 using QubitCount = uint32_t;

@@ -38,6 +38,13 @@ struct Complex{
         return *this;
     }
 
+    bool isZero()const noexcept{
+        return r == 0.0 && i == 0.0;
+    }
+    bool isOne()const noexcept{
+        return r == 1.0 && i == 0.0;
+    }
+
     bool operator==(const Complex& rhs) const noexcept {
         return r == rhs.r && i == rhs.i;
     }
@@ -100,10 +107,16 @@ struct vEdge {
     }
 
     std_complex w;
-    vNode* n;
+    vNode* n{nullptr};
 
 
 };
+static_assert(sizeof(vEdge) == 16);
+inline void swap(vEdge& lhs, vEdge& rhs){
+    using std::swap;
+    swap(lhs.w, rhs.w);
+    swap(lhs.n, rhs.n);
+}
 
 struct vNode {
 
@@ -149,8 +162,16 @@ struct mEdge {
     mNode*    n{nullptr};
 };
 
+
+inline void swap(mEdge& lhs, mEdge& rhs){
+    using std::swap;
+    swap(lhs.w, rhs.w);
+    swap(lhs.n, rhs.n);
+}
+
 static_assert(std::is_aggregate_v<mEdge>);
 
+static_assert(sizeof(mEdge) == 16);
 
 
 template<>

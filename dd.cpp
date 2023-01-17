@@ -300,20 +300,9 @@ static Qubit rootVar(const mEdge& lhs, const mEdge& rhs) {
     return (lhs.isTerminal() || (!rhs.isTerminal() && ( rhs.getVar()> lhs.getVar() )))?  rhs.getVar() : lhs.getVar();
 }
 
+mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var);
+static mEdge sum_for_entry(Worker* w, const mEdge& lhs, const mEdge& rhs, int i, int32_t current_var){
 
-mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
-    
-    if(current_var == -1) {
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w + rhs.w, mNode::terminal};
-    }
-
-    Query query(lhs, rhs, current_var);
-    Query* q = addTable.find_or_overwrite(std::hash<Query>()(query), query);
-    mEdge result;
-    if(q->load_result(w,result)) {
-        return result;
-    }
 
     mEdge x, y;
 
@@ -321,28 +310,50 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     Qubit rv = rhs.getVar();
     mNode* lnode = lhs.getNode();
     mNode* rnode = rhs.getNode();
+    if(lv == current_var && !lhs.isTerminal()){
+        x = lnode->getEdge(i);
+        x.w = lhs.w * x.w;
+    }else{
+        x = lhs;
+    }
+    if(rv == current_var && !rhs.isTerminal()){
+        y = rnode->getEdge(i);
+        y.w = rhs.w * y.w;
+    }else{
+        y = rhs;
+    }
+
+    mEdge result = add2(w, x, y, current_var - 1);
+    return result;
+
+}
+mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
+    if(lhs.w.isZero()){
+        return rhs;
+    }else if(rhs.w.isZero()){
+        return lhs;
+    }
+    
+    if(current_var == -1) {
+        assert(lhs.isTerminal() && rhs.isTerminal());
+        return {lhs.w + rhs.w, mNode::terminal};
+    }
+
+    mEdge result = w->_addCache.find(lhs,rhs);
+    if(result.n != nullptr){
+        return result;
+    }
+
 
     std::array<mEdge, 4> edges;
 
     Job* jobs[2];
 
     for(auto i = 0; i < 4; i++){
-        if(lv == current_var && !lhs.isTerminal()){
-            x = lnode->getEdge(i);
-            x.w = lhs.w * x.w;
-        }else{
-            x = lhs;
-        }
-        if(rv == current_var && !rhs.isTerminal()){
-            y = rnode->getEdge(i);
-            y.w = rhs.w * y.w;
-        }else{
-            y = rhs;
-        }
 
-       if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(add2, x, y, current_var - 1); 
+       if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(sum_for_entry, lhs, rhs, i, current_var ); 
        else{
-        edges[i] = add2(w, x, y, current_var - 1);
+        edges[i] = sum_for_entry(w, lhs, rhs, i, current_var );
        }
     }
 
@@ -362,8 +373,8 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 
     result =  makeEdge(w, current_var, edges);
+    w->_addCache.set(lhs, rhs, result);
     
-    q->set_result(w,result);
 
     return result;
 
@@ -409,7 +420,6 @@ static mEdge product_for_entry(Worker* w, const mEdge& lhs, const mEdge& rhs, in
     for(auto k = 0; k < 2; k++){
         if(lv == current_var && !lhs.isTerminal()){
             x = lnode->getEdge((row<<1) | k);
-            //x.w = lhs.w * x.w;
         }else{
             x = lhs; 
         }
@@ -417,8 +427,6 @@ static mEdge product_for_entry(Worker* w, const mEdge& lhs, const mEdge& rhs, in
 
         if(rv == current_var && !rhs.isTerminal()){
             y = rnode->getEdge((k<<1) | col);
-            //y.w = rhs.w * y.w;
-        
         }else{
             y = rhs;     
         }
@@ -434,67 +442,54 @@ static mEdge product_for_entry(Worker* w, const mEdge& lhs, const mEdge& rhs, in
 }
 
 mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
+
+    if(lhs.w.isZero() || rhs.w.isZero()){
+        return mEdge::zero;
+    }
+
     if(current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
+    
+    mEdge result = w->_mulCache.find(lhs.n, rhs.n);
+    if(result.n != nullptr){
+        return {result.w * lhs.w * rhs.w, result.n};
+    }
+    
 
     mEdge lcopy = lhs;
     mEdge rcopy = rhs;
     lcopy.w = {1.0,0.0};
     rcopy.w = {1.0, 0.0};
 
-    Query query(lcopy,  rcopy, current_var);
-    Query* q = mulTable.find_or_overwrite(std::hash<Query>()(query), query);
-    mEdge result;
-    if(q->load_result(w,result)){
-        return {result.w * lhs.w * rhs.w, result.n};
-    }
-
-    mEdge x, y;
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    mNode* lnode = lhs.getNode();
-    mNode* rnode = rhs.getNode();
-
 
     std::array<mEdge, 4 > edges;
 
-
+    Job* jobs[2];
     for(auto i = 0; i < 4; i++){
-        std::size_t row = i >> 1;
-        std::size_t col = i & 0x1;
-        
-        std::array<mEdge, 2> product;
-        for(auto k = 0; k < 2; k++){
-            if(lv == current_var && !lhs.isTerminal()){
-                x = lnode->getEdge((row<<1) | k);
-                //x.w = lhs.w * x.w;
-            }else{
-                x = lhs; 
-            }
-
-
-            if(rv == current_var && !rhs.isTerminal()){
-                y = rnode->getEdge((k<<1) | col);
-                //y.w = rhs.w * y.w;
-            
-            }else{
-                y = rhs;     
-            }
-
-            
-            product[k] = multiply2(w, x, y, current_var - 1); 
-            
+        if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(product_for_entry, lcopy, rcopy, i, current_var);
+        else{
+            edges[i] = product_for_entry(w, lcopy, rcopy, i, current_var);
         }
 
-        edges[i] = add2(w, product[0], product[1], current_var - 1);
+    }
+    if(current_var >= SUBTASK_THRESHOLD){
+        while(!jobs[0]->available()){
+            w->run_pending();
+        }
+        while(!jobs[1]->available()){
+            w->run_pending();
+        }
+
+        edges[0] = jobs[0]->getResult();
+        edges[1] = jobs[1]->getResult();
+    
     }
 
     result = makeEdge(w, current_var, edges);
+    w->_mulCache.set(lhs.n, rhs.n, result);
 
-    q->set_result(w, result);
     return {result.w * lhs.w * rhs.w, result.n};
     
 }

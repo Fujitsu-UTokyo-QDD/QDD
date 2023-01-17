@@ -13,6 +13,7 @@
 #include "lockfree_hashmap.hpp"
 #include <random>
 #include "wsq.hpp"
+#include "cache.hpp"
 
 
 
@@ -70,7 +71,7 @@ class Worker{
     friend class Engine;
     public:
 
-        Worker(Engine* eng, std::size_t id,std::size_t total ,  bool* stop): _eng(eng), _id(id),  _stop(stop), worker_dist(0, total-1) {
+        Worker(Engine* eng, std::size_t id,std::size_t total ,  bool* stop, QubitCount q): _eng(eng), _id(id),  _stop(stop), worker_dist(0, total-1), _mulCache(q), _addCache(q) {
             rng.seed(_id);
         };
 
@@ -84,13 +85,7 @@ class Worker{
                 return j;
             }
 
-        void run_pending(){
-            if(auto j = _local_jobs.pop()){
-                j.value()->execute(this);
-            }
-
-            return;
-        }
+        void run_pending();
 
         Engine* _eng;
         bool* _stop;
@@ -106,6 +101,8 @@ class Worker{
         std::mt19937_64 rng;
         std::uniform_int_distribution<int> worker_dist;
         
+        MulCache _mulCache; 
+        AddCache _addCache;
 
 };
 
@@ -171,7 +168,7 @@ class Engine {
         Engine(std::size_t workers, QubitCount q)
             :_total_worker(workers),  _current_worker(0), _stop(false){ 
             for(auto i = 0; i < _total_worker; i++) {
-                Worker* w = new Worker(this, i+1, _total_worker, &_stop);
+                Worker* w = new Worker(this, i+1, _total_worker, &_stop, q);
                 _workers.push_back(w);
             }
             for(auto i = 0; i < _total_worker; i++) {

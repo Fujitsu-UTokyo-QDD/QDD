@@ -34,6 +34,18 @@ void Worker::run() {
 
 }
 
+void Worker::run_pending(){
+
+        if(auto j = _local_jobs.pop()){
+            j.value()->execute(this);
+        }
+        else if(auto j = _eng->steal(worker_dist(rng))){
+            j.value()->execute(this);
+        }
+
+        return;
+}
+
 
 
 std::optional<Job*> Engine::steal(std::size_t target) {

@@ -22,9 +22,6 @@ static const uint64_t CL_MASK     = ~(((LINE_SIZE) / 8) - 1);  //  X & CL_MASK =
 static const uint64_t CL_MASK_R   = ((LINE_SIZE) / 8) - 1;    // X&CL_MASK_R = X%8
                                                               //
                                                               //
-static const std::size_t NBUCKETS = 32768;
-static const std::size_t INITIAL_ALLOCATION_SIZE = 2048;
-static const std::size_t GROWTH_FACTOR = 2;
 
 template<typename T, typename Hash = std::hash<T>, typename ValueEqual = std::equal_to<T>>
 class CHashTable{
@@ -138,7 +135,7 @@ private:
 
 
     struct Table{
-        T* _table[NBUCKETS];
+        T* _table[NBUCKETS] = {nullptr};
     };
 
     std::vector<Table> _tables;
