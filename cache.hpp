@@ -1,6 +1,5 @@
 #pragma once
 #include <new>
-#include <sys/_types/_uintptr_t.h>
 #include <vector>
 #include "common.h"
 #include <algorithm>
