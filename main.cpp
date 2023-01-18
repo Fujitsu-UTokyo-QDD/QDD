@@ -182,23 +182,6 @@ void test_basic(){
 }
 
 
-void test_kronecker(){
-
-    //GateMatrix gates[] = {Imat, Hmat, Xmat, Ymat, Zmat, Smat, Sdagmat, Tmat, Tdagmat, SXmat, SXdagmat, Vmat, Vdagmat};
-    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
-
-    mEdge e1 = makeGate(nullptr, gates[1], 1, 0, Controls{});
-    mEdge e2 = makeGate(nullptr, gates[2], 1, 0, Controls{});
-    mEdge e3 = makeGate(nullptr, gates[3], 1, 0, Controls{});
-    mEdge result = kronecker(nullptr, e1, e2);
-    result = kronecker(nullptr, result, e3);
-    result.printMatrix();
-
-
-    return;
-
-
-}
 
 static mEdge make_dense(QubitCount q, int seed = 0){
     
@@ -279,8 +262,35 @@ void foo(F&& f, Args&&... args){
     auto t = std::bind(f, std::forward<Args>(args)...);
     t();
 }
+void test_kronecker(){
+
+    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
+
+    mEdge e1 = makeGate(nullptr, gates[1], 1, 0, Controls{});
+    mEdge e2 = makeGate(nullptr, gates[2], 1, 0, Controls{});
+    mEdge e3 = makeGate(nullptr, gates[3], 1, 0, Controls{});
+    mEdge result = kronecker(nullptr, e1, e2);
+    result.printMatrix();
+    result = kronecker(nullptr, e3, result);
+    result.printMatrix();
+
+
+    return;
+
+
+}
+
 
 int main(int argc, char* argv[]){
+    
+    Worker* w = new Worker(20);
+    mEdge e1 = makeGate(w, Hmat, 2,0, Controls{});
+    mEdge e2 = makeGate(w, Vdagmat, 2, 1, Controls{});
+    mEdge result = multiply(w, e1, e2);
+    result.printMatrix();
+    return 0;
+
+
     int nthreads;
     if(argc > 1) nthreads = std::atoi(argv[1]);
     else nthreads = 4;
@@ -294,9 +304,12 @@ int main(int argc, char* argv[]){
     }
 
     auto t1 = std::chrono::high_resolution_clock::now();
+    /*
     for(auto i = 0; i < ntests; i+=2){
         auto res = eng.submit(multiply, gates[i], gates[i+1])->getResult();
     }
+    */
+    make_dense(10,0);
     auto t2 = std::chrono::high_resolution_clock::now();
     
     duration<double, std::micro> ms = t2 - t1;

@@ -542,6 +542,54 @@ static void printVector2(const vEdge& edge, std::size_t row, const std_complex& 
     printVector2(node->getEdge(1), (row<<1)|1, wp, left-1, m);
 
 }
+struct kjob{
+    mEdge l;
+    mEdge r;
+    int idx;
+};
+/*
+mEdge kronecker2(Worker *w, const mEdge &lhs, const mEdge &rhs)
+{
+    std::vector<kjob> jobs;
+    kjob initial_job = {lhs, rhs, 0};
+    jobs.push_back(initial_job);
+    std::vector<mEdge> result;
+
+    while(jobs.size()){
+        kjob& job = jobs.back();
+        auto ltmp = job.l;
+        auto rtmp = job.r;
+        char idx = job.idx;
+        if (idx == 4)
+        {
+            jobs.pop_back();
+            Qubit lv = ltmp.getVar();
+            Qubit rv = rtmp.getVar();
+            std::array<mEdge, 4> last4;
+            assert(result.size() > 3);
+            copy(result.end() - 4, result.end(), last4.begin());
+            result.erase(result.end() - 4, result.end());
+            mEdge ret = makeEdge(w,  lv + rv + 1, last4);
+            result.push_back(ret);
+        }else{
+            if (ltmp.isTerminal())
+            {
+                result.push_back({ltmp.w * rtmp.w, rtmp.n});
+                jobs.pop_back();
+            }else{
+                job.idx += 1;
+                auto x = ltmp.getNode()->getEdge(idx);
+                x.w = ltmp.w * x.w;
+                kjob next_job = {x, rhs, 0};
+                jobs.push_back(next_job);
+            }
+        }
+    }
+    assert(result.size() == 1);
+    return result[0];
+}
+*/
+
 mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if (lhs.isTerminal()){
         return {lhs.w * rhs.w, rhs.n};
@@ -563,6 +611,7 @@ mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
     mEdge ret = makeEdge(w,  lv + rv + 1, edges);
     return ret;
 }
+
 
 mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
    if(lhs.isTerminal() && rhs.isTerminal()){

@@ -74,6 +74,7 @@ class Worker{
         Worker(Engine* eng, std::size_t id,std::size_t total ,  bool* stop, QubitCount q): _eng(eng), _id(id),  _stop(stop), worker_dist(0, total-1), _mulCache(q), _addCache(q) {
             rng.seed(_id);
         };
+        Worker(QubitCount q):_mulCache(q), _addCache(q) {};
 
         void run();
 
