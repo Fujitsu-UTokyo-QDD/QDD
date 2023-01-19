@@ -622,6 +622,109 @@ mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 }
 
+vEdge add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var);
+static vEdge sum_for_entry(Worker* w, const vEdge& lhs, const vEdge& rhs, int i, int32_t current_var){
+
+
+    vEdge x, y;
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    vNode* lnode = lhs.getNode();
+    vNode* rnode = rhs.getNode();
+    if(lv == current_var && !lhs.isTerminal()){
+        x = lnode->getEdge(i);
+        x.w = lhs.w * x.w;
+    }else{
+        x = lhs;
+    }
+    if(rv == current_var && !rhs.isTerminal()){
+        y = rnode->getEdge(i);
+        y.w = rhs.w * y.w;
+    }else{
+        y = rhs;
+    }
+
+    vEdge result = add2(w, x, y, current_var - 1);
+    return result;
+
+}
+
+vEdge add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var){
+    if(lhs.w.isZero()){
+        return rhs;
+    }else if(rhs.w.isZero()){
+        return lhs;
+    }
+    
+    if(current_var == -1) {
+        assert(lhs.isTerminal() && rhs.isTerminal());
+        return {lhs.w + rhs.w, vNode::terminal};
+    }
+
+    vEdge result = w->_addCache.find(lhs,rhs);
+    if(result.n != nullptr){
+        return result;
+    }
+
+
+    std::array<vEdge, 2> edges;
+
+    for(auto i = 0; i < 4; i++){
+        edges[i] = sum_for_entry(w, lhs, rhs, i, current_var );
+    }
+
+    result =  makeEdge(w, current_var, edges);
+    w->_addCache.set(lhs, rhs, result);
+    
+
+    return result;
+
+
+}
+
+vEdge add(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    if(lhs.isTerminal() && rhs.isTerminal()){
+        return {lhs.w + rhs.w, vNode::terminal};
+    }
+
+    // assume lhs and rhs are the same size vector.
+    assert(lhs.getVar()==rhs.getVar());
+    return add2(w, lhs, rhs, lhs.getVar());
+}
+
+vEdge kronecker2(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    if (lhs.isTerminal()){
+        return {lhs.w * rhs.w, rhs.n};
+    }
+    if (rhs.isTerminal()){
+        return {lhs.w * rhs.w, lhs.n};
+    }
+
+    std::array<vEdge, 2> edges;
+    vEdge x;
+    vNode* lnode = lhs.getNode();
+
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    for(auto i = 0; i < 2; i++){
+        x = lnode->getEdge(i);
+        x.w = lhs.w * x.w;
+        edges[i] = kronecker2(w, x, rhs);
+    }
+
+    vEdge ret = makeEdge(w,  lv + rv + 1, edges);
+    return ret;
+}
+
+vEdge kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    if(lhs.isTerminal() && rhs.isTerminal()){
+        return {lhs.w * rhs.w, vNode::terminal};
+   }
+
+   return kronecker2(w, lhs, rhs);
+}
 
 
 void vEdge::printVector() const {

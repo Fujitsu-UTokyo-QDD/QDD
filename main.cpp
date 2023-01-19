@@ -281,7 +281,7 @@ void test_kronecker(){
 }
 
 
-int main(int argc, char* argv[]){
+int tset_worker(int argc, char* argv[]){
     
     Worker* w = new Worker(20);
     mEdge e1 = makeGate(w, Hmat, 2,0, Controls{});
@@ -317,4 +317,29 @@ int main(int argc, char* argv[]){
     eng.terminate();
 }
 
+void test_vector(){
+    std_complex half{0.5,0.};
+    Worker* w = new Worker(20);
 
+    vEdge one = makeOneState(w, 1);
+    vEdge zero = makeZeroState(w, 1);
+    vEdge st = add(w, one, zero);
+    st.printVector();
+    
+    vEdge st10 = kronecker(w, one, zero);
+    vEdge st01 = kronecker(w, one, zero);
+    st01.printVector();
+    std::cout << std::endl;
+    std::cout << st01.w << std::endl<<std::endl;
+    st01.w = half;
+    st01.printVector();
+    std::cout << std::endl;
+    kronecker(w,st,st01).printVector();
+
+    return;
+}
+
+int main(int argc, char* argv[]){
+    test_vector();
+    return 0;
+}
