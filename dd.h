@@ -290,3 +290,5 @@ vEdge makeZeroState(Worker *w, QubitCount q);
 vEdge makeOneState(Worker *w, QubitCount q);
 vEdge add(Worker* w, const vEdge& lhs, const vEdge& rhs);
 vEdge kronecker(Worker *w, const vEdge& lhs, const vEdge& rhs);
+
+vEdge multiply(Worker *w, const mEdge& lhs, const vEdge& rhs);
