@@ -1,4 +1,5 @@
 #include <iostream>
+#include "common.h"
 #include "dd.h"
 #include <random>
 #include <chrono>
@@ -23,21 +24,18 @@ using namespace oneapi::tbb;
 
 
 int main(int argc, char* argv[]){
-    /*
+    
     QuantumCircuit qc(2);
     qc.emplace_back(Hmat, 1);
     qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
+    qc.emplace_back(Ymat, 0);
+    qc.emplace_back(Vdagmat, 1);
+    qc.emplace_back(Hmat, 0);
+    qc.emplace_back(Sdagmat, 1);
     qc.buildCircuit();
     qc.dump_task_graph();
-    */
+    
 
-    Executor e(10);
-    e.spawn();
 }
 
 

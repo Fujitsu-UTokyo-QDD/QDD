@@ -142,9 +142,8 @@ class Node {
 
         void prepare_to_be_executed() const {
 
-            for(Node* n : _dependents){
+
                 
-            }
             
         }
     
