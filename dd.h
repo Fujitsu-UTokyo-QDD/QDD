@@ -149,10 +149,7 @@ struct mEdge {
     bool isTerminal() const;
     mNode* getNode() const;
     
-    vEdge get_column(std::size_t col) const;
     void printMatrix() const;
-
-
 
     inline bool operator==(const mEdge& e) const noexcept {
         return w == e.w && n == e.n;
@@ -271,20 +268,22 @@ extern std::vector<mEdge> identityTable;
 
 struct Job;
 
-mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c);
-mEdge makeIdent(Worker* w, QubitCount q);
-mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c );
+mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c);
+mEdge makeIdent(QubitCount q);
+mEdge makeGate(QubitCount q, GateMatrix g,Qubit target, const Controls& c );
+mEdge makeGate(QubitCount q, GateMatrix g,Qubit target);
 
 
-mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs);
-mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
-mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
 
+vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs);
+vEdge vv_multiply(Worker* w, const vEdge& lhs, const vEdge& rhs);
+vEdge vv_kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs);
 
-// serial addition of jobs in the vector of the rang [start,end)
-mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end);
+vEdge mv_multiply(Worker* w, const mEdge& lhs, const vEdge& rhs);
 
-mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end);
 
 vEdge makeZeroState(Worker *w, QubitCount q);
 vEdge makeOneState(Worker *w, QubitCount q);

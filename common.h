@@ -107,4 +107,27 @@ constexpr GateMatrix SXdagmat{complex_1minusi_2, complex_1plusi_2, complex_1plus
 constexpr GateMatrix Vmat{complex_SQRT2_2, complex_miSQRT2_2, complex_miSQRT2_2, complex_SQRT2_2};
 constexpr GateMatrix Vdagmat{complex_SQRT2_2, complex_iSQRT2_2, complex_iSQRT2_2, complex_SQRT2_2};
 
+
+
+// ----------------------------------------------------------------------------
+// std::variant
+// ----------------------------------------------------------------------------
+template <typename T, typename>
+struct get_index;
+
+template <size_t I, typename... Ts>
+struct get_index_impl {};
+
+template <size_t I, typename T, typename... Ts>
+struct get_index_impl<I, T, T, Ts...> : std::integral_constant<size_t, I>{};
+
+template <size_t I, typename T, typename U, typename... Ts>
+struct get_index_impl<I, T, U, Ts...> : get_index_impl<I+1, T, Ts...>{};
+
+template <typename T, typename... Ts>
+struct get_index<T, std::variant<Ts...>> : get_index_impl<0, T, Ts...>{};
+
+template <typename T, typename... Ts>
+constexpr auto get_index_v = get_index<T, Ts...>::value;
+
 #endif

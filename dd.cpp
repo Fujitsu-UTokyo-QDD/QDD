@@ -22,7 +22,7 @@ vEdge vEdge::zero{{0.0,0.0}, vNode::terminal};
 mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 
-static mEdge normalize(Worker* w,  const mEdge& e){
+static mEdge normalize(const mEdge& e){
     /*
 
     const mEdge& e0 = e.n->children[0]; 
@@ -89,9 +89,7 @@ static vEdge normalize(Worker* w,  const vEdge& e){
 
 }
 
-mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c){
-    
-
+mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c){
     
 
     mNode* node = mUnique.getNode();
@@ -103,7 +101,7 @@ mEdge makeEdge(Worker* w, Qubit q, const std::array<mEdge, 4>& c){
     }
 
     
-    mEdge e =  normalize(w, {{1.0,0.0}, node}); 
+    mEdge e =  normalize({{1.0,0.0}, node}); 
 
     assert(e.getVar() == q || e.isTerminal());
 
@@ -216,14 +214,14 @@ void mEdge::printMatrix() const {
 
 
 
-mEdge makeIdent(Worker* w, Qubit q){
+mEdge makeIdent( Qubit q){
     if(identityTable[q].n != nullptr) {
         return identityTable[q];
     }
 
-    mEdge e = makeEdge(w, 0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
+    mEdge e = makeEdge(0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
     for(Qubit i = 1; i <= q; i++){
-       e = makeEdge(w, i, {{e,mEdge::zero,mEdge::zero,e}}); 
+       e = makeEdge(i, {{e,mEdge::zero,mEdge::zero,e}}); 
     }
     
     identityTable[q] = e;
@@ -247,8 +245,11 @@ vEdge makeOneState(Worker *w, QubitCount q){
     }
     return e;
 }
+mEdge makeGate(QubitCount q, GateMatrix g,Qubit target){
+    return makeGate(q, g, target, {});
+}
 
-mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Controls& c){
+mEdge makeGate(QubitCount q,  GateMatrix g, Qubit target, const Controls& c){
     std::array<mEdge, 4> edges;
 
     for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].r, g[i].i}, mNode::terminal}; 
@@ -265,27 +266,27 @@ mEdge makeGate(Worker* w, GateMatrix g, QubitCount q, Qubit target, const Contro
                 if(it != c.end() && *it == z){
                     //positive control 
                     if(z == 0)
-                        edges[i] = makeEdge(w, z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
+                        edges[i] = makeEdge(z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
                     else
-                        edges[i] = makeEdge(w, z, { (b1 == b0)? makeIdent(w, z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
+                        edges[i] = makeEdge(z, { (b1 == b0)? makeIdent(z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
 
                 }else{
-                    edges[i] = makeEdge(w, z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
+                    edges[i] = makeEdge(z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
                 }
             }
         }
         if(it != c.end() && *it == z) ++it;
     }
 
-    auto e = makeEdge(w, z, edges);
+    auto e = makeEdge(z, edges);
 
 
     for( z = z+1 ; z < q; z++){
        if(it != c.end() && *it == z){
-           e = makeEdge(w, z, {makeIdent(w, z-1), mEdge::zero, mEdge::zero, e});
+           e = makeEdge(z, {makeIdent(z-1), mEdge::zero, mEdge::zero, e});
            ++it;
        }else{
-            e = makeEdge(w, z, {e, mEdge::zero, mEdge::zero, e}); 
+            e = makeEdge(z, {e, mEdge::zero, mEdge::zero, e}); 
        }
     }
 
@@ -372,7 +373,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 
 
-    result =  makeEdge(w, current_var, edges);
+    result =  makeEdge(current_var, edges);
     w->_addCache.set(lhs, rhs, result);
     
 
@@ -381,7 +382,7 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 }
 
-mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
+mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w + rhs.w, mNode::terminal};
     }
@@ -391,18 +392,7 @@ mEdge add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     return add2(w, lhs, rhs, root);
 }
 
-mEdge addSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end){
-    //end = std::min(jobs.size(), end);
 
-    mEdge result = jobs[start]->getResult();
-
-    for(auto i = start+1; i < end; i++){
-       result = add(w, result, jobs[i]->getResult()); 
-    }
-
-    return result;
-
-}
 
 mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var);
 
@@ -487,7 +477,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
     
     }
 
-    result = makeEdge(w, current_var, edges);
+    result = makeEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);
 
     return {result.w * lhs.w * rhs.w, result.n};
@@ -495,7 +485,7 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
 }
 
 
-mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
+mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, mNode::terminal};
     }
@@ -506,18 +496,6 @@ mEdge multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 }
 
-mEdge mulSerial(Worker* w,  const std::vector<Job*>& jobs, std::size_t start, std::size_t end){
-    //end = std::min(jobs.size(), end);
-
-    mEdge result = jobs[start]->getResult();
-
-    for(auto i = start+1; i < end; i++){
-       result = multiply(w, result, jobs[i]->getResult()); 
-    }
-
-    return result;
-
-}
 
 
 
@@ -542,53 +520,7 @@ static void printVector2(const vEdge& edge, std::size_t row, const std_complex& 
     printVector2(node->getEdge(1), (row<<1)|1, wp, left-1, m);
 
 }
-struct kjob{
-    mEdge l;
-    mEdge r;
-    int idx;
-};
-/*
-mEdge kronecker2(Worker *w, const mEdge &lhs, const mEdge &rhs)
-{
-    std::vector<kjob> jobs;
-    kjob initial_job = {lhs, rhs, 0};
-    jobs.push_back(initial_job);
-    std::vector<mEdge> result;
 
-    while(jobs.size()){
-        kjob& job = jobs.back();
-        auto ltmp = job.l;
-        auto rtmp = job.r;
-        char idx = job.idx;
-        if (idx == 4)
-        {
-            jobs.pop_back();
-            Qubit lv = ltmp.getVar();
-            Qubit rv = rtmp.getVar();
-            std::array<mEdge, 4> last4;
-            assert(result.size() > 3);
-            copy(result.end() - 4, result.end(), last4.begin());
-            result.erase(result.end() - 4, result.end());
-            mEdge ret = makeEdge(w,  lv + rv + 1, last4);
-            result.push_back(ret);
-        }else{
-            if (ltmp.isTerminal())
-            {
-                result.push_back({ltmp.w * rtmp.w, rtmp.n});
-                jobs.pop_back();
-            }else{
-                job.idx += 1;
-                auto x = ltmp.getNode()->getEdge(idx);
-                x.w = ltmp.w * x.w;
-                kjob next_job = {x, rhs, 0};
-                jobs.push_back(next_job);
-            }
-        }
-    }
-    assert(result.size() == 1);
-    return result[0];
-}
-*/
 
 mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if (lhs.isTerminal()){
@@ -608,12 +540,12 @@ mEdge kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
         edges[i] = kronecker2(w, x, rhs);
     }
 
-    mEdge ret = makeEdge(w,  lv + rv + 1, edges);
+    mEdge ret = makeEdge(lv + rv + 1, edges);
     return ret;
 }
 
 
-mEdge kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
+mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
    if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, mNode::terminal};
    }
@@ -646,6 +578,17 @@ void vEdge::printVector() const {
     delete[] vector;
 }
 
-vEdge mEdge::get_column(std::size_t col)  const {
 
+vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    return vEdge{};
+}
+vEdge vv_multiply(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    return vEdge{}; 
+}
+vEdge vv_kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs){
+    return vEdge{};
+}
+
+vEdge mv_multiply(Worker* w, const mEdge& lhs, const vEdge& rhs){
+    return vEdge{};
 }
