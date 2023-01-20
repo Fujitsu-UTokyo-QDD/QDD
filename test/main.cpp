@@ -17,7 +17,7 @@ using std::chrono::milliseconds;
 
 
 mEdge run(){
-    QuantumCircuit qc(10,1);
+    QuantumCircuit qc(10,8);
     qc.emplace_back(Hmat, 1);
     qc.emplace_back(Xmat, 2);
     qc.emplace_back(Ymat, 3);
@@ -31,8 +31,8 @@ mEdge run(){
     qc.emplace_back(Hmat, 2);
     qc.emplace_back(Sdagmat, 3);
     qc.buildCircuit();
-    std::cout<<"Task graph: "<<std::endl;
-    qc.dump_task_graph();
+//    std::cout<<"Task graph: "<<std::endl;
+//    qc.dump_task_graph();
     auto t1 = std::chrono::high_resolution_clock::now();
     mEdge result = qc.wait().matrixResult();
     auto t2 = std::chrono::high_resolution_clock::now();

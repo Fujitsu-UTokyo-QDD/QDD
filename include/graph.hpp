@@ -313,7 +313,7 @@ class Graph {
 
         }
 #else
-        int dump(void* ofile){
+        int dump(){
             std::cout<<"Graphviz is not enabled"<<std::endl;
             return 1;
         }
