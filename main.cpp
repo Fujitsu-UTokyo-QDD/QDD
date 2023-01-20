@@ -8,6 +8,7 @@
 #include <oneapi/tbb.h>
 #include <future>
 #include <cstdlib>
+#include <random>
 #include "graph.hpp"
 
 
@@ -55,5 +56,3 @@ int main(int argc, char* argv[]){
     assert(r1.compareNumerically(r2));
     
 }
-
-

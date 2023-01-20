@@ -293,3 +293,4 @@ vEdge mv_multiply(Worker* w, const mEdge& lhs, const vEdge& rhs);
 
 vEdge makeZeroState(Worker *w, QubitCount q);
 vEdge makeOneState(Worker *w, QubitCount q);
+

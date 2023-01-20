@@ -5,3 +5,4 @@ tags
 build/
 .cache/
 .vscode/
+tmp/
