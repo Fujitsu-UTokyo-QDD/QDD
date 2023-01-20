@@ -7,6 +7,8 @@
 #include <thread>
 #include <random>
 #include <variant>
+#include <semaphore>
+#include "cache.hpp"
 #include "wsq.hpp"
 
 #ifdef GRAPHVIZ
@@ -14,10 +16,27 @@
 #include "gvc.h"
 #endif
 
-class Worker;
+class Node;
+class Executor;
+
+struct Worker{
+        Worker(QubitCount q): _addCache(q), _mulCache(q){}
+        
+        void push(Node* n){ _wsq.push(n);}
+        size_t _id;
+        Executor* _executor;
+        WorkStealingQueue<Node*> _wsq;
+        std::thread* _thread;
+        std::default_random_engine _rdgen { std::random_device{}() };
+        std::uniform_int_distribution<int> _dist;
+
+        AddCache _addCache;
+        MulCache _mulCache;
+};
 
 class Node {
     friend class Graph;
+    friend class QuantumCircuit;
     public:
 
         struct IdentM{
@@ -94,20 +113,20 @@ class Node {
 
         
         Node(const mEdge& m): _required(0){
-            task = IdentM(m);
+            _task = IdentM(m);
         }
 
         Node(const vEdge& v): _required(0){
-            task = IdentV(v);
+            _task = IdentV(v);
         }
 
         Node(decltype(TASK_PLACE_HOLDER) t): _required(2), _dependents{2}{
             switch(t){
-                case ADDMM:    task = AddMM();      break;
-                case ADDVV:    task = AddVV();      break;
-                case MULMM:    task = MulMM();      break;
-                case MULMV:    task = MulMV();      break;
-                case MULVV:    task = MulVV();      break;
+                case ADDMM:    _task = AddMM();      break;
+                case ADDVV:    _task = AddVV();      break;
+                case MULMM:    _task = MulMM();      break;
+                case MULMV:    _task = MulMV();      break;
+                case MULVV:    _task = MulVV();      break;
                 default:  {
                     std::cout<<"Unsupported task: "<<t<<std::endl;
                     exit(1);
@@ -139,8 +158,19 @@ class Node {
         bool ready_to_be_executed() const {
             return _joint.load(std::memory_order_acquire) == _required;
         }
+        
 
-        void prepare_to_be_executed() const {
+        void prepare_to_be_executed() {
+            assert(_dependents.size() == 2);
+            std::size_t idx = _task.index(); 
+            switch(idx){
+                case ADDMM:      std::get<AddMM>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<MEDGE>(_dependents[1]->_result));   break;
+                case ADDVV:      std::get<AddVV>(_task).bind(std::get<VEDGE>(_dependents[0]->_result), std::get<VEDGE>(_dependents[1]->_result));   break;
+                case MULMM:      std::get<MulMM>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<MEDGE>(_dependents[1]->_result));   break;
+                case MULMV:      std::get<MulMV>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<VEDGE>(_dependents[1]->_result));   break;
+                case MULVV:      std::get<MulVV>(_task).bind(std::get<VEDGE>(_dependents[0]->_result), std::get<VEDGE>(_dependents[1]->_result));   break;
+                default:         std::cout<<"Unsupported task"<<std::endl;       break;
+            }
 
 
                 
@@ -148,15 +178,15 @@ class Node {
         }
     
         void execute(Worker* w){
-            std::size_t idx = task.index(); 
+            std::size_t idx =_task.index(); 
             switch(idx){
-                case IDENTM:     update_result(w, std::get<IdentM>(task).work(w));  break;
-                case IDENTV:     update_result(w, std::get<IdentV>(task).work(w));  break;
-                case ADDMM:      update_result(w, std::get<AddMM>(task).work(w));   break;
-                case ADDVV:      update_result(w, std::get<AddVV>(task).work(w));   break;
-                case MULMM:      update_result(w, std::get<MulMM>(task).work(w));   break;
-                case MULMV:      update_result(w, std::get<MulMV>(task).work(w));   break;
-                case MULVV:      update_result(w, std::get<MulVV>(task).work(w));   break;
+                case IDENTM:     update_result(w, std::get<IdentM>(_task).work(w));  break;
+                case IDENTV:     update_result(w, std::get<IdentV>(_task).work(w));  break;
+                case ADDMM:      update_result(w, std::get<AddMM>(_task).work(w));   break;
+                case ADDVV:      update_result(w, std::get<AddVV>(_task).work(w));   break;
+                case MULMM:      update_result(w, std::get<MulMM>(_task).work(w));   break;
+                case MULMV:      update_result(w, std::get<MulMV>(_task).work(w));   break;
+                case MULVV:      update_result(w, std::get<MulVV>(_task).work(w));   break;
                 default:         std::cout<<"Unsupported task"<<std::endl;       break;
             }
             
@@ -164,13 +194,15 @@ class Node {
 
 
         void update_result(Worker* w, const Edge_t& r){
-            result = r;
+            assert(_result.index() == EDGE_PLACEHOLDER);
+            _result = r;
             for(Node* s: _successors){
-                s->_joint.fetch_add(1, std::memory_order_release);
-                if(s->ready_to_be_executed()){
+                if(s->_joint.fetch_add(1, std::memory_order_release) == (s->_required-1)){
                     s->prepare_to_be_executed();
+                    w->push(s);
                 }
             }
+            if(this->_sem != nullptr) this->_sem->release();
         }
         
 
@@ -179,11 +211,12 @@ class Node {
         std::vector<Node*> _successors;
         std::vector<Node*> _dependents;
 
-        task_t task;
-        Edge_t result;
+        task_t _task;
+        Edge_t _result;
 
         const int _required;
         std::atomic<int> _joint{0}; 
+        std::binary_semaphore* _sem{nullptr};
 
 #ifdef GRAPHVIZ
         Agnode_t* agn{nullptr};
@@ -226,7 +259,7 @@ class Graph {
 #ifdef GRAPHVIZ
         void set_node_label(Node* n){
             if(n->agn){
-              switch(n->task.index()) {
+              switch(n->_task.index()) {
                 case Node::IDENTM:      agset(n->agn, "label", "IdentM");   break;
                 case Node::IDENTV:      agset(n->agn, "label", "IdentV");   break;
                 case Node::ADDMM:       agset(n->agn, "label", "AddMM");    break;
@@ -293,10 +326,37 @@ class Graph {
 };
 
 
+class Executor{
+    public:
+        Executor(int N, bool* s, QubitCount q): _nworkers(N), _stop(s){
+            for(int i = 0; i < N; i++) _workers.emplace_back(new Worker(q));
+
+        }
+
+        ~Executor(){
+            for(Worker* w: _workers){
+                w->_thread->join();
+            }
+        }
+        void seed(const Graph& graph){
+            for(Node* n: graph._nodes){
+                _wsq.push(n);
+            }
+        }
+        void spawn(); 
+    private:
+        void try_execute_self(Worker*);
+        void try_execute_else(Worker*);
+        
+        std::vector<Worker*> _workers;
+        WorkStealingQueue<Node*> _wsq;
+        int _nworkers;
+        bool* _stop;
+};
 
 class QuantumCircuit{
     public:
-        QuantumCircuit(QubitCount q): _total_qubits(q){}
+        QuantumCircuit(QubitCount q, int nworkers): _total_qubits(q), _stop(false), _executor(nworkers, &_stop, q){}
 
         template<typename... Args>
         void emplace_back(Args&&... args){
@@ -317,8 +377,25 @@ class QuantumCircuit{
 
             mulmm_next_level(g, nodes, 0, nodes.size());
             _graph = std::move(g);
+            _executor.seed(_graph);
+            _executor.spawn();
             return;
 
+        }
+
+        QuantumCircuit& wait(){
+            assert(_output->_sem != nullptr);
+            _output->_sem->acquire();
+           _stop = true; 
+           return *this;
+        }
+
+        mEdge matrixResult() {
+            return std::get<Node::MEDGE>(_output->_result);
+        }
+
+        vEdge vectorResult(){
+            return std::get<Node::VEDGE>(_output->_result);
         }
 
 
@@ -326,16 +403,26 @@ class QuantumCircuit{
             _graph.dump();
         }
 
+        
+
 
     private:
         QubitCount _total_qubits;
         std::vector<mEdge> _gates;
         Graph _graph;
+        bool _stop;
         vEdge _input;
+        Node* _output;
+
+        Executor _executor;
 
 
         void mulmm_next_level(Graph& g,std::vector<Node*>& v, std::size_t start, std::size_t end){
-            if(start == end - 1) return;
+            if(start == end - 1) {
+                v[start]->_sem = new std::binary_semaphore(0);
+                _output = v[start];
+                return;
+            }
             std::size_t i;
             for(i = start; i < end - 1; i+=2){
                 Node* n = new Node(Node::MULMM); 
@@ -354,34 +441,5 @@ class QuantumCircuit{
 
 };
 
-class Executor;
 
-class Worker{
-    friend class Executor;
-    public:
-    private:
-        size_t _id;
-        Executor* _executor;
-        WorkStealingQueue<Node*> _wsq;
-        std::thread* _thread;
-        std::default_random_engine _rdgen { std::random_device{}() };
-};
 
-class Executor{
-    public:
-        Executor(int N): _nworkers(N), _workers{(std::size_t)N}{}
-        void seed(const Graph& graph){
-            for(Node* n: graph._nodes){
-                _wsq.push(n);
-            }
-        }
-        void spawn(); 
-    private:
-        void invoke(Worker*, Node*);
-        void try_execute_self(Worker*);
-        bool try_execute_else(Worker*);
-        
-        std::vector<Worker> _workers;
-        WorkStealingQueue<Node*> _wsq;
-        int _nworkers;
-};

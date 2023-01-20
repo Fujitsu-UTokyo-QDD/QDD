@@ -22,7 +22,7 @@ endif()
 
 
 find_package(TBB REQUIRED)
-add_library(engine STATIC dd.cpp engine.cpp  graph.cpp)
+add_library(engine STATIC dd.cpp  graph.cpp)
 target_link_libraries(engine PUBLIC TBB::tbb )
 
 

@@ -25,7 +25,7 @@ using namespace oneapi::tbb;
 
 int main(int argc, char* argv[]){
     
-    QuantumCircuit qc(2);
+    QuantumCircuit qc(2,4);
     qc.emplace_back(Hmat, 1);
     qc.emplace_back(Xmat, 0);
     qc.emplace_back(Ymat, 0);
@@ -33,7 +33,13 @@ int main(int argc, char* argv[]){
     qc.emplace_back(Hmat, 0);
     qc.emplace_back(Sdagmat, 1);
     qc.buildCircuit();
+    std::cout<<"Task graph: "<<std::endl;
     qc.dump_task_graph();
+
+    mEdge result = qc.wait().matrixResult();
+    std::cout<<"\nResult: "<<std::endl;
+    result.printMatrix();
+    
     
 
 }

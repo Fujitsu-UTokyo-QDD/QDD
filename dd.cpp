@@ -1,8 +1,8 @@
 #include "dd.h"
 #include "common.h"
-#include "engine.h"
 #include <algorithm>
 #include "table.hpp"
+#include "graph.hpp"
 
 #define SUBTASK_THRESHOLD 5
 
@@ -10,8 +10,6 @@ mNodeTable mUnique(20);
 vNodeTable vUnique(20);
 
 std::vector<mEdge> identityTable(20);
-AddTable addTable;
-MulTable mulTable;
 
 
 mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
@@ -345,30 +343,31 @@ mEdge add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         return result;
     }
 
+    mEdge x, y;
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
 
     std::array<mEdge, 4> edges;
 
-    Job* jobs[2];
 
     for(auto i = 0; i < 4; i++){
-
-       if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(sum_for_entry, lhs, rhs, i, current_var ); 
-       else{
-        edges[i] = sum_for_entry(w, lhs, rhs, i, current_var );
-       }
-    }
-
-    if(current_var >= SUBTASK_THRESHOLD){
-        while(!jobs[0]->available()){
-            w->run_pending();
+        if(lv == current_var && !lhs.isTerminal()){
+            x = lnode->getEdge(i);
+            x.w = lhs.w * x.w;
+        }else{
+            x = lhs;
         }
-        while(!jobs[1]->available()){
-            w->run_pending();
+        if(rv == current_var && !rhs.isTerminal()){
+            y = rnode->getEdge(i);
+            y.w = rhs.w * y.w;
+        }else{
+            y = rhs;
         }
 
-        edges[0] = jobs[0]->getResult();
-        edges[1] = jobs[1]->getResult();
-    
+        edges[i] = add2(w, x, y, current_var - 1);
     }
 
 
@@ -448,6 +447,11 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
     }
     
 
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
+    mEdge x,y;
     mEdge lcopy = lhs;
     mEdge rcopy = rhs;
     lcopy.w = {1.0,0.0};
@@ -456,26 +460,35 @@ mEdge multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_v
 
     std::array<mEdge, 4 > edges;
 
-    Job* jobs[2];
     for(auto i = 0; i < 4; i++){
-        if(i < 2 && current_var >= SUBTASK_THRESHOLD) jobs[i] = w->submit(product_for_entry, lcopy, rcopy, i, current_var);
-        else{
-            edges[i] = product_for_entry(w, lcopy, rcopy, i, current_var);
+
+        std::size_t row = i >> 1;
+        std::size_t col = i & 0x1;
+        
+        std::array<mEdge, 2> product;
+        for(auto k = 0; k < 2; k++){
+            if(lv == current_var && !lhs.isTerminal()){
+                x = lnode->getEdge((row<<1) | k);
+            }else{
+                x = lhs; 
+            }
+
+
+            if(rv == current_var && !rhs.isTerminal()){
+                y = rnode->getEdge((k<<1) | col);
+            }else{
+                y = rhs;     
+            }
+
+            
+            product[k] = multiply2(w, x, y, current_var - 1); 
+            
         }
+        edges[i] = add2(w, product[0], product[1], current_var - 1);
+        
 
     }
-    if(current_var >= SUBTASK_THRESHOLD){
-        while(!jobs[0]->available()){
-            w->run_pending();
-        }
-        while(!jobs[1]->available()){
-            w->run_pending();
-        }
 
-        edges[0] = jobs[0]->getResult();
-        edges[1] = jobs[1]->getResult();
-    
-    }
 
     result = makeEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);

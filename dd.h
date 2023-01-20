@@ -266,7 +266,7 @@ extern std::vector<mEdge> identityTable;
 
 
 
-struct Job;
+class Worker;
 
 mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c);
 mEdge makeIdent(QubitCount q);
