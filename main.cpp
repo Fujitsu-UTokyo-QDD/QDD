@@ -11,6 +11,7 @@
 #include <oneapi/tbb.h>
 #include <future>
 #include <cstdlib>
+#include <random>
 
 
 
@@ -281,7 +282,7 @@ void test_kronecker(){
 }
 
 
-int main(int argc, char* argv[]){
+int test_worker(int argc, char* argv[]){
     
     Worker* w = new Worker(20);
     mEdge e1 = makeGate(w, Hmat, 2,0, Controls{});
@@ -317,4 +318,53 @@ int main(int argc, char* argv[]){
     eng.terminate();
 }
 
+void test_vector(){
+    std_complex half{0.5,0.};
+    Worker* w = new Worker(20);
 
+    vEdge one = makeOneState(w, 1);
+    vEdge zero = makeZeroState(w, 1);
+    vEdge st = add(w, one, zero);
+    st.printVector();
+    
+    vEdge st10 = kronecker(w, one, zero);
+    vEdge st01 = kronecker(w, one, zero);
+    st01.printVector();
+    std::cout << std::endl;
+    std::cout << st01.w << std::endl<<std::endl;
+    st01.w = half;
+    st01.printVector();
+    std::cout << std::endl;
+    kronecker(w,st,st01).printVector();
+
+    return;
+}
+
+void test_matvecmul(){
+    std::random_device rnd;
+    Worker* w = new Worker(20);
+
+    vEdge st0 = makeOneState(w, 1);
+    vEdge st1 = makeZeroState(w, 1);
+    std_complex half{0.5,0.};
+    st1.w = half;
+    vEdge st2 = add(w, st0, st1);
+    st2.printVector();
+
+    GateMatrix gates[] = {Hmat, SXmat, SXdagmat, Vmat, Vdagmat};
+
+    mEdge e1 = makeGate(nullptr, gates[1], 1, 0, Controls{});
+    e1.printMatrix();
+    multiply(w, e1, st2).printVector();
+
+    vEdge st3 = kronecker(w, st0, st2);
+    mEdge e2 = make_dense(2, rnd());
+    st3.printVector();
+    e2.printMatrix();
+    multiply(w, e2, st3).printVector();
+}
+
+int main(int argc, char* argv[]){
+    test_matvecmul();
+    return 0;
+}
