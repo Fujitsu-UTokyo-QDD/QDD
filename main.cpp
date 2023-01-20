@@ -3,10 +3,6 @@
 #include "dd.h"
 #include <random>
 #include <chrono>
-#include <bitset>
-#include <oneapi/tbb/enumerable_thread_specific.h>
-#include <oneapi/tbb.h>
-#include <future>
 #include <cstdlib>
 #include <random>
 #include "graph.hpp"
@@ -19,7 +15,6 @@ using std::chrono::duration;
 using std::chrono::milliseconds;
 
 
-using namespace oneapi::tbb;
 
 mEdge run(){
     QuantumCircuit qc(10,1);
@@ -50,7 +45,6 @@ mEdge run(){
 
 int main(int argc, char* argv[]){
     
-    //result.printMatrix();
     mEdge r1 = run();
     mEdge r2 = run();
     assert(r1.compareNumerically(r2));
