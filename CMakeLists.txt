@@ -5,10 +5,15 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wno-writable-strings")
 project(QDD)
 
 
+get_filename_component(USER $ENV{HOME} NAME)
+
+
 option(with_graphviz      "Use graphviz to draw task graph for debugging" OFF)
 if(with_graphviz)
     find_package(PkgConfig REQUIRED)
-    set(ENV{PKG_CONFIG_PATH} /Users/lsw/Code/graphviz/build/install/lib/pkgconfig)
+    if(${USER} STREQUAL "lsw")
+        set(ENV{PKG_CONFIG_PATH} /Users/lsw/Code/graphviz/build/install/lib/pkgconfig)
+    endif()
     pkg_check_modules(CGRAPH REQUIRED IMPORTED_TARGET libcgraph)
     pkg_check_modules(GVC REQUIRED IMPORTED_TARGET libgvc)
 endif()
