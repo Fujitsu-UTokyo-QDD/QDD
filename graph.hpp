@@ -383,6 +383,10 @@ class QuantumCircuit{
 
         }
 
+        void setInput(const vEdge& v){
+            _input = v;
+        }
+
         QuantumCircuit& wait(){
             assert(_output->_sem != nullptr);
             _output->_sem->acquire();

@@ -153,7 +153,7 @@ bool vEdge::isTerminal() const {
 
 
 
-static void printMatrix2(const mEdge& edge, size_t col, size_t row, const std_complex& w, uint64_t left,  std_complex** m){
+static void fillMatrix(const mEdge& edge, size_t col, size_t row, const std_complex& w, uint64_t left,  std_complex** m){
     
     std_complex wp = edge.w * w;
     
@@ -173,10 +173,10 @@ static void printMatrix2(const mEdge& edge, size_t col, size_t row, const std_co
     }
     
     mNode* node = edge.getNode();
-    printMatrix2(node->getEdge(0), (col<<1)|0, (row<<1)|0, wp, left-1, m);
-    printMatrix2(node->getEdge(1), (col<<1)|1, (row<<1)|0, wp, left-1, m);
-    printMatrix2(node->getEdge(2), (col<<1)|0, (row<<1)|1, wp, left-1, m);
-    printMatrix2(node->getEdge(3), (col<<1)|1, (row<<1)|1, wp, left-1, m);
+    fillMatrix(node->getEdge(0), (col<<1)|0, (row<<1)|0, wp, left-1, m);
+    fillMatrix(node->getEdge(1), (col<<1)|1, (row<<1)|0, wp, left-1, m);
+    fillMatrix(node->getEdge(2), (col<<1)|0, (row<<1)|1, wp, left-1, m);
+    fillMatrix(node->getEdge(3), (col<<1)|1, (row<<1)|1, wp, left-1, m);
     
     
 
@@ -193,7 +193,7 @@ void mEdge::printMatrix() const {
     for(std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
 
 
-    printMatrix2(*this, 0, 0, {1.0,0.0}, q+1, matrix);
+    fillMatrix(*this, 0, 0, {1.0,0.0}, q+1, matrix);
 
     for(size_t i = 0 ; i < dim; i++){
         for(size_t j = 0; j < dim; j++){
@@ -208,6 +208,56 @@ void mEdge::printMatrix() const {
         delete[] matrix[i];
     }
     delete[] matrix;
+}
+
+static std_complex** getMatrix(const mEdge& e){
+    assert(!e.isTerminal());
+
+    Qubit q = e.getVar();   
+    std::size_t dim = 1 << (q+1);
+
+    std_complex** matrix = new std_complex*[dim];
+    for(std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
+
+
+    fillMatrix(e, 0, 0, {1.0,0.0}, q+1, matrix);
+    return matrix;
+
+}
+
+struct MatrixGuard{
+    MatrixGuard(std_complex** m, std::size_t dim): _m(m), _dim(dim){} 
+    ~MatrixGuard(){
+        for(size_t i = 0; i < _dim; i++){
+            delete[] _m[i];
+        }
+        delete[] _m;
+    
+    }
+
+    std_complex** _m;
+    const std::size_t _dim;
+};
+
+bool mEdge::compareNumerically(const mEdge& other) const noexcept {
+    if(this->getVar() != other.getVar()) return false;
+
+    auto m1 = getMatrix(*this);
+    auto m2 = getMatrix(other);
+    Qubit q = this->getVar();
+    std::size_t dim = 1<<(q+1);
+    MatrixGuard mg1(m1 , dim);
+    MatrixGuard mg2(m2 , dim);
+
+
+    for(auto i = 0; i < dim; i++){
+        for(auto j = 0; j < dim; j++){
+            if(m1[i][j] != m2[i][j])
+                return false;
+        }
+    }
+    return true;
+
 }
 
 

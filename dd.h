@@ -155,6 +155,12 @@ struct mEdge {
         return w == e.w && n == e.n;
     }
 
+    inline bool operator!=(const mEdge& e) const noexcept{
+        return !(this->operator==(e));
+    }
+    
+    bool compareNumerically(const mEdge& other) const noexcept;
+
     std_complex w;
     mNode*    n{nullptr};
 };
