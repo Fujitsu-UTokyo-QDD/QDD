@@ -7,7 +7,7 @@
 #include <oneapi/tbb.h>
 #include <future>
 #include <cstdlib>
-#include "graph.hpp"
+#include <random>
 
 
 
@@ -22,22 +22,8 @@ using namespace oneapi::tbb;
 
 
 
+
+
 int main(int argc, char* argv[]){
-    /*
-    QuantumCircuit qc(2);
-    qc.emplace_back(Hmat, 1);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.emplace_back(Xmat, 0);
-    qc.buildCircuit();
-    qc.dump_task_graph();
-    */
-
-    Executor e(10);
-    e.spawn();
+    return 0;
 }
-
-
