@@ -22,17 +22,19 @@ endif()
 
 
 find_package(TBB REQUIRED)
-add_library(engine STATIC dd.cpp  graph.cpp)
+add_library(engine STATIC src/dd.cpp  src/graph.cpp)
 target_link_libraries(engine PUBLIC TBB::tbb )
-
-
-
-add_executable(qdd main.cpp)
-
-target_link_libraries(qdd PUBLIC engine)
-
+target_include_directories(engine PUBLIC include/)
 
 if(with_graphviz)
     target_link_libraries(engine PUBLIC PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
+
+
+add_executable(qdd test/main.cpp)
+
+target_link_libraries(qdd PUBLIC engine)
+
+
+
 
