@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <set>
+#include <variant>
 #ifndef LINE_SIZE
 #define LINE_SIZE 64
 #endif
