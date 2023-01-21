@@ -201,17 +201,18 @@ void mEdge::printMatrix() const {
     delete[] matrix;
 }
 
-static std_complex** getMatrix(const mEdge& e){
-    assert(!e.isTerminal());
+std_complex** mEdge::getMatrix(std::size_t* dim) const {
+    assert(!this->isTerminal());
 
-    Qubit q = e.getVar();   
-    std::size_t dim = 1 << (q+1);
+    Qubit q = this->getVar();   
+    std::size_t d = 1 << (q+1);
 
-    std_complex** matrix = new std_complex*[dim];
-    for(std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
+    std_complex** matrix = new std_complex*[d];
+    for(std::size_t i = 0; i < d; i++) matrix[i] = new std_complex[d];
 
 
-    fillMatrix(e, 0, 0, {1.0,0.0}, q+1, matrix);
+    fillMatrix(*this, 0, 0, {1.0,0.0}, q+1, matrix);
+    if(dim != nullptr) *dim = d;
     return matrix;
 
 }
@@ -232,9 +233,9 @@ struct MatrixGuard{
 
 bool mEdge::compareNumerically(const mEdge& other) const noexcept {
     if(this->getVar() != other.getVar()) return false;
-
-    auto m1 = getMatrix(*this);
-    auto m2 = getMatrix(other);
+    
+    auto m1 = this->getMatrix(nullptr);
+    auto m2 = other.getMatrix(nullptr);
     Qubit q = this->getVar();
     std::size_t dim = 1<<(q+1);
     MatrixGuard mg1(m1 , dim);
@@ -291,7 +292,7 @@ mEdge makeGate(QubitCount q, GateMatrix g,Qubit target){
 mEdge makeGate(QubitCount q,  GateMatrix g, Qubit target, const Controls& c){
     std::array<mEdge, 4> edges;
 
-    for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].r, g[i].i}, mNode::terminal}; 
+    for(auto i = 0; i < 4; i++) edges[i] = mEdge{{g[i].real(), g[i].imag()}, mNode::terminal}; 
     
     auto it = c.begin();
     
@@ -355,7 +356,11 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
     mEdge result = w->_addCache.find(lhs,rhs);
     if(result.n != nullptr){
-        return result;
+        if(result.w.isApproximatelyZero()){
+            return mEdge::zero;
+        }else{
+            return result;
+        }
     }
 
     mEdge x, y;

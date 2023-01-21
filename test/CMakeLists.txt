@@ -1,4 +1,9 @@
 
-add_executable(qdd main.cpp)
+add_executable(qdd_test test.cpp)
 
-target_link_libraries(qdd PUBLIC engine)
+target_link_libraries(qdd_test PUBLIC engine PUBLIC GTest::gtest_main)
+target_include_directories(qdd_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
+
+include(GoogleTest)
+gtest_discover_tests(qdd_test)
+

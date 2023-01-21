@@ -163,13 +163,13 @@ class AddCache{
 
                 if constexpr(std::is_same_v<T, mEdge>){
                     if(std::equal_to<>()(e.lhs.m, l) && std::equal_to<>()(e.rhs.m, r)){
-                       return e.rhs.m; 
+                       return e.result.m; 
                     }else{
                         return T{};
                     }
                 }else{
                     if(std::equal_to<>()(e.lhs.v, l) && std::equal_to<>()(e.rhs.v, r)){
-                       return e.rhs.v; 
+                       return e.result.v; 
                     }else{
                         return T{}; 
                     }

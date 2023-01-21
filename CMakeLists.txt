@@ -33,5 +33,15 @@ add_compile_definitions(_GUN_SOURCE)
 
 enable_testing()
 
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        v1.13.0
+  FIND_PACKAGE_ARGS NAMES GTest
+)
+FetchContent_MakeAvailable(googletest)
+
+
 add_subdirectory(src)
 add_subdirectory(test)

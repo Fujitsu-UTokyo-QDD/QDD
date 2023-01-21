@@ -55,6 +55,10 @@ struct Complex{
         return r == rhs.r && i == rhs.i;
     }
 
+    bool operator==(const std::complex<float> rhs) const noexcept{
+        return r == rhs.real() && i == rhs.imag();
+    }
+
     float real() const noexcept { return r;}
     float imag() const noexcept { return i;}
 };
@@ -157,6 +161,9 @@ struct mEdge {
     
     void printMatrix() const;
 
+    std_complex** getMatrix(std::size_t* dim) const;
+    
+
     inline bool operator==(const mEdge& e) const noexcept {
         return w == e.w && n == e.n;
     }
@@ -170,6 +177,7 @@ struct mEdge {
     std_complex w;
     mNode*    n{nullptr};
 };
+
 
 
 inline void swap(mEdge& lhs, mEdge& rhs){
@@ -281,10 +289,9 @@ extern std::vector<mEdge> identityTable;
 class Worker;
 
 mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c);
-mEdge makeIdent(QubitCount q);
+mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target, const Controls& c );
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target);
-
 
 mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);

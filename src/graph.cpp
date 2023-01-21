@@ -44,6 +44,7 @@ void Executor::spawn(){
                 
     }
 
+#if defined(__linux__)
     for(int i = 0; i < _nworkers; i++){
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
@@ -53,6 +54,7 @@ void Executor::spawn(){
             exit(1);
         }
     }
+#endif
 
     std::unique_lock<std::mutex> lock{mtx};
     cond.wait(lock, [&]() { return spawned == _nworkers; });
