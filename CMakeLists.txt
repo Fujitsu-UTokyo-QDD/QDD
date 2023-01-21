@@ -8,6 +8,7 @@ project(QDD)
 get_filename_component(USER $ENV{HOME} NAME)
 
 
+
 option(with_graphviz      "Use graphviz to draw task graph for debugging" OFF)
 if(with_graphviz)
     find_package(PkgConfig REQUIRED)
@@ -23,6 +24,12 @@ if(CGRAPH_FOUND)
     message(STATUS ${CGRAPH_LIBDIR})
     add_compile_definitions(GRAPHVIZ)
 endif()
+
+
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+add_compile_definitions(_GUN_SOURCE)
 
 enable_testing()
 

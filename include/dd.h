@@ -5,10 +5,11 @@
 #include <vector>
 
 
-
 struct Complex{
     float r; 
     float i;
+
+    static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
 
     Complex& operator+=(const Complex& rhs) noexcept{
         r += rhs.r;
@@ -40,6 +41,11 @@ struct Complex{
 
     bool isZero()const noexcept{
         return r == 0.0 && i == 0.0;
+    }
+
+
+    bool isApproximatelyZero() const noexcept {
+        return std::abs(r) <=TOLERANCE && std::abs(i) <= TOLERANCE;
     }
     bool isOne()const noexcept{
         return r == 1.0 && i == 0.0;

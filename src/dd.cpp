@@ -423,7 +423,13 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
     
     mEdge result = w->_mulCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
-        return {result.w * lhs.w * rhs.w, result.n};
+        if(result.w.isApproximatelyZero()){
+            return mEdge::zero;
+        }else{
+            result.w = result.w * lhs.w * rhs.w;
+            if(result.w.isApproximatelyZero()) return mEdge::zero;
+            else return result;
+        }
     }
     
 
@@ -473,7 +479,10 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
     result = makeEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);
 
-    return {result.w * lhs.w * rhs.w, result.n};
+    result.w = result.w * lhs.w * rhs.w;
+    if(result.w.isApproximatelyZero()) return mEdge::zero;
+    else return result;
+
     
 }
 

@@ -1,8 +1,10 @@
+#include <sched.h>
 #include "graph.hpp"
 #include <mutex>
 #include <exception>
 #include <condition_variable>
 #include <optional>
+#include <pthread.h>
 
 
 
@@ -40,6 +42,16 @@ void Executor::spawn(){
         }, i, std::ref(mtx), std::ref(cond), std::ref(spawned));
         
                 
+    }
+
+    for(int i = 0; i < _nworkers; i++){
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(i, &cpuset);
+        if(pthread_setaffinity_np(_workers[i]->_thread->native_handle(), sizeof(cpu_set_t), &cpuset)){
+            std::cout<<"pthread_setaffinity_np failed"<<std::endl;
+            exit(1);
+        }
     }
 
     std::unique_lock<std::mutex> lock{mtx};
