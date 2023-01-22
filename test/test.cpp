@@ -18,6 +18,7 @@ using std::chrono::duration;
 using std::chrono::milliseconds;
 using Eigen::MatrixXcf;
 using Eigen::Matrix2cf;
+using Eigen::VectorXcf;
 
 
 #define EIGEN_MATRIX(GATE) \
@@ -104,6 +105,24 @@ static testing::AssertionResult matrixEqual(const mEdge& e, const MatrixXcf& m){
 
 }
 
+static testing::AssertionResult vectorEqual(const vEdge& e, const VectorXcf& v){
+    std::size_t dim;
+    std_complex* vv = e.getVector(&dim);
+    if(dim != v.rows()){
+        return testing::AssertionFailure()<<"vEdge dim: "<<dim<<" , Vector dim: "<< v.size();
+    }
+
+
+    for(auto i = 0; i < dim; i++){
+        if(vv[i] != v(i)){
+            return testing::AssertionFailure()<<"vEdge["<<i<<"] = "<<vv[i]<<", Vector["<<i<<"] = "<<v(i);
+        }
+    }
+
+    return testing::AssertionSuccess();
+
+}
+
 static MatrixXcf makeEigenGate(QubitCount q, const Matrix2cf& g, Qubit target){
     
     MatrixXcf k(1,1); 
@@ -177,6 +196,18 @@ TEST(BinaryTest, MatrixTest){
         result_e = mm_multiply(&w, le, re);
         result_m = lm * rm;
         ASSERT_TRUE(matrixEqual(result_e, result_m));
+    }
+
+    //mv_multiply
+    {
+        vEdge v = makeZeroState(&w, 8); 
+        vEdge result_v = mv_multiply(&w, le, v);
+
+        VectorXcf vec =  VectorXcf::Zero(1<<8);
+        vec(0) = std::complex{1.0,0.0};
+        std::cout<<lm.cols()<<" " << vec.rows()<<std::endl;
+        VectorXcf result_vec = lm * vec;
+        ASSERT_TRUE(vectorEqual(result_v, result_vec));
     }
 
 

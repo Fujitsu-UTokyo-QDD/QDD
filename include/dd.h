@@ -111,6 +111,7 @@ struct vEdge {
     vNode* getNode() const;
 
     void printVector() const;
+    std_complex* getVector(std::size_t* dim) const;
 
     inline bool operator==(const vEdge& e) const noexcept {
         return w == e.w && n == e.n;
@@ -137,6 +138,7 @@ struct vNode {
     vEdge getEdge(std::size_t i){
         return this->operator[](i);
     }
+
 
     inline bool operator==(const vNode& n) const noexcept{
         return v== n.v && children == n.children;

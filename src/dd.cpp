@@ -681,7 +681,41 @@ void vEdge::printVector() const {
     delete[] vector;
 }
 
+static void fillVector(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std_complex* m){
+        
+    std_complex wp = edge.w * w;
+    
+    if(edge.isTerminal() && left == 0){
+        m[row] = wp;
+        return;
+    }else if (edge.isTerminal()){
+        row = row << left;
 
+        for(std::size_t i = 0; i < (1<<left); i++){
+            m[row|i] = wp;  
+        }
+        return;
+    }
+    
+    vNode* node = edge.getNode();
+    fillVector(node->getEdge(0), (row<<1)|0, wp, left-1, m);
+    fillVector(node->getEdge(1), (row<<1)|1, wp, left-1, m);
+
+}
+
+std_complex* vEdge::getVector(std::size_t* dim) const{
+    assert(!this->isTerminal());
+
+
+    Qubit q = this->getVar();   
+    std::size_t d = 1 << (q+1);
+
+    std_complex* vector = new std_complex[d];
+    fillVector(*this, 0, {1.0,0.0}, q+1, vector);
+    if(dim != nullptr) *dim = d;
+    return vector;
+
+}
 
 
 
