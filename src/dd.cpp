@@ -20,7 +20,7 @@ vEdge vEdge::zero{{0.0,0.0}, vNode::terminal};
 mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 
-static mEdge normalize(const mEdge& e){
+static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return norm(e.w) == 0.0;})){
@@ -49,7 +49,7 @@ static mEdge normalize(const mEdge& e){
 
 }
 
-static vEdge normalize(Worker* w,  const vEdge& e){
+static vEdge normalizeV(const vEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
@@ -78,7 +78,7 @@ static vEdge normalize(Worker* w,  const vEdge& e){
 
 }
 
-mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c){
+mEdge makeMEdge(Qubit q, const std::array<mEdge, 4>& c){
     
 
     mNode* node = mUnique.getNode();
@@ -90,14 +90,14 @@ mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c){
     }
 
     
-    mEdge e =  normalize({{1.0,0.0}, node}); 
+    mEdge e =  normalizeM({{1.0,0.0}, node}); 
 
     assert(e.getVar() == q || e.isTerminal());
 
     return e;
 }
 
-vEdge makeEdge(Worker* w, Qubit q, const std::array<vEdge, 2>& c){
+vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c){
     
 
     
@@ -111,7 +111,7 @@ vEdge makeEdge(Worker* w, Qubit q, const std::array<vEdge, 2>& c){
     }
 
     
-    vEdge e =  normalize(w, {{1.0,0.0}, node}); 
+    vEdge e =  normalizeV({{1.0,0.0}, node}); 
 
     assert(e.getVar() == q || e.isTerminal());
 
@@ -259,9 +259,9 @@ mEdge makeIdent( Qubit q){
         return identityTable[q];
     }
 
-    mEdge e = makeEdge(0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
+    mEdge e = makeMEdge(0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
     for(Qubit i = 1; i <= q; i++){
-       e = makeEdge(i, {{e,mEdge::zero,mEdge::zero,e}}); 
+       e = makeMEdge(i, {{e,mEdge::zero,mEdge::zero,e}}); 
     }
     
     identityTable[q] = e;
@@ -270,18 +270,18 @@ mEdge makeIdent( Qubit q){
 
 }
 
-vEdge makeZeroState(Worker *w, QubitCount q){
-    vEdge e = makeEdge(w, 0, {vEdge::one, vEdge::zero});
+vEdge makeZeroState( QubitCount q){
+    vEdge e = makeVEdge(0, {vEdge::one, vEdge::zero});
     for(Qubit i = 1; i < q; i++){
-       e = makeEdge(w, i, {{e,vEdge::zero}}); 
+       e = makeVEdge(i, {{e,vEdge::zero}}); 
     }
     return e;
 }
 
 vEdge makeOneState(Worker *w, QubitCount q){
-    vEdge e = makeEdge(w, 0, {vEdge::zero, vEdge::one});
+    vEdge e = makeVEdge( 0, {vEdge::zero, vEdge::one});
     for(Qubit i = 1; i < q; i++){
-       e = makeEdge(w, i, {{vEdge::zero, e}}); 
+       e = makeVEdge( i, {{vEdge::zero, e}}); 
     }
     return e;
 }
@@ -306,27 +306,27 @@ mEdge makeGate(QubitCount q,  GateMatrix g, Qubit target, const Controls& c){
                 if(it != c.end() && *it == z){
                     //positive control 
                     if(z == 0)
-                        edges[i] = makeEdge(z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
+                        edges[i] = makeMEdge(z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
                     else
-                        edges[i] = makeEdge(z, { (b1 == b0)? makeIdent(z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
+                        edges[i] = makeMEdge(z, { (b1 == b0)? makeIdent(z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
 
                 }else{
-                    edges[i] = makeEdge(z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
+                    edges[i] = makeMEdge(z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
                 }
             }
         }
         if(it != c.end() && *it == z) ++it;
     }
 
-    auto e = makeEdge(z, edges);
+    auto e = makeMEdge(z, edges);
 
 
     for( z = z+1 ; z < q; z++){
        if(it != c.end() && *it == z){
-           e = makeEdge(z, {makeIdent(z-1), mEdge::zero, mEdge::zero, e});
+           e = makeMEdge(z, {makeIdent(z-1), mEdge::zero, mEdge::zero, e});
            ++it;
        }else{
-            e = makeEdge(z, {e, mEdge::zero, mEdge::zero, e}); 
+            e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e}); 
        }
     }
 
@@ -392,7 +392,7 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
     }
 
 
-    result =  makeEdge(current_var, edges);
+    result =  makeMEdge(current_var, edges);
     w->_addCache.set(lhs, rhs, result);
     
 
@@ -481,7 +481,7 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
     }
 
 
-    result = makeEdge(current_var, edges);
+    result = makeMEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);
 
     result.w = result.w * lhs.w * rhs.w;
@@ -547,7 +547,7 @@ mEdge mm_kronecker2(Worker* w, const mEdge& lhs, const mEdge& rhs){
         edges[i] = mm_kronecker2(w, x, rhs);
     }
 
-    mEdge ret = makeEdge(lv + rv + 1, edges);
+    mEdge ret = makeMEdge(lv + rv + 1, edges);
     return ret;
 }
 
@@ -606,7 +606,7 @@ vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var
         edges[i] = vv_add2(w, x, y, current_var - 1);
     }
 
-    result =  makeEdge(w, current_var, edges);
+    result =  makeVEdge( current_var, edges);
     w->_addCache.set(lhs, rhs, result);
     
 
@@ -646,7 +646,7 @@ vEdge vv_kronecker2(Worker* w, const vEdge& lhs, const vEdge& rhs){
         edges[i] = vv_kronecker2(w, x, rhs);
     }
 
-    vEdge ret = makeEdge(w,  lv + rv + 1, edges);
+    vEdge ret = makeVEdge(lv + rv + 1, edges);
     return ret;
 }
 
@@ -774,7 +774,7 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
         edges[i] = vv_add2(w, product[0], product[1], current_var - 1);
     }
 
-    result = makeEdge(w, current_var, edges);
+    result = makeVEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);
 
     return {result.w * lhs.w * rhs.w, result.n};

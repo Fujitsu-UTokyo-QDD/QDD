@@ -290,7 +290,7 @@ extern std::vector<mEdge> identityTable;
 
 class Worker;
 
-mEdge makeEdge(Qubit q, const std::array<mEdge, 4>& c);
+mEdge makeMEdge(Qubit q, const std::array<mEdge, 4>& c);
 mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target, const Controls& c );
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target);
@@ -306,6 +306,7 @@ vEdge vv_kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs);
 vEdge mv_multiply(Worker* w, const mEdge& lhs, const vEdge& rhs);
 
 
-vEdge makeZeroState(Worker *w, QubitCount q);
-vEdge makeOneState(Worker *w, QubitCount q);
+vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c);
+vEdge makeZeroState( QubitCount q);
+vEdge makeOneState( QubitCount q);
 

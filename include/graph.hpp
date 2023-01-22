@@ -227,6 +227,7 @@ class Node {
 
 class Graph {
     friend class Executor;
+    friend class QuantumCircuit;
     public:
 
         template<typename... Args>
@@ -276,7 +277,8 @@ class Graph {
             Agraph_t* g;
             g = agopen("G", Agdirected, NULL);
 
-            Agsym_t* sym = agattr(g, AGNODE, "label", "IdentM");
+            Agsym_t* node_sym = agattr(g, AGNODE, "label", "IdentM");
+            Agsym_t* edge_sym = agattr(g, AGEDGE, "label", "L");
             for(Node* n: _nodes){
                 Agnode_t* agn = agnode(g, NULL, true);
                 if(agn == NULL){
@@ -291,7 +293,8 @@ class Graph {
             std::vector<Node*> next;
             while(!current.empty()){
                 for(Node* n: current){
-                    for(Node* head: n->_successors){
+                    for(int i = 0; i < n->_successors.size(); i++){
+                        Node* head = n->_successors[i];
                         bool first_time = false;
                         if(head->agn == NULL){
                             head->agn = agnode(g, NULL, true);
@@ -299,6 +302,9 @@ class Graph {
                             first_time = true;
                         }
                         Agedge_t* e = agedge(g, n->agn, head->agn, NULL, true);
+                        if(n == head->_dependents[1]){
+                            agset(e, "label", "R");
+                        }
                         if(first_time)next.push_back(head);
                     }
 
@@ -357,6 +363,7 @@ class Executor{
 class QuantumCircuit{
     public:
         QuantumCircuit(QubitCount q, int nworkers): _total_qubits(q), _stop(false), _executor(nworkers, &_stop, q){}
+        QuantumCircuit(QubitCount q, int nworkers, const vEdge& v): _total_qubits(q), _stop(false), _executor(nworkers, &_stop, q), _input(v){}
 
         template<typename... Args>
         void emplace_back(Args&&... args){
@@ -368,7 +375,14 @@ class QuantumCircuit{
 
             Graph g;
             std::vector<Node*> nodes;
-            nodes.reserve(_gates.size());
+            nodes.reserve(_gates.size() + 1);
+            
+            if(_input.n != nullptr){
+                Node* n = new Node(_input);
+                nodes.push_back(n);
+                g.emplace(n);
+            }
+
             for(const mEdge& e: _gates){
                 Node* n = new Node(e);
                 nodes.push_back(n); 
@@ -383,9 +397,7 @@ class QuantumCircuit{
 
         }
 
-        void setInput(const vEdge& v){
-            _input = v;
-        }
+
 
         QuantumCircuit& wait(){
             assert(_output->_sem != nullptr);
@@ -429,9 +441,14 @@ class QuantumCircuit{
             }
             std::size_t i;
             for(i = start; i < end - 1; i+=2){
-                Node* n = new Node(Node::MULMM); 
-                v[i]->lhs(n);
-                v[i+1]->rhs(n);
+                Node* n;
+                if(std::holds_alternative<Node::IdentV>(v[i]->_task) || std::holds_alternative<Node::MulMV>(v[i]->_task)){
+                    n = new Node(Node::MULMV);
+                }else{
+                     n = new Node(Node::MULMM); 
+                }
+                v[i]->rhs(n);
+                v[i+1]->lhs(n);
                 v.push_back(n);
             }
 

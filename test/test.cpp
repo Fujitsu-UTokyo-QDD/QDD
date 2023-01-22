@@ -146,7 +146,9 @@ static MatrixXcf makeEigenGate(QubitCount q, const Matrix2cf& g, Qubit target){
 
 }
 
-TEST(UnitaryTest, MatrixTest){
+
+
+TEST(QddTest, ArithmeticTest){
     {
         //Identity Matrix
         Qubit q = 9;
@@ -167,14 +169,6 @@ TEST(UnitaryTest, MatrixTest){
         
     }
 
-
-
-}
-
-TEST(UnitaryTest, VectorTest){
-}
-
-TEST(BinaryTest, MatrixTest){
     mEdge le, re, result_e;
     le = makeGate(8, Vdagmat, 2);
     re = makeGate(8, Hmat, 4);
@@ -200,12 +194,11 @@ TEST(BinaryTest, MatrixTest){
 
     //mv_multiply
     {
-        vEdge v = makeZeroState(&w, 8); 
+        vEdge v = makeZeroState(8); 
         vEdge result_v = mv_multiply(&w, le, v);
 
         VectorXcf vec =  VectorXcf::Zero(1<<8);
         vec(0) = std::complex{1.0,0.0};
-        std::cout<<lm.cols()<<" " << vec.rows()<<std::endl;
         VectorXcf result_vec = lm * vec;
         ASSERT_TRUE(vectorEqual(result_v, result_vec));
     }
@@ -213,5 +206,32 @@ TEST(BinaryTest, MatrixTest){
 
 
 }
-TEST(BinaryTest, VectorTest){
+TEST(QddTest, CircuitTest){
+    vEdge v;
+    VectorXcf vec;
+    {
+        //compute using graph.hpp
+        vEdge input = makeZeroState(5);
+        QuantumCircuit qc(5,8, input);
+        qc.emplace_back(Hmat, 1);
+        qc.emplace_back(Xmat, 2);
+        qc.emplace_back(Ymat, 3);
+        qc.emplace_back(Vdagmat, 4);
+        qc.emplace_back(Hmat, 3);
+        qc.emplace_back(Sdagmat, 2);
+        qc.buildCircuit();
+        v = qc.wait().vectorResult();
+
+        //compute using Eigen
+        VectorXcf vinput =  VectorXcf::Zero(1<<5);
+        vinput(0) = std::complex{1.0,0.0};
+        MatrixXcf m1 = makeEigenGate(5,qdd_test::Hmat, 1);
+        MatrixXcf m2 = makeEigenGate(5,qdd_test::Xmat, 2);
+        MatrixXcf m3 = makeEigenGate(5,qdd_test::Ymat, 3);
+        MatrixXcf m4 = makeEigenGate(5,qdd_test::Vdagmat, 4);
+        MatrixXcf m5 = makeEigenGate(5,qdd_test::Hmat, 3);
+        MatrixXcf m6 = makeEigenGate(5,qdd_test::Sdagmat, 2);
+        vec = m6 * m5 * m4 * m3 * m2 * m1 * vinput;
+    }
+    ASSERT_TRUE(vectorEqual(v, vec));
 }
