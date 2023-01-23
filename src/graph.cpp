@@ -6,6 +6,7 @@
 #include <optional>
 #include <pthread.h>
 
+oneapi::tbb::enumerable_thread_specific<std::chrono::duration<double, std::micro>> steal_timer{std::chrono::duration<double, std::micro>::zero()};
 
 
 void Executor::spawn(){

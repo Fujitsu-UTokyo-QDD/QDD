@@ -9,6 +9,7 @@
 #include <set>
 #include <variant>
 #include <complex>
+#include <chrono>
 #ifndef LINE_SIZE
 #define LINE_SIZE 64
 #endif
@@ -20,6 +21,8 @@
 #ifndef cas
 #define cas(ptr, old, new) (__sync_bool_compare_and_swap((ptr),(old),(new)))
 #endif
+
+using duration_micro = std::chrono::duration<double, std::micro>;
 
 const std::size_t NBUCKETS = 32768;
 const std::size_t INITIAL_ALLOCATION_SIZE = 2048;

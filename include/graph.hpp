@@ -344,6 +344,16 @@ class Executor{
             for(Worker* w: _workers){
                 w->_thread->join();
             }
+
+            duration_micro longest = steal_timer.combine([](const duration_micro& t1, const duration_micro& t2){
+                return (t1 > t2)? t1: t2;
+            });
+            duration_micro sum = steal_timer.combine([](const duration_micro& t1, const duration_micro& t2){
+                return t1 + t2 ;
+            });
+
+            std::cout<<"longest time spent in wait: "<<longest.count()<<" ms"<<std::endl;
+            std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
         }
         void seed(const Graph& graph){
             std::default_random_engine rdgen { std::random_device{}() };

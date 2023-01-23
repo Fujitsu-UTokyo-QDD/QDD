@@ -4,6 +4,10 @@
 #include <vector>
 #include <optional>
 #include <cassert>
+#include <oneapi/tbb/enumerable_thread_specific.h>
+#include <chrono>
+
+extern oneapi::tbb::enumerable_thread_specific<std::chrono::duration<double, std::micro>> steal_timer;
 
 /**
 @class: WorkStealingQueue
@@ -212,9 +216,19 @@ std::optional<T> WorkStealingQueue<T>::pop() {
   return item;
 }
 
+struct TimerGuard{
+    TimerGuard(): start(std::chrono::high_resolution_clock::now()){}
+    ~TimerGuard(){
+        steal_timer.local() += std::chrono::high_resolution_clock::now() - start;
+    }
+    
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
+};
+
 // Function: steal
 template <typename T>
 std::optional<T> WorkStealingQueue<T>::steal() {
+  TimerGuard tg;
   int64_t t = _top.load(std::memory_order_acquire);
   std::atomic_thread_fence(std::memory_order_seq_cst);
   int64_t b = _bottom.load(std::memory_order_acquire);
