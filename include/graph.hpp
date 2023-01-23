@@ -233,6 +233,7 @@ class Graph {
         template<typename... Args>
             Node* emplace(Args... args){
                 Node* n = new Node(std::forward<Args>(args)...); 
+
                 _nodes.push_back(n);
                 return n;
             }
@@ -392,14 +393,16 @@ class QuantumCircuit{
             mulmm_next_level(g, nodes, 0, nodes.size());
             _graph = std::move(g);
             _executor.seed(_graph);
-            _executor.spawn();
             return;
 
         }
 
+        void setInput(const vEdge& v){ _input = v; }
+
 
 
         QuantumCircuit& wait(){
+            _executor.spawn();
             assert(_output->_sem != nullptr);
             _output->_sem->acquire();
            _stop = true; 

@@ -169,6 +169,30 @@ TEST(QddTest, ArithmeticTest){
         
     }
 
+    {
+        //makeGate with controls
+        Controls controls;
+        controls.emplace(Control{2, Control::Type::pos});
+        mEdge e = makeGate(3, Hmat, 0, controls);
+        e.printMatrix();
+
+        MatrixXcf one = Matrix2cf::Zero();
+        one(1,1) = {1.0,0.0};
+        MatrixXcf zero = Matrix2cf::Zero();
+        zero(0,0) = {1.0,0.0};
+        MatrixXcf ident = Matrix2cf::Identity();
+        MatrixXcf h = makeEigenGate(1, qdd_test::Hmat, 0);
+
+        MatrixXcf r1 = Eigen::kroneckerProduct(one, ident);
+        r1 = Eigen::kroneckerProduct(r1, h).eval();
+        MatrixXcf r2 = Eigen::kroneckerProduct(zero, ident).eval();
+        r2 = Eigen::kroneckerProduct(r2, ident).eval();
+        MatrixXcf result =  r1 + r2;
+        ASSERT_TRUE(matrixEqual(e, result));
+        
+
+    }
+
     mEdge le, re, result_e;
     le = makeGate(8, Vdagmat, 2);
     re = makeGate(8, Hmat, 4);

@@ -255,6 +255,9 @@ bool mEdge::compareNumerically(const mEdge& other) const noexcept {
 
 
 mEdge makeIdent( Qubit q){
+
+    if(q < 0) return mEdge::one;
+
     if(identityTable[q].n != nullptr) {
         return identityTable[q];
     }
@@ -303,10 +306,9 @@ mEdge makeGate(QubitCount q,  GateMatrix g, Qubit target, const Controls& c){
         for(int b1 = 0; b1 < 2; b1++){
             for(int b0 = 0; b0 < 2; b0++){
                 std::size_t i = (b1<<1) | b0; 
-                if(it != c.end() && *it == z){
-                    //positive control 
-                    if(z == 0)
-                        edges[i] = makeMEdge(z, { (b1 == b0)? mEdge::one : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
+                if(it != c.end() && it->qubit == z){
+                    if(it->type == Control::Type::neg)
+                        edges[i] = makeMEdge(z, { edges[i], mEdge::zero, mEdge::zero, (b1 == b0)? makeIdent(z-1): mEdge::zero});
                     else
                         edges[i] = makeMEdge(z, { (b1 == b0)? makeIdent(z-1) : mEdge::zero , mEdge::zero, mEdge::zero, edges[i]});
 
@@ -315,16 +317,19 @@ mEdge makeGate(QubitCount q,  GateMatrix g, Qubit target, const Controls& c){
                 }
             }
         }
-        if(it != c.end() && *it == z) ++it;
+        if(it != c.end() && it->qubit == z) ++it;
     }
 
     auto e = makeMEdge(z, edges);
 
 
     for( z = z+1 ; z < q; z++){
-       if(it != c.end() && *it == z){
-           e = makeMEdge(z, {makeIdent(z-1), mEdge::zero, mEdge::zero, e});
-           ++it;
+       if(it != c.end() && it ->qubit == z){
+            if(it->type == Control::Type::neg)
+                e = makeMEdge(z, { e, mEdge::zero, mEdge::zero, makeIdent(z-1)});
+            else
+                e = makeMEdge(z, { makeIdent(z-1) , mEdge::zero, mEdge::zero, e});
+            ++it;
        }else{
             e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e}); 
        }
@@ -413,7 +418,8 @@ mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 
 
-
+static void brp(){
+}
 
 mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
@@ -422,6 +428,9 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
     }
 
     if(current_var == -1) {
+        if(!lhs.isTerminal() || !rhs.isTerminal()){
+            brp();
+        }
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
@@ -440,6 +449,7 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
+    assert(lv <= current_var && rv <= current_var);
     mNode* lnode = lhs.getNode();
     mNode* rnode = rhs.getNode();
     mEdge x,y;
@@ -493,14 +503,15 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
 
 
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
+
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
 
     Qubit root = rootVar(lhs, rhs);
-    return mm_multiply2(w, lhs, rhs, root);
-
+    mEdge result = mm_multiply2(w, lhs, rhs, root);
+    return result;
 }
 
 
@@ -720,7 +731,13 @@ std_complex* vEdge::getVector(std::size_t* dim) const{
 
 
 vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t current_var){
-
+    /*
+    std::cout<<"lhs\n";
+    lhs.printMatrix();
+    std::cout<<"rhs\n";
+    rhs.printVector();
+    std::cout<<std::endl;
+*/
     if(lhs.w.isZero() || rhs.w.isZero()){
         return vEdge::zero;
     }
@@ -787,7 +804,9 @@ vEdge mv_multiply(Worker *w, const mEdge& lhs, const vEdge& rhs){
     }
 
     // assume lhs and rhs are the same length.
-    return mv_multiply2(w, lhs, rhs, lhs.getVar());
+    assert(lhs.getVar() == rhs.getVar());
+    vEdge v = mv_multiply2(w, lhs, rhs, lhs.getVar());
+    return v;
 }
 
 

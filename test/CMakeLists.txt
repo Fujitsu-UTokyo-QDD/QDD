@@ -19,5 +19,5 @@ include(GoogleTest)
 gtest_discover_tests(qdd_test)
 
 add_executable(benchmark main.cpp)
-target_link_libraries(benchmark PUBLIC engine)
+target_link_libraries(benchmark PUBLIC engine alg)
 

@@ -2,6 +2,8 @@
 #include "graph.hpp"
 #include "dd.h"
 #include <chrono>
+#include "algorithms/grover.hpp"
+#include <cstdlib>
 
 
 
@@ -38,8 +40,17 @@ vEdge run(){
 }
 
 
+
+
 int main(int argc, char* argv[]){
+
+    int q = std::atoi(argv[1]);
+    int workers = std::atoi(argv[2]);
+    std::cout<<"Qubit: "<<q<<", workers: "<<workers<<std::endl;
     
-    vEdge r1 = run();
-    
+    Grover g(q/*qubits*/, workers/*workers*/) ;   
+    g.full_grover();
+
+
+    return 0;
 }

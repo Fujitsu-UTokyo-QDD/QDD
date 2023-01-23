@@ -28,7 +28,6 @@ const std::size_t GROWTH_FACTOR = 2;
 using Qubit = int32_t;
 using QubitCount = uint32_t;
 using Index = std::size_t;
-using Controls = std::set<Qubit>;
 
 inline Index operator""_idx(unsigned long long int idx){
     return static_cast<Index>(idx);

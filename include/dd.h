@@ -284,6 +284,41 @@ struct std::hash<vNode>{
     }
 };
 
+
+
+
+struct Control {
+    enum class Type:bool {pos = true, neg = false};
+    Qubit qubit;
+    Type type = Type::pos;
+
+};
+inline bool operator<(const Control& lhs, const Control& rhs){
+    return lhs.qubit < rhs.qubit || (lhs.qubit == rhs.qubit && lhs.type < rhs.type);
+}
+inline bool operator==(const Control& lhs, const Control& rhs){
+    return lhs.qubit == rhs.qubit&& lhs.type == rhs.type;
+}
+inline bool operator!=(const Control& lhs, const Control& rhs){
+    return !(lhs == rhs); 
+}
+
+struct ControlComparator{
+    inline bool operator()(const Control& lhs, const Control& rhs) const {
+            return lhs < rhs;
+        }
+
+    inline bool operator()(Qubit lhs, const Control& rhs) const {
+        return lhs < rhs.qubit;
+    }
+
+    inline bool operator()(const Control& lhs, Qubit rhs) const {
+        return lhs.qubit < rhs;
+    }
+};
+
+using Controls = std::set<Control, ControlComparator>;
+
 extern std::vector<mEdge> identityTable;
 
 

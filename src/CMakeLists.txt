@@ -7,3 +7,8 @@ target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads)
 if(with_graphviz)
     target_link_libraries(engine PUBLIC PkgConfig::CGRAPH PkgConfig::GVC)
 endif()
+
+
+add_library(alg STATIC algorithms/grover.cpp)
+target_include_directories(alg PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(alg PUBLIC engine)
