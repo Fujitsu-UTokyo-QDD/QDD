@@ -346,12 +346,15 @@ class Executor{
             }
         }
         void seed(const Graph& graph){
+            std::default_random_engine rdgen { std::random_device{}() };
+            std::uniform_int_distribution dist(0, _nworkers -1);
             for(Node* n: graph._nodes){
-                _wsq.push(n);
+                _workers[dist(rdgen)]->_wsq.push(n);
             }
         }
         void spawn(); 
     private:
+        const std::size_t MAX_STEALS{100};
         void try_execute_self(Worker*);
         void try_execute_else(Worker*);
         

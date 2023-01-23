@@ -72,7 +72,7 @@ void Executor::try_execute_self(Worker* w){
 
 
 void Executor::try_execute_else(Worker* w){
-
+    /*
     if(auto job = this->_wsq.steal()){
         job.value()->execute(w);
     }
@@ -83,6 +83,21 @@ void Executor::try_execute_else(Worker* w){
         }
         
     }
+    */
+    std::size_t num_steals = 0;
+
+    do{
+        int victim = w->_dist(w->_rdgen);
+        if(auto job = this->_workers[victim]->_wsq.steal()){
+            job.value()->execute(w);
+        }else{
+            num_steals++;
+            if(num_steals == MAX_STEALS){
+                std::this_thread::yield();
+                break;
+            }
+        }
+    }while(true);
 
 
 }
