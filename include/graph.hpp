@@ -391,6 +391,10 @@ class QuantumCircuit{
             _gates.emplace_back(makeGate(_total_qubits, std::forward<Args>(args)...));
         }
 
+        void emplace_gate(const mEdge& e){
+            _gates.emplace_back(e);
+        }
+
 
         void buildCircuit(){
 
@@ -410,7 +414,7 @@ class QuantumCircuit{
                 g.emplace(n);
             }
 
-            mulmm_next_level(g, nodes, 0, nodes.size());
+            mul_next_level(g, nodes, 0, nodes.size());
             _graph = std::move(g);
             _executor.seed(_graph);
             return;
@@ -456,7 +460,7 @@ class QuantumCircuit{
         Executor _executor;
 
 
-        void mulmm_next_level(Graph& g,std::vector<Node*>& v, std::size_t start, std::size_t end){
+        void mul_next_level(Graph& g,std::vector<Node*>& v, std::size_t start, std::size_t end){
             if(start == end - 1) {
                 v[start]->_sem = new std::binary_semaphore(0);
                 _output = v[start];
@@ -479,7 +483,7 @@ class QuantumCircuit{
                 v.push_back(v[i]);
             }
 
-            mulmm_next_level(g,v, end, v.size());
+            mul_next_level(g,v, end, v.size());
         
         }
 

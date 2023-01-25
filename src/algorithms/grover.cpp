@@ -9,7 +9,52 @@ static unsigned long long CalculateIterations(const unsigned short n_qubits) {
     }
 }
 
-Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q),  seed(seed), qc(n_qubits + n_anciallae, workers){
+
+mEdge Grover::makeFullIteration(){
+    
+    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers);
+    QubitCount total_qubits = n_qubits + n_anciallae;
+
+    Controls controls;
+    for(int i = 0; i < n_qubits; i++){
+        controls.emplace(Control{i, oracle.at(i) == '1'? Control::Type::pos: Control::Type::neg});
+    }
+
+        //oracle
+    qc.emplace_back( Zmat, n_qubits, controls);
+
+    //diffusion
+    for(int q = 0; q < n_qubits; q++){
+        qc.emplace_back( Hmat, q);        
+    }
+    for(int q = 0; q < n_qubits; q++){
+        qc.emplace_back( Xmat, q);        
+    }
+
+    qc.emplace_back( Hmat, n_qubits - 1);
+
+    Controls diff;
+    for(int j = 0; j < n_qubits - 1; j++){
+        diff.emplace(Control{j});
+    }
+
+    qc.emplace_back( Xmat, n_qubits, diff);
+    qc.emplace_back( Hmat, n_qubits - 1);
+    for(int q = 0; q < n_qubits; q++){
+        qc.emplace_back( Xmat, q);        
+    }
+    for(int q = 0; q < n_qubits; q++){
+        qc.emplace_back( Hmat, q);        
+    }
+
+    qc.buildCircuit();
+
+    return qc.wait().matrixResult();
+    
+
+}
+
+Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q), _nworkers(workers),  seed(seed){
     
     iterations = CalculateIterations(n_qubits);
     std::cout<<"iterations: "<<iterations<<std::endl;
@@ -27,6 +72,15 @@ Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q),  seed(
         }
     }
 
+}
+
+
+
+
+void Grover::full_grover(){
+    mEdge full_iteration = makeFullIteration();
+
+    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers);
     QubitCount total_qubits = n_qubits + n_anciallae;
     //create init state  and set it up
     qc.setInput(makeZeroState(total_qubits));
@@ -35,50 +89,20 @@ Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q),  seed(
         qc.emplace_back(  Hmat, i);
     }
     
-    Controls controls;
-    for(int i = 0; i < n_qubits; i++){
-        controls.emplace(Control{i, oracle.at(i) == '1'? Control::Type::pos: Control::Type::neg});
-    }
+
 
     int j_pre = 0; 
     while((iterations - j_pre) % 8 != 0){
-        //oracle
-        qc.emplace_back( Zmat, n_qubits, controls);
-
-        //diffusion
-        for(int q = 0; q < n_qubits; q++){
-            qc.emplace_back( Hmat, q);        
-        }
-        for(int q = 0; q < n_qubits; q++){
-            qc.emplace_back( Xmat, q);        
-        }
-
-        qc.emplace_back( Hmat, n_qubits - 1);
-
-        Controls diff;
-        for(int j = 0; j < n_qubits - 1; j++){
-            diff.emplace(Control{j});
-        }
-
-        qc.emplace_back( Xmat, n_qubits, diff);
-        qc.emplace_back( Hmat, n_qubits - 1);
-        for(int q = 0; q < n_qubits; q++){
-            qc.emplace_back( Xmat, q);        
-        }
-        for(int q = 0; q < n_qubits; q++){
-            qc.emplace_back( Hmat, q);        
-        }
     
         j_pre++; 
     }
+
+    for(auto j = 0;j < iterations; j++){
+        qc.emplace_gate(full_iteration);
+    
+    }
     
     qc.buildCircuit();
-}
-
-
-
-
-void Grover::full_grover(){
     std::cout<<"begin to execute..."<<std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
     vEdge result = qc.wait().vectorResult();
