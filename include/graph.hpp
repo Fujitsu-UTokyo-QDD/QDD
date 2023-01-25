@@ -579,10 +579,12 @@ class QuantumCircuit{
             mul_next_level(g,v, end, v.size());
         
         }
-
+        
+        void brp(){}
 
         Node* reduce_nodes_with_mul(std::vector<Node*> root /*we need a copy*/){
             std::vector<Node*> next_root;
+
             
             while( root.size() > 1 ){
                 for(auto i = 0; i < root.size()/2; i++){
@@ -608,8 +610,10 @@ class QuantumCircuit{
             if(root.size() == 1)
                 return new Node(root.back());
             else 
+            {
+                brp();
                 return nullptr;
-
+            }
             
             
         }
@@ -617,15 +621,20 @@ class QuantumCircuit{
 
         Node* mul_next_level_reduce(Node* root, const std::vector<mEdge>& gates, std::size_t start, std::size_t end){
 
+            assert(std::holds_alternative<Node::ReduceVHub>(root->_task) || std::holds_alternative<Node::ReduceMHub>(root->_task));
             
             std::vector<Node*> level;
-            std::size_t i = start;
 
-            if(root != nullptr){
+            if(start < gates.size()){
                 Node* n = new Node(root);
                 level.push_back(n);
             }
 
+            if(start >= gates.size()){
+                return root;
+            }
+
+            std::size_t i = start;
 
             for(; i < end && i < gates.size(); i++){
                 Node* n = new Node(gates[i]);
@@ -637,11 +646,7 @@ class QuantumCircuit{
             root = reduce_nodes_with_mul(level);
 
 
-            if(i == end && i < gates.size()){
-                return mul_next_level_reduce(root, gates, end, end + REDUCE_THRESHOLD);
-            }else{
-                return root;
-            }
+            return mul_next_level_reduce(root, gates, end, end + REDUCE_THRESHOLD);
 
         
         }
