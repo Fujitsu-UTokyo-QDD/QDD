@@ -16,6 +16,8 @@
 #include "gvc.h"
 #endif
 
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 class Node;
 class Executor;
 
@@ -356,11 +358,16 @@ class Executor{
             std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
         }
         void seed(const Graph& graph){
-            std::default_random_engine rdgen { std::random_device{}() };
-            std::uniform_int_distribution dist(0, _nworkers -1);
-            for(Node* n: graph._nodes){
-                _workers[dist(rdgen)]->_wsq.push(n);
+            int ntasks = graph._nodes.size() / _nworkers;
+            int w = 0;
+            for(;w < _nworkers; w++){
+                for(int t = 0; t < ntasks; t++){
+                    _workers[w]->_wsq.push(graph._nodes[w*ntasks + t]);
+                }
             }
+
+            for(int t = w*ntasks; t < graph._nodes.size(); t++ )
+                _workers[w-1]->_wsq.push(graph._nodes[t]);
         }
         void spawn(); 
     private:

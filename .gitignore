@@ -6,3 +6,4 @@ build/
 .cache/
 .vscode/
 tmp/
+lib/

@@ -228,7 +228,7 @@ struct TimerGuard{
 // Function: steal
 template <typename T>
 std::optional<T> WorkStealingQueue<T>::steal() {
-  auto t1 = std::chrono::high_resolution_clock::now();
+  TimerGuard g;
   int64_t t = _top.load(std::memory_order_acquire);
   std::atomic_thread_fence(std::memory_order_seq_cst);
   int64_t b = _bottom.load(std::memory_order_acquire);
@@ -241,7 +241,6 @@ std::optional<T> WorkStealingQueue<T>::steal() {
     if(!_top.compare_exchange_strong(t, t+1,
                                      std::memory_order_seq_cst,
                                      std::memory_order_relaxed)) {
-      steal_timer.local() += std::chrono::high_resolution_clock::now() - t1;
       return std::nullopt;
     }
   }
