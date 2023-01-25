@@ -35,13 +35,13 @@ Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q),  seed(
         qc.emplace_back(  Hmat, i);
     }
     
-    
     Controls controls;
     for(int i = 0; i < n_qubits; i++){
         controls.emplace(Control{i, oracle.at(i) == '1'? Control::Type::pos: Control::Type::neg});
     }
 
-    for(int i = 0; i < iterations; i++){
+    int j_pre = 0; 
+    while((iterations - j_pre) % 8 != 0){
         //oracle
         qc.emplace_back( Zmat, n_qubits, controls);
 
@@ -69,7 +69,7 @@ Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q),  seed(
             qc.emplace_back( Hmat, q);        
         }
     
-    
+        j_pre++; 
     }
     
     qc.buildCircuit();
