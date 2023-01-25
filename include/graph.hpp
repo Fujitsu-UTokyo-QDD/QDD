@@ -28,7 +28,7 @@ struct Worker{
         size_t _id;
         Executor* _executor;
         WorkStealingQueue<Node*> _wsq;
-        std::thread* _thread;
+        std::thread* _thread{nullptr};
         std::default_random_engine _rdgen { std::random_device{}() };
         std::uniform_int_distribution<int> _dist;
 
@@ -52,6 +52,36 @@ class Node {
             IdentV(const vEdge& v): work(
                 std::bind([=](Worker* w){ return v;}, std::placeholders::_1)
                     ){}
+            std::function<vEdge(Worker*)> work;
+        };
+        struct ReduceMHub{
+            ReduceMHub() = default;
+           void bind (const mEdge& m){
+                work = std::bind([=](Worker* w){ return m;}, std::placeholders::_1);
+            }
+            std::function<mEdge(Worker*)> work;
+        };
+
+        struct ReduceVHub{
+            ReduceVHub() = default;
+            void bind(const vEdge& v){ 
+                work=std::bind([=](Worker* w){ return v;}, std::placeholders::_1);
+            }
+            std::function<vEdge(Worker*)> work;
+        };
+        struct ReduceMRep{
+            ReduceMRep() = default;
+           void bind (const mEdge& m){
+                work = std::bind([=](Worker* w){ return m;}, std::placeholders::_1);
+            }
+            std::function<mEdge(Worker*)> work;
+        };
+
+        struct ReduceVRep{
+            ReduceVRep() = default;
+            void bind(const vEdge& v){ 
+                work=std::bind([=](Worker* w){ return v;}, std::placeholders::_1);
+            }
             std::function<vEdge(Worker*)> work;
         };
 
@@ -103,7 +133,7 @@ class Node {
         constexpr static auto MEDGE = get_index_v<mEdge, Edge_t>;
         constexpr static auto VEDGE = get_index_v<vEdge, Edge_t>;
 
-        using task_t = std::variant<std::monostate, IdentM, IdentV, AddMM, AddVV, MulMM, MulMV, MulVV>;
+        using task_t = std::variant<std::monostate, IdentM, IdentV, AddMM, AddVV, MulMM, MulMV, MulVV, ReduceMHub, ReduceVHub, ReduceMRep, ReduceVRep>;
         constexpr static auto TASK_PLACE_HOLDER = get_index_v<std::monostate, task_t>;
         constexpr static auto IDENTM = get_index_v<IdentM, task_t>;
         constexpr static auto IDENTV = get_index_v<IdentV, task_t>;
@@ -112,6 +142,10 @@ class Node {
         constexpr static auto MULMM = get_index_v<MulMM, task_t>;
         constexpr static auto MULMV = get_index_v<MulMV, task_t>;
         constexpr static auto MULVV = get_index_v<MulVV, task_t>;
+        constexpr static auto REDUCEMHUB = get_index_v<ReduceMHub, task_t>;
+        constexpr static auto REDUCEVHUB = get_index_v<ReduceVHub, task_t>;
+        constexpr static auto REDUCEMREP = get_index_v<ReduceMRep, task_t>;
+        constexpr static auto REDUCEVREP = get_index_v<ReduceVRep, task_t>;
 
         
         Node(const mEdge& m): _required(0){
@@ -121,6 +155,31 @@ class Node {
         Node(const vEdge& v): _required(0){
             _task = IdentV(v);
         }
+
+        Node(Node* dep): _required(1){
+            if(std::holds_alternative<Node::MulMV>(dep->_task)){
+                _task = ReduceVHub();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
+            }else if(std::holds_alternative<Node::MulMM>(dep->_task)){
+                _task = ReduceMHub();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
+            }else if (std::holds_alternative<Node::ReduceMHub>(dep->_task)){
+                _task = ReduceMRep();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
+            }else if (std::holds_alternative<Node::ReduceVHub>(dep->_task)){
+                _task = ReduceVRep();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
+            }else{
+                std::cout<<"Unsupported reduce task"<<std::endl;
+                exit(1);
+            }
+        }
+
+
 
         Node(decltype(TASK_PLACE_HOLDER) t): _required(2), _dependents{2}{
             switch(t){
@@ -136,6 +195,8 @@ class Node {
             }
         }
 
+
+
         void lhs(Node* v){
             assert(v->_dependents.size() == 2);
             _successors.push_back(v);
@@ -148,6 +209,13 @@ class Node {
             v->_dependents[1] = this;
         
         }
+
+        void precede(Node* v){
+            _successors.push_back(v);
+            v->_dependents.push_back(this);
+            v->_required++;
+        }
+
 
         size_t num_successors() const {
             return _successors.size();
@@ -163,7 +231,6 @@ class Node {
         
 
         void prepare_to_be_executed() {
-            assert(_dependents.size() == 2);
             std::size_t idx = _task.index(); 
             switch(idx){
                 case ADDMM:      std::get<AddMM>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<MEDGE>(_dependents[1]->_result));   break;
@@ -171,6 +238,12 @@ class Node {
                 case MULMM:      std::get<MulMM>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<MEDGE>(_dependents[1]->_result));   break;
                 case MULMV:      std::get<MulMV>(_task).bind(std::get<MEDGE>(_dependents[0]->_result), std::get<VEDGE>(_dependents[1]->_result));   break;
                 case MULVV:      std::get<MulVV>(_task).bind(std::get<VEDGE>(_dependents[0]->_result), std::get<VEDGE>(_dependents[1]->_result));   break;
+                case REDUCEMHUB:    std::get<ReduceMHub>(_task).bind(std::get<MEDGE>(_dependents[0]->_result));                                     break;
+                case REDUCEVHUB:    std::get<ReduceVHub>(_task).bind(std::get<VEDGE>(_dependents[0]->_result));                                     break;
+                case REDUCEMREP:    std::get<ReduceMRep>(_task).bind(std::get<MEDGE>(_dependents[0]->_result));                                     break;
+                case REDUCEVREP:    std::get<ReduceVRep>(_task).bind(std::get<VEDGE>(_dependents[0]->_result));                                     break;
+                case IDENTM:     
+                case IDENTV:     break;
                 default:         std::cout<<"Unsupported task"<<std::endl;       break;
             }
 
@@ -189,6 +262,10 @@ class Node {
                 case MULMM:      update_result(w, std::get<MulMM>(_task).work(w));   break;
                 case MULMV:      update_result(w, std::get<MulMV>(_task).work(w));   break;
                 case MULVV:      update_result(w, std::get<MulVV>(_task).work(w));   break;
+                case REDUCEMHUB:    update_result(w, std::get<ReduceMHub>(_task).work(w)); break;
+                case REDUCEVHUB:    update_result(w, std::get<ReduceVHub>(_task).work(w)); break;
+                case REDUCEMREP:    update_result(w, std::get<ReduceMRep>(_task).work(w)); break;
+                case REDUCEVREP:    update_result(w, std::get<ReduceVRep>(_task).work(w)); break;
                 default:         std::cout<<"Unsupported task"<<std::endl;       break;
             }
             
@@ -216,7 +293,7 @@ class Node {
         task_t _task;
         Edge_t _result;
 
-        const int _required;
+        int _required;
         std::atomic<int> _joint{0}; 
         std::binary_semaphore* _sem{nullptr};
 
@@ -271,6 +348,10 @@ class Graph {
                 case Node::MULMM:       agset(n->agn, "label", "MulMM");    break;
                 case Node::MULMV:       agset(n->agn, "label", "MulMV");    break;
                 case Node::MULVV:       agset(n->agn, "label", "MulVV");    break;
+                case Node::REDUCEMHUB:     agset(n->agn, "label", "ReduceMHub");    break;
+                case Node::REDUCEVHUB:     agset(n->agn, "label", "ReduceVHub");    break;
+                case Node::REDUCEMREP:     agset(n->agn, "label", "ReduceMRep");    break;
+                case Node::REDUCEVREP:     agset(n->agn, "label", "ReduceVRep");    break;
                 default:                std::cout<<"unrecognized task"<<std::endl; exit(1); 
               }
             }
@@ -305,9 +386,13 @@ class Graph {
                             first_time = true;
                         }
                         Agedge_t* e = agedge(g, n->agn, head->agn, NULL, true);
-                        if(n == head->_dependents[1]){
+                        if(std::holds_alternative<Node::ReduceMHub>(head->_task) || std::holds_alternative<Node::ReduceVHub>(head->_task) || std::holds_alternative<Node::ReduceMRep>(head->_task)||std::holds_alternative<Node::ReduceVRep>(head->_task)||std::holds_alternative<Node::IdentM>(head->_task)||std::holds_alternative<Node::IdentV>(head->_task)){
+                                agset(e, "label", "");
+                        }else if(n == head->_dependents[1]){
                             agset(e, "label", "R");
                         }
+
+                        
                         if(first_time)next.push_back(head);
                     }
 
@@ -344,7 +429,9 @@ class Executor{
 
         ~Executor(){
             for(Worker* w: _workers){
-                w->_thread->join();
+                if(w->_thread != nullptr){
+                    w->_thread->join();
+                }
             }
 
             duration_micro longest = steal_timer.combine([](const duration_micro& t1, const duration_micro& t2){
@@ -383,8 +470,8 @@ class Executor{
 
 class QuantumCircuit{
     public:
-        QuantumCircuit(QubitCount q, int nworkers): _total_qubits(q), _stop(false), _executor(nworkers, &_stop, q){}
-        QuantumCircuit(QubitCount q, int nworkers, const vEdge& v): _total_qubits(q), _stop(false), _executor(nworkers, &_stop, q), _input(v){}
+        QuantumCircuit(QubitCount q, int nworkers, int reduce): _total_qubits(q), _stop(false), REDUCE_THRESHOLD(reduce), _executor(nworkers, &_stop, q){}
+        QuantumCircuit(QubitCount q, int nworkers, int reduce, const vEdge& v): _total_qubits(q), _stop(false),REDUCE_THRESHOLD(reduce), _executor(nworkers, &_stop, q), _input(v){}
 
         template<typename... Args>
         void emplace_back(Args&&... args){
@@ -398,25 +485,28 @@ class QuantumCircuit{
 
         void buildCircuit(){
 
-            Graph g;
             std::vector<Node*> nodes;
-            nodes.reserve(_gates.size() + 1);
             
             if(_input.n != nullptr){
                 Node* n = new Node(_input);
                 nodes.push_back(n);
-                g.emplace(n);
+            }
+            
+            std::size_t i = 0;
+            for(; i < _gates.size()&& i < REDUCE_THRESHOLD; i++){
+                Node* n = new Node(_gates[i]);
+                nodes.push_back(n);
             }
 
-            for(const mEdge& e: _gates){
-                Node* n = new Node(e);
-                nodes.push_back(n); 
-                g.emplace(n);
-            }
-
-            mul_next_level(g, nodes, 0, nodes.size());
-            _graph = std::move(g);
+            for(Node* n: nodes) _graph.emplace(n);
+            
+            Node* root = reduce_nodes_with_mul(nodes);  
+            root = mul_next_level_reduce(root, _gates, i, i + REDUCE_THRESHOLD);
             _executor.seed(_graph);
+            assert(root != nullptr);
+
+            _output = root;
+            root->_sem = new std::binary_semaphore(0);
             return;
 
         }
@@ -450,6 +540,9 @@ class QuantumCircuit{
 
 
     private:
+
+        std::size_t REDUCE_THRESHOLD{100};
+
         QubitCount _total_qubits;
         std::vector<mEdge> _gates;
         Graph _graph;
@@ -487,7 +580,72 @@ class QuantumCircuit{
         
         }
 
-};
 
+        Node* reduce_nodes_with_mul(std::vector<Node*> root /*we need a copy*/){
+            std::vector<Node*> next_root;
+            
+            while( root.size() > 1 ){
+                for(auto i = 0; i < root.size()/2; i++){
+                    Node* n;
+                    if(std::holds_alternative<Node::IdentV>(root[i]->_task) || std::holds_alternative<Node::MulMV>(root[i]->_task) || std::holds_alternative<Node::ReduceVRep>(root[i]->_task)){
+                        n = new Node(Node::MULMV);
+                    }else{
+                        n = new Node(Node::MULMM); 
+                    }
+                    root[i*2]->rhs(n);
+                    root[i*2+1]->lhs(n);
+                    next_root.emplace_back(n);
+                }
+
+                if(root.size() % 2 == 1){
+                    next_root.emplace_back(root.back());
+                }
+
+                root.clear();
+                root.swap(next_root);
+            }
+            
+            if(root.size() == 1)
+                return new Node(root.back());
+            else 
+                return nullptr;
+
+            
+            
+        }
+
+
+        Node* mul_next_level_reduce(Node* root, const std::vector<mEdge>& gates, std::size_t start, std::size_t end){
+
+            
+            std::vector<Node*> level;
+            std::size_t i = start;
+
+            if(root != nullptr){
+                Node* n = new Node(root);
+                level.push_back(n);
+            }
+
+
+            for(; i < end && i < gates.size(); i++){
+                Node* n = new Node(gates[i]);
+                if(root != nullptr)
+                    root->precede(n);
+                level.push_back(n);
+            }
+
+            root = reduce_nodes_with_mul(level);
+
+
+            if(i == end && i < gates.size()){
+                return mul_next_level_reduce(root, gates, end, end + REDUCE_THRESHOLD);
+            }else{
+                return root;
+            }
+
+        
+        }
+
+};
 
 

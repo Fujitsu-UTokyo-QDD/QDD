@@ -12,7 +12,7 @@ static unsigned long long CalculateIterations(const unsigned short n_qubits) {
 
 mEdge Grover::makeFullIteration(){
     
-    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers);
+    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers, _reduce);
     QubitCount total_qubits = n_qubits + n_anciallae;
 
     Controls controls;
@@ -54,7 +54,7 @@ mEdge Grover::makeFullIteration(){
 
 }
 
-Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q), _nworkers(workers),  seed(seed){
+Grover::Grover(QubitCount q, int workers, int reduce, std::size_t seed): n_qubits(q), _nworkers(workers), _reduce(reduce), seed(seed){
     
     iterations = CalculateIterations(n_qubits);
     std::cout<<"iterations: "<<iterations<<std::endl;
@@ -80,7 +80,7 @@ Grover::Grover(QubitCount q, int workers, std::size_t seed): n_qubits(q), _nwork
 void Grover::full_grover(){
     mEdge full_iteration = makeFullIteration();
 
-    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers);
+    QuantumCircuit qc(n_qubits + n_anciallae, _nworkers, _reduce);
     QubitCount total_qubits = n_qubits + n_anciallae;
     //create init state  and set it up
     qc.setInput(makeZeroState(total_qubits));

@@ -7,7 +7,7 @@
 
 class Grover {
     public:
-        explicit Grover(QubitCount q, int workers, std::size_t seed = 0);
+        explicit Grover(QubitCount q, int workers, int reduce,  std::size_t seed = 0);
         void full_grover();
     private:
         
@@ -20,6 +20,8 @@ class Grover {
         QubitCount n_anciallae{1};
         std::mt19937_64 mt;
         int _nworkers;
+
+        int _reduce;
 
 };
 

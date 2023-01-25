@@ -236,7 +236,7 @@ TEST(QddTest, CircuitTest){
     {
         //compute using graph.hpp
         vEdge input = makeZeroState(5);
-        QuantumCircuit qc(5,8, input);
+        QuantumCircuit qc(5,8, 10, input);
         qc.emplace_back(Hmat, 1);
         qc.emplace_back(Xmat, 2);
         qc.emplace_back(Ymat, 3);

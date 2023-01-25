@@ -14,7 +14,7 @@ using std::chrono::milliseconds;
 
 vEdge run(){
     vEdge input = makeZeroState(10);
-    QuantumCircuit qc(10,8, input);
+    QuantumCircuit qc(10,8, 10,input);
     qc.emplace_back(Hmat, 1);
     qc.emplace_back(Xmat, 2);
     qc.emplace_back(Ymat, 3);
@@ -28,8 +28,8 @@ vEdge run(){
     qc.emplace_back(Hmat, 2);
     qc.emplace_back(Sdagmat, 3);
     qc.buildCircuit();
-    std::cout<<"Task graph: "<<std::endl;
-    qc.dump_task_graph();
+    //std::cout<<"Task graph: "<<std::endl;
+    //qc.dump_task_graph();
     auto t1 = std::chrono::high_resolution_clock::now();
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -44,12 +44,15 @@ vEdge run(){
 
 int main(int argc, char* argv[]){
 
+    
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
-    std::cout<<"Qubit: "<<q<<", workers: "<<workers<<std::endl;
+    int reduce = std::atoi(argv[3]);
+    std::cout<<"Qubit: "<<q<<", workers: "<<workers<<", reduce: "<<reduce<<std::endl;
     
-    Grover g(q/*qubits*/, workers/*workers*/) ;   
+    Grover g(q, workers, reduce) ;   
     g.full_grover();
+    
 
 
     return 0;
