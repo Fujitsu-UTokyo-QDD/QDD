@@ -48,6 +48,7 @@ mEdge Grover::makeFullIteration(){
     }
 
     qc.buildCircuit();
+    qc.dump_task_graph();
 
     return qc.wait().matrixResult();
     
@@ -71,6 +72,7 @@ Grover::Grover(QubitCount q, int workers, int reduce, std::size_t seed): n_qubit
             oracle[i] = '1';
         }
     }
+    std::cout<<"orcale: "<<oracle<<std::endl;
 
 }
 
@@ -103,11 +105,14 @@ void Grover::full_grover(){
     }
     
     qc.buildCircuit();
+    qc.dump_task_graph();
     std::cout<<"begin to execute..."<<std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()<<" micro s"<<std::endl;
+    std::cout<<"result: "<<std::endl;
+    result.printVector();
 
 }
