@@ -255,8 +255,6 @@ void Shor::run(){
 */
     delete[] as;
                                                         
-
-
 }
 std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& sample) const {
     unsigned long long res = 0;

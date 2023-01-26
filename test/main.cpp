@@ -57,18 +57,15 @@ vEdge run(int r){
 
 int main(int argc, char* argv[]){
 
-/*     
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
+    int r = std::atoi(argv[3]);
 
-
-    for(auto r = 20; r<= 120 ; r += 20){
-        std::cout<<r<<" reduce"<<std::endl; 
         Grover g(q, workers, r) ;   
         g.full_grover();
-    }
+        return 0;
     
-*/
+/*
     int n = std::atoi(argv[1]);
     int w = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
@@ -77,4 +74,5 @@ int main(int argc, char* argv[]){
 
 
     return 0;
+    */
 }
