@@ -449,8 +449,8 @@ class Executor{
                 return t1 + t2 ;
             });
 
-            std::cout<<"longest time spent in wait: "<<longest.count()<<" ms"<<std::endl;
-            std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
+            //std::cout<<"longest time spent in wait: "<<longest.count()<<" ms"<<std::endl;
+            //std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
         }
         void seed(const Graph& graph){
             int ntasks = graph._nodes.size() / _nworkers;

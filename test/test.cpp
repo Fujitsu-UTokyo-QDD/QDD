@@ -266,20 +266,19 @@ TEST(QddTest, GroverTest){
     QubitCount n_oracles = 1;
     QubitCount total_qubit = n_qubits + n_oracles;
     
-    std::string oracle = "00"; 
+    std::string oracle = "11"; 
 
 
     QuantumCircuit qc(total_qubit,2, 10);
     qc.setInput(makeZeroState(total_qubit));
 
-
+    
     //prepare the oracle qubit to be 1
     qc.emplace_back(Xmat, n_qubits);
 
 
     //apply H to all qubits
     for(auto i = 0; i < total_qubit; i++) qc.emplace_back(Hmat, i);
-    
     //prepare oracle
     Controls controls;
     for(auto i = 0; i < n_qubits; i++){
@@ -287,6 +286,7 @@ TEST(QddTest, GroverTest){
     }
     qc.emplace_back(Zmat, n_qubits, controls);
 
+     
 
     //prepare diffusioin
     // 1. H to data qubits
@@ -322,7 +322,7 @@ TEST(QddTest, GroverTest){
 
 
     //7. H to all qubits
-    for(auto i = 0 ; i < n_qubits; i++){
+    for(auto i = 0 ; i < total_qubit; i++){
         qc.emplace_back(Hmat, i);
     }
 
