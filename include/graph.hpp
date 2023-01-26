@@ -490,6 +490,10 @@ class QuantumCircuit{
             _gates.emplace_back(e);
         }
 
+        void emplace_add(){
+            add_pos.emplace_back(_gates.size());
+        }
+
 
         void buildCircuit(){
 
@@ -509,7 +513,7 @@ class QuantumCircuit{
             for(Node* n: nodes) _graph.emplace(n);
             
             Node* root = reduce_nodes_with_mul(nodes);  
-            root = mul_next_level_reduce(root, _gates, i, i + REDUCE_THRESHOLD);
+            root = mul_next_level_reduce(root, _gates, _gates.size(), i, i + REDUCE_THRESHOLD);
             _executor.seed(_graph);
             assert(root != nullptr);
 
@@ -553,6 +557,9 @@ class QuantumCircuit{
 
         QubitCount _total_qubits;
         std::vector<mEdge> _gates;
+        std::vector<int> add_pos; // for example, if add_pos == 3, this means we have 0,1, 2, in total 3 gates multiplied together, followed by an addition
+
+
         Graph _graph;
         bool _stop;
         vEdge _input;
@@ -627,24 +634,24 @@ class QuantumCircuit{
         }
 
 
-        Node* mul_next_level_reduce(Node* root, const std::vector<mEdge>& gates, std::size_t start, std::size_t end){
+        Node* mul_next_level_reduce(Node* root, const std::vector<mEdge>& gates, std::size_t gates_end, std::size_t start, std::size_t end){
 
             assert(std::holds_alternative<Node::ReduceVHub>(root->_task) || std::holds_alternative<Node::ReduceMHub>(root->_task));
             
             std::vector<Node*> level;
 
-            if(start < gates.size()){
+            if(start < gates_end){
                 Node* n = new Node(root);
                 level.push_back(n);
             }
 
-            if(start >= gates.size()){
+            if(start >= gates_end){
                 return root;
             }
 
             std::size_t i = start;
 
-            for(; i < end && i < gates.size(); i++){
+            for(; i < end && i < gates_end; i++){
                 Node* n = new Node(gates[i]);
                 if(root != nullptr)
                     root->precede(n);
@@ -654,7 +661,7 @@ class QuantumCircuit{
             root = reduce_nodes_with_mul(level);
 
 
-            return mul_next_level_reduce(root, gates, end, end + REDUCE_THRESHOLD);
+            return mul_next_level_reduce(root, gates, gates_end, end, end + REDUCE_THRESHOLD);
 
         
         }

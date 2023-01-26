@@ -3,6 +3,7 @@
 #include "dd.h"
 #include <chrono>
 #include "algorithms/grover.hpp"
+#include "algorithms/shor.hpp"
 #include <cstdlib>
 
 
@@ -40,8 +41,8 @@ vEdge run(int r){
     qc.emplace_back(Hmat, 2);
     qc.emplace_back(Sdagmat, 3);
     qc.buildCircuit();
-    //std::cout<<"Task graph: "<<std::endl;
-    //qc.dump_task_graph();
+    std::cout<<"Task graph: "<<std::endl;
+    qc.dump_task_graph();
     auto t1 = std::chrono::high_resolution_clock::now();
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -56,7 +57,7 @@ vEdge run(int r){
 
 int main(int argc, char* argv[]){
 
-     
+/*     
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
 
@@ -67,8 +68,12 @@ int main(int argc, char* argv[]){
         g.full_grover();
     }
     
-
-    
+*/
+    int n = std::atoi(argv[1]);
+    int w = std::atoi(argv[2]);
+    int r = std::atoi(argv[3]);
+    Shor s(n, w, r, true);    
+    s.run();
 
 
     return 0;

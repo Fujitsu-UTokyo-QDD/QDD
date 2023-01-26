@@ -6,10 +6,10 @@
 
 #define SUBTASK_THRESHOLD 5
 
-mNodeTable mUnique(35);
-vNodeTable vUnique(35);
+mNodeTable mUnique(40);
+vNodeTable vUnique(40);
 
-std::vector<mEdge> identityTable(35);
+std::vector<mEdge> identityTable(40);
 
 
 mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
@@ -877,3 +877,56 @@ vEdge vv_multiply(Worker* w, const vEdge& lhs, const vEdge& rhs){
 
 
 
+std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt, float epsilon) {
+    if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
+        if (rootEdge.w.isApproximatelyZero()) {
+            throw std::runtime_error("Numerical instabilities led to a 0-vector! Abort simulation!");
+        }
+    }
+
+    vEdge      cur            = rootEdge;
+    const auto numberOfQubits = static_cast<QubitCount>(rootEdge.n->v + 1);
+
+    std::string result(numberOfQubits, '0');
+
+    std::uniform_real_distribution<float> dist(0.0, 1.0L);
+
+    for (Qubit i = rootEdge.n->v; i >= 0; --i) {
+        double p0  = cur.n->children.at(0).w.mag2();
+        float p1  = cur.n->children.at(1).w.mag2();
+        float tmp = p0 + p1;
+
+        if (std::abs(tmp - 1.0L) > epsilon) {
+            throw std::runtime_error("Added probabilities differ from 1 by " + std::to_string(std::abs(tmp - 1.0L)));
+        }
+        p0 /= tmp;
+
+        const float threshold = dist(mt);
+        if (threshold < p0) {
+            cur = cur.n->children.at(0);
+        } else {
+            result[cur.n->v] = '1';
+            cur              = cur.n->children.at(1);
+        }
+    }
+
+    if (collapse) {
+
+        vEdge                e = vEdge::one;
+        std::array<vEdge, 2> edges{};
+
+        for (Qubit p = 0; p < numberOfQubits; p++) {
+            if (result[p] == '0') {
+                edges[0] = e;
+                edges[1] = vEdge::zero;
+            } else {
+                edges[0] = vEdge::zero;
+                edges[1] = e;
+            }
+            e = makeVEdge(p, edges);
+        }
+        rootEdge = e;
+    }
+
+    return std::string{result.rbegin(), result.rend()};
+}

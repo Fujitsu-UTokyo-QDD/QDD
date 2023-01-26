@@ -5,13 +5,14 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include "graph.hpp"
 
 
 class Shor{
     public:
-        Shor(int composite_number, int w, int r, int coprime_a = 0 ):
-            n(composite_number), coprime_a(coprime_a), _nworkers(w), _reduce(r),
-            required_bits(std::ceil(std::log2(composite_number))),  approximate(false) {
+        Shor(int composite_number, int w, int r, bool v = false, int coprime_a = 0 ):
+            n(composite_number), coprime_a(coprime_a), _nworkers(w), _reduce(r), verbose(v), 
+            required_bits(std::ceil(std::log2(composite_number))), n_qubits(2 * required_bits + 3), qc(2*required_bits + 3, w,r),  approximate(false) {
                 std::array<std::mt19937_64::result_type, std::mt19937_64::state_size> random_data{};
                 std::random_device                                                    rd;
                 std::generate(std::begin(random_data), std::end(random_data), [&rd]() { return rd(); });
@@ -41,11 +42,11 @@ class Shor{
             return b;
         }
 
-        static double QDDcos(double fac, double div) {
+        static float QDDcos(float fac, float div) {
             return std::cos((std::numbers::pi * fac) / div);
         }
 
-        static double QDDsin(double fac, double div) {
+        static float QDDsin(float fac, float div) {
             return std::sin((std::numbers::pi * fac) / div);
         }
 
@@ -68,7 +69,7 @@ class Shor{
 
         static int inverse_mod(int a, int n);
 
-        mEdge u_a_emulate(unsigned long long a, int q);
+        void u_a(unsigned long long a, int N, int c) ;
 
 
         std::vector<unsigned long long> ts;
@@ -96,15 +97,19 @@ class Shor{
         std::string                   polr_result = "did not start";
         std::pair<unsigned, unsigned> polr_factors{0, 0};
 
+        const bool verbose;
+
         const bool         approximate;
         unsigned long long approximation_runs{0};
         long double        final_fidelity{1.0L};
         double             step_fidelity{0.9};
+        QuantumCircuit qc;
         std::mt19937_64 mt;
 
         int _nworkers;
 
         int _reduce;
+
 
 
 };

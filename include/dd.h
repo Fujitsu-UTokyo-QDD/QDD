@@ -3,6 +3,7 @@
 #include "common.h"
 #include <complex>
 #include <vector>
+#include <random>
 
 
 struct Complex{
@@ -37,6 +38,10 @@ struct Complex{
         r = (a*p+b*q)/mag;
         i = (b*p-a*q)/mag;
         return *this;
+    }
+
+    float mag2() const{
+        return r*r + i*i;
     }
 
     bool isZero()const noexcept{
@@ -346,3 +351,4 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c);
 vEdge makeZeroState( QubitCount q);
 vEdge makeOneState( QubitCount q);
 
+std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt, float epsilon = 0.001) ;
