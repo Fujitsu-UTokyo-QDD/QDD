@@ -331,6 +331,7 @@ mEdge makeGate(QubitCount q, GateMatrix g,Qubit target, const Controls& c );
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target);
 
 mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge mm_add_no_worker(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
 

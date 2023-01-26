@@ -6,10 +6,10 @@
 
 #define SUBTASK_THRESHOLD 5
 
-mNodeTable mUnique(20);
-vNodeTable vUnique(20);
+mNodeTable mUnique(35);
+vNodeTable vUnique(35);
 
-std::vector<mEdge> identityTable(20);
+std::vector<mEdge> identityTable(35);
 
 
 mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
@@ -406,6 +406,56 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
 }
 
+mEdge mm_add2_no_worker( const mEdge& lhs, const mEdge& rhs, int32_t current_var){
+    if(lhs.w.isZero()){
+        return rhs;
+    }else if(rhs.w.isZero()){
+        return lhs;
+    }
+    
+    if(current_var == -1) {
+        assert(lhs.isTerminal() && rhs.isTerminal());
+        return {lhs.w + rhs.w, mNode::terminal};
+    }
+
+
+
+    mEdge x, y;
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
+
+
+    std::array<mEdge, 4> edges;
+
+
+    for(auto i = 0; i < 4; i++){
+        if(lv == current_var && !lhs.isTerminal()){
+            x = lnode->getEdge(i);
+            x.w = lhs.w * x.w;
+        }else{
+            x = lhs;
+        }
+        if(rv == current_var && !rhs.isTerminal()){
+            y = rnode->getEdge(i);
+            y.w = rhs.w * y.w;
+        }else{
+            y = rhs;
+        }
+
+        edges[i] = mm_add2_no_worker( x, y, current_var - 1);
+    }
+
+
+    mEdge result =  makeMEdge(current_var, edges);
+    
+
+    return result;
+
+
+}
 mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs){
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w + rhs.w, mNode::terminal};
@@ -417,6 +467,15 @@ mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs){
 }
 
 
+mEdge mm_add_no_worker( const mEdge& lhs, const mEdge& rhs){
+    if(lhs.isTerminal() && rhs.isTerminal()){
+        return {lhs.w + rhs.w, mNode::terminal};
+    }
+
+
+    Qubit root = rootVar(lhs, rhs);
+    return mm_add2_no_worker( lhs, rhs, root);
+}
 
 static void brp(){
 }
