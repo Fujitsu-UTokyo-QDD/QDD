@@ -46,7 +46,7 @@ vEdge run(int r){
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
     duration<double, std::micro> ms = t2 - t1;
-    std::cout<<ms.count()<<" micro s"<<std::endl;
+    std::cout<<ms.count()<<" micros"<<std::endl;
     return result;
 
 }
@@ -59,11 +59,13 @@ int main(int argc, char* argv[]){
      
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
-    int reduce = std::atoi(argv[3]);
-    std::cout<<"Qubit: "<<q<<", workers: "<<workers<<", reduce: "<<reduce<<std::endl;
-    
-    Grover g(q, workers, reduce) ;   
-    g.full_grover();
+
+
+    for(auto r = 20; r<= 120 ; r += 20){
+        std::cout<<r<<" reduce"<<std::endl; 
+        Grover g(q, workers, r) ;   
+        g.full_grover();
+    }
     
 
     

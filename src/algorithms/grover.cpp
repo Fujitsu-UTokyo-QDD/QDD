@@ -74,7 +74,7 @@ mEdge Grover::makeFullIteration(){
 Grover::Grover(QubitCount q, int workers, int reduce, std::size_t seed): n_qubits(q), _nworkers(workers), _reduce(reduce), seed(seed){
     
     iterations = CalculateIterations(n_qubits);
-    std::cout<<"iterations: "<<iterations<<std::endl;
+    std::cout<<iterations<<" iterations"<<std::endl;
     std::array<std::mt19937_64::result_type, std::mt19937_64::state_size> random_data{};
     std::random_device                                                    rd;
     std::generate(std::begin(random_data), std::end(random_data), [&rd]() { return rd(); });
@@ -116,7 +116,6 @@ void Grover::full_grover(){
     }
     
     qc.buildCircuit();
-    std::cout<<"begin to execute..."<<std::endl;
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
