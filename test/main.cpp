@@ -56,7 +56,7 @@ vEdge run(int r){
 
 int main(int argc, char* argv[]){
 
-    
+    /* 
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
     int reduce = std::atoi(argv[3]);
@@ -64,7 +64,17 @@ int main(int argc, char* argv[]){
     
     Grover g(q, workers, reduce) ;   
     g.full_grover();
+    */
     //run(reduce);
+    QuantumCircuit qc(3,1,10);
+    Controls c1;
+    c1.emplace(Control{0, Control::Type::pos});
+    c1.emplace(Control{1, Control::Type::neg});
+    qc.emplace_back(Zmat, 2, c1);
+    qc.buildCircuit();
+    qc.dump_task_graph();
+    mEdge result = qc.wait().matrixResult();
+    result.printMatrix();
     
 
 

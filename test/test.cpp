@@ -174,7 +174,6 @@ TEST(QddTest, ArithmeticTest){
         Controls controls;
         controls.emplace(Control{2, Control::Type::pos});
         mEdge e = makeGate(3, Hmat, 0, controls);
-        e.printMatrix();
 
         MatrixXcf one = Matrix2cf::Zero();
         one(1,1) = {1.0,0.0};
@@ -258,4 +257,78 @@ TEST(QddTest, CircuitTest){
         vec = m6 * m5 * m4 * m3 * m2 * m1 * vinput;
     }
     ASSERT_TRUE(vectorEqual(v, vec));
+}
+
+
+TEST(QddTest, GroverTest){
+
+    QubitCount n_qubits = 2;
+    QubitCount n_oracles = 1;
+    QubitCount total_qubit = n_qubits + n_oracles;
+    
+    std::string oracle = "00"; 
+
+
+    QuantumCircuit qc(total_qubit,2, 10);
+    qc.setInput(makeZeroState(total_qubit));
+
+
+    //prepare the oracle qubit to be 1
+    qc.emplace_back(Xmat, n_qubits);
+
+
+    //apply H to all qubits
+    for(auto i = 0; i < total_qubit; i++) qc.emplace_back(Hmat, i);
+    
+    //prepare oracle
+    Controls controls;
+    for(auto i = 0; i < n_qubits; i++){
+        controls.emplace(Control{i, oracle.at(i) == '1'? Control::Type::pos: Control::Type::neg});
+    }
+    qc.emplace_back(Zmat, n_qubits, controls);
+
+
+    //prepare diffusioin
+    // 1. H to data qubits
+    for(auto i = 0 ; i < n_qubits; i++){
+        qc.emplace_back(Hmat, i);
+    }
+
+    //2. X to data qubits
+    for(auto i = 0; i < n_qubits; i++){
+        qc.emplace_back(Xmat,i);   
+    }
+
+
+    //3. H to the last data qubit
+    qc.emplace_back(Hmat, n_qubits - 1);
+
+
+    //4. CX to the last data qubit
+    Controls diff_controls;
+    for(auto i = 0; i < n_qubits - 1; i++){
+        diff_controls.emplace(Control{i, Control::Type::pos});
+    }
+    qc.emplace_back(Xmat, n_qubits -1 , diff_controls);
+
+
+    //5. H to the last data qubit
+    qc.emplace_back(Hmat, n_qubits - 1);
+
+    //6. X to data qubits
+    for(auto i = 0; i < n_qubits; i++){
+        qc.emplace_back(Xmat,i);   
+    }
+
+
+    //7. H to all qubits
+    for(auto i = 0 ; i < n_qubits; i++){
+        qc.emplace_back(Hmat, i);
+    }
+
+    qc.buildCircuit();
+    vEdge result = qc.wait().vectorResult();
+    result.printVector();
+
+
 }

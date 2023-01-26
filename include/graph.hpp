@@ -173,6 +173,14 @@ class Node {
                 _task = ReduceVRep();
                 _dependents.push_back(dep);
                 dep->_successors.push_back(this);
+            }else if (std::holds_alternative<Node::IdentM>(dep->_task)){
+                _task = ReduceMHub();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
+            }else if (std::holds_alternative<Node::IdentV>(dep->_task)){
+                _task = ReduceVHub();
+                _dependents.push_back(dep);
+                dep->_successors.push_back(this);
             }else{
                 std::cout<<"Unsupported reduce task"<<std::endl;
                 exit(1);
