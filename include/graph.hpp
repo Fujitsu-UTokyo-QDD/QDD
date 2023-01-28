@@ -34,6 +34,10 @@ struct Worker{
 
         AddCache _addCache;
         MulCache _mulCache;
+
+
+        std::vector<Node*> this_round;
+        std::vector<Node*> next_round;
 };
 
 class Node {
@@ -464,6 +468,8 @@ class Executor{
             for(int t = w*ntasks; t < graph._nodes.size(); t++ )
                 _workers[w-1]->_wsq.push(graph._nodes[t]);
         }
+
+
         void spawn(); 
     private:
         const std::size_t MAX_STEALS{100};
@@ -494,7 +500,7 @@ class QuantumCircuit{
             add_pos.emplace_back(_gates.size());
         }
 
-
+        /*
         void buildCircuit(){
 
             std::vector<Node*> nodes;
@@ -519,6 +525,31 @@ class QuantumCircuit{
 
             _output = root;
             root->_sem = new std::binary_semaphore(0);
+            return;
+
+        }
+        */
+        void buildCircuit(){
+
+            Graph g;
+            std::vector<Node*> nodes;
+            nodes.reserve(_gates.size() + 1);
+            
+            if(_input.n != nullptr){
+                Node* n = new Node(_input);
+                nodes.push_back(n);
+                g.emplace(n);
+            }
+
+            for(const mEdge& e: _gates){
+                Node* n = new Node(e);
+                nodes.push_back(n); 
+                g.emplace(n);
+            }
+
+            mul_next_level(g, nodes, 0, nodes.size());
+            _graph = std::move(g);
+            _executor.seed(_graph);
             return;
 
         }

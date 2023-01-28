@@ -128,6 +128,8 @@ class WorkStealingQueue {
     The return can be a @std_nullopt if this operation failed (not necessary empty).
     */
     std::optional<T> steal();
+
+    std::optional<T*> steal_half(std::size_t& sz); 
 };
 
 // Constructor
@@ -228,12 +230,32 @@ struct TimerGuard{
 // Function: steal
 template <typename T>
 std::optional<T> WorkStealingQueue<T>::steal() {
-  TimerGuard g;
   int64_t t = _top.load(std::memory_order_acquire);
   std::atomic_thread_fence(std::memory_order_seq_cst);
   int64_t b = _bottom.load(std::memory_order_acquire);
   
   std::optional<T> item;
+
+  if(t < b) {
+    Array* a = _array.load(std::memory_order_consume);
+    item = a->pop(t);
+    if(!_top.compare_exchange_strong(t, t+1,
+                                     std::memory_order_seq_cst,
+                                     std::memory_order_relaxed)) {
+      return std::nullopt;
+    }
+  }
+
+  return item;
+}
+
+template <typename T>
+std::optional<T*> WorkStealingQueue<T>::steal_half(std::size_t& sz) {
+  int64_t t = _top.load(std::memory_order_acquire);
+  std::atomic_thread_fence(std::memory_order_seq_cst);
+  int64_t b = _bottom.load(std::memory_order_acquire);
+  
+  std::optional<T*> item;
 
   if(t < b) {
     Array* a = _array.load(std::memory_order_consume);

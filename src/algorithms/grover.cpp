@@ -64,7 +64,7 @@ mEdge Grover::makeFullIteration(){
 
 
     qc.buildCircuit();
-    //qc.dump_task_graph();
+    qc.dump_task_graph();
 
     return qc.wait().matrixResult();
     
