@@ -561,6 +561,75 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
     
 }
 
+mEdge mm_multiply2_no_worker(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
+
+    if(lhs.w.isZero() || rhs.w.isZero()){
+        return mEdge::zero;
+    }
+
+    if(current_var == -1) {
+        if(!lhs.isTerminal() || !rhs.isTerminal()){
+            brp();
+        }
+        assert(lhs.isTerminal() && rhs.isTerminal());
+        return {lhs.w * rhs.w, mNode::terminal};
+    }
+    
+
+    
+
+    Qubit lv = lhs.getVar();
+    Qubit rv = rhs.getVar();
+    assert(lv <= current_var && rv <= current_var);
+    mNode* lnode = lhs.getNode();
+    mNode* rnode = rhs.getNode();
+    mEdge x,y;
+    mEdge lcopy = lhs;
+    mEdge rcopy = rhs;
+    lcopy.w = {1.0,0.0};
+    rcopy.w = {1.0, 0.0};
+
+
+    std::array<mEdge, 4 > edges;
+
+    for(auto i = 0; i < 4; i++){
+
+        std::size_t row = i >> 1;
+        std::size_t col = i & 0x1;
+        
+        std::array<mEdge, 2> product;
+        for(auto k = 0; k < 2; k++){
+            if(lv == current_var && !lhs.isTerminal()){
+                x = lnode->getEdge((row<<1) | k);
+            }else{
+                x = lhs; 
+            }
+
+
+            if(rv == current_var && !rhs.isTerminal()){
+                y = rnode->getEdge((k<<1) | col);
+            }else{
+                y = rhs;     
+            }
+
+            
+
+            product[k] = mm_multiply2_no_worker(x, y, current_var - 1); 
+            
+        }
+        edges[i] = mm_add2_no_worker(product[0], product[1], current_var - 1);
+        
+    }
+
+
+    mEdge result = makeMEdge(current_var, edges);
+
+    result.w = result.w * lhs.w * rhs.w;
+    if(result.w.isApproximatelyZero()) return mEdge::zero;
+    else return result;
+
+    
+}
 
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
@@ -575,6 +644,17 @@ mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs){
 }
 
 
+mEdge mm_multiply_no_worker(const mEdge& lhs, const mEdge& rhs){
+
+    if(lhs.isTerminal() && rhs.isTerminal()){
+        return {lhs.w * rhs.w, mNode::terminal};
+    }
+
+
+    Qubit root = rootVar(lhs, rhs);
+    mEdge result = mm_multiply2_no_worker(lhs, rhs, root);
+    return result;
+}
 
 
 static void printVector2(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std_complex* m){
@@ -893,4 +973,17 @@ std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt
     std::bitset<10> b(max_idx);
     return b.to_string();
 
+}
+
+mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1){
+    Controls c1{Control{target0, Control::Type::pos}};
+    mEdge e1 = makeGate(q, Xmat, target1, c1);
+
+    Controls c2{Control{target1, Control::Type::pos}};
+    mEdge e2 = makeGate(q, Xmat, target0, c2);
+
+    mEdge e3 = mm_multiply_no_worker(e2, e1);
+    e3 = mm_multiply_no_worker(e1, e3);
+
+    return e3;
 }

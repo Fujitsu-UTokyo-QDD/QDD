@@ -9,6 +9,8 @@
 #include <Eigen/KroneckerProduct>
 #include "gtest/gtest.h"
 #include "graph.hpp"
+#include <numbers>
+#include <cmath>
 
 
 
@@ -329,6 +331,52 @@ TEST(QddTest, GroverTest){
     qc.buildCircuit();
     vEdge result = qc.wait().vectorResult();
     result.printVector();
+
+
+}
+
+static void qft_rotations(QuantumCircuit& qc, Qubit start, Qubit end){
+    if(start == end) 
+        return;
+
+    end -= 1;
+    qc.emplace_back(Hmat, end);
+
+    for(Qubit q = start; q < end; q++){
+        Controls c{Control{q, Control::Type::pos}};
+        float r = std::cos(std::numbers::pi/(std::pow(2, end - q))); 
+        float i = std::sin(std::numbers::pi/(std::pow(2, end - q))); 
+        GateMatrix g{cf_one, cf_zero, cf_zero, {r,i}}; 
+        qc.emplace_back(g, end, c);
+    }
+
+    qft_rotations(qc, start, end);
+    
+}
+
+
+static void qft_swap(QuantumCircuit& qc, Qubit start, Qubit end){
+    QubitCount total_qubits = qc.getQubits();
+
+    for(Qubit q = start; q < (end + start)/2; q++){
+        qc.emplace_gate(makeSwap(total_qubits, q, end + start -1 - q ));
+    }
+}
+
+static void full_qft(QuantumCircuit& qc, Qubit start, Qubit end){
+    qft_rotations(qc, start, end);
+    //qft_swap(qc, start, end);
+}
+
+TEST(QddTest, QFTTest){
+
+    QuantumCircuit qc(2,2, 10);
+    full_qft(qc,0,3);
+    qc.buildCircuit();
+    mEdge m = qc.wait().matrixResult();
+    m.printMatrix();
+
+
 
 
 }

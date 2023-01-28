@@ -10,9 +10,13 @@
 
 class Shor{
     public:
-        Shor(int composite_number, int w, int r, bool v = false, int coprime_a = 0 ):
-            n(composite_number), coprime_a(coprime_a), _nworkers(w), _reduce(r), verbose(v), 
+        Shor(int composite_number, int w, int r, bool v = false ):
+            n(composite_number), coprime_a(2), _nworkers(w), _reduce(r), verbose(v), 
             required_bits(std::ceil(std::log2(composite_number))), n_qubits(2 * required_bits + 3), qc(2*required_bits + 3, w,r),  approximate(false) {
+                if(n%2 == 0){
+                    std::cout<<"only support factorizing odd numbers"<<std::endl;
+                    exit(1);
+                }
                 std::array<std::mt19937_64::result_type, std::mt19937_64::state_size> random_data{};
                 std::random_device                                                    rd;
                 std::generate(std::begin(random_data), std::end(random_data), [&rd]() { return rd(); });

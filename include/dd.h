@@ -334,10 +334,12 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4>& c);
 mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target, const Controls& c );
 mEdge makeGate(QubitCount q, GateMatrix g,Qubit target);
+mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
 
 mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_add_no_worker(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
+mEdge mm_multiply_no_worker(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
 
 vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs);

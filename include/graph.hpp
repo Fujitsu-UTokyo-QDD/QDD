@@ -548,6 +548,10 @@ class QuantumCircuit{
             _graph.dump();
         }
 
+        QubitCount getQubits() const{
+            return _total_qubits; 
+        }
+
         
 
 

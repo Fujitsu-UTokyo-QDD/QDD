@@ -119,6 +119,41 @@ void Shor::mod_add_phi_inv(int a, int N, int c1, int c2) {
     add_phi_inv(a, c1, c2);
 }
 
+//[start, end)
+static void qft_rotations(QuantumCircuit& qc, Qubit start, Qubit end){
+    if(start == end) 
+        return;
+
+    end -= 1;
+    qc.emplace_back(Hmat, end);
+
+    for(Qubit q = start; q < end; q++){
+        Controls c{Control{q, Control::Type::pos}};
+        float r = std::cos(std::numbers::pi/(std::pow(2, end - q))); 
+        float i = std::sin(std::numbers::pi/(std::pow(2, end - q))); 
+        GateMatrix g{cf_one, cf_zero, cf_zero, {r,i}}; 
+        qc.emplace_back(g, end, c);
+    }
+
+    qft_rotations(qc, start, end);
+    
+}
+
+
+//[start, end)
+static void qft_swap(QuantumCircuit& qc, Qubit start, Qubit end){
+    QubitCount total_qubits = qc.getQubits();
+    Qubit e = end-1;
+    for(Qubit q = start; q < (start+end)/2; q++){
+        qc.emplace_gate(makeSwap(total_qubits, q, e-- ));
+    }
+}
+
+static void full_qft(QuantumCircuit& qc, Qubit start, Qubit end){
+    qft_rotations(qc, start, end);
+    qft_swap(qc, start, end);
+}
+
 void Shor::qft() {
     for (unsigned int i = required_bits + 1; i < 2 * required_bits + 2; i++) {
         qc.emplace_back(Hmat, (n_qubits-1) - i);
@@ -193,13 +228,7 @@ void Shor::run(){
 
     qc.emplace_back(Xmat, n_qubits - 1);
 
-    if(coprime_a == 0){
-        std::uniform_int_distribution<unsigned int> distribution(1, n - 1); // range is inclusive
-        do {
-            coprime_a = distribution(mt);
-        } while (gcd(coprime_a, n) != 1 || coprime_a == 1);
-        
-    }
+    std::cout<<"coprime_a = "<< coprime_a<<std::endl;
 
     auto* as                  = new unsigned long long[2 * required_bits];
     as[2 * required_bits - 1] = coprime_a;
@@ -233,7 +262,7 @@ void Shor::run(){
         qc.emplace_back(Hmat, n_qubits - 1 - i);
     }
     qc.buildCircuit();
-    //qc.dump_task_graph();
+    qc.dump_task_graph();
 
     vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();

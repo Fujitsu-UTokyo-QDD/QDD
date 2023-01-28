@@ -5,6 +5,7 @@
 #include "algorithms/grover.hpp"
 #include "algorithms/shor.hpp"
 #include <cstdlib>
+#include <cmath>
 
 
 
@@ -54,9 +55,44 @@ vEdge run(int r){
 
 
 
+//[start, end)
+static void qft_rotations(QuantumCircuit& qc, Qubit start, Qubit end){
+    if(start == end) 
+        return;
+
+    end -= 1;
+    qc.emplace_back(Hmat, end);
+
+    for(Qubit q = start; q < end; q++){
+        Controls c{Control{q, Control::Type::pos}};
+        float r = std::cos(std::numbers::pi/(std::pow(2, end - q))); 
+        float i = std::sin(std::numbers::pi/(std::pow(2, end - q))); 
+        GateMatrix g{cf_one, cf_zero, cf_zero, {r,i}}; 
+        qc.emplace_back(g, end, c);
+    }
+
+    qft_rotations(qc, start, end);
+    
+}
+
+
+//[start, end)
+static void qft_swap(QuantumCircuit& qc, Qubit start, Qubit end){
+    QubitCount total_qubits = qc.getQubits();
+    Qubit e = end-1;
+    for(Qubit q = start; q < (start+end)/2; q++){
+        qc.emplace_gate(makeSwap(total_qubits, q, e-- ));
+    }
+}
+
+static void full_qft(QuantumCircuit& qc, Qubit start, Qubit end){
+    qft_rotations(qc, start, end);
+    qft_swap(qc, start, end);
+}
 
 int main(int argc, char* argv[]){
 
+/*
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
@@ -64,8 +100,9 @@ int main(int argc, char* argv[]){
         Grover g(q, workers, r) ;   
         g.full_grover();
         return 0;
+        */
     
-/*
+
     int n = std::atoi(argv[1]);
     int w = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
@@ -74,5 +111,5 @@ int main(int argc, char* argv[]){
 
 
     return 0;
-    */
+    
 }
