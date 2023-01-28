@@ -12,7 +12,7 @@ class Shor{
     public:
         Shor(int composite_number, int w, int r, bool v = false ):
             n(composite_number), coprime_a(2), _nworkers(w), _reduce(r), verbose(v), 
-            required_bits(std::ceil(std::log2(composite_number))), n_qubits(2 * required_bits + 3), qc(2*required_bits + 3, w,r),  approximate(false) {
+            required_bits(std::ceil(std::log2(composite_number))), n_qubits(2 * required_bits + 3),  approximate(false) {
                 if(n%2 == 0){
                     std::cout<<"only support factorizing odd numbers"<<std::endl;
                     exit(1);
@@ -55,25 +55,25 @@ class Shor{
         }
 
 
-        void cmult_inv(int a, int N, int c);
+        void cmult_inv(QuantumCircuit& qc,int a, int N, int c);
 
-        void cmult(int a, int N, int c);
+        void cmult(QuantumCircuit& qc, int a, int N, int c);
 
-        void mod_add_phi_inv(int a, int N, int c1, int c2);
+        void mod_add_phi_inv(QuantumCircuit& qc, int a, int N, int c1, int c2);
 
-        void mod_add_phi(int a, int N, int c1, int c2);
+        void mod_add_phi(QuantumCircuit& qc, int a, int N, int c1, int c2);
 
-        void qft_inv();
+        void qft_inv(QuantumCircuit& qc);
 
-        void qft();
+        void qft(QuantumCircuit& qc);
 
-        void add_phi_inv(int a, int c1, int c2);
+        void add_phi_inv(QuantumCircuit& qc,int a, int c1, int c2);
 
-        void add_phi(int a, int c1, int c2);
+        void add_phi(QuantumCircuit& qc, int a, int c1, int c2);
 
         static int inverse_mod(int a, int n);
 
-        void u_a(unsigned long long a, int N, int c) ;
+        void u_a(QuantumCircuit& qc, unsigned long long a, int N, int c) ;
 
 
         std::vector<unsigned long long> ts;
@@ -107,7 +107,6 @@ class Shor{
         unsigned long long approximation_runs{0};
         long double        final_fidelity{1.0L};
         double             step_fidelity{0.9};
-        QuantumCircuit qc;
         std::mt19937_64 mt;
 
         int _nworkers;
