@@ -244,12 +244,9 @@ void Shor::run(){
         qc.emplace_back(Hmat, (n_qubits-1) - i);
     }
     const int mod = std::ceil(2 * required_bits / 6.0); // log_0.9(0.5) is about 6
-    QuantumCircuit qc2(n_qubits, _nworkers, _reduce);
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
-        u_a(qc2,as[i], n, 0);
+        u_a(qc,as[i], n, 0);
     }
-    qc2.buildCircuit();
-    qc.emplace_gate(qc2.wait().matrixResult());
 
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
 
