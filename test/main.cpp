@@ -92,7 +92,7 @@ static void full_qft(QuantumCircuit& qc, Qubit start, Qubit end){
 
 int main(int argc, char* argv[]){
 
-
+    /*
     int q = std::atoi(argv[1]);
     int workers = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
@@ -100,16 +100,15 @@ int main(int argc, char* argv[]){
         Grover g(q, workers, r) ;   
         g.full_grover();
         return 0;
-    /*
     
 
+    */
     int n = std::atoi(argv[1]);
     int w = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
     Shor s(n, w, r, true);    
     s.run();
 
-    */
     return 0;
     
 }

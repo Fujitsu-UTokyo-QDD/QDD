@@ -31,14 +31,9 @@ void Executor::spawn(){
             }
 
             std::exception_ptr ptr{nullptr};
-            try {
-                while(!(*this->_stop)) {
-                    try_execute_self(_workers[id]);
-                    try_execute_else(_workers[id]);
-                }
-            } catch(...) {
-                ptr = std::current_exception();
-            }
+            _workers[id]->execute();
+            if(id == 0) _workers[id]->collect(_nworkers);
+
 
         }, i, std::ref(mtx), std::ref(cond), std::ref(spawned));
         
@@ -104,4 +99,41 @@ void Executor::try_execute_else(Worker* w){
 }
 
 
+void Worker::execute(){
 
+    while(this_round.size() > 1){
+        for(Node* n: this_round){
+            n->execute(this);
+        }
+        this_round.clear();
+        this_round.swap(next_round);
+    }
+
+    assert(this_round.size() == 1);
+    _executor->_total_queue[_id] = this_round[0];
+    
+   this->_executor->_sem.release(); 
+
+}
+
+
+void Worker::collect(int N){
+    do{
+        _executor->_sem.acquire();
+    }while(--N > 0);
+
+    this_round.clear();
+    next_round.clear();
+
+    this_round = std::move(_executor->_total_queue);
+
+
+    while(!this_round.empty()){
+        for(Node* n: this_round){
+            n->execute(this);
+        }
+        this_round.clear();
+        this_round.swap(next_round);
+    }
+
+}
