@@ -24,13 +24,13 @@ vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
-    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return norm(e.w) == 0.0;})){
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](mEdge& e){ return e.w.norm() == 0.0;})){
         mUnique.returnNode(e.n);
         return mEdge::zero;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const mEdge& lhs, const mEdge& rhs){
-            return norm(lhs.w) < norm(rhs.w);
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](mEdge& lhs, mEdge& rhs){
+            return lhs.w.norm() < rhs.w.norm();
     });
 
     
@@ -53,13 +53,13 @@ static mEdge normalizeM(const mEdge& e){
 static vEdge normalizeV(const vEdge& e){
 
     // check for all zero weights
-    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](vEdge& e){ return e.w.norm() == 0.0;})){
         vUnique.returnNode(e.n);
         return vEdge::zero;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
-            return norm(lhs.w) < norm(rhs.w);
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](vEdge& lhs, vEdge& rhs){
+            return lhs.w.norm() < rhs.w.norm();
     });
 
     

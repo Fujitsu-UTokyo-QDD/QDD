@@ -9,6 +9,7 @@
 struct Complex{
     float r; 
     float i;
+    float n{-1.0};
 
     static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
 
@@ -30,14 +31,22 @@ struct Complex{
         i = (a*q + b*p);
         return *this;
     }
-    Complex& operator/=(const Complex& rhs) noexcept{
+    Complex& operator/=(Complex& rhs) noexcept{
 
-        float mag = rhs.r*rhs.r + rhs.i*rhs.i;
+        float mag = rhs.norm() * rhs.norm();
         float a = r, b = i;
         float p = rhs.r, q = rhs.i;
         r = (a*p+b*q)/mag;
         i = (b*p-a*q)/mag;
         return *this;
+    }
+
+    float norm(){
+        if(n != -1.0) return n;
+        else{
+            n = std::sqrt(r*r + i*i);
+            return n;
+        }
     }
 
     float mag2() const{
@@ -92,8 +101,12 @@ inline std::ostream& operator<<(std::ostream& os, const Complex& c) noexcept {
     return os<<"("<<c.r<<" , "<<c.i<<")";
 }
 
-inline float norm(const Complex& c){
-    return std::sqrt(c.r*c.r + c.i*c.i);
+inline float norm(Complex& c){
+    if(c.n != -1.0) return c.n;
+    else{
+        c.n = std::sqrt(c.r*c.r + c.i*c.i);
+        return c.n;
+    }
 }
 
 
