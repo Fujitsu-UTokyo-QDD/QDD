@@ -94,7 +94,8 @@ public:
         T* previous = current;
 RELOAD:
         while(current != nullptr){
-            if(ValueEqual()(*node, *current)){
+            //if(ValueEqual()(*node, *current)){
+            if(*node == *current){
                 assert(current -> v == node->v);
 
                 returnNode(node);
