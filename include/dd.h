@@ -9,7 +9,6 @@
 struct Complex{
     double r; 
     double i;
-    double n{-1.0};
 
     static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
 
@@ -50,7 +49,7 @@ struct Complex{
     double norm(){
         auto s = r*r + i*i;
         assert(s >= 0.0);
-        n = std::sqrt(s);
+        double n = std::sqrt(s);
         assert(!std::isnan(n));
         return n;
     }
@@ -109,13 +108,7 @@ inline std::ostream& operator<<(std::ostream& os, const Complex& c) noexcept {
     return os<<"("<<c.r<<" , "<<c.i<<")";
 }
 
-inline double norm(Complex& c){
-    if(c.n != -1.0) return c.n;
-    else{
-        c.n = std::sqrt(c.r*c.r + c.i*c.i);
-        return c.n;
-    }
-}
+
 
 
 //using std_complex = std::complex<float>;
