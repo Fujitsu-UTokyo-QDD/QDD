@@ -101,14 +101,13 @@ int main(int argc, char* argv[]){
         g.full_grover();
         return 0;
     
+*/
 
-    */
     int n = std::atoi(argv[1]);
     int w = std::atoi(argv[2]);
     int r = std::atoi(argv[3]);
     Shor s(n, w, r, true);    
     s.run();
-
     return 0;
     
 }

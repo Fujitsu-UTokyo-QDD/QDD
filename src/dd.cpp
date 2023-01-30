@@ -347,6 +347,12 @@ static Qubit rootVar(const mEdge& lhs, const mEdge& rhs) {
     return (lhs.isTerminal() || (!rhs.isTerminal() && ( rhs.getVar()> lhs.getVar() )))?  rhs.getVar() : lhs.getVar();
 }
 
+static Qubit rootVar(const mEdge& lhs, const vEdge& rhs) {
+    assert(!(lhs.isTerminal() && rhs.isTerminal()));
+    
+    return (lhs.isTerminal() || (!rhs.isTerminal() && ( rhs.getVar()> lhs.getVar() )))?  rhs.getVar() : lhs.getVar();
+}
+
 
 mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
     if(lhs.w.isZero()){
@@ -944,8 +950,8 @@ vEdge mv_multiply(Worker *w, const mEdge& lhs, const vEdge& rhs){
     }
 
     // assume lhs and rhs are the same length.
-    assert(lhs.getVar() == rhs.getVar());
-    vEdge v = mv_multiply2(w, lhs, rhs, lhs.getVar());
+    Qubit root = rootVar(lhs, rhs);
+    vEdge v = mv_multiply2(w, lhs, rhs, root);
     return v;
 }
 
@@ -963,7 +969,7 @@ std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt
     std::size_t dim; 
     std_complex* vs = rootEdge.getVector(&dim);
     std::size_t max_idx = 0;
-    float max_val = vs[max_idx].mag2();
+    double max_val = vs[max_idx].mag2();
     for(auto i = 1; i < dim; i++){
         if(vs[i].mag2() > max_val){
             max_val = vs[i].mag2();

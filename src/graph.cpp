@@ -29,13 +29,13 @@ void Executor::spawn(){
                     cond.notify_one();
                 }
             }
-            auto t1 = std::chrono::high_resolution_clock::now();
+          //  auto t1 = std::chrono::high_resolution_clock::now();
 
             _workers[id]->execute();
             if(id == 0) _workers[id]->collect(_nworkers);
-            auto t2 = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::micro> ms = t2 - t1;
-            std::cout<<id<<" finished in "<<ms.count()<<" micro s"<<std::endl;
+            //auto t2 = std::chrono::high_resolution_clock::now();
+            //std::chrono::duration<double, std::micro> ms = t2 - t1;
+           // std::cout<<id<<" finished in "<<ms.count()<<" micro s"<<std::endl;
 
 
         }, i, std::ref(mtx), std::ref(cond), std::ref(spawned));

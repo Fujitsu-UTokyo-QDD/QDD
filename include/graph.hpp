@@ -475,9 +475,9 @@ class Executor{
 
         void seed(const Graph& graph){
             int ntasks = graph._nodes.size() / _nworkers;
-            std::cout<<"ntasks before:"<<ntasks<<std::endl;
+            //std::cout<<"ntasks before:"<<ntasks<<std::endl;
             ntasks = findPreviousPowerOf2(ntasks);
-            std::cout<<"ntasks after:"<<ntasks<<std::endl;
+            //std::cout<<"ntasks after:"<<ntasks<<std::endl;
             int w = 0;
             for(;w < _nworkers; w++){
                 for(int t = 0; t < ntasks; t++){

@@ -64,7 +64,6 @@ mEdge Grover::makeFullIteration(){
 
 
     qc.buildCircuit();
-    qc.dump_task_graph();
 
     return qc.wait().matrixResult();
     
@@ -120,7 +119,7 @@ void Grover::full_grover(){
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()<<" micro s"<<std::endl;
-    auto s = measureAll(result, false, mt, 0.001L);
-    std::cout<<s<<std::endl;
+    //auto s = measureAll(result, false, mt, 0.001L);
+    //std::cout<<s<<std::endl;
 
 }
