@@ -17,6 +17,7 @@ struct Complex{
         r += rhs.r;
         i += rhs.i;
         return *this;
+        assert(!std::isnan(i));
     }
     Complex& operator-=(const Complex& rhs) noexcept{
         r -= rhs.r;
@@ -29,6 +30,8 @@ struct Complex{
 
         r = (a*p - b*q);
         i = (a*q + b*p);
+        assert(!std::isnan(r));
+        assert(!std::isnan(i));
         return *this;
     }
     Complex& operator/=(Complex& rhs) noexcept{
@@ -39,19 +42,23 @@ struct Complex{
         double p = rhs.r, q = rhs.i;
         r = (a*p+b*q)/mag;
         i = (b*p-a*q)/mag;
+        assert(!std::isnan(r));
+        assert(!std::isnan(i));
         return *this;
     }
 
     double norm(){
-        if(n != -1.0) return n;
-        else{
-            n = std::sqrt(r*r + i*i);
-            return n;
-        }
+        auto s = r*r + i*i;
+        assert(s >= 0.0);
+        n = std::sqrt(s);
+        assert(!std::isnan(n));
+        return n;
     }
 
     double mag2() const{
-        return r*r + i*i;
+        double result = r*r + i*i;
+        assert(!std::isnan(result));
+        return result;
     }
 
     bool isZero()const noexcept{

@@ -102,6 +102,8 @@ int main(int argc, char* argv[]){
         return 0;
     
 */
+    auto i = std::sqrt(-1);
+    std::cout<<i<<std::endl;
 
     int n = std::atoi(argv[1]);
     int w = std::atoi(argv[2]);

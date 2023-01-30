@@ -24,7 +24,7 @@ vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
 static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
-    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](mEdge& e){ return e.w.norm() == 0.0;})){
+    if(std::all_of(e.n->children.begin(), e.n->children.end(), [](mEdge& e){ return e.w.mag2() == 0.0;})){
         mUnique.returnNode(e.n);
         return mEdge::zero;
     }
