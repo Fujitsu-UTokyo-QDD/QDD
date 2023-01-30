@@ -475,8 +475,8 @@ class Executor{
 
         void seed(const Graph& graph){
             int ntasks = graph._nodes.size() / _nworkers;
-            //std::cout<<"ntasks before:"<<ntasks<<std::endl;
-            ntasks = findPreviousPowerOf2(ntasks);
+            std::cout<<"ntasks:"<<ntasks<<std::endl;
+           // ntasks = findPreviousPowerOf2(ntasks);
             //std::cout<<"ntasks after:"<<ntasks<<std::endl;
             int w = 0;
             for(;w < _nworkers; w++){
@@ -485,8 +485,13 @@ class Executor{
                 }
             }
 
-            for(int t = w*ntasks; t < graph._nodes.size(); t++ )
+            int c = 0;
+
+            for(int t = w*ntasks; t < graph._nodes.size(); t++ ){
                 _workers[w-1]->push_to_this_round(graph._nodes[t]);
+                c++;
+            }
+            std::cout<<"last worker: "<< c<<std::endl;
         }
 
 

@@ -32,7 +32,7 @@ void Executor::spawn(){
           //  auto t1 = std::chrono::high_resolution_clock::now();
 
             _workers[id]->execute();
-            if(id == 0) _workers[id]->collect(_nworkers);
+   //         if(id == 0) _workers[id]->collect(_nworkers);
             //auto t2 = std::chrono::high_resolution_clock::now();
             //std::chrono::duration<double, std::micro> ms = t2 - t1;
            // std::cout<<id<<" finished in "<<ms.count()<<" micro s"<<std::endl;
@@ -104,7 +104,7 @@ void Executor::try_execute_else(Worker* w){
 
 void Worker::execute(){
 
-    while(this_round.size() > 1){
+    while(!this_round.empty()){
         for(Node* n: this_round){
             n->execute(this);
         }
@@ -112,8 +112,6 @@ void Worker::execute(){
         this_round.swap(next_round);
     }
 
-    assert(this_round.size() == 1);
-    _executor->_total_queue[_id] = this_round[0];
     
    this->_executor->_sem.release(); 
 

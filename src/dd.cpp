@@ -9,6 +9,8 @@
 
 mNodeTable mUnique(40);
 vNodeTable vUnique(40);
+MMCache mmc(40); 
+MVCache mvc(40); 
 
 std::vector<mEdge> identityTable(40);
 
@@ -500,6 +502,24 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
+
+    MMQuery* q = mmc.getNode();
+    q->lhs = lhs.n;
+    q->rhs = rhs.n;
+    q->v = lhs.getVar();
+    q = mmc.lookup(q);
+    mEdge result;
+    if(q->get(result)){
+        if(result.w.isApproximatelyZero()){
+            return mEdge::zero;
+        }else{
+            result.w = result.w * lhs.w * rhs.w;
+            if(result.w.isApproximatelyZero()) return mEdge::zero;
+            else return result;
+        }
+    }
+
+    /*
     
     mEdge result = w->_mulCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
@@ -511,7 +531,7 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
             else return result;
         }
     }
-    
+    */
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -558,7 +578,8 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
 
 
     result = makeMEdge(current_var, edges);
-    w->_mulCache.set(lhs.n, rhs.n, result);
+    //w->_mulCache.set(lhs.n, rhs.n, result);
+    q->set(result);
 
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()) return mEdge::zero;
@@ -892,12 +913,27 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
-    
+    MVQuery* q = mvc.getNode();
+    q->lhs = lhs.n;
+    q->rhs = rhs.n;
+    q->v = lhs.getVar();
+    q = mvc.lookup(q);
+    vEdge result;
+    if(q->get(result)){
+        if(result.w.isApproximatelyZero()){
+            return vEdge::zero;
+        }else{
+            result.w = result.w * lhs.w * rhs.w;
+            if(result.w.isApproximatelyZero()) return vEdge::zero;
+            else return result;
+        }
+    }
+    /* 
     vEdge result = w->_mulCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         return {result.w * lhs.w * rhs.w, result.n};
     }
-    
+    */
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -938,7 +974,8 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     }
 
     result = makeVEdge(current_var, edges);
-    w->_mulCache.set(lhs.n, rhs.n, result);
+    //w->_mulCache.set(lhs.n, rhs.n, result);
+    q->set(result);
 
     return {result.w * lhs.w * rhs.w, result.n};
     
