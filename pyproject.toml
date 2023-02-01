@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "qdd"
+version = "0.1.0"
+description = ""
+authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+qiskit = "^0.40"
+pybind11 = "^2.10.3"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

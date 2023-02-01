@@ -7,3 +7,5 @@ build/
 .vscode/
 tmp/
 lib/
+*.pyc
+*.so

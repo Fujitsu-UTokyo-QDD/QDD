@@ -1,6 +1,7 @@
 #include <iostream>
 #include "common.h"
 #include "dd.h"
+#include "python_helper.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <random>
@@ -379,4 +380,12 @@ TEST(QddTest, QFTTest){
 
 
 
+}
+
+TEST(QddTest, PythonHelperTest){
+    vEdge input = makeZeroState(2);
+    QuantumCircuit qc(2, 1, 1, input);
+    H(0, qc);
+    CX(1, 0, qc);
+    simulate(qc);
 }
