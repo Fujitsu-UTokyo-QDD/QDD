@@ -531,14 +531,14 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((row<<1) | k);
             }else{
-                x = lhs; 
+                x = lcopy; 
             }
 
 
             if(rv == current_var && !rhs.isTerminal()){
                 y = rnode->getEdge((k<<1) | col);
             }else{
-                y = rhs;     
+                y = rcopy;     
             }
 
             
@@ -913,14 +913,14 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((i<<1) | k);
             }else{
-                x = lhs; 
+                x = lcopy; 
             }
 
 
             if(rv == current_var && !rhs.isTerminal()){
                 y = rnode->getEdge(k);
             }else{
-                y = rhs;     
+                y = rcopy;     
             }
 
             
