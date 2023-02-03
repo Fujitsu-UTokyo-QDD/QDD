@@ -11,7 +11,7 @@
 struct Complex{
     float r; 
     float i;
-    float n{-1};
+    float n{-1.0};
 
     static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
 
