@@ -10,13 +10,12 @@ struct Complex{
     double r; 
     double i;
 
-    static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
+    static inline const double TOLERANCE = std::numeric_limits<double>::epsilon() * 1024;
 
     Complex& operator+=(const Complex& rhs) noexcept{
         r += rhs.r;
         i += rhs.i;
         return *this;
-        assert(!std::isnan(i));
     }
     Complex& operator-=(const Complex& rhs) noexcept{
         r -= rhs.r;
@@ -29,35 +28,20 @@ struct Complex{
 
         r = (a*p - b*q);
         i = (a*q + b*p);
-        assert(!std::isnan(r));
-        assert(!std::isnan(i));
         return *this;
     }
-    Complex& operator/=(Complex& rhs) noexcept{
+    Complex& operator/=(const Complex& rhs) noexcept{
 
-        //float mag = rhs.norm() * rhs.norm();
-        double mag = rhs.r * rhs.r + rhs.i*rhs.i;
+        double mag = rhs.r*rhs.r + rhs.i*rhs.i;
         double a = r, b = i;
         double p = rhs.r, q = rhs.i;
         r = (a*p+b*q)/mag;
         i = (b*p-a*q)/mag;
-        assert(!std::isnan(r));
-        assert(!std::isnan(i));
         return *this;
     }
 
-    double norm(){
-        auto s = r*r + i*i;
-        assert(s >= 0.0);
-        double n = std::sqrt(s);
-        assert(!std::isnan(n));
-        return n;
-    }
-
     double mag2() const{
-        double result = r*r + i*i;
-        assert(!std::isnan(result));
-        return result;
+        return r*r + i*i;
     }
 
     bool isZero()const noexcept{
@@ -68,6 +52,15 @@ struct Complex{
     bool isApproximatelyZero() const noexcept {
         return std::abs(r) <=TOLERANCE && std::abs(i) <= TOLERANCE;
     }
+
+    bool isApproximatelyEqual(const Complex& rhs) const noexcept {
+        if(r == rhs.r && i == rhs.i) return true;
+        if(std::abs(r-rhs.r) <= TOLERANCE && std::abs(i - rhs.r) <= TOLERANCE) return true;
+
+        return false;
+
+    
+    }
     bool isOne()const noexcept{
         return r == 1.0 && i == 0.0;
     }
@@ -76,7 +69,7 @@ struct Complex{
         return r == rhs.r && i == rhs.i;
     }
 
-    bool operator==(const std::complex<float> rhs) const noexcept{
+    bool operator==(const std::complex<double> rhs) const noexcept{
         return r == rhs.real() && i == rhs.imag();
     }
 
@@ -99,7 +92,7 @@ inline Complex operator*(Complex lhs, const Complex& rhs) noexcept{
     return lhs;
 
 }
-inline Complex operator/(Complex lhs, Complex& rhs) noexcept{
+inline Complex operator/(Complex lhs, const Complex& rhs) noexcept{
     lhs /= rhs;
     return lhs;
 }
@@ -108,10 +101,12 @@ inline std::ostream& operator<<(std::ostream& os, const Complex& c) noexcept {
     return os<<"("<<c.r<<" , "<<c.i<<")";
 }
 
+inline double norm(const Complex& c){
+    return std::sqrt(c.r*c.r + c.i*c.i);
+}
 
 
-
-//using std_complex = std::complex<float>;
+//using std_complex = std::complex<double>;
 using std_complex = Complex;
 
 
@@ -133,7 +128,7 @@ struct vEdge {
     std_complex* getVector(std::size_t* dim) const;
 
     inline bool operator==(const vEdge& e) const noexcept {
-        return w == e.w && n == e.n;
+        return w.isApproximatelyEqual(e.w) && n == e.n;
     }
 
     std_complex w;
@@ -141,7 +136,6 @@ struct vEdge {
 
 
 };
-//static_assert(sizeof(vEdge) == 16);
 inline void swap(vEdge& lhs, vEdge& rhs){
     using std::swap;
     swap(lhs.w, rhs.w);
@@ -186,7 +180,7 @@ struct mEdge {
     
 
     inline bool operator==(const mEdge& e) const noexcept {
-        return w == e.w && n == e.n;
+        return w.isApproximatelyEqual(e.w) && n == e.n;
     }
 
     inline bool operator!=(const mEdge& e) const noexcept{
@@ -209,7 +203,6 @@ inline void swap(mEdge& lhs, mEdge& rhs){
 
 static_assert(std::is_aggregate_v<mEdge>);
 
-//static_assert(sizeof(mEdge) == 16);
 
 
 template<>
@@ -261,6 +254,8 @@ struct mNode {
     inline bool operator==(const mNode& n) const noexcept{
         return v== n.v && children == n.children;
     }
+
+
 
     static mNode       terminalNode;
     constexpr static mNode*   terminal{&terminalNode};
@@ -367,4 +362,4 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c);
 vEdge makeZeroState( QubitCount q);
 vEdge makeOneState( QubitCount q);
 
-std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt, float epsilon = 0.001) ;
+std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt, double epsilon = 0.001) ;

@@ -105,7 +105,6 @@ class AddCache{
         };
 
 
-       // static_assert(sizeof(Bucket) == hardware_constructive_interference_size);
 
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
@@ -156,19 +155,19 @@ class AddCache{
 
         template<typename T>
             T find_in_bucket(Table& t, std::size_t key, const T& l, const T& r){
-                if(t._table[key] == nullptr) t._table[key] = getBucket();
+                if(t._table[key] == nullptr) {t._table[key] = getBucket(); return T{};}
                 Bucket* b = t._table[key];
 
                 Entry& e = b->e;
 
                 if constexpr(std::is_same_v<T, mEdge>){
-                    if(std::equal_to<>()(e.lhs.m, l) && std::equal_to<>()(e.rhs.m, r)){
+                    if(e.lhs.m == l && e.rhs.m ==r){
                        return e.result.m; 
                     }else{
                         return T{};
                     }
                 }else{
-                    if(std::equal_to<>()(e.lhs.v, l) && std::equal_to<>()(e.rhs.v, r)){
+                    if(e.lhs.v == l && e.rhs.v ==r){
                        return e.result.v; 
                     }else{
                         return T{}; 
@@ -289,7 +288,6 @@ class MulCache{
         };
 
 
-       // static_assert(sizeof(Bucket) <= hardware_constructive_interference_size);
 
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
@@ -332,7 +330,7 @@ class MulCache{
 
         template<typename RET>
             RET find_in_bucket(Table& t, std::size_t key, uintptr_t l, uintptr_t r){
-                if(t._table[key] == nullptr) t._table[key] = getBucket();
+                if(t._table[key] == nullptr) {t._table[key] = getBucket(); return RET{};}
                 Bucket* b = t._table[key];
 
                 Entry& e1 = b->e1;

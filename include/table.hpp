@@ -9,8 +9,6 @@
 #include "common.h"
 #include "dd.h"
 #include <oneapi/tbb/enumerable_thread_specific.h>
-#include <shared_mutex>
-#include <mutex>
 
 using namespace oneapi::tbb;
 
@@ -24,87 +22,6 @@ static const uint64_t CL_MASK_R   = ((LINE_SIZE) / 8) - 1;    // X&CL_MASK_R = X
                                                               //
                                                               //
 
-
-struct MMQuery{
-    mNode* lhs;
-    mNode* rhs;
-    Qubit v;
-    mutable std::shared_mutex _mtx;
-    mEdge result{};
-    MMQuery* next;
-    MMQuery() = default;
-    MMQuery(const MMQuery& other):_mtx(){
-        lhs = other.lhs;
-        rhs= other.rhs;
-        v = other.v;
-        result = other.result;
-        next = other.next;
-    }
-    bool operator==(const MMQuery& other) const{
-        return lhs == other.lhs && rhs == other.rhs;
-    }
-
-    bool get(mEdge& r) {
-        std::shared_lock lock(_mtx);
-        r = result;
-        return result.n != nullptr;
-    }
-
-    void set(const mEdge& r){
-        std::unique_lock lock(_mtx);
-        result = r;
-        return;
-    }
-};
-struct MVQuery{
-    mNode* lhs;
-    vNode* rhs;
-    Qubit v;
-    mutable std::shared_mutex _mtx;
-    vEdge result{};
-    MVQuery* next;
-
-    MVQuery() = default;
-    MVQuery(const MVQuery& other):_mtx(){
-        lhs = other.lhs;
-        rhs= other.rhs;
-        v = other.v;
-        result = other.result;
-        next = other.next;
-    }
-
-    bool operator==(const MVQuery& other) const{
-        return lhs == other.lhs && rhs == other.rhs;
-    }
-
-    bool get(vEdge& r) {
-        std::shared_lock lock(_mtx);
-        r = result;
-        return result.n != nullptr;
-    }
-
-    void set(const vEdge& r){
-        std::unique_lock lock(_mtx);
-        result = r;
-        return;
-    }
-};
-template<>
-struct std::hash<MMQuery>{
-    std::size_t operator()(const MMQuery& q) const noexcept {
-        auto h1 = std::hash<mNode*>()(q.lhs);
-        auto h2 = std::hash<mNode*>()(q.rhs);
-        return hash_combine(h1,h2);
-    }
-};
-template<>
-struct std::hash<MVQuery>{
-    std::size_t operator()(const MVQuery& q) const noexcept {
-        auto h1 = std::hash<mNode*>()(q.lhs);
-        auto h2 = std::hash<vNode*>()(q.rhs);
-        return hash_combine(h1,h2);
-    }
-};
 template<typename T, typename Hash = std::hash<T>, typename ValueEqual = std::equal_to<T>>
 class CHashTable{
 public:
@@ -178,13 +95,14 @@ public:
 RELOAD:
         while(current != nullptr){
             if(ValueEqual()(*node, *current)){
-            //if(*node == *current){
                 assert(current -> v == node->v);
 
                 returnNode(node);
 
                 return current;
             }
+
+
 
             previous = current;
             current = current ->next;
@@ -251,10 +169,6 @@ using vNodeTable = CHashTable<vNode>;
 extern vNodeTable vUnique;
 
 
-using MMCache = CHashTable<MMQuery>;
-extern MMCache mmc; 
-using MVCache = CHashTable<MVQuery>;
-extern MVCache mvc; 
 
 
 

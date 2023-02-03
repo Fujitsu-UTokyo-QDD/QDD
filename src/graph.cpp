@@ -29,14 +29,16 @@ void Executor::spawn(){
                     cond.notify_one();
                 }
             }
-          //  auto t1 = std::chrono::high_resolution_clock::now();
 
-            _workers[id]->execute();
-   //         if(id == 0) _workers[id]->collect(_nworkers);
-            //auto t2 = std::chrono::high_resolution_clock::now();
-            //std::chrono::duration<double, std::micro> ms = t2 - t1;
-           // std::cout<<id<<" finished in "<<ms.count()<<" micro s"<<std::endl;
-
+            std::exception_ptr ptr{nullptr};
+            try {
+                while(!(*this->_stop)) {
+                    try_execute_self(_workers[id]);
+                    try_execute_else(_workers[id]);
+                }
+            } catch(...) {
+                ptr = std::current_exception();
+            }
 
         }, i, std::ref(mtx), std::ref(cond), std::ref(spawned));
         
@@ -102,39 +104,4 @@ void Executor::try_execute_else(Worker* w){
 }
 
 
-void Worker::execute(){
 
-    while(!this_round.empty()){
-        for(Node* n: this_round){
-            n->execute(this);
-        }
-        this_round.clear();
-        this_round.swap(next_round);
-    }
-
-    
-   this->_executor->_sem.release(); 
-
-}
-
-
-void Worker::collect(int N){
-    do{
-        _executor->_sem.acquire();
-    }while(--N > 0);
-
-    this_round.clear();
-    next_round.clear();
-
-    this_round = std::move(_executor->_total_queue);
-
-
-    while(!this_round.empty()){
-        for(Node* n: this_round){
-            n->execute(this);
-        }
-        this_round.clear();
-        this_round.swap(next_round);
-    }
-
-}

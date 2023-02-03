@@ -10,8 +10,6 @@
 #include <semaphore>
 #include "cache.hpp"
 #include "wsq.hpp"
-#include <cmath>
-#include <semaphore>
 
 #ifdef GRAPHVIZ
 #include "cgraph.h"
@@ -20,28 +18,19 @@
 
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
-inline unsigned findPreviousPowerOf2(unsigned n)
-{
-    // drop all set bits from `n` except its last set bit
-    return 1U << (int)log2(n);
-}
-
 class Node;
 class Executor;
 
 struct Worker{
         Worker(QubitCount q): _addCache(q), _mulCache(q){}
         
-
-        void push_to_next_round(Node* n) {next_round.push_back(n);}
-        void push_to_this_round(Node* n) {this_round.push_back(n);}
-
+        void push(Node* n){ _wsq.push(n);}
         size_t _id;
         Executor* _executor;
+        WorkStealingQueue<Node*> _wsq;
         std::thread* _thread{nullptr};
         std::default_random_engine _rdgen { std::random_device{}() };
         std::uniform_int_distribution<int> _dist;
-        WorkStealingQueue<Node*> _wsq;
 
         AddCache _addCache;
         MulCache _mulCache;
@@ -49,10 +38,6 @@ struct Worker{
 
         std::vector<Node*> this_round;
         std::vector<Node*> next_round;
-
-        void execute();
-
-        void collect(int N);
 };
 
 class Node {
@@ -305,7 +290,7 @@ class Node {
             for(Node* s: _successors){
                 if(s->_joint.fetch_add(1, std::memory_order_release) == (s->_required-1)){
                     s->prepare_to_be_executed();
-                    w->push_to_next_round(s);
+                    w->push(s);
                 }
             }
             if(this->_sem != nullptr) this->_sem->release();
@@ -448,11 +433,10 @@ class Graph {
 
 
 class Executor{
-    friend class Worker;
     public:
-        Executor(int N, bool* s, QubitCount q): _nworkers(N), _stop(s), _sem(0){
+        Executor(int N, bool* s, QubitCount q): _nworkers(N), _stop(s){
             for(int i = 0; i < N; i++) _workers.emplace_back(new Worker(q));
-            _total_queue.resize(N);
+
         }
 
         ~Executor(){
@@ -472,26 +456,17 @@ class Executor{
             //std::cout<<"longest time spent in wait: "<<longest.count()<<" ms"<<std::endl;
             //std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
         }
-
         void seed(const Graph& graph){
             int ntasks = graph._nodes.size() / _nworkers;
-            std::cout<<"ntasks:"<<ntasks<<std::endl;
-           // ntasks = findPreviousPowerOf2(ntasks);
-            //std::cout<<"ntasks after:"<<ntasks<<std::endl;
             int w = 0;
             for(;w < _nworkers; w++){
                 for(int t = 0; t < ntasks; t++){
-                    _workers[w]->push_to_this_round(graph._nodes[w*ntasks+t]);
+                    _workers[w]->_wsq.push(graph._nodes[w*ntasks + t]);
                 }
             }
 
-            int c = 0;
-
-            for(int t = w*ntasks; t < graph._nodes.size(); t++ ){
-                _workers[w-1]->push_to_this_round(graph._nodes[t]);
-                c++;
-            }
-            std::cout<<"last worker: "<< c<<std::endl;
+            for(int t = w*ntasks; t < graph._nodes.size(); t++ )
+                _workers[w-1]->_wsq.push(graph._nodes[t]);
         }
 
 
@@ -502,12 +477,9 @@ class Executor{
         void try_execute_else(Worker*);
         
         std::vector<Worker*> _workers;
+        WorkStealingQueue<Node*> _wsq;
         int _nworkers;
         bool* _stop;
-
-        std::vector<Node*> _total_queue;
-        std::counting_semaphore<64> _sem;
-
 };
 
 class QuantumCircuit{
@@ -528,7 +500,7 @@ class QuantumCircuit{
             add_pos.emplace_back(_gates.size());
         }
 
-        /*
+        
         void buildCircuit(){
 
             std::vector<Node*> nodes;
@@ -556,7 +528,7 @@ class QuantumCircuit{
             return;
 
         }
-        */
+        /*
         void buildCircuit(){
 
             Graph g;
@@ -581,6 +553,7 @@ class QuantumCircuit{
             return;
 
         }
+        */
 
         void setInput(const vEdge& v){ _input = v; }
 
