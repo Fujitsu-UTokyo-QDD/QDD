@@ -349,9 +349,9 @@ static Qubit rootVar(const mEdge& lhs, const mEdge& rhs) {
 
 
 mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
-    if(lhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero()){
         return rhs;
-    }else if(rhs.w.isZero()){
+    }else if(rhs.w.isApproximatelyZero()){
         return lhs;
     }
     
@@ -408,9 +408,9 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
 }
 
 mEdge mm_add2_no_worker( const mEdge& lhs, const mEdge& rhs, int32_t current_var){
-    if(lhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero()){
         return rhs;
-    }else if(rhs.w.isZero()){
+    }else if(rhs.w.isApproximatelyZero()){
         return lhs;
     }
     
@@ -483,7 +483,7 @@ static void brp(){
 
 mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
-    if(lhs.w.isZero() || rhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()){
         return mEdge::zero;
     }
 
@@ -563,7 +563,7 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
 
 mEdge mm_multiply2_no_worker(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
-    if(lhs.w.isZero() || rhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()){
         return mEdge::zero;
     }
 
@@ -715,9 +715,9 @@ mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs){
 
 
 vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var){
-    if(lhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero()){
         return rhs;
-    }else if(rhs.w.isZero()){
+    }else if(rhs.w.isApproximatelyZero()){
         return lhs;
     }
     
@@ -878,7 +878,7 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     rhs.printVector();
     std::cout<<std::endl;
 */
-    if(lhs.w.isZero() || rhs.w.isZero()){
+    if(lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()){
         return vEdge::zero;
     }
 
