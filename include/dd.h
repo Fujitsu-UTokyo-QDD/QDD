@@ -4,8 +4,6 @@
 #include <complex>
 #include <vector>
 #include <random>
-#include <iostream>
-#include <bitset>
 
 
 struct Complex{
