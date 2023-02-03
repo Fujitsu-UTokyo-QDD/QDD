@@ -4,23 +4,27 @@
 #include <complex>
 #include <vector>
 #include <random>
+#include <iostream>
+#include <bitset>
 
 
 struct Complex{
     float r; 
     float i;
-    float n{-1.0};
+    float n{-1};
 
     static inline const float TOLERANCE = std::numeric_limits<float>::epsilon() * 1024;
 
     Complex& operator+=(const Complex& rhs) noexcept{
         r += rhs.r;
         i += rhs.i;
+        n = std::sqrt(r * r + i * i);
         return *this;
     }
     Complex& operator-=(const Complex& rhs) noexcept{
         r -= rhs.r;
         i -= rhs.i;
+        n = std::sqrt(r * r + i * i);
         return *this;
     }
     Complex& operator*=(const Complex& rhs) noexcept{
@@ -29,15 +33,17 @@ struct Complex{
 
         r = (a*p - b*q);
         i = (a*q + b*p);
+        n = std::sqrt(r * r + i * i);
         return *this;
     }
     Complex& operator/=(Complex& rhs) noexcept{
 
-        float mag = rhs.norm() * rhs.norm();
+        float mag = p*p + q*q;
         float a = r, b = i;
         float p = rhs.r, q = rhs.i;
         r = (a*p+b*q)/mag;
         i = (b*p-a*q)/mag;
+        n = std::sqrt(r * r + i * i);
         return *this;
     }
 
