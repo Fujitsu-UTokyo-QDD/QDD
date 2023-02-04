@@ -487,11 +487,13 @@ class Executor{
                 _ready_for_next_round.acquire();
 
                 if(left <= REDUCE_THRESHOLD){
+                    std::cout<<"under reduce threshold"<<std::endl;
                     for(; start < end; start++){
                         _workers[0]->push_this_round(graph._nodes[start]);
                     }
                 }else{
                     std::size_t ntasks = findPreviousPowerOf2(left/_nworkers);
+                    std::cout<<"ntasks: "<<ntasks<<std::endl;
                     for(auto w = 0; w < _nworkers; w++){
                         for( auto i = 0; i < ntasks; i++){
                             _workers[w]->push_this_round(graph._nodes[start + w*ntasks + i]);

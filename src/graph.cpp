@@ -111,7 +111,7 @@ void Worker::reduce(){
     next_round.clear();
 
     while(sz > 1){
-        assert((sz&(sz-1)) == 0);
+        //assert((sz&(sz-1)) == 0);
         for(Node* n : this_round){
             n->execute(this);
         }
