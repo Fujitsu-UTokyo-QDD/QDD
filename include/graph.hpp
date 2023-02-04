@@ -21,6 +21,7 @@
 // Compute a power of two less than or equal to `n`
 inline unsigned findPreviousPowerOf2(unsigned n)
 {
+    if(n  == 1) return 0;
     // do till only one bit is left
     while (n & n - 1) {
         n = n & n - 1;        // unset rightmost bit
@@ -175,10 +176,12 @@ class Node {
         
         Node(const mEdge& m): _required(0){
             _task = IdentM(m);
+            _result = m;
         }
 
         Node(const vEdge& v): _required(0){
             _task = IdentV(v);
+            _result = v;
         }
 
         Node(Node* dep): _required(1){
@@ -306,7 +309,7 @@ class Node {
 
 
         void update_result(Worker* w, const Edge_t& r){
-            assert(_result.index() == EDGE_PLACEHOLDER);
+            //assert(_result.index() == EDGE_PLACEHOLDER);
             _result = r;
             for(Node* s: _successors){
                 if(s->_joint.fetch_add(1, std::memory_order_release) == (s->_required-1)){

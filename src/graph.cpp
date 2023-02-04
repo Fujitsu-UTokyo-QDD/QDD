@@ -122,6 +122,7 @@ void Worker::reduce(){
     }
     if(this_round.size() == 1){
         _reduced_node = this_round[0];
+        _reduced_node->execute(this);
         this_round.clear();
     }
 
@@ -168,17 +169,21 @@ void Worker::collect(){
             result = input;
         
         }
+        
+        if(this_round.size() == 1){
+            this_round[0]->update_result(this, result); 
+        }else{
+            unsigned n = findPreviousPowerOf2(this_round.size());
+            float reminder = 1.0 * this_round.size() - n * 2.0;
+            n += std::ceil(reminder/2);
 
-        unsigned n = findPreviousPowerOf2(this_round.size());
-        float reminder = 1.0 * this_round.size() - n;
-        n += std::ceil(reminder/2);
+            Node* current = this_round[0];
+            for(auto i = 0; i < n; i++){
+                current = current->_successors[0];
+            }
 
-        Node* current = this_round[0];
-        for(auto i = 0; i < n; i++){
-            current = current->_successors[0];
+            current->update_result(this, result);
         }
-
-        current->update_result(this, result);
 
         this_round.clear();
     }
