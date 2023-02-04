@@ -169,6 +169,8 @@ void Worker::collect(){
         }
 
         current->update_result(this, input);
+
+        this_round.clear();
     }
 
     _executor->_ready_for_next_round.release();
