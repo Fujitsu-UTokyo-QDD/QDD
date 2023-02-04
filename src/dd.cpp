@@ -217,7 +217,6 @@ std_complex** mEdge::getMatrix(std::size_t* dim) const {
     return matrix;
 
 }
-
 struct MatrixGuard{
     MatrixGuard(std_complex** m, std::size_t dim): _m(m), _dim(dim){} 
     ~MatrixGuard(){
@@ -231,6 +230,21 @@ struct MatrixGuard{
     std_complex** _m;
     const std::size_t _dim;
 };
+
+MatrixXcf mEdge::getEigenMatrix(){
+    std::size_t dim;
+    auto m = getMatrix(&dim);
+    MatrixGuard g(m, dim);
+    MatrixXcf M(dim,dim);
+
+    for(auto i = 0; i < dim; i++){
+        for(auto j = 0; j < dim; j++ ){
+           M(i,j) = std::complex<double>{m[i][j].r, m[i][j].i}; 
+        }
+    }
+    return M;
+}
+
 
 bool mEdge::compareNumerically(const mEdge& other) const noexcept {
     if(this->getVar() != other.getVar()) return false;
@@ -866,6 +880,28 @@ std_complex* vEdge::getVector(std::size_t* dim) const{
     if(dim != nullptr) *dim = d;
     return vector;
 
+}
+struct VectorGuard{
+    VectorGuard(std_complex* m, std::size_t dim): _m(m), _dim(dim){} 
+    ~VectorGuard(){
+        delete[] _m;
+    
+    }
+
+    std_complex* _m;
+    const std::size_t _dim;
+};
+
+VectorXcf vEdge::getEigenVector(){
+    std::size_t dim;
+    auto v = getVector(&dim);
+    VectorGuard g(v, dim);
+    VectorXcf V(dim);
+
+    for(auto i = 0; i < dim; i++){
+       V(i) = std::complex<double>{v[i].r, v[i].i}; 
+    }
+    return V;
 }
 
 

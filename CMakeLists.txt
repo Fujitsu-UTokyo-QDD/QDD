@@ -7,6 +7,12 @@ project(QDD)
 get_filename_component(USER $ENV{HOME} NAME)
 
 
+set(EIGEN_PATH ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0)
+
+if(NOT EXISTS ${EIGEN_PATH})
+    file(DOWNLOAD https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip "${EIGEN}.zip")
+    file(ARCHIVE_EXTRACT INPUT "${EIGEN}.zip" DESTINATION ${PROJECT_SOURCE_DIR}/lib)
+endif()
 
 option(with_graphviz      "Use graphviz to draw task graph for debugging" OFF)
 if(with_graphviz)

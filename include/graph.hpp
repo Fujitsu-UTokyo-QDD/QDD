@@ -19,16 +19,19 @@
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
 // Compute a power of two less than or equal to `n`
+
+
 inline unsigned findPreviousPowerOf2(unsigned n)
 {
-    if(n  == 1) return 0;
-    // do till only one bit is left
-    while (n & n - 1) {
-        n = n & n - 1;        // unset rightmost bit
+    unsigned res = 0;
+    for (int i = n; i >= 1; i--) {
+        // If i is a power of 2
+        if ((i & (i - 1)) == 0) {
+            res = i;
+            break;
+        }
     }
- 
-    // `n` is now a power of two (less than or equal to `n`)
-    return n;
+    return res;
 }
 
 class Node;

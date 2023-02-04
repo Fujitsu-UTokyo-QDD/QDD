@@ -5,6 +5,10 @@
 #include <condition_variable>
 #include <optional>
 #include <pthread.h>
+#include <Eigen/Dense>
+
+using Eigen::MatrixXcf;
+using Eigen::VectorXcf;
 
 oneapi::tbb::enumerable_thread_specific<std::chrono::duration<double, std::micro>> steal_timer{std::chrono::duration<double, std::micro>::zero()};
 
@@ -174,11 +178,13 @@ void Worker::collect(){
             this_round[0]->update_result(this, result); 
         }else{
             unsigned n = findPreviousPowerOf2(this_round.size());
-            float reminder = 1.0 * this_round.size() - n * 2.0;
-            n += std::ceil(reminder/2);
+            unsigned c = __builtin_ctz(n);
+            float reminder = 1.0 * this_round.size() - n;
+            unsigned total = c + std::ceil(reminder/2);
+            
 
             Node* current = this_round[0];
-            for(auto i = 0; i < n; i++){
+            for(auto i = 0; i < total; i++){
                 current = current->_successors[0];
             }
 

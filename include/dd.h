@@ -4,6 +4,9 @@
 #include <complex>
 #include <vector>
 #include <random>
+#include <Eigen/Dense>
+using Eigen::MatrixXcf;
+using Eigen::VectorXcf;
 
 
 struct Complex{
@@ -124,6 +127,10 @@ struct vEdge {
     bool isTerminal() const;
     vNode* getNode() const;
 
+    VectorXcf getEigenVector();
+
+
+
     void printVector() const;
     std_complex* getVector(std::size_t* dim) const;
 
@@ -177,6 +184,7 @@ struct mEdge {
     void printMatrix() const;
 
     std_complex** getMatrix(std::size_t* dim) const;
+    MatrixXcf getEigenMatrix();
     
 
     inline bool operator==(const mEdge& e) const noexcept {
