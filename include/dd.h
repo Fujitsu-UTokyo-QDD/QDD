@@ -55,7 +55,7 @@ struct Complex{
 
     bool isApproximatelyEqual(const Complex& rhs) const noexcept {
         if(r == rhs.r && i == rhs.i) return true;
-        if(std::abs(r-rhs.r) <= TOLERANCE && std::abs(i - rhs.r) <= TOLERANCE) return true;
+        if(std::abs(r-rhs.r) <= TOLERANCE && std::abs(i - rhs.i) <= TOLERANCE) return true;
 
         return false;
 
