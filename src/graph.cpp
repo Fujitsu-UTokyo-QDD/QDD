@@ -153,10 +153,20 @@ void Worker::collect(){
     */
 
     if(!this_round.empty()){
-        assert(std::holds_alternative<vEdge>(this_round[0]->_result));
-        vEdge input = std::get<Node::VEDGE>(this_round[0]->_result);
-        for(auto i = 1; i < this_round.size(); i++){
-            input = mv_multiply(this, std::get<Node::MEDGE>(this_round[i]->_result), input);
+        Node::Edge_t result;
+        if(std::holds_alternative<vEdge>(this_round[0]->_result)){
+            vEdge input = std::get<Node::VEDGE>(this_round[0]->_result);
+            for(auto i = 1; i < this_round.size(); i++){
+                input = mv_multiply(this, std::get<Node::MEDGE>(this_round[i]->_result), input);
+            }
+            result = input;
+        }else{
+            mEdge input = std::get<Node::MEDGE>(this_round[0]->_result);
+            for(auto i = 1; i < this_round.size(); i++){
+                input = mm_multiply(this, std::get<Node::MEDGE>(this_round[i]->_result), input);
+            }
+            result = input;
+        
         }
 
         unsigned n = findPreviousPowerOf2(this_round.size());
@@ -168,7 +178,7 @@ void Worker::collect(){
             current = current->_successors[0];
         }
 
-        current->update_result(this, input);
+        current->update_result(this, result);
 
         this_round.clear();
     }
