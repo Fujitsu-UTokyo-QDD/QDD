@@ -141,13 +141,34 @@ void Worker::collect(){
         
         }
     }
-
+    
+    /*
     while(!this_round.empty()){
         for(Node* n : this_round){
             n->execute(this);
         }
         this_round.clear();
         this_round.swap(next_round);
+    }
+    */
+
+    if(!this_round.empty()){
+        assert(std::holds_alternative<vEdge>(this_round[0]->_result));
+        vEdge input = std::get<Node::VEDGE>(this_round[0]->_result);
+        for(auto i = 1; i < this_round.size(); i++){
+            input = mv_multiply(this, std::get<Node::MEDGE>(this_round[i]->_result), input);
+        }
+
+        unsigned n = findPreviousPowerOf2(this_round.size());
+        float reminder = 1.0 * this_round.size() - n;
+        n += std::ceil(reminder/2);
+
+        Node* current = this_round[0];
+        for(auto i = 0; i < n; i++){
+            current = current->_successors[0];
+        }
+
+        current->update_result(this, input);
     }
 
     _executor->_ready_for_next_round.release();
