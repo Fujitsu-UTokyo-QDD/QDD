@@ -34,15 +34,23 @@ class Node;
 class Executor;
 
 struct Worker{
-        Worker(QubitCount q): _addCache(q), _mulCache(q){}
+        Worker(QubitCount q): _addCache(q), _mulCache(q), _sem(0){}
         
-        void push(Node* n){ _wsq.push(n);}
+       // void push(Node* n){ _wsq.push(n);}
+        void push_this_round(Node* n) {this_round.push_back(n);}
+        void push_next_round(Node* n) {next_round.push_back(n);}
+        void reduce();
+        void collect();
         size_t _id;
         Executor* _executor;
         WorkStealingQueue<Node*> _wsq;
         std::thread* _thread{nullptr};
         std::default_random_engine _rdgen { std::random_device{}() };
         std::uniform_int_distribution<int> _dist;
+        std::binary_semaphore _sem;
+
+        Node* _reduced_node{nullptr};
+        
 
         AddCache _addCache;
         MulCache _mulCache;
@@ -302,7 +310,8 @@ class Node {
             for(Node* s: _successors){
                 if(s->_joint.fetch_add(1, std::memory_order_release) == (s->_required-1)){
                     s->prepare_to_be_executed();
-                    w->push(s);
+                    //w->push(s);
+                    w->push_next_round(s);
                 }
             }
             if(this->_sem != nullptr) this->_sem->release();
@@ -445,8 +454,9 @@ class Graph {
 
 
 class Executor{
+    friend class Worker;
     public:
-        Executor(int N, bool* s, QubitCount q): _nworkers(N), _stop(s){
+        Executor(int N, bool* s, QubitCount q): _nworkers(N), _stop(s), _sem(0), _ready_for_next_round(1){
             for(int i = 0; i < N; i++) _workers.emplace_back(new Worker(q));
 
         }
@@ -469,16 +479,42 @@ class Executor{
             //std::cout<<"avg time spent in wait: "<<sum.count()/_nworkers<<" ms"<<std::endl;
         }
         void seed(const Graph& graph){
-            int ntasks = graph._nodes.size() / _nworkers;
-            int w = 0;
-            for(;w < _nworkers; w++){
-                for(int t = 0; t < ntasks; t++){
-                    _workers[w]->_wsq.push(graph._nodes[w*ntasks + t]);
+            std::size_t start = 0;
+            const std::size_t end = graph._nodes.size();
+            std::size_t left = end - start;
+
+            while(left > 0){
+                _ready_for_next_round.acquire();
+
+                if(left <= REDUCE_THRESHOLD){
+                    for(; start < end; start++){
+                        _workers[0]->push_this_round(graph._nodes[start]);
+                    }
+                }else{
+                    std::size_t ntasks = findPreviousPowerOf2(left/_nworkers);
+                    for(auto w = 0; w < _nworkers; w++){
+                        for( auto i = 0; i < ntasks; i++){
+                            _workers[w]->push_this_round(graph._nodes[start + w*ntasks + i]);
+                        }
+                    }
+
+                    start += ntasks * _nworkers;
+                
                 }
+                left = end - start;
+
+                for(Worker* w: _workers){
+                    w->_sem.release();
+                }
+
             }
 
-            for(int t = w*ntasks; t < graph._nodes.size(); t++ )
-                _workers[w-1]->_wsq.push(graph._nodes[t]);
+            *_stop = true;
+            for(Worker* w: _workers){
+                w->_sem.release();
+            }
+
+
         }
 
 
@@ -492,6 +528,11 @@ class Executor{
         WorkStealingQueue<Node*> _wsq;
         int _nworkers;
         bool* _stop;
+
+        std::counting_semaphore<100> _sem;
+        std::binary_semaphore _ready_for_next_round;
+
+        const std::size_t REDUCE_THRESHOLD = 64;
 };
 
 class QuantumCircuit{
@@ -511,7 +552,7 @@ class QuantumCircuit{
         void emplace_add(){
             add_pos.emplace_back(_gates.size());
         }
-
+/*
         
         void buildCircuit(){
 
@@ -540,7 +581,7 @@ class QuantumCircuit{
             return;
 
         }
-        /*
+        */
         void buildCircuit(){
 
             Graph g;
@@ -561,21 +602,20 @@ class QuantumCircuit{
 
             mul_next_level(g, nodes, 0, nodes.size());
             _graph = std::move(g);
+            _executor.spawn();
             _executor.seed(_graph);
             return;
 
         }
-        */
+        
 
         void setInput(const vEdge& v){ _input = v; }
 
 
 
         QuantumCircuit& wait(){
-            _executor.spawn();
             assert(_output->_sem != nullptr);
             _output->_sem->acquire();
-           _stop = true; 
            return *this;
         }
 

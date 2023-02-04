@@ -33,8 +33,8 @@ void Executor::spawn(){
             std::exception_ptr ptr{nullptr};
             try {
                 while(!(*this->_stop)) {
-                    try_execute_self(_workers[id]);
-                    try_execute_else(_workers[id]);
+                    _workers[id]->reduce();
+                    if(id == 0) _workers[id]->collect();
                 }
             } catch(...) {
                 ptr = std::current_exception();
@@ -104,4 +104,52 @@ void Executor::try_execute_else(Worker* w){
 }
 
 
+void Worker::reduce(){
+    _sem.acquire();
+    auto sz = this_round.size();
+    
+    next_round.clear();
 
+    while(sz > 1){
+        assert((sz&(sz-1)) == 0);
+        for(Node* n : this_round){
+            n->execute(this);
+        }
+        this_round.clear();
+        this_round.swap(next_round);
+        sz = this_round.size();
+    
+    }
+    if(this_round.size() == 1){
+        _reduced_node = this_round[0];
+        this_round.clear();
+    }
+
+    _executor->_sem.release(); 
+
+}
+
+void Worker::collect(){
+   
+    for(auto i = 0; i < _executor->_nworkers; i++) _executor->_sem.acquire(); 
+    next_round.clear();
+
+    for(Worker* w : _executor->_workers){
+        if(w->_reduced_node != nullptr){
+            this_round.push_back(w->_reduced_node);
+            w->_reduced_node = nullptr;
+        
+        }
+    }
+
+    while(!this_round.empty()){
+        for(Node* n : this_round){
+            n->execute(this);
+        }
+        this_round.clear();
+        this_round.swap(next_round);
+    }
+
+    _executor->_ready_for_next_round.release();
+
+}
