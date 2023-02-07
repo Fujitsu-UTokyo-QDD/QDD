@@ -127,6 +127,8 @@ struct vEdge {
     Qubit getVar() const;
     bool isTerminal() const;
     vNode* getNode() const;
+    void decRef();
+    void incRef();
 
     VectorXcf getEigenVector();
 
@@ -152,11 +154,15 @@ inline void swap(vEdge& lhs, vEdge& rhs){
 
 struct vNode {
 
-    vEdge operator[](std::size_t i){
+    vNode() = default;
+    vNode(const vNode& vv): v(vv.v), children(vv.children){}
+    vNode(Qubit q , const std::array<vEdge, 2>& c, vNode* n, unsigned int r): v(q), children(c), next(n), ref(r){}
+
+    vEdge& operator[](std::size_t i){
         return children[i]; 
     }
 
-    vEdge getEdge(std::size_t i){
+    vEdge& getEdge(std::size_t i){
         return this->operator[](i);
     }
 
@@ -171,6 +177,12 @@ struct vNode {
     Qubit v;
     std::array<vEdge, 2> children;
     vNode*   next{nullptr};
+
+#ifdef MT
+    std::atomic_uint ref{0};
+#else
+    unsigned int ref{0};
+#endif
 };
 
 struct mEdge {
@@ -183,7 +195,11 @@ struct mEdge {
     mNode* getNode() const;
     
     void printMatrix() const;
+    void decRef();
+    void incRef();
+    void foo(){}
 
+    void check();
     std_complex** getMatrix(std::size_t* dim) const;
     MatrixXcf getEigenMatrix();
     
@@ -210,7 +226,6 @@ inline void swap(mEdge& lhs, mEdge& rhs){
     swap(lhs.n, rhs.n);
 }
 
-static_assert(std::is_aggregate_v<mEdge>);
 
 
 
@@ -251,12 +266,14 @@ inline std::ostream& operator<<(std::ostream& os, const mEdge& c){
 
 struct mNode {
     
-
-    mEdge operator[](std::size_t i){
+    mNode() = default;
+    mNode(Qubit q , const std::array<mEdge, 4>& c, mNode* n, unsigned int r): v(q), children(c), next(n), ref(r){}
+    mNode(const mNode& vv): v(vv.v), children(vv.children){}
+    mEdge& operator[](std::size_t i){
         return children[i]; 
     }
 
-    mEdge getEdge(std::size_t i){
+    mEdge& getEdge(std::size_t i){
         return this->operator[](i);
     }
 
@@ -276,13 +293,18 @@ struct mNode {
     std::array<mEdge, 4> children;
     mNode*   next{nullptr};
 
+#ifdef MT
+    std::atomic_uint ref{0};
+#else
+    unsigned int ref{0};
+#endif
+
 };
 
 
 
 
 
-static_assert(std::is_aggregate_v<mNode>);
 
 
 template<>
@@ -364,7 +386,7 @@ vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs);
 vEdge vv_multiply(Worker* w, const vEdge& lhs, const vEdge& rhs);
 vEdge vv_kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs);
 
-vEdge mv_multiply(Worker* w, const mEdge& lhs, const vEdge& rhs);
+vEdge mv_multiply(Worker* w, mEdge lhs,  vEdge rhs);
 
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c);

@@ -7,6 +7,7 @@
 #include <functional>
 #include <stdio.h>
 #include "common.h"
+#include <iostream>
 #include "dd.h"
 #include <oneapi/tbb/enumerable_thread_specific.h>
 
@@ -28,7 +29,13 @@ public:
 
 
 
-    CHashTable(QubitCount n): _tables{n}{};
+    CHashTable(QubitCount n): _tables{n}{
+        
+        for(Table& t: _tables){
+            for(auto i = 0; i < NBUCKETS; i++) t._gc_flags[i] = false;
+        }
+    
+    };
 
     ~CHashTable(){
         _tables.clear();
@@ -58,6 +65,7 @@ public:
         if (c.available != nullptr) {
             T* p   = c.available;
             c.available = p->next;
+            p->next = nullptr;
             return p;
         }
 
@@ -71,14 +79,18 @@ public:
         }
 
         auto p = &(*c.chunkIt);
+        p->next = nullptr;
         ++c.chunkIt;
         return p;
     }
 
-    void returnNode(T* p) {
+    void returnNode(T* p, int i) {
         if constexpr(std::is_same_v<T, mNode>){
             if(p == mNode::terminal) return; 
         }
+
+        p->v = i;
+        p->ref = 0;
         Cache& c = _caches.local();
         p->next   = c.available;
         c.available = p;
@@ -88,6 +100,9 @@ public:
     T* lookup(T* node){
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
+        
+        //wait for gc completed
+        while(_tables[v]._gc_flags[key]){}
 
 
         T* current = _tables[v]._table[key];
@@ -97,7 +112,7 @@ RELOAD:
             if(ValueEqual()(*node, *current)){
                 assert(current -> v == node->v);
 
-                returnNode(node);
+                returnNode(node, -2);
 
                 return current;
             }
@@ -127,6 +142,19 @@ RELOAD:
 
     }
 
+    void gc(){
+        collected = 0;
+       for(Table& t: _tables){
+            for(auto i = 0; i < NBUCKETS; i++){
+                bucket_gc(t,i);
+            }
+        }
+
+        //std::cout<<"gc collected "<<collected<<std::endl;
+
+        
+    }
+
 
     
     
@@ -137,6 +165,7 @@ private:
 
     struct Table{
         T* _table[NBUCKETS] = {nullptr};
+        std::atomic_bool _gc_flags[NBUCKETS];
     };
 
     std::vector<Table> _tables;
@@ -151,7 +180,42 @@ private:
         std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
     };
 
+    std::size_t collected;
+
     enumerable_thread_specific<Cache> _caches;
+
+    void bucket_gc( Table& t,  std::size_t key){
+        t._gc_flags[key] = true;
+
+        T* current = t._table[key];
+        T* previous = nullptr;
+        T* to_return = nullptr;
+        while(current != nullptr){
+            if(current->ref == 0){
+
+                to_return = current;
+                current = current->next;
+                if(previous == nullptr){
+                    t._table[key] = current;
+                }else{
+                    previous->next = current;                    
+                }
+                returnNode(to_return, -3);
+                collected++;
+
+            }else{
+                previous = current;
+                current = current->next;
+            }
+
+        }
+
+        
+
+
+        t._gc_flags[key] = false;
+    
+    }
 
 
 };

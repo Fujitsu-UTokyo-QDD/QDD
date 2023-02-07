@@ -14,7 +14,7 @@ if(NOT EXISTS ${EIGEN_PATH})
     file(ARCHIVE_EXTRACT INPUT "${EIGEN}.zip" DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 endif()
 
-optioin(with_mt         "Run with multiple threads" OFF)
+option(with_mt         "Run with multiple threads" OFF)
 if(with_mt)
     message(STATUS "Run with multiple threads")
     add_compile_definitions(MT)

@@ -18,14 +18,17 @@ mEdge mEdge::zero{{0.0,0.0}, mNode::terminal};
 vEdge vEdge::one{{1.0, 0.0}, vNode::terminal};
 vEdge vEdge::zero{{0.0,0.0}, vNode::terminal};
 
-mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
-vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr};
+//mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr, .ref = MAX_REF };
+//vNode vNode::terminalNode{.v = -1, .children = {}, .next = nullptr, .ref = MAX_REF };
+
+mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
+vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 
 static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return norm(e.w) == 0.0;})){
-        mUnique.returnNode(e.n);
+        mUnique.returnNode(e.n, -4);
         return mEdge::zero;
     }
 
@@ -45,6 +48,10 @@ static mEdge normalizeM(const mEdge& e){
 
 
     mNode* n = mUnique.lookup(e.n);
+    assert(n->v >= -1);
+    
+
+    
     return {max_weight * e.w, n};
     
 
@@ -54,7 +61,7 @@ static vEdge normalizeV(const vEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
-        vUnique.returnNode(e.n);
+        vUnique.returnNode(e.n, -4);
         return vEdge::zero;
     }
 
@@ -74,6 +81,7 @@ static vEdge normalizeV(const vEdge& e){
 
 
     vNode* n = vUnique.lookup(e.n);
+
     return {max_weight * e.w, n};
     
 
@@ -86,9 +94,7 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4>& c){
     node->v = q;
     node->children = c;
 
-    for(int i = 0; i < 4; i++){
-        assert(&node->children[i] != &mEdge::one && (&node->children[i] != &mEdge::zero));
-    }
+
 
     
     mEdge e =  normalizeM({{1.0,0.0}, node}); 
@@ -274,6 +280,7 @@ mEdge makeIdent( Qubit q){
     if(q < 0) return mEdge::one;
 
     if(identityTable[q].n != nullptr) {
+        assert(identityTable[q].n->v > -1);
         return identityTable[q];
     }
 
@@ -283,6 +290,7 @@ mEdge makeIdent( Qubit q){
     }
     
     identityTable[q] = e;
+    e.incRef();
     return e;
 
 
@@ -974,7 +982,21 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     
 }
 
-vEdge mv_multiply(Worker *w, const mEdge& lhs, const vEdge& rhs){
+struct mEdgeRefGuard{
+    mEdgeRefGuard(mEdge& ee): e(ee){ e.incRef();}
+    ~mEdgeRefGuard(){ e.decRef();};
+    mEdge e;
+};
+struct vEdgeRefGuard{
+    vEdgeRefGuard(vEdge& ee): e(ee){ e.incRef();}
+    ~vEdgeRefGuard(){ e.decRef();};
+    vEdge e;
+};
+
+vEdge mv_multiply(Worker *w, mEdge lhs, vEdge rhs){
+    mEdgeRefGuard mg(lhs);
+    vEdgeRefGuard vg(rhs);
+    
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, vNode::terminal};
     }
@@ -1022,4 +1044,53 @@ mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1){
     e3 = mm_multiply_no_worker(e1, e3);
 
     return e3;
+}
+
+
+void mEdge::decRef() {
+    if (isTerminal()) return;
+    assert(n->ref > 0);     
+    n->ref--;
+    
+    for(auto i = 0; i < 4; i++)  n->getEdge(i).decRef();
+    
+}
+void vEdge::decRef() {
+    if (isTerminal()) return;
+
+    assert(n->ref > 0);     
+    n->ref--;
+    
+    for(auto i = 0; i < 2; i++)  n->getEdge(i).decRef();
+    
+}
+void mEdge::incRef() {
+    if (isTerminal()) return;
+
+    if(n->ref < MAX_REF){
+        n->ref++;
+    }
+    
+    for(auto i = 0; i < 4; i++)  n->getEdge(i).incRef();
+    
+}
+void vEdge::incRef() {
+    if (isTerminal()) return;
+
+    if(n->ref < MAX_REF){
+        n->ref++;
+    }
+    
+    for(auto i = 0; i < 2; i++)  n->getEdge(i).incRef();
+    
+}
+void mEdge::check(){
+    if(isTerminal()) return;
+
+    if(n->v == -2 || n->v == -3 || n->v == -4) {
+        foo();
+        assert(false);
+    }
+    for(auto i = 0; i < 4; i++) n->getEdge(i).check();
+    
 }

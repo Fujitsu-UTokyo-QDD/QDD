@@ -1,6 +1,7 @@
 #include <iostream>
 #include "graph.hpp"
 #include "dd.h"
+#include "table.hpp"
 #include <chrono>
 #include "algorithms/grover.hpp"
 #include "algorithms/shor.hpp"
@@ -143,7 +144,6 @@ void runQV15(){
     state = mv_multiply(&w, RY(15,8,1.9773095363663689), state);
     state = mv_multiply(&w, RZ(15,8,3.1318194120047744), state);
     state = mv_multiply(&w, RZ(15,9,2.7946118064652037), state);
-    //return; //100
     state = mv_multiply(&w, RY(15,9,1.965045162660141), state);
     state = mv_multiply(&w, RZ(15, 9, 2.3785351684797007), state);
     state = mv_multiply(&w, RZ(15,10,-1.359607471955605), state);
@@ -245,6 +245,10 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,7,0.9054056230033529), state);
     state = mv_multiply(&w, RY(15,7,1.1733777353180699), state);
     //return; //200
+     state.incRef();
+    mUnique.gc(); 
+    vUnique.gc(); 
+
     state = mv_multiply(&w, RZ(15,7,2.5260439398529932), state);
     state = mv_multiply(&w, CX(15,2,7), state);
     state = mv_multiply(&w, RZ(15,2,2.815232263929512), state);
@@ -346,6 +350,9 @@ void runQV15(){
     state = mv_multiply(&w, RY(15,12,2.0277055254564686), state);
     state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state);
     //return; //300
+    state.incRef();
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state);
     state = mv_multiply(&w, RY(15,7,-0.2972716557626958), state);
     state = mv_multiply(&w, CX(15,12,7), state);
@@ -447,6 +454,9 @@ void runQV15(){
     state = mv_multiply(&w, CX(15,1,5), state);
     state = mv_multiply(&w, RZ(15,1,-1.5122592118784963), state);
     //return; //400
+    state.incRef();
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RY(15,1,1.4705197464787012), state);
     state = mv_multiply(&w, RZ(15,1,1.850317074070154), state);
     state = mv_multiply(&w, CX(15,11,1), state);
@@ -548,6 +558,10 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,14,2.801116120161568), state);
     state = mv_multiply(&w, RY(15,14,1.76853973264416), state);
     //return; // 500
+    state.incRef();
+    mUnique.gc(); 
+    vUnique.gc(); 
+    return;
     state = mv_multiply(&w, RZ(15,14,0.5063190937426287), state);
     state = mv_multiply(&w, RX(15,8,1.0718646790521935), state);
     state = mv_multiply(&w, CX(15,14,8), state);
@@ -649,6 +663,8 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,13,0.49651246893179035), state);
     state = mv_multiply(&w, RY(15,13,0.3147503706444718), state);
    //return; //600
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,13,0.3630052881809722), state);
     state = mv_multiply(&w, RZ(15,6,-0.49547825680539503), state);
     state = mv_multiply(&w, RY(15,6,2.4933906640350805), state);
@@ -750,6 +766,8 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state);
     state = mv_multiply(&w, RY(15,0,-0.024380509882372496), state);
     //return; //700
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,6,2.181330471729889), state);
     state = mv_multiply(&w, RY(15,6,2.0277055254564686), state);
     state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state);
@@ -851,6 +869,8 @@ void runQV15(){
     state = mv_multiply(&w, RY(15,4,0.38126175427535236), state);
     state = mv_multiply(&w, RZ(15,4,2.5776028412966214), state);
     //return; //800
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, CX(15,1,4), state);
     state = mv_multiply(&w, RZ(15,1,2.8487909192537053), state);
     state = mv_multiply(&w, RY(15,1,1.7422769930046016), state);
@@ -952,6 +972,8 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,13,2.181330471729889), state);
     state = mv_multiply(&w, RY(15,13,2.0277055254564686), state);
     //return; //900
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state);
     state = mv_multiply(&w, CX(15,13,10), state);
     state = mv_multiply(&w, RZ(15,10,-2.3551080379983755), state);
@@ -1053,6 +1075,8 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,14,-3.06211519204121), state);
     state = mv_multiply(&w, RY(15,14,1.5231960206422643), state);
     return; //1000
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,14,0.5385265713225595), state);
     state = mv_multiply(&w, CX(15,14,11), state);
     state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state);
@@ -1154,6 +1178,8 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,14,2.398174591880599), state);
     state = mv_multiply(&w, RY(15,14,2.035220016415435), state);
     //return; //1100
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,14,0.14743350408535605), state);
     state = mv_multiply(&w, CX(15,14,5), state);
     state = mv_multiply(&w, RZ(15,14,2.750474308820464), state);
@@ -1255,6 +1281,8 @@ void runQV15(){
     state = mv_multiply(&w, RX(15,6,0.6369563729039348), state);
     state = mv_multiply(&w, CX(15,3,6), state);
     //return; //1200
+    mUnique.gc(); 
+    vUnique.gc(); 
     state = mv_multiply(&w, RZ(15,3,2.181330471729889), state);
     state = mv_multiply(&w, RY(15,3,2.0277055254564686), state);
     state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state);
@@ -1364,6 +1392,7 @@ void runQV15(){
 }
 
 int main(int argc, char* argv[]){
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
     runQV15();
