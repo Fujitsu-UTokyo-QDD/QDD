@@ -15,3 +15,6 @@ gtest_discover_tests(qdd_test)
 add_executable(benchmark main.cpp)
 target_link_libraries(benchmark PUBLIC engine alg)
 
+add_executable(gc_test  qv15.cpp)
+target_link_libraries(gc_test PUBLIC engine)
+

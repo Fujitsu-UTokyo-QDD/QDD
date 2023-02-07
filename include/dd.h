@@ -4,6 +4,7 @@
 #include <complex>
 #include <vector>
 #include <random>
+#include <atomic>
 #include <Eigen/Dense>
 using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
