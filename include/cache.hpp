@@ -120,9 +120,12 @@ class AddCache{
         struct Entry{
             Entry():valid(false){}
             Edge lhs;
+            unsigned lversion;
             Edge rhs;
+            unsigned rversion;
             Edge result;
             bool valid;
+
         };
 
         struct alignas(hardware_constructive_interference_size) // the same cacheline
@@ -187,13 +190,13 @@ class AddCache{
                 Entry& e = b->e;
 
                 if constexpr(std::is_same_v<T, mEdge>){
-                    if(e.valid && e.lhs.m == l && e.rhs.m ==r){
+                    if(e.valid && e.lhs.m == l && e.rhs.m ==r && e.lversion == l.n->version && e.rversion == r.n->version){
                        return e.result.m; 
                     }else{
                         return T{};
                     }
                 }else{
-                    if(e.valid && e.lhs.v == l && e.rhs.v ==r){
+                    if(e.valid && e.lhs.v == l && e.rhs.v ==r && e.lversion == l.n->version && e.rversion == r.n->version){
                        return e.result.v; 
                     }else{
                         return T{}; 
@@ -206,11 +209,15 @@ class AddCache{
             void set(Entry& e, const T& l , const T& r, const T& res){
                     if constexpr(std::is_same_v<T, mEdge>){
                         e.lhs.m = l;
+                        e.lversion = l.n->version;
                         e.rhs.m = r;
+                        e.rversion = r.n->version;
                         e.result.m = res;
                     }else{
                         e.lhs.v = l;
+                        e.lversion = l.n->version;
                         e.rhs.v = r;
+                        e.rversion = r.n->version;
                         e.result.v = res;
                     }
                     e.valid = true;
@@ -328,10 +335,13 @@ class MulCache{
         };
 
         struct Entry{
-            Entry(): lhs(0), rhs(0), valid(false){};
+            Entry(): lhs(0), rhs(0), valid(false), lversion(0), rversion(0){};
             uintptr_t lhs;
             uintptr_t rhs;
             Edge result;
+
+            unsigned lversion;
+            unsigned rversion;
             
             bool valid;
         };
@@ -393,18 +403,23 @@ class MulCache{
                 Entry& e2 = b->e2;
 
                 if constexpr(std::is_same_v<RET, mEdge>){
+                    mNode* lp = reinterpret_cast<mNode*>(l); 
+                    mNode* rp = reinterpret_cast<mNode*>(r); 
 
-                    if(e1.valid && e1.lhs == l && e1.rhs == r){
+                    if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
                         return e1.result.m;
-                    }else if(e2.valid && e2.lhs == l && e2.rhs == r){
+                    }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
                         return e2.result.m;
                     }else{
                         return RET{};
                     }
                 }else{
-                    if(e1.valid && e1.lhs == l && e1.rhs == r){
+                    mNode* lp = reinterpret_cast<mNode*>(l); 
+                    vNode* rp = reinterpret_cast<vNode*>(r); 
+
+                    if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
                         return e1.result.v;
-                    }else if(e2.valid && e2.lhs == l && e2.rhs == r){
+                    }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
                         return e2.result.v;
                     }else{
                         return RET{};
@@ -416,12 +431,20 @@ class MulCache{
         template<typename T>
             void set(Entry& e, uintptr_t& l , uintptr_t& r, const T& res){
                     if constexpr(std::is_same_v<T, mEdge>){
+                        mNode* lp = reinterpret_cast<mNode*>(l); 
+                        mNode* rp = reinterpret_cast<mNode*>(r); 
                         e.lhs = l;
+                        e.lversion = lp->version;
                         e.rhs = r;
+                        e.rversion = rp->version;
                         e.result.m = res;
                     }else{
+                        mNode* lp = reinterpret_cast<mNode*>(l); 
+                        vNode* rp = reinterpret_cast<vNode*>(r); 
                         e.lhs = l;
+                        e.lversion = lp->version;
                         e.rhs = r;
+                        e.rversion = rp->version;
                         e.result.v = res;
                     }
                     e.valid = true;

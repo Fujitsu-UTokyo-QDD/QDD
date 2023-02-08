@@ -1373,16 +1373,16 @@ void runQV15(int DURATION){
     int i = 0;
     vEdge state = makeZeroState(qc);
     state = mv_multiply(&w, RZ(qc,0,1.7952706710012407), state); 
-    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc();  }
     std::cout<<"1"<<std::endl;
     state.printVector();
     state = mv_multiply(&w, RY(qc, 0, 1.0056905557557458),  state); 
-    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
     std::cout<<"2"<<std::endl;
     state.printVector();
 
     state = mv_multiply(&w, RZ(qc,0,-2.860782987649066), state); 
-    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc();  }
     std::cout<<"3"<<std::endl;
     state.printVector();
 
