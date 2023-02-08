@@ -84,13 +84,14 @@ public:
         return p;
     }
 
-    void returnNode(T* p, int i) {
+    void returnNode(T* p) {
         if constexpr(std::is_same_v<T, mNode>){
             if(p == mNode::terminal) return; 
         }
 
-        p->v = i;
+        p->v = -2;
         p->ref = 0;
+        p->version++;
         Cache& c = _caches.local();
         p->next   = c.available;
         c.available = p;
@@ -112,7 +113,7 @@ RELOAD:
             if(ValueEqual()(*node, *current)){
                 assert(current -> v == node->v);
 
-                returnNode(node, -2);
+                returnNode(node);
 
                 return current;
             }
@@ -200,7 +201,7 @@ private:
                 }else{
                     previous->next = current;                    
                 }
-                returnNode(to_return, -3);
+                returnNode(to_return);
                 collected++;
 
             }else{

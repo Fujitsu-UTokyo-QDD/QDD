@@ -180,9 +180,12 @@ struct vNode {
 
 #ifdef MT
     std::atomic_uint ref{0};
+    std::atomic_uint version{0};
 #else
     unsigned int ref{0};
+    unsigned int version{0};
 #endif
+
 };
 
 struct mEdge {
@@ -295,9 +298,13 @@ struct mNode {
 
 #ifdef MT
     std::atomic_uint ref{0};
+    std::atomic_uint version{0};
 #else
     unsigned int ref{0};
+    unsigned int version{0};
 #endif
+
+     
 
 };
 

@@ -40,7 +40,7 @@ mEdge CX(QubitCount qnum, int target, int control){
     controls.emplace(Control{control, Control::Type::pos});
     return makeGate(qnum, GateMatrix{zero,one,one,zero}, target, controls );
 }
-
+/*
 void runQV15(){
     Worker w(15);
     vEdge state = makeZeroState(15);
@@ -1390,12 +1390,37 @@ void runQV15(){
     state = mv_multiply(&w, RZ(15,9,-2.7886360394649663), state);
     //statHash(&w);
 }
+*/
+
+void runQV15(int DURATION){
+    QubitCount qc = 3;
+    Worker w(qc);
+    int i = 0;
+    vEdge state = makeZeroState(qc);
+    state = mv_multiply(&w, RZ(qc,0,1.7952706710012407), state); 
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    std::cout<<"1"<<std::endl;
+    state.printVector();
+    state = mv_multiply(&w, RY(qc, 0, 1.0056905557557458),  state); 
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    std::cout<<"2"<<std::endl;
+    state.printVector();
+
+    state = mv_multiply(&w, RZ(qc,0,-2.860782987649066), state); 
+    i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); w._mulCache.clearAll(); w._addCache.clearAll(); }
+    std::cout<<"3"<<std::endl;
+    state.printVector();
+
+}
+
+
 
 int main(int argc, char* argv[]){
 
+
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    runQV15();
+    runQV15(std::atoi(argv[1]));
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms = t2 - t1;

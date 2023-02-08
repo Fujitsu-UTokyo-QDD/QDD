@@ -83,6 +83,30 @@ class AddCache{
                 
             }
 
+    void clearAll() {
+        for(std::vector<Table>& vt: _tables){
+            for(Table& t: vt){
+                std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
+            }
+        }
+
+        while(c.chunkID > 0){
+            c.chunks.pop_back();
+            c.chunkID--;
+        }
+
+        c.chunkIt = c.chunks[0].begin();
+        c.chunkEndIt = c.chunks[0].end();
+        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE;
+        for(Bucket& b : c.chunks[0]){
+            b.e.valid = false;
+        }
+    
+
+
+    }
+
 
     private:
 
@@ -94,9 +118,11 @@ class AddCache{
         };
 
         struct Entry{
+            Entry():valid(false){}
             Edge lhs;
             Edge rhs;
             Edge result;
+            bool valid;
         };
 
         struct alignas(hardware_constructive_interference_size) // the same cacheline
@@ -161,13 +187,13 @@ class AddCache{
                 Entry& e = b->e;
 
                 if constexpr(std::is_same_v<T, mEdge>){
-                    if(e.lhs.m == l && e.rhs.m ==r){
+                    if(e.valid && e.lhs.m == l && e.rhs.m ==r){
                        return e.result.m; 
                     }else{
                         return T{};
                     }
                 }else{
-                    if(e.lhs.v == l && e.rhs.v ==r){
+                    if(e.valid && e.lhs.v == l && e.rhs.v ==r){
                        return e.result.v; 
                     }else{
                         return T{}; 
@@ -187,6 +213,7 @@ class AddCache{
                         e.rhs.v = r;
                         e.result.v = res;
                     }
+                    e.valid = true;
             }
 
         template<typename T>
@@ -265,6 +292,31 @@ class MulCache{
                 
             }
 
+    void clearAll() {
+        for(std::vector<Table>& vt: _tables){
+            for(Table& t: vt){
+                std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
+            }
+        }
+
+        while(c.chunkID > 0){
+            c.chunks.pop_back();
+            c.chunkID--;
+        }
+
+        c.chunkIt = c.chunks[0].begin();
+        c.chunkEndIt = c.chunks[0].end();
+        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE;
+        for(Bucket& b : c.chunks[0]){
+            b.e1.valid = false;
+            b.e2.valid = false;
+        }
+    
+
+
+    }
+
 
     private:
 
@@ -276,11 +328,15 @@ class MulCache{
         };
 
         struct Entry{
+            Entry(): lhs(0), rhs(0), valid(false){};
             uintptr_t lhs;
             uintptr_t rhs;
             Edge result;
+            
+            bool valid;
         };
 
+        static_assert(std::is_default_constructible_v<Entry>);
         struct alignas(hardware_constructive_interference_size) // the same cacheline
         Bucket{
             Entry e1;
@@ -337,18 +393,18 @@ class MulCache{
                 Entry& e2 = b->e2;
 
                 if constexpr(std::is_same_v<RET, mEdge>){
-                    if(e1.result.m.n != nullptr && e1.lhs == l && e1.rhs == r){
+
+                    if(e1.valid && e1.lhs == l && e1.rhs == r){
                         return e1.result.m;
-                    }else if(e2.result.m.n != nullptr && e2.lhs == l && e2.rhs == r){
+                    }else if(e2.valid && e2.lhs == l && e2.rhs == r){
                         return e2.result.m;
                     }else{
                         return RET{};
                     }
-
                 }else{
-                    if(e1.result.v.n != nullptr && e1.lhs == l && e1.rhs == r){
+                    if(e1.valid && e1.lhs == l && e1.rhs == r){
                         return e1.result.v;
-                    }else if(e2.result.m.n != nullptr && e2.lhs == l && e2.rhs == r){
+                    }else if(e2.valid && e2.lhs == l && e2.rhs == r){
                         return e2.result.v;
                     }else{
                         return RET{};
@@ -368,6 +424,7 @@ class MulCache{
                         e.rhs = r;
                         e.result.v = res;
                     }
+                    e.valid = true;
             }
 
         template<typename ResT>

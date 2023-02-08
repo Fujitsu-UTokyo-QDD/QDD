@@ -28,7 +28,7 @@ static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const mEdge& e){ return norm(e.w) == 0.0;})){
-        mUnique.returnNode(e.n, -4);
+        mUnique.returnNode(e.n);
         return mEdge::zero;
     }
 
@@ -61,7 +61,7 @@ static vEdge normalizeV(const vEdge& e){
 
     // check for all zero weights
     if(std::all_of(e.n->children.begin(), e.n->children.end(), [](const vEdge& e){ return norm(e.w) == 0.0;})){
-        vUnique.returnNode(e.n, -4);
+        vUnique.returnNode(e.n);
         return vEdge::zero;
     }
 
