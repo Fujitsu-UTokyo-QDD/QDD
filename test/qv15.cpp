@@ -40,1334 +40,1333 @@ mEdge CX(QubitCount qnum, int target, int control){
     controls.emplace(Control{control, Control::Type::pos});
     return makeGate(qnum, GateMatrix{zero,one,one,zero}, target, controls );
 }
-/*
-void runQV15(){
+
+void runQV15(int DURATION, int DURATION_CLEARALL){
     Worker w(15);
     int i = 0;
-    int DURATION = 2000;
     vEdge state = makeZeroState(15);
-    state = mv_multiply(&w, RZ(15,0,1.7952706710012407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15, 0, 1.0056905557557458), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.860782987649066), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.36809985992673866), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.9482444835445483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,3.048128613729963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-1.6766025200126147), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.691181548417681), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.752495774771061), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.15867419345120287), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.753872250542794), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.7938684591160685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.49644925379025606), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,-0.004519309895791802), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-1.4633345277414826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.5777078038266734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-0.156293564178847), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-0.5405114280189416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,0.9340193562250253), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.2236570193021592), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.8939912076034355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.20906762100842996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,3.056581307493153), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.14413419514758408), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.3419785191257416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.0001404066426094), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-0.711278691385111), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.3673332843852621), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.5961129761811885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.7280846057397286), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.8073759437373023), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.49057417985085294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,5,0.2717309510266508), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,0.05695780385403705), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.824650268624337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.5001281687191006), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.7210126206920435), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-0.4147446628950977), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.157236106106376), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.401928538758737), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.2908468316408817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.6068036026920197), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.8688677532008233), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.4072373624967063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.0199376308130983), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.5231915008981685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-1.352883035073208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,2.6141290902303425), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,1.5167804357109373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-3.0630602631644352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.5237600298069103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.5385712738020789), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,0.7735762372616726), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.06865613588153278), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.0895710409751391), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.6062162040638797), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.9234807344449294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.8041275203426451), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.992332787933192), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.6597844456950097), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.5337615961771074), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,0.6217717479565182), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.6196325362851525), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.4669775813220833), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.3771149616546463), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.9622152445314187), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.8605865653090716), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.7447166202425928), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,1.4850783306331792), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.9773095363663689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,3.1318194120047744), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.7946118064652037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
+    state = mv_multiply(&w, RZ(15,0,1.7952706710012407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15, 0, 1.0056905557557458), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.860782987649066), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.36809985992673866), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.9482444835445483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,3.048128613729963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-1.6766025200126147), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.691181548417681), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.752495774771061), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.15867419345120287), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.753872250542794), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.7938684591160685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.49644925379025606), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,-0.004519309895791802), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-1.4633345277414826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.5777078038266734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-0.156293564178847), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-0.5405114280189416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,0.9340193562250253), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.2236570193021592), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.8939912076034355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.20906762100842996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,3.056581307493153), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.14413419514758408), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.3419785191257416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.0001404066426094), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-0.711278691385111), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.3673332843852621), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.5961129761811885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.7280846057397286), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.8073759437373023), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.49057417985085294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,5,0.2717309510266508), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,0.05695780385403705), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.824650268624337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.5001281687191006), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.7210126206920435), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-0.4147446628950977), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.157236106106376), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.401928538758737), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.2908468316408817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.6068036026920197), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.8688677532008233), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.4072373624967063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.0199376308130983), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.5231915008981685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-1.352883035073208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,2.6141290902303425), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,1.5167804357109373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-3.0630602631644352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.5237600298069103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.5385712738020789), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,0.7735762372616726), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.06865613588153278), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.0895710409751391), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.6062162040638797), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.9234807344449294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.8041275203426451), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.992332787933192), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.6597844456950097), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.5337615961771074), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,0.6217717479565182), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.6196325362851525), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.4669775813220833), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.3771149616546463), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.9622152445314187), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.8605865653090716), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.7447166202425928), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,1.4850783306331792), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.9773095363663689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,3.1318194120047744), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.7946118064652037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //return; //100
-    state = mv_multiply(&w, RY(15,9,1.965045162660141), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15, 9, 2.3785351684797007), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-1.359607471955605), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.450325444814238), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.5073149985988037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,0.28424925650670513), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.948994754238056), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,1.456451646176144), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.5293621255108398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.030212973929138645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,1.6299974863309155), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.1128050723402898), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.4378388702281155), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.595007456031011), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.5026436375225821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.19681844425572148), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.1585613735014526), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.550645118937032), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.03936563939274418), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,11,0.791154450835611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.756851298707814), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.7922931743884956), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.49710601088521145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,-0.48056939717107156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.3728735241740724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.424454258163221), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.525509687766415), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.7580148386645007), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.7916770869685157), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.4973612795128499), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.6413470249719414), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,-0.08225482155417335), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.6716861214811436), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.4788278548556293), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,1.121901111325398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.0234948448289645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,1.672676020105948), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.113972033711544), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.7194156527415422), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.7160480286309383), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.8135998224475898), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.48771661379836884), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.26250551805852623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.9188276651112499), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.186084420514183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.4220790107637669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.1404759046463386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.101493995262753), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-0.04725336685517645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.9754097583392962), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0859273992994702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,1.1940818328641676), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-0.3584883736767175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.290334553083619), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-1.6833029123100625), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,3.006409111808175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.651484071716645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.5349544001805806), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,7,0.6253131536101243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,-0.2128490655812685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-0.07760045410512584), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.9917807841033758), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,1.737768680644808), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.9054056230033529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.1733777353180699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
+    state = mv_multiply(&w, RY(15,9,1.965045162660141), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15, 9, 2.3785351684797007), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-1.359607471955605), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.450325444814238), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.5073149985988037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,0.28424925650670513), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.948994754238056), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,1.456451646176144), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.5293621255108398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.030212973929138645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,1.6299974863309155), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.1128050723402898), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.4378388702281155), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.595007456031011), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.5026436375225821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.19681844425572148), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.1585613735014526), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.550645118937032), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.03936563939274418), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,11,0.791154450835611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.756851298707814), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.7922931743884956), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.49710601088521145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,-0.48056939717107156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.3728735241740724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.424454258163221), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.525509687766415), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.7580148386645007), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.7916770869685157), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.4973612795128499), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.6413470249719414), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,-0.08225482155417335), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.6716861214811436), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.4788278548556293), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,1.121901111325398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.0234948448289645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,1.672676020105948), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.113972033711544), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.7194156527415422), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.7160480286309383), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.8135998224475898), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.48771661379836884), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.26250551805852623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.9188276651112499), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.186084420514183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.4220790107637669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.1404759046463386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.101493995262753), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-0.04725336685517645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.9754097583392962), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0859273992994702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,1.1940818328641676), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-0.3584883736767175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.290334553083619), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-1.6833029123100625), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,3.006409111808175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.651484071716645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.5349544001805806), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,7,0.6253131536101243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,-0.2128490655812685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-0.07760045410512584), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.9917807841033758), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,1.737768680644808), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.9054056230033529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.1733777353180699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //return; //200
-    state = mv_multiply(&w, RZ(15,7,2.5260439398529932), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.815232263929512), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.760833705001965), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.5090390254772479), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,7,0.9386695921965352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,0.3494244033270996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-0.9564205150902119), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.3207524779165296), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.5189343063480774), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.5211570819482603), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.6926843142721053), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.7285922785052676), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.7660150163105417), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.23891432603722812), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-0.7309856725645858), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,0.8879112325161316), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-3.1077428570480716), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.5504931174453886), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.540075825900352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,-0.4359695038458272), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.6818673310384629), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,2.0574365432775736), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.7980208829567594), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.9725659493751433), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.470203203454477), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.5318905981043325), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,0.46813706172517644), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,-0.22609077134581115), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,1.999945235847794), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.4527365109808337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,1.2056172651345056), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-1.4953427294553236), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.7283494647371823), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-2.550020173750985), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,1.3691119174683788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.8714887512719396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-1.038606325574691), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.9337358008894867), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.6939873519629494), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.5275540576988322), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,9,0.6845363459419976), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,-0.1428587548707901), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,1.9839336659758118), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.7995538955331174), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.4922354788797456), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.81508585643234), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.7609139404640473), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.5090113639773217), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,1.1766412742015218), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,-0.38598567002282447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.1751518443746916), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0256080514645816), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-0.7917227735268151), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,1.0429972098540485), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.5101211282218623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-0.5617834245229156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.935639718442152), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.4487065560601609), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.527786970124168), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,7,0.7777693666468612), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //300
-    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,-0.2972716557626958), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-1.9883674123654993), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.1345618203727326), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,1.0346986559621136), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-1.5257825146431818), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,0.36002623553389573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,1.4469192079440365), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,1.2097211756313762), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.0413433093517817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.7649685672042321), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,1.2201442560495859), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.6732793185467596), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.8352807829553954), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.47698236912514247), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.6381858766346368), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.08878576572442043), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.8056521537063042), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.0225217477349338), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.7099005165091619), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.3642194689061924), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.405843326296889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.6692879180319905), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.8568564005250554), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.7377696797537916), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.5164312859953362), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,-0.026623046620421847), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.773944826258497), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.9358704115200702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.39731754558107335), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.7528396631313106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,1.794413770626133), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.49622054332661314), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,7,0.7580589215410635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,0.43379846231584945), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.7704821644479694), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.1213782888843373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.48839792816055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.537558870978721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.9848800994780649), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.7203513914152495), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.97258323863268), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.56999947527571), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-1.2373022620370935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,3.076598282297855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.781781762077692), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-0.5985920423907438), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,1,0.9002164115764355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.894394997962493), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.716567622429018), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.5222783889550295), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,-0.5353655871074885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-0.8508534788289683), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.730905278036487), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.7232747755882749), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.546482475668981), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.8836140419215974), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.629570519969345), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.706426287915459), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.8185370842064046), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.48538023559718724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,5,0.48112609652276883), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,-0.34222750809694374), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-1.5122592118784963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //400
-    state = mv_multiply(&w, RY(15,1,1.4705197464787012), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,1.850317074070154), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,1,0.653927489819112), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,3.0485666405632674), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.6264738615636778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.5378272332740526), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,-0.16793940470796176), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.6967548451638175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.6955812719262355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.219429649447072), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.0285916647304623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.4334482212119968), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-1.2217084626786043), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.8189542407064927), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.7587917951017713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.5097383597323417), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,0.5599826596123786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,-0.2349582204792817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.5127768572795066), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.5669539581789753), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-1.8350531820574996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.000904872599954), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.2516962431085887), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.6052378568938703), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,0.8092153604577244), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-0.27271133004295045), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.145542829632689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-0.23945386320320727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.791154450835611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.756851298707814), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.7922931743884956), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.49710601088521145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,-0.48056939717107156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.5539759928545767), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.3583329703644336), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-0.19389675810258433), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,1.1905693650696882), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.5508131452878529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.407187137645124), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,0.6369563729039348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-3.0887252950355117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.5391013034040788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.5395814188829409), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,-0.2733627214479613), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,1.066684069506561), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,2.331542091858977), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.7401303527638934), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-0.1835354067125743), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.6973563660702484), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.27497165171755), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,12,0.47115690048425907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,3.01776854556595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.6447658809761183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.535831949004697), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.06425176937861628), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,1.3492418460856772), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.0752700719629251), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.557297532091825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.127264681040205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.69549872420158), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.96847056349083), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.801116120161568), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.76853973264416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
+    state = mv_multiply(&w, RZ(15,7,2.5260439398529932), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.815232263929512), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.760833705001965), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.5090390254772479), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,7,0.9386695921965352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,0.3494244033270996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-0.9564205150902119), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.3207524779165296), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.5189343063480774), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.5211570819482603), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.6926843142721053), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.7285922785052676), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.7660150163105417), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.23891432603722812), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-0.7309856725645858), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,0.8879112325161316), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-3.1077428570480716), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.5504931174453886), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.540075825900352), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,-0.4359695038458272), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.6818673310384629), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,2.0574365432775736), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.7980208829567594), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.9725659493751433), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.470203203454477), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.5318905981043325), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,0.46813706172517644), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,-0.22609077134581115), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,1.999945235847794), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.4527365109808337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,1.2056172651345056), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-1.4953427294553236), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.7283494647371823), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-2.550020173750985), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,1.3691119174683788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.8714887512719396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-1.038606325574691), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.9337358008894867), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.6939873519629494), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.5275540576988322), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,9,0.6845363459419976), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,-0.1428587548707901), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,1.9839336659758118), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.7995538955331174), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.4922354788797456), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.81508585643234), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.7609139404640473), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.5090113639773217), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,1.1766412742015218), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,-0.38598567002282447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.1751518443746916), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0256080514645816), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-0.7917227735268151), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,1.0429972098540485), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.5101211282218623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-0.5617834245229156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.935639718442152), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.4487065560601609), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.527786970124168), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,7,0.7777693666468612), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //300
+    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,-0.2972716557626958), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-1.9883674123654993), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.1345618203727326), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,1.0346986559621136), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-1.5257825146431818), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,0.36002623553389573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,1.4469192079440365), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,1.2097211756313762), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.0413433093517817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.7649685672042321), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,1.2201442560495859), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.6732793185467596), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.8352807829553954), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.47698236912514247), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.6381858766346368), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.08878576572442043), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.8056521537063042), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.0225217477349338), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.7099005165091619), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.3642194689061924), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.405843326296889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.6692879180319905), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.8568564005250554), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.7377696797537916), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.5164312859953362), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,-0.026623046620421847), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.773944826258497), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.9358704115200702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.39731754558107335), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.7528396631313106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,1.794413770626133), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.49622054332661314), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,7,0.7580589215410635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,0.43379846231584945), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.7704821644479694), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.1213782888843373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.48839792816055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.537558870978721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.9848800994780649), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.7203513914152495), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.97258323863268), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.56999947527571), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-1.2373022620370935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,3.076598282297855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.781781762077692), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-0.5985920423907438), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,1,0.9002164115764355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.894394997962493), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.716567622429018), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.5222783889550295), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,-0.5353655871074885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-0.8508534788289683), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.730905278036487), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.7232747755882749), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.546482475668981), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.8836140419215974), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.629570519969345), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.706426287915459), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.8185370842064046), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.48538023559718724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,5,0.48112609652276883), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,-0.34222750809694374), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-1.5122592118784963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //400
+    state = mv_multiply(&w, RY(15,1,1.4705197464787012), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,1.850317074070154), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,1,0.653927489819112), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,3.0485666405632674), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.6264738615636778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.5378272332740526), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,-0.16793940470796176), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.6967548451638175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.6955812719262355), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.219429649447072), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.0285916647304623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.4334482212119968), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-1.2217084626786043), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.8189542407064927), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.7587917951017713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.5097383597323417), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,0.5599826596123786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,-0.2349582204792817), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.5127768572795066), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.5669539581789753), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-1.8350531820574996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.000904872599954), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.2516962431085887), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.6052378568938703), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,0.8092153604577244), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-0.27271133004295045), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.145542829632689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-0.23945386320320727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.791154450835611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.756851298707814), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.7922931743884956), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.49710601088521145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,-0.48056939717107156), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.5539759928545767), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.3583329703644336), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-0.19389675810258433), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,1.1905693650696882), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.5508131452878529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.407187137645124), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,0.6369563729039348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-3.0887252950355117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.5391013034040788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.5395814188829409), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,-0.2733627214479613), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,1.066684069506561), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,2.331542091858977), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.7401303527638934), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-0.1835354067125743), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.6973563660702484), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.27497165171755), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,12,0.47115690048425907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,3.01776854556595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.6447658809761183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.535831949004697), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.06425176937861628), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,1.3492418460856772), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.0752700719629251), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.557297532091825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.127264681040205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.69549872420158), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.96847056349083), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.801116120161568), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.76853973264416), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //state.printVector(); return;// 500
-    state = mv_multiply(&w, RZ(15,14,0.5063190937426287), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,1.0718646790521935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.3077483280861729), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-0.5569253230559461), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.2440469414622886), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,1.5404335075870872), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,1.1168291387099556), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,3.058716434723803), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.620424370540976), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.5383614083700454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.7032779403502636), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.0963703913447063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.5644904475860931), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-2.566262743486294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,0.4330788966838853), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.6816455419322116), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.2816139199665877), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.200290036508319), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.6681923957455727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.8378131795305446), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.4756463682934533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,14,0.24384219771607935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,-0.18671161456201607), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,1.692647040716234), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,0.7035900923218219), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-1.5110280582047457), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.7836914912766106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.7779661774176398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.5028152883182386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,11,1.0498123479338266), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,-0.10964200643546133), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-1.1894144049771285), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.352402802300801), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-0.5483785512625237), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.1733759982591963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,0.7724537171113984), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,1.0154173511929354), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,3.1401985278796207), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.8572272473644393), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.0895962344258354), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.8012141071200585), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.768486452755721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.5063383414280533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,14,0.6547340271882262), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,0.10027698146933507), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.6620171454144685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,2.6766792368355734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.2174932972224966), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,1.0026894688508348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-1.2453835044118993), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.9755576653769875), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,1.182271851769662), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,3.0992743137163394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.5961743032897624), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.539882414389321), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.16809910144908702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.49651246893179035), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.3147503706444718), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-   //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //600
-    state = mv_multiply(&w, RZ(15,13,0.3630052881809722), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-0.49547825680539503), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.4933906640350805), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.832386756497689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.8352531365191638), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.7498019003895369), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.5127125526341145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.3894669850170328), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.235016148709878), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.8766468492538058), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.636616591541281), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,1.1590249852755292), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.1785478127806837), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.993650255013708), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-0.9647612122263727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.831278507716904), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-1.5108623871693307), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.9145940206858265), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.7050169753397826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.525097083911191), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,0.9979935788412017), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.18868423607045853), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.08626982082617474), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0719444947080077), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.5036606705532387), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-3.1117974704087477), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.5529237650898242), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.5401532153595454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,6,0.4449462263113627), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.2687101337473975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,1.9489157491439766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.2461019097448736), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,1.1202034273108588), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.683419749151593), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.8302028029832558), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.47960836594422096), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,14,1.0851168024540214), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,0.6414958502918741), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.935101905469689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.529403495732979), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.4152218356271593), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.682325150615643), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.830752841177263), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.47932730284309555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,1.2466408097273067), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.2976640449324587), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.7065070265717699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.1895726037516632), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.426649793106324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.369290075791555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.45212737888449195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,2.5416256416497163), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.8547156995836325), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.225101857194764), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-1.8397993204624987), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.3805310007831713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.7315845963995362), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.288913370323235), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.8634831277021265), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.845583713727601), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.744064343365263), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.5145227764627864), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,-0.024380509882372496), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //700
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-0.9783104848680786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.515716386701825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.6716767376321027), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.9987240689188324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,3.109154960139068), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0436531567624083), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-0.5586005200487127), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.6914471762031766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.8261550575862378), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.48165176394131626), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,0.32531429324399397), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,1.7175539185420572), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,0.8731809499928128), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-0.5396186072422182), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.40500882941136584), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,0.5932533449350759), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.38337980540122), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.90388456388309), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.7809223531163649), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,1.07303745879591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.7979132469682106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.7702796296044623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.50568713364162), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,1.1307358665294145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,-0.6646634102292096), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.1758269815613076), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,2.371211424400209), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.917568244145583), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,3.097710451956229), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.597111122684382), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.5398419987018563), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.5854064392101112), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.296480715407501), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.06124669819446327), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.916923753900191), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.07574882155855533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,1.1273714720390984), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.970878008078139), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.6723774722303337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.5317202593451), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,-0.17013394718129324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.2964674788476422), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.0072378621848113), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-2.3578065466252034), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-0.12767409735431778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.6439431982979724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,3.0254295498038317), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,0.47653125479109115), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,3.000069961342203), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.6552255886596423), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.5344316410676373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.03679099992477126), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.621984997979959), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.9332305820344486), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,3.006633414164468), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.11934896000960737), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.6206009111579127), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,1.324980588557942), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.168865610259159), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.38126175427535236), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.5776028412966214), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //800
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.8487909192537053), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.7422769930046016), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.5150728833972766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.5149412305625257), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.16060647526662553), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.32253012594446195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.636626879838591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.62501213580917), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.8171620233781725), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.0757662671100188), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,1.9260305330695404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.7908437041980907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.7741086079167798), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.5042729406667599), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,4,0.7375998518754461), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,-0.33325443989464915), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.5248875713630055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.5475212936719578), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,0.642602942982581), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,1.3004308220082699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.12469555562219992), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-0.5833872656800243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-2.2567884578883257), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.9606535998434322), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,1.0956742731687843), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.9569675554955666), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.4610917479330483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.530253415752044), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,0.4399729570562724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,0.09747168373390672), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,1.7575468846102975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.7326893578814704), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.9554046150703961), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-1.0058173682854732), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.1905461306594107), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.7992726285774205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.6748291523763816), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.8345072434236425), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.47738693528963294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,0.4050277127874424), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,-0.1517513542066985), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.279531433380611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.773531322726603), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-1.387071761077578), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.940829912543662), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.2719596347522069), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,0.6908317022790387), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,0.6150152035717529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.8960947025236763), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.715599319218041), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,0.5225244664118427), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.5101795130632282), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.5501207070690004), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.1962946275482356), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.5558147326154357), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,1.1345181388195573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.7611860801136014), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.78999560122881), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.4980534629813316), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.03275592920767848), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //900
-    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-2.3551080379983755), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.9359029130100391), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,1.814084002084475), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.356587733534413), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,1.4698317254896778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,1.7915809886414253), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,0.041365489097707986), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,2.12705446206821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,2.1034303411524), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.743056807739027), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.7995618753829787), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,0.4940265412851783), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,8,1.0343494767698842), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,-0.07290138249799394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-1.6021598673043318), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,2.6550591242414594), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-1.217519629122854), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,1.3504683172857206), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,8,1.97996008757771), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,8,0.5264969606654666), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.986330673051734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.6633148042662036), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.5332176294028232), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.1801038647855612), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.1243926983649617), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.2668013271235252), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.5017907966123198), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,12,0.6397402185197671), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.85304689232989), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.7399007956673609), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.5157941476658503), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,-0.26755054667851574), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.6747796249844518), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.905523827098103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,3.0506338572794363), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-1.8600338372178324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.786088046967407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-0.0942508961023063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.7772145342431394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.7814452933027654), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.5014720053094024), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,6,1.1229181500977974), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.42702432836059223), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,1.6612172344948553), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.597252460373436), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-1.5663616532900786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-1.9389670295759531), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.7377467814994927), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.3106610067427589), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.09183649271174765), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.717071224252192), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.7436114985931317), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.8316193680773907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.7518128598653444), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.5120619600819611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,9,0.860478168869215), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,0.4132068313413739), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.9442710974624555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,0.5526787381043125), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.7261460296884579), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,11,0.34035988188879734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-3.06211519204121), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.5231960206422643), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //1000
-    state = mv_multiply(&w, RZ(15,14,0.5385265713225595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,-0.15403934783761639), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.0761841746523868), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.778511827509231), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.6997786802379871), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.0223782549263714), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.3627241576230669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.33939234680824004), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.867222154086548), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.73195118980591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.5181243368886359), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,14,0.8159359548571795), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,-0.47626563736655564), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,3.0150677013301532), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.5727395950636798), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,1.08787332440658), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,0,0.7134800762293911), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.5773997448520447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.17589427887996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.5914556132854245), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.822521516594885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.756830876137151), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.5104016128636384), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,-0.18672410484818552), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.4169603005428524), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.546798180068646), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.1012522063025525), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.863530836829268), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.7340264600161652), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.517528253449064), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,13,1.0012715021789957), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,-0.17029430324025172), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,0.39753174147354997), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,0,1.1424444651040808), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,0,-2.8201345965768567), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,-0.459164212742063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,13,0.31701567418932036), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,13,0.5857617479093751), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,1.3710569805208284), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,3.0221179914075114), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.414687288325138), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.738340917327454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.802031657485742), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.4929514195404696), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,7,0.932572589540971), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,-0.6315623077180399), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,1.855338531114806), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.7433749985350049), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.4899937545519055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,1.8737290640672235), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.2880387298429699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.7897443316962098), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,14,1.1917132861505344), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.7896246246109717), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.7747672801621113), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.5040263975854842), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,-0.3089399547138195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.398174591880599), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.035220016415435), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } //1100
-    state = mv_multiply(&w, RZ(15,14,0.14743350408535605), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.750474308820464), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,1.7956615395201783), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,0.49569456684216595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,5,0.6987384460630434), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,0.22078240336146476), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,-3.0405981495286447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,14,2.229899724595018), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,14,1.8734544025331061), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,2.7664830431569705), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,5,1.996766677138874), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,5,-1.9223237196024834), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-1.0802366492698363), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.9180013758597845), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.9093326608106205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,1,0.885406391843821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.7584597279018244), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,1.7914413991704208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,0.49745869872985793), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,-0.46906534907539826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,1.1082617245258097), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,1,1.2144805993560048), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,1,2.0737643669177466), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-0.44580352701056025), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,7,2.1200309196038645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,7,-0.5612176197273464), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.107562307653533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.195051342225825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.9889663112732183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,0.6105956200047606), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,3.0839978633008975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.6053203759618428), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.5394249239589999), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,-0.2995869854804701), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,1.7862089339137945), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.6585330898609421), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-3.0913008087670635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,0.38094345225927556), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,3.0772531942011243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.6093542546247566), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.5391785204919795), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.14063057333354034), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.0733794783483877), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.6764365297781989), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.6924699556364624), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.8166426503587374), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.6374904387482692), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-0.2713030942768895), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,3,1.055018737699104), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.8224873163077735), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,1.7568496938344937), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,0.5103952867483805), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.11649858033203825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-0.9219001516910925), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.95524713430867), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,1.9507926783767369), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.499407110502208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,0.7090954468617998), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,1.7964292124839458), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-3.0887252950355117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,1.5391013034040788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,0.5395814188829409), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,6,0.6369563729039348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
+    state = mv_multiply(&w, RZ(15,14,0.5063190937426287), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,1.0718646790521935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.3077483280861729), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-0.5569253230559461), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.2440469414622886), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,1.5404335075870872), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,1.1168291387099556), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,3.058716434723803), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.620424370540976), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.5383614083700454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.7032779403502636), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.0963703913447063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.5644904475860931), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-2.566262743486294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,0.4330788966838853), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.6816455419322116), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.2816139199665877), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.200290036508319), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.6681923957455727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.8378131795305446), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.4756463682934533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,14,0.24384219771607935), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,-0.18671161456201607), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,1.692647040716234), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,0.7035900923218219), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-1.5110280582047457), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.7836914912766106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.7779661774176398), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.5028152883182386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,11,1.0498123479338266), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,-0.10964200643546133), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-1.1894144049771285), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.352402802300801), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-0.5483785512625237), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.1733759982591963), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,0.7724537171113984), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,1.0154173511929354), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,3.1401985278796207), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.8572272473644393), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.0895962344258354), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.8012141071200585), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.768486452755721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.5063383414280533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,14,0.6547340271882262), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,0.10027698146933507), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,10,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.6620171454144685), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,2.6766792368355734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.2174932972224966), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,1.0026894688508348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-1.2453835044118993), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.9755576653769875), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,1.182271851769662), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,3.0992743137163394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.5961743032897624), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.539882414389321), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.16809910144908702), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.49651246893179035), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.3147503706444718), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+   //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //600
+    state = mv_multiply(&w, RZ(15,13,0.3630052881809722), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-0.49547825680539503), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.4933906640350805), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.832386756497689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.8352531365191638), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.7498019003895369), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.5127125526341145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.3894669850170328), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.235016148709878), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.8766468492538058), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.636616591541281), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,1.1590249852755292), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.1785478127806837), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.993650255013708), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-0.9647612122263727), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.831278507716904), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-1.5108623871693307), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.9145940206858265), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.7050169753397826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.525097083911191), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,0.9979935788412017), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.18868423607045853), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.08626982082617474), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0719444947080077), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.5036606705532387), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-3.1117974704087477), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.5529237650898242), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.5401532153595454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,6,0.4449462263113627), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.2687101337473975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,1.9489157491439766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.2461019097448736), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,1.1202034273108588), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.683419749151593), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.8302028029832558), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.47960836594422096), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,14,1.0851168024540214), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,0.6414958502918741), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.935101905469689), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.529403495732979), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.4152218356271593), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.682325150615643), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.830752841177263), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.47932730284309555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,1.2466408097273067), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.2976640449324587), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.7065070265717699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.1895726037516632), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.426649793106324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.369290075791555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.45212737888449195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,2.5416256416497163), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.8547156995836325), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.225101857194764), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-1.8397993204624987), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.3805310007831713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.7315845963995362), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.288913370323235), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.8634831277021265), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.845583713727601), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.744064343365263), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.5145227764627864), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,-0.024380509882372496), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //700
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-0.9783104848680786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.515716386701825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.6716767376321027), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.9987240689188324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,3.109154960139068), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0436531567624083), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-0.5586005200487127), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.6914471762031766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.8261550575862378), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.48165176394131626), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,0.32531429324399397), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,1.7175539185420572), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,0.8731809499928128), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-0.5396186072422182), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.40500882941136584), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,0.5932533449350759), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.38337980540122), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.90388456388309), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.7809223531163649), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,1.07303745879591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.7979132469682106), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.7702796296044623), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.50568713364162), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,1.1307358665294145), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,-0.6646634102292096), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.1758269815613076), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,2.371211424400209), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.917568244145583), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,3.097710451956229), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.597111122684382), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.5398419987018563), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.5854064392101112), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.296480715407501), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.06124669819446327), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.916923753900191), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.07574882155855533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,1.1273714720390984), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.970878008078139), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.6723774722303337), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.5317202593451), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,-0.17013394718129324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.2964674788476422), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.0072378621848113), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-2.3578065466252034), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-0.12767409735431778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.6439431982979724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,3.0254295498038317), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,0.47653125479109115), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,3.000069961342203), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.6552255886596423), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.5344316410676373), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.03679099992477126), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.621984997979959), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.9332305820344486), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,3.006633414164468), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.11934896000960737), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.6206009111579127), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,1.324980588557942), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.168865610259159), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.38126175427535236), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.5776028412966214), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //800
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.8487909192537053), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.7422769930046016), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.5150728833972766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.5149412305625257), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.16060647526662553), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.32253012594446195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.636626879838591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.62501213580917), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.8171620233781725), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.0757662671100188), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,1.9260305330695404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.7908437041980907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.7741086079167798), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.5042729406667599), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,4,0.7375998518754461), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,-0.33325443989464915), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,1,4), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.5248875713630055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.5475212936719578), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,0.642602942982581), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,1.3004308220082699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.12469555562219992), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-0.5833872656800243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-2.2567884578883257), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.9606535998434322), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,1.0956742731687843), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.9569675554955666), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.4610917479330483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.530253415752044), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,0.4399729570562724), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,0.09747168373390672), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,1.7575468846102975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.7326893578814704), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.9554046150703961), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-1.0058173682854732), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.1905461306594107), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.7992726285774205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.6748291523763816), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.8345072434236425), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.47738693528963294), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,0.4050277127874424), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,-0.1517513542066985), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.279531433380611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.773531322726603), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-1.387071761077578), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.940829912543662), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.2719596347522069), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,0.6908317022790387), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,0.6150152035717529), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.8960947025236763), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.715599319218041), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,0.5225244664118427), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.5101795130632282), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,8,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.5501207070690004), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.1962946275482356), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.5558147326154357), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,1.1345181388195573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.7611860801136014), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.78999560122881), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.4980534629813316), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.03275592920767848), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //900
+    state = mv_multiply(&w, RZ(15,13,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,13,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-2.3551080379983755), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.9359029130100391), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,1.814084002084475), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.356587733534413), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,1.4698317254896778), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,1.7915809886414253), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,0.041365489097707986), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,2.12705446206821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,2.1034303411524), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.743056807739027), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.7995618753829787), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,0.4940265412851783), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,8,1.0343494767698842), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,-0.07290138249799394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,5,8), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-1.6021598673043318), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,2.6550591242414594), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-1.217519629122854), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,1.3504683172857206), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,8,1.97996008757771), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,8,0.5264969606654666), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.986330673051734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.6633148042662036), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.5332176294028232), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.1801038647855612), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.1243926983649617), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.2668013271235252), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.5017907966123198), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,12,0.6397402185197671), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.85304689232989), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.7399007956673609), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.5157941476658503), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,-0.26755054667851574), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.6747796249844518), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.905523827098103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,3.0506338572794363), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-1.8600338372178324), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.786088046967407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-0.0942508961023063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.7772145342431394), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.7814452933027654), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.5014720053094024), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,6,1.1229181500977974), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.42702432836059223), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,1.6612172344948553), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.597252460373436), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-1.5663616532900786), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-1.9389670295759531), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.7377467814994927), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.3106610067427589), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.09183649271174765), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.717071224252192), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.7436114985931317), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.8316193680773907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.7518128598653444), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.5120619600819611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,9,0.860478168869215), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,0.4132068313413739), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.9442710974624555), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,0.5526787381043125), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.7261460296884579), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,11,0.34035988188879734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-3.06211519204121), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.5231960206422643), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //1000
+    state = mv_multiply(&w, RZ(15,14,0.5385265713225595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,-0.15403934783761639), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,11), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.0761841746523868), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.778511827509231), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.6997786802379871), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.0223782549263714), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.3627241576230669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.33939234680824004), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.867222154086548), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.73195118980591), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.5181243368886359), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,14,0.8159359548571795), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,-0.47626563736655564), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,3.0150677013301532), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.5727395950636798), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,1.08787332440658), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,0,0.7134800762293911), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.5773997448520447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.17589427887996), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.5914556132854245), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.822521516594885), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.756830876137151), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.5104016128636384), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,-0.18672410484818552), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,2,0), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.4169603005428524), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.546798180068646), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.1012522063025525), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.863530836829268), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.7340264600161652), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.517528253449064), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,13,1.0012715021789957), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,-0.17029430324025172), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,0,13), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,0.39753174147354997), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,0,1.1424444651040808), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,0,-2.8201345965768567), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,-0.459164212742063), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,13,0.31701567418932036), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,13,0.5857617479093751), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,1.3710569805208284), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,3.0221179914075114), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.414687288325138), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.738340917327454), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.802031657485742), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.4929514195404696), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,7,0.932572589540971), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,-0.6315623077180399), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,7), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,1.855338531114806), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.7433749985350049), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.4899937545519055), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,1.8737290640672235), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.2880387298429699), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.7897443316962098), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,14,1.1917132861505344), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.7896246246109717), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.7747672801621113), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.5040263975854842), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,-0.3089399547138195), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,14), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.398174591880599), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.035220016415435), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    //return; i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();} //1100
+    state = mv_multiply(&w, RZ(15,14,0.14743350408535605), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.750474308820464), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,1.7956615395201783), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,0.49569456684216595), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,5,0.6987384460630434), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,0.22078240336146476), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,14,5), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,-3.0405981495286447), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,14,2.229899724595018), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,14,1.8734544025331061), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,2.7664830431569705), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,5,1.996766677138874), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,5,-1.9223237196024834), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-1.0802366492698363), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.9180013758597845), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.9093326608106205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,1,0.885406391843821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.7584597279018244), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,1.7914413991704208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,0.49745869872985793), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,-0.46906534907539826), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,7,1), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,1.1082617245258097), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,1,1.2144805993560048), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,1,2.0737643669177466), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-0.44580352701056025), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,7,2.1200309196038645), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,7,-0.5612176197273464), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.107562307653533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.195051342225825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.9889663112732183), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,0.6105956200047606), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,3.0839978633008975), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.6053203759618428), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.5394249239589999), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,-0.2995869854804701), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,1.7862089339137945), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.6585330898609421), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-3.0913008087670635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,0.38094345225927556), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,3.0772531942011243), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.6093542546247566), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.5391785204919795), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.14063057333354034), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.0733794783483877), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.6764365297781989), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.6924699556364624), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.8166426503587374), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.6374904387482692), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-0.2713030942768895), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,3,1.055018737699104), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.8224873163077735), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,1.7568496938344937), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,0.5103952867483805), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.11649858033203825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,6,3), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-0.9219001516910925), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.95524713430867), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,1.9507926783767369), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.499407110502208), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,0.7090954468617998), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,1.7964292124839458), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-3.0887252950355117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,1.5391013034040788), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,0.5395814188829409), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,6,0.6369563729039348), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //return; //1200
-    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,-0.2733627214479613), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,2.2764239285946637), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,3,0.9177705000798734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,3,-1.1883791990110386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-0.5593510345966353), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,6,2.37658288563825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,6,-2.9986246336883573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,1.5065826457011768), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.39636263282272), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,1.0332860906683514), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,12,0.860478168869215), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.8316193680773907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.7518128598653444), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,0.5120619600819611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.4132068313413739), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.431571631770005), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.8578630485366667), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.5873469250853756), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.670797167320809), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.836517714837695), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.47633202373173766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,12,1.2626349627423568), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.46228980765739713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-3.1324670470288796), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.9574571995240404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-0.5512254977070299), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,10,0.7976828872528622), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.7119976034501407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,1.8156823850708057), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,0.4867386958307396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,0.3795078140133669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,0.09216268591773291), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,10,1.4484369022323396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,10,-1.5137392356450037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,2.3030866726134205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,11,2.0929175524422923), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,11,1.1695956406054169), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.4612731566941646), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,0.8248134798040103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-1.5016027803549785), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.8012141071200585), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,1.768486452755721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.5063383414280533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,2,0.6547340271882262), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,0.10027698146933507), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,0.32842684171915604), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,12,2.4758577472462746), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,12,-2.942127415591635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,-2.248237441901745), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,2,1.2968209240255821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,2,0.9780742719587181), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-1.0673904485487635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,0.4486334247305117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,1.6020493287930204), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,3.1366898588498664), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,1.5737379833687404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.54041228908175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RX(15,9,0.5476652101072443), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,0.17218296842903766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,-1.8930048185136803), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,4,0.9659503872669483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,4,0.5477162438808771), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,2.794301286071523), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RY(15,9,1.012789090101725), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
-    state = mv_multiply(&w, RZ(15,9,-2.7886360394649663), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); }
+    state = mv_multiply(&w, RZ(15,3,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,-0.2733627214479613), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,3,6), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,2.2764239285946637), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,3,0.9177705000798734), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,3,-1.1883791990110386), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-0.5593510345966353), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,6,2.37658288563825), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,6,-2.9986246336883573), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,1.5065826457011768), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.39636263282272), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,1.0332860906683514), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,12,0.860478168869215), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.8316193680773907), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.7518128598653444), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,0.5120619600819611), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.4132068313413739), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,9,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.431571631770005), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.8578630485366667), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.5873469250853756), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.670797167320809), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.836517714837695), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.47633202373173766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,12,1.2626349627423568), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.46228980765739713), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,12), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-3.1324670470288796), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.9574571995240404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-0.5512254977070299), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,10,0.7976828872528622), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.7119976034501407), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,1.8156823850708057), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,0.4867386958307396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,0.3795078140133669), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,11,10), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,0.09216268591773291), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,10,1.4484369022323396), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,10,-1.5137392356450037), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,2.3030866726134205), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,11,2.0929175524422923), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,11,1.1695956406054169), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.4612731566941646), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,0.8248134798040103), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-1.5016027803549785), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.8012141071200585), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,1.768486452755721), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.5063383414280533), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,2,0.6547340271882262), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,0.10027698146933507), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,12,2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,0.32842684171915604), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,12,2.4758577472462746), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,12,-2.942127415591635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,-2.248237441901745), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,2,1.2968209240255821), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,2,0.9780742719587181), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-1.0673904485487635), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,0.4486334247305117), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,1.6020493287930204), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,3.1366898588498664), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,1.5737379833687404), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.54041228908175), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RX(15,9,0.5476652101072443), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,2.181330471729889), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,2.0277055254564686), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-2.842175767552855), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,std::numbers::pi/2), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,0.17218296842903766), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, CX(15,4,9), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,-1.8930048185136803), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,4,0.9659503872669483), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,4,0.5477162438808771), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,2.794301286071523), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RY(15,9,1.012789090101725), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
+    state = mv_multiply(&w, RZ(15,9,-2.7886360394649663), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //statHash(&w);
-    state.printVector();
+    //state.printVector();
 }
-*/
 
+/*
 void runQV15(int DURATION){
     QubitCount qc = 3;
     Worker w(qc);
@@ -1388,7 +1387,7 @@ void runQV15(int DURATION){
     state.printVector();
 
 }
-
+*/
 
 
 int main(int argc, char* argv[]){
@@ -1396,7 +1395,7 @@ int main(int argc, char* argv[]){
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    runQV15(std::atoi(argv[1]));
+    runQV15(std::atoi(argv[1]),std::atoi(argv[2]));
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms = t2 - t1;
