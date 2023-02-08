@@ -927,13 +927,22 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     }
 
     if(current_var == -1) {
+        if(!lhs.isTerminal() || !rhs.isTerminal()){
+            brp();
+        }
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
     
     vEdge result = w->_mulCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
-        return {result.w * lhs.w * rhs.w, result.n};
+        if(result.w.isApproximatelyZero()){
+            return vEdge::zero;
+        }else{
+            result.w = result.w * lhs.w * rhs.w;
+            if(result.w.isApproximatelyZero()) return vEdge::zero;
+            else return result;
+        }
     }
     
 
@@ -978,8 +987,9 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     result = makeVEdge(current_var, edges);
     w->_mulCache.set(lhs.n, rhs.n, result);
 
-    return {result.w * lhs.w * rhs.w, result.n};
-    
+    result.w = result.w * lhs.w * rhs.w;
+    if(result.w.isApproximatelyZero()) return vEdge::zero;
+    else return result;    
 }
 
 struct mEdgeRefGuard{
