@@ -1364,6 +1364,9 @@ void runQV15(int DURATION, int DURATION_CLEARALL){
     state = mv_multiply(&w, RZ(15,9,-2.7886360394649663), state); i++;if(i%DURATION==0){ state.incRef(); mUnique.gc(); vUnique.gc(); } if(i%DURATION_CLEARALL==0){w._mulCache.clearAll(); w._addCache.clearAll();}
     //statHash(&w);
     //state.printVector();
+    std::cout<<"add hit ratio: "<<w._addCache.hitRatio()<<std::endl;
+    std::cout<<"mul hit ratio: "<<w._mulCache.hitRatio()<<std::endl;
+    return ;
 }
 
 /*

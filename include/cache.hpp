@@ -1,5 +1,6 @@
 #pragma once
 #include <new>
+#include <iostream>
 #include <vector>
 #include "common.h"
 #include <algorithm>
@@ -32,6 +33,7 @@ class AddCache{
 
         template<typename T>
             T find(T lhs, T rhs){
+                lookups++;
 
                 if(lhs.getVar() > rhs.getVar()){
                     swap(lhs, rhs);
@@ -107,6 +109,10 @@ class AddCache{
 
     }
 
+        double hitRatio() const noexcept {
+            std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
+            return static_cast<double>(hits)/static_cast<double>(lookups); 
+        }
 
     private:
 
@@ -157,6 +163,10 @@ class AddCache{
                                                  //
         std::mt19937_64 rng;
         std::uniform_int_distribution<int> dist;
+        
+        std::size_t lookups{0};
+        std::size_t hits{0};
+
 
         Bucket* getBucket() {
 
@@ -191,12 +201,14 @@ class AddCache{
 
                 if constexpr(std::is_same_v<T, mEdge>){
                     if(e.valid && e.lhs.m == l && e.rhs.m ==r && e.lversion == l.n->version && e.rversion == r.n->version){
+                        hits++;
                        return e.result.m; 
                     }else{
                         return T{};
                     }
                 }else{
                     if(e.valid && e.lhs.v == l && e.rhs.v ==r && e.lversion == l.n->version && e.rversion == r.n->version){
+                        hits++;
                        return e.result.v; 
                     }else{
                         return T{}; 
@@ -249,6 +261,7 @@ class MulCache{
 
         template<typename LT, typename RT, typename RetT = std::conditional_t<std::is_same_v<RT, vNode>, vEdge, mEdge>>
             RetT find(const LT* lhs, const RT* rhs){
+                lookups++;
                 //pick the right table
                 int idx = 0;
                 if constexpr(std::is_same_v<RT, mNode>){ //mm
@@ -324,6 +337,9 @@ class MulCache{
 
     }
 
+        double hitRatio() const noexcept {
+            return static_cast<double>(hits)/static_cast<double>(lookups); 
+        }
 
     private:
 
@@ -378,6 +394,10 @@ class MulCache{
         std::mt19937_64 rng;
         std::uniform_int_distribution<int> dist;
 
+        std::size_t lookups{0};
+        std::size_t hits{0};
+
+
         Bucket* getBucket() {
 
             if (c.chunkIt == c.chunkEndIt) {
@@ -407,8 +427,10 @@ class MulCache{
                     mNode* rp = reinterpret_cast<mNode*>(r); 
 
                     if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
+                        hits++;
                         return e1.result.m;
                     }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
+                        hits++;
                         return e2.result.m;
                     }else{
                         return RET{};
@@ -418,8 +440,10 @@ class MulCache{
                     vNode* rp = reinterpret_cast<vNode*>(r); 
 
                     if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
+                        hits++;
                         return e1.result.v;
                     }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
+                        hits++;
                         return e2.result.v;
                     }else{
                         return RET{};
