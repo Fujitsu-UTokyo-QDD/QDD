@@ -25,3 +25,4 @@ class Grover {
 
 };
 
+vEdge grover(QubitCount n_qubits);

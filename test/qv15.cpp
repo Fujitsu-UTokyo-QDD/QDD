@@ -1398,7 +1398,10 @@ int main(int argc, char* argv[]){
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    runQV15(std::atoi(argv[1]),std::atoi(argv[2]));
+    //runQV15(std::atoi(argv[1]),std::atoi(argv[2]));
+    //vEdge result = grover(std::atoi(argv[1]));
+    vEdge result = grover(std::atoi(argv[1]));
+    //result.printVector();
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto ms = t2 - t1;
