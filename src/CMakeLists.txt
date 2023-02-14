@@ -1,6 +1,6 @@
 
 find_package(TBB REQUIRED)
-add_library(engine STATIC dd.cpp  graph.cpp)
+add_library(engine STATIC dd.cpp  graph.cpp epoch.cpp)
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
 target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads)
