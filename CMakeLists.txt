@@ -54,6 +54,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+find_package(Boost REQUIRED context)
+message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
+
 
 add_subdirectory(src)
 add_subdirectory(test)
