@@ -19,5 +19,5 @@ add_executable(gc_test  qv15.cpp)
 target_link_libraries(gc_test PUBLIC engine alg)
 
 add_executable(fiber_test  fiber.cpp)
-target_include_directories(fiber_test PRIVATE ${Boost_INCLUDE_DIR})
+target_link_libraries(fiber_test PRIVATE task)
 

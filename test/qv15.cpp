@@ -16,30 +16,6 @@ using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
 
-mEdge RX(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {0, -std::sin(angle / 2)};
-    return makeGate(qnum, GateMatrix{i1,i2,i2,i1}, target);
-}
-mEdge RY(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {-std::sin(angle / 2), 0};
-    std::complex<float> i3 = {std::sin(angle / 2), 0};
-    return makeGate(qnum, GateMatrix{i1,i2,i3,i1}, target);
-}
-mEdge RZ(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
-    std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
-    return makeGate(qnum, GateMatrix{i1,cf_zero,cf_zero,i1}, target);
-}
-
-mEdge CX(QubitCount qnum, int target, int control){
-    std::complex<float> zero = {0, 0};
-    std::complex<float> one = {1, 0};
-    Controls controls;
-    controls.emplace(Control{control, Control::Type::pos});
-    return makeGate(qnum, GateMatrix{zero,one,one,zero}, target, controls );
-}
 
 void runQV15(int DURATION, int DURATION_CLEARALL){
     Worker w(15);

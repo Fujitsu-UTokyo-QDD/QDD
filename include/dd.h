@@ -387,6 +387,7 @@ mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_add_no_worker(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply_no_worker(const mEdge& lhs, const mEdge& rhs);
+mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
 
 vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs);
@@ -401,3 +402,13 @@ vEdge makeZeroState( QubitCount q);
 vEdge makeOneState( QubitCount q);
 
 std::string measureAll(vEdge& rootEdge, const bool collapse, std::mt19937_64& mt, double epsilon = 0.001) ;
+
+mEdge RX(QubitCount qnum, int target, float angle);
+
+mEdge RY(QubitCount qnum, int target, float angle);
+
+mEdge RZ(QubitCount qnum, int target, float angle);
+
+
+mEdge CX(QubitCount qnum, int target, int control);
+
