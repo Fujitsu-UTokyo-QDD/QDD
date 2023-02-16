@@ -387,7 +387,9 @@ mEdge mm_add(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_add_no_worker(const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply(Worker* w, const mEdge& lhs, const mEdge& rhs);
 mEdge mm_multiply_no_worker(const mEdge& lhs, const mEdge& rhs);
+
 mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs);
+
 mEdge mm_kronecker(Worker* w, const mEdge& lhs, const mEdge& rhs);
 
 vEdge vv_add(Worker* w, const vEdge& lhs, const vEdge& rhs);
@@ -395,6 +397,9 @@ vEdge vv_multiply(Worker* w, const vEdge& lhs, const vEdge& rhs);
 vEdge vv_kronecker(Worker* w, const vEdge& lhs, const vEdge& rhs);
 
 vEdge mv_multiply(Worker* w, mEdge lhs,  vEdge rhs);
+
+vEdge mv_multiply_fiber(mEdge lhs,  vEdge rhs);
+
 
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2>& c);

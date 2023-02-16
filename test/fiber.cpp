@@ -10,6 +10,10 @@
 #include <boost/fiber/future/packaged_task.hpp>
 #include <boost/fiber/buffered_channel.hpp>
 using namespace std::chrono_literals;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
 
 
 static int fiber_counts = 50;
@@ -163,16 +167,27 @@ void fiber_channel(){
 
 
 int main(int argc, char* argv[]){
-    //work_stealing_test();
-    //return 0;
-
-    Scheduler s(4);
-    s.spawn();
+    const int nworkers = std::stoi(argv[1]);
+    std::cout<<"run with "<<nworkers<<std::endl;
+    Scheduler s(nworkers);
 
     s.addGate(RZ(15,0,1.7952706710012407));
     s.addGate(RY(15, 0, 1.0056905557557458));
     s.addGate(RZ(15,0,-2.860782987649066));
     s.addGate(RY(15,1,2.9482444835445483));
-    s.buildCircuit();
+    s.addGate(RZ(15,0,1.7952706710012407));
+    s.addGate(RZ(15,0,1.7952706710012407));
+    s.addGate(RY(15, 0, 1.0056905557557458));
+    s.addGate(RZ(15,0,-2.860782987649066));
+    s.addGate(RY(15,1,2.9482444835445483));
+    s.addGate(RY(15, 0, 1.0056905557557458));
+    s.addGate(RZ(15,0,-2.860782987649066));
+    s.addGate(RY(15,1,2.9482444835445483));
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    vEdge result = s.buildCircuit(makeZeroState(15));
+    auto t2 = std::chrono::high_resolution_clock::now();
+    duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()<<" micros"<<std::endl;
     return 0;
 }

@@ -14,23 +14,23 @@
 struct Scheduler;
 
 struct WorkerThread{
-    
     int _id;
     Scheduler* _sched; 
     std::thread* _thread;
 };
 
-struct Scheduler{
+class Scheduler{
+    friend struct WorkerThread;
     
+public:
     Scheduler(int n);
-    void spawn();
     ~Scheduler();
 
     void addGate(const mEdge& e);
-    mEdge buildCircuit();
+    vEdge buildCircuit(vEdge v);
+private:
+    void spawn();
     
-    std::atomic_bool _stop;
-    std::atomic_bool _ready;
     const int _nworkers;
 
     std::vector<WorkerThread> _workers;
