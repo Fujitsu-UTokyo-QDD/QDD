@@ -3,6 +3,9 @@
 #include <boost/fiber/fiber.hpp>
 #include <boost/fiber/operations.hpp>
 #include <boost/fiber/algo/work_stealing.hpp>
+#include <boost/fiber/operations.hpp>
+#include <boost/fiber/mutex.hpp>
+#include <boost/fiber/condition_variable.hpp>
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -31,6 +34,8 @@ struct Scheduler{
     const int _nworkers;
 
     std::vector<WorkerThread> _workers;
-
     std::vector<mEdge> _gates;
+
+    boost::fibers::condition_variable_any cond_stop;
+    boost::fibers::mutex mtx_stop;
 };
