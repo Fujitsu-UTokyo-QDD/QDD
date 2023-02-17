@@ -27,7 +27,8 @@ public:
     ~Scheduler();
 
     void addGate(const mEdge& e);
-    vEdge buildCircuit(vEdge v, int gcfreq);
+    vEdge buildCircuit(vEdge v, int gcfreq=1000000);
+    mEdge buildUnitary(const std::vector<mEdge>& g);
 private:
     void spawn();
     

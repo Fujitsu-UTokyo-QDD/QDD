@@ -19,5 +19,5 @@ add_executable(gc_test  qv15.cpp)
 target_link_libraries(gc_test PUBLIC engine alg)
 
 add_executable(fiber_test  fiber.cpp)
-target_link_libraries(fiber_test PRIVATE task)
+target_link_libraries(fiber_test PRIVATE task alg)
 
