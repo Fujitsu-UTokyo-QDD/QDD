@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <bitset>
 #include "graph.hpp"
+#include "task.h"
 
 
 class Grover {
@@ -26,3 +27,4 @@ class Grover {
 };
 
 vEdge grover(QubitCount n_qubits);
+vEdge groverFiber(Scheduler& s ,QubitCount n_qubits);

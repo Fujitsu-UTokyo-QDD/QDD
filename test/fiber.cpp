@@ -5,6 +5,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include "algorithms/grover.hpp"
 #include <condition_variable>
 #include <boost/fiber/future/future.hpp>
 #include <boost/fiber/future/packaged_task.hpp>
@@ -168,8 +169,15 @@ void fiber_channel(){
 
 int main(int argc, char* argv[]){
     const int nworkers = std::stoi(argv[1]);
-    std::cout<<"run with "<<nworkers<<std::endl;
+    const int nqubits = std::stoi(argv[2]);
+    std::cout<<"run with "<<nworkers<<" workers, "<<nqubits<<" qubits"<<std::endl;
+
     Scheduler s(nworkers);
+    auto output = groverFiber(s, nqubits);
+    std::cout<<"output"<<std::endl;
+    output.printVector();
+    return 0;
+
 
     s.addGate(RZ(15,0,1.7952706710012407));
     s.addGate(RY(15, 0, 1.0056905557557458));

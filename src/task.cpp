@@ -91,3 +91,17 @@ vEdge Scheduler::buildCircuit(vEdge input){
     return v;
 
 }
+mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
+
+    if(g.size() == 0){
+        return mEdge();
+    }
+
+    mEdge lhs = g[0];
+    for(int i = 1; i < g.size(); i++){
+        lhs = mm_multiply_fiber(lhs, g[i]);
+    }
+    return lhs;
+
+
+}

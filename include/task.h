@@ -28,6 +28,7 @@ public:
 
     void addGate(const mEdge& e);
     vEdge buildCircuit(vEdge v);
+    mEdge buildUnitary(const std::vector<mEdge>& g);
 private:
     void spawn();
     

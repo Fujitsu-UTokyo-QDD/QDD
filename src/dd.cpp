@@ -729,9 +729,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     }
 
     if(current_var == -1) {
-        if(!lhs.isTerminal() || !rhs.isTerminal()){
-            brp();
-        }
+
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
@@ -787,17 +785,17 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
             
             boost::fibers::packaged_task<mEdge()> pt(std::bind(mm_multiply_fiber2, x, y, current_var - 1)); 
-            //products.emplace_back(pt.get_future());
-            //boost::fibers::fiber(std::move(pt)).detach();
+            products.emplace_back(pt.get_future());
+            boost::fibers::fiber f(std::move(pt));
+            f.detach();
 
-            product[k] = mm_multiply_fiber2( x, y, current_var - 1); 
             
         }
-        edges[i] = mm_add_fiber2( product[0], product[1], current_var - 1);
         
     }
     assert(products.size() == 8);
-    for(int i = 0; i < 8; i++){
+    for(int i = 0; i < 8; i += 2){
+        edges[i/2] = mm_add_fiber2(products[i].get(), products[i+1].get(), current_var - 1);
     
     }
 
