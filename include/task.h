@@ -27,7 +27,7 @@ public:
     ~Scheduler();
 
     void addGate(const mEdge& e);
-    vEdge buildCircuit(vEdge v);
+    vEdge buildCircuit(vEdge v, int gcfreq);
 private:
     void spawn();
     

@@ -5,6 +5,7 @@
 
 
 #include "task.h"
+#include <table.hpp>
 #include <iostream>
 #include <chrono>
 
@@ -78,12 +79,16 @@ void Scheduler::addGate(const mEdge& e){
 }
 
 
-vEdge Scheduler::buildCircuit(vEdge input){
+vEdge Scheduler::buildCircuit(vEdge input, int gcfreq){
 
     vEdge v = input;
 
     for(auto i = 0; i < _gates.size(); i++){
         v = mv_multiply_fiber(_gates[i], v);
+        if(i%gcfreq==0 && i){
+            v.incRef();
+            vUnique.gc();
+        }
     }
 
 

@@ -30,6 +30,8 @@ vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
 
+static int LIMIT =11;
+
 static mEdge normalizeM(const mEdge& e){
 
     // check for all zero weights
@@ -971,11 +973,14 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
         return {lhs.w + rhs.w, vNode::terminal};
     }
     
+    vEdge result;
+#ifdef CACHE
     AddCache& local_aCache = _aCache.local();
-    vEdge result = local_aCache.find(lhs,rhs);
+    result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
         return result;
     }
+#endif
 
 
     vEdge x, y;
@@ -1017,8 +1022,9 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
     edges[1] = sums[1].get();
     */
     result =  makeVEdge( current_var, edges);
+#ifdef CACHE
     local_aCache.set(lhs, rhs, result);
-    
+#endif
 
     return result;
 
@@ -1269,9 +1275,11 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
-    
+
+    vEdge result;
+#ifdef CACHE
     MulCache& local_mCache = _mCache.local();
-    vEdge result = local_mCache.find(lhs.n, rhs.n);
+    result = local_mCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return vEdge::zero;
@@ -1281,6 +1289,7 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
             else return result;
         }
     }
+#endif
     
 
     Qubit lv = lhs.getVar();
@@ -1296,6 +1305,7 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
 
     
     std::vector<boost::fibers::future<vEdge>> products;
+    std::vector<vEdge> products_nofuture;
     std::array<vEdge, 2> edges;
 
     for(auto i = 0; i < 2; i++){
@@ -1315,10 +1325,14 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
             }
     
             {
-                boost::fibers::packaged_task<vEdge()> pt(std::bind(mv_multiply_fiber2,x,y, current_var - 1));
-                products.emplace_back(pt.get_future());
-                boost::fibers::fiber f(std::move(pt));
-                f.detach();
+                if(current_var > LIMIT){
+                    boost::fibers::packaged_task<vEdge()> pt(std::bind(mv_multiply_fiber2,x,y, current_var - 1));
+                    products.emplace_back(pt.get_future());
+                    boost::fibers::fiber f(std::move(pt));
+                    f.detach();
+                }else{
+                    products_nofuture.emplace_back(mv_multiply_fiber2(x,y, current_var - 1));
+                }
             }
             
         }
@@ -1326,12 +1340,19 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
     }
 
     assert(products.size() == 4 );
+if(current_var > LIMIT){
     edges[0] = vv_add_fiber2(products[0].get(), products[1].get(), current_var - 1);
     edges[1] = vv_add_fiber2(products[2].get(), products[3].get(), current_var - 1);
+}else{
+    edges[0] = vv_add_fiber2(products_nofuture[0], products_nofuture[1], current_var - 1);
+    edges[1] = vv_add_fiber2(products_nofuture[2], products_nofuture[3], current_var - 1);
+}
 
 
     result = makeVEdge(current_var, edges);
+#ifdef CACHE
     local_mCache.set(lhs.n, rhs.n, result);
+#endif
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()){ 
         return vEdge::zero;
@@ -1455,7 +1476,7 @@ mEdge RY(QubitCount qnum, int target, float angle) {
 mEdge RZ(QubitCount qnum, int target, float angle) {
     std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
     std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
-    return makeGate(qnum, GateMatrix{i1,cf_zero,cf_zero,i1}, target);
+    return makeGate(qnum, GateMatrix{i1,cf_zero,cf_zero,i2}, target);
 }
 
 mEdge CX(QubitCount qnum, int target, int control){

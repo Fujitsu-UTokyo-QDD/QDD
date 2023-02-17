@@ -20,6 +20,11 @@ if(with_mt)
     add_compile_definitions(MT)
 endif()
 
+option(with_cache         "Run with cache" OFF)
+if(with_cache)
+    message(STATUS "Run with cache")
+    add_compile_definitions(CACHE)
+endif()
 
 option(with_graphviz      "Use graphviz to draw task graph for debugging" OFF)
 if(with_graphviz)
