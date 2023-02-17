@@ -105,3 +105,14 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
 
 
 }
+
+
+namespace boost{
+namespace fibers{
+namespace algo{
+
+
+
+
+
+}}};
