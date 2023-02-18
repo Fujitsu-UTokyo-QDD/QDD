@@ -201,15 +201,39 @@ class AddCache{
 
                 if constexpr(std::is_same_v<T, mEdge>){
                     if(e.valid && e.lhs.m == l && e.rhs.m ==r && e.lversion == l.n->version && e.rversion == r.n->version){
-                        hits++;
+                        if(e.result.m.getVar() != -2){
+                            hits++;
+                            return e.result.m;
+                        }else{
+                            return T{};    
+                        }
+                        /*
+                        if(e.result.m.getVar() == -2){
+                            std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
+                            std::cout<<"lpversion: "<<l.n->version<<", rpversion: "<< r.n->version<<std::endl;
+                            assert(false);
+                        }
                        return e.result.m; 
+                        */
                     }else{
                         return T{};
                     }
                 }else{
                     if(e.valid && e.lhs.v == l && e.rhs.v ==r && e.lversion == l.n->version && e.rversion == r.n->version){
-                        hits++;
+                        if(e.result.v.getVar() != -2){
+                            hits++;
+                            return e.result.v;
+                        }else{
+                            return T{};    
+                        }
+                        /*
+                        if(e.result.v.getVar() == -2){
+                            std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
+                            std::cout<<"lpversion: "<<l.n->version<<", rpversion: "<< r.n->version<<std::endl;
+                            assert(false);
+                        }
                        return e.result.v; 
+                        */
                     }else{
                         return T{}; 
                     }
@@ -329,8 +353,9 @@ class MulCache{
         c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
         c.allocations = INITIAL_ALLOCATION_SIZE;
         for(Bucket& b : c.chunks[0]){
-            b.e1.valid = false;
-            b.e2.valid = false;
+            for(Entry& e : b.es){
+                e.valid = false;
+            }
         }
     
 
@@ -351,7 +376,7 @@ class MulCache{
         };
 
         struct Entry{
-            Entry(): lhs(0), rhs(0), valid(false), lversion(0), rversion(0){};
+            Entry(): lhs(0), rhs(0), valid(false), lversion(0), rversion(0), picked{0}{};
             uintptr_t lhs;
             uintptr_t rhs;
             Edge result;
@@ -360,13 +385,13 @@ class MulCache{
             unsigned rversion;
             
             bool valid;
+            int picked;
         };
 
         static_assert(std::is_default_constructible_v<Entry>);
         struct alignas(hardware_constructive_interference_size) // the same cacheline
         Bucket{
-            Entry e1;
-            Entry e2;
+            Entry es[4];
         };
 
 
@@ -419,35 +444,60 @@ class MulCache{
                 if(t._table[key] == nullptr) {t._table[key] = getBucket(); return RET{};}
                 Bucket* b = t._table[key];
 
-                Entry& e1 = b->e1;
-                Entry& e2 = b->e2;
+
 
                 if constexpr(std::is_same_v<RET, mEdge>){
                     mNode* lp = reinterpret_cast<mNode*>(l); 
                     mNode* rp = reinterpret_cast<mNode*>(r); 
-
-                    if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
-                        hits++;
-                        return e1.result.m;
-                    }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
-                        hits++;
-                        return e2.result.m;
-                    }else{
-                        return RET{};
+                    
+                    for(Entry& e: b->es){
+                        if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
+                            if(e.result.m.getVar() != -2){
+                                hits++;
+                                e.picked++;
+                                return e.result.m;
+                            }else{
+                                e.picked = 0;
+                                return RET{};
+                            }
+                            /*
+                            if(e.result.m.getVar() == -2){
+                                std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
+                                std::cout<<"lpversion: "<<lp->version<<", rpversion: "<< rp->version<<std::endl;
+                                assert(false);
+                            }
+                            return e.result.m;
+                            */
+                        }   
                     }
+
+                    return RET{};
                 }else{
                     mNode* lp = reinterpret_cast<mNode*>(l); 
                     vNode* rp = reinterpret_cast<vNode*>(r); 
 
-                    if(e1.valid && e1.lhs == l && e1.rhs == r && e1.lversion == lp->version && e1.rversion == rp->version){
-                        hits++;
-                        return e1.result.v;
-                    }else if(e2.valid && e2.lhs == l && e2.rhs == r && e2.lversion == lp->version && e2.rversion == rp->version){
-                        hits++;
-                        return e2.result.v;
-                    }else{
-                        return RET{};
+                    for(Entry& e: b->es){
+                        if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
+                            if(e.result.v.getVar() != -2){
+                                hits++;
+                                e.picked++;
+                                return e.result.v;
+                            }else{
+                                e.picked = 0;
+                                return RET{};
+                            }
+                            /*
+                            if(e.result.v.getVar() == -2){
+                                std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
+                                std::cout<<"lpversion: "<<lp->version<<", rpversion: "<< rp->version<<std::endl;
+                                assert(false);
+                            }
+                            return e.result.v;
+                            */
+                        }   
                     }
+
+                    return RET{};
                 
                 }
             }
@@ -462,6 +512,7 @@ class MulCache{
                         e.rhs = r;
                         e.rversion = rp->version;
                         e.result.m = res;
+                        e.picked = 1;
                     }else{
                         mNode* lp = reinterpret_cast<mNode*>(l); 
                         vNode* rp = reinterpret_cast<vNode*>(r); 
@@ -470,6 +521,7 @@ class MulCache{
                         e.rhs = r;
                         e.rversion = rp->version;
                         e.result.v = res;
+                        e.picked = 1;
                     }
                     e.valid = true;
             }
@@ -479,34 +531,46 @@ class MulCache{
                 if(t._table[key] == nullptr) t._table[key] = getBucket();
                 Bucket* b = t._table[key];
 
-                Entry& e1 = b->e1;
-                Entry& e2 = b->e2;
-
 
                 if constexpr(std::is_same_v<ResT, mEdge>){
-                    if(e1.result.m.n == nullptr){
-                        set(e1, l, r, result);
-                        return;
-                    }else if(e2.result.m.n == nullptr ){
-                        set(e2, l, r, result);
-                        return;
-                    }else{
-                        //currently just evict randomly
-                       if(dist(rng) == 0) return set(e1, l, r, result);
-                       else return set(e2, l, r, result);
+                    
+                    for(Entry& e : b->es){
+                        if(e.result.m.n == nullptr){
+                            set(e, l, r, result);
+                            return;
+                        }
                     }
 
-                }else{
-                    if(e1.result.v.n == nullptr){
-                        set(e1, l, r, result);
-                        return;
-                    }else if(e2.result.m.n == nullptr){
-                        set(e2, l, r, result);
-                        return;
-                    }else{
-                       if(dist(rng) == 0) return set(e1, l, r, result);
-                       else return set(e2, l, r, result);
+                    int idx = 0;
+                    int min_picked = b->es[0].picked;
+                    for(int i = 1; i < 4; i++){
+                        if(b->es[i].picked < min_picked){
+                            idx = i;
+                            min_picked = b->es[i].picked;
+                        }
+                    
                     }
+                    return set(b->es[idx], l, r, result);            
+
+
+                }else{
+                    for(Entry& e : b->es){
+                        if(e.result.v.n == nullptr){
+                            set(e, l, r, result);
+                            return;
+                        }
+                    }
+                    int idx = 0;
+                    int min_picked = b->es[0].picked;
+                    for(int i = 1; i < 4; i++){
+                        if(b->es[i].picked < min_picked){
+                            idx = i;
+                            min_picked = b->es[i].picked;
+                        }
+                    
+                    }
+                    return set(b->es[idx], l, r, result);            
+
                 
                 }
             }

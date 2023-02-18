@@ -19,6 +19,7 @@
 
 
 
+
 using namespace std::chrono_literals;
 
 
@@ -63,7 +64,11 @@ my_ws::awakened( context * ctx) noexcept {
 context *
 my_ws::pick_next() noexcept {
     context * victim = rqueue_.pop();
+    //std::optional<context*> victim_opt = rqueue_.pop();
+    //context* victim{nullptr};
     if ( nullptr != victim) {
+    //if ( victim_opt) {
+     //   victim = *victim_opt;
         boost::context::detail::prefetch_range( victim, sizeof( context) );
         if ( ! victim->is_context( type::pinned_context) ) {
             context::active()->attach( victim);
@@ -194,6 +199,7 @@ vEdge Scheduler::buildCircuit(vEdge input, int gcfreq){
         if(i%gcfreq==0 && i){
             v.incRef();
             vUnique.gc();
+            //mUnique.gc();
         }
     }
 
@@ -219,12 +225,4 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
 }
 
 
-namespace boost{
-namespace fibers{
-namespace algo{
 
-
-
-
-
-}}};

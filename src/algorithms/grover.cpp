@@ -356,6 +356,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
     QubitCount total_qubits = n_qubits + 1;
 
     mEdge full_iteration = groverIterationFiber(s, oracle, n_qubits);
+    full_iteration.incRef();
     std::cout<<"after full: "<<std::endl;
 
 
@@ -373,12 +374,13 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
 
 
     unsigned int j_pre = 0;
+    std::cout<<"iterations: "<<iterations<<std::endl;
 
     while ((iterations - j_pre) % 8 != 0) {
         s.addGate(full_iteration);
         j_pre++;
     }
-
+    int i = 0;
     for (unsigned long long j = j_pre; j < iterations; j += 8) {
         //std::cout<<"ite: "<<j_pre<<std::endl;
         s.addGate(full_iteration);
@@ -392,7 +394,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
          
     }
 
-    vEdge result = s.buildCircuit(makeZeroState(total_qubits));
+    vEdge result = s.buildCircuit(makeZeroState(total_qubits), 20);
 
 
     return result; 

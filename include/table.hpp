@@ -89,6 +89,7 @@ public:
             if(p == mNode::terminal) return; 
         }
 
+
         p->v = -2;
         p->ref = 0;
         p->version++;
@@ -144,6 +145,7 @@ RELOAD:
     }
 
     void gc(){
+        std::cout<<"gc"<<std::endl;
         collected = 0;
        for(Table& t: _tables){
             for(auto i = 0; i < NBUCKETS; i++){

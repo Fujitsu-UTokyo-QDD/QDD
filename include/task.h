@@ -7,6 +7,7 @@
 #include <boost/fiber/mutex.hpp>
 #include <boost/fiber/condition_variable.hpp>
 #include <boost/fiber/algo/algorithm.hpp>
+#include "wsq.hpp"
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -25,11 +26,14 @@ private:
 
     std::uint32_t                                           id_;
     std::uint32_t                                           thread_count_;
+    
 #ifdef BOOST_FIBERS_USE_SPMC_QUEUE
     detail::context_spmc_queue                              rqueue_{};
 #else
     detail::context_spinlock_queue                          rqueue_{};
 #endif
+
+//    WorkStealingQueue<context*>                             rqueue_{2048};
     std::mutex                                              mtx_{};
     std::condition_variable                                 cnd_{};
     bool                                                    flag_{ false };
@@ -52,6 +56,14 @@ public:
     context * pick_next() noexcept override;
 
     virtual context * steal() noexcept {
+        /*
+        auto ctx_opt = rqueue_.steal();
+        if(ctx_opt){
+            return *ctx_opt;
+        }else{
+            return nullptr;
+        }
+        */
         return rqueue_.steal();
     }
 

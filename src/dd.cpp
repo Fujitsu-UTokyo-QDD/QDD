@@ -974,6 +974,7 @@ vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var
 
 }
 
+
 vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
     if(lhs.w.isApproximatelyZero()){
         return rhs;
@@ -982,6 +983,10 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
     }
     
     if(current_var == -1) {
+        if(!lhs.isTerminal() || !rhs.isTerminal()){
+            brp();
+        
+        }
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w + rhs.w, vNode::terminal};
     }
