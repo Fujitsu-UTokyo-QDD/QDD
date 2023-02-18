@@ -21,7 +21,7 @@ namespace algo{
 class my_ws : public algorithm {
 private:
     static std::atomic< std::uint32_t >                     counter_;
-    static std::vector< intrusive_ptr< work_stealing > >    schedulers_;
+    static std::vector< intrusive_ptr< my_ws > >    schedulers_;
 
     std::uint32_t                                           id_;
     std::uint32_t                                           thread_count_;
@@ -35,7 +35,7 @@ private:
     bool                                                    flag_{ false };
     bool                                                    suspend_;
 
-    static void init_( std::uint32_t, std::vector< intrusive_ptr< work_stealing > > &);
+    static void init_( std::uint32_t, std::vector< intrusive_ptr< my_ws > > &);
 
 public:
 

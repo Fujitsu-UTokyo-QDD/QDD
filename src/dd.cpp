@@ -30,7 +30,7 @@ vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
 
-static int LIMIT =11;
+static int LIMIT =8;
 
 static mEdge normalizeM(const mEdge& e){
 
@@ -764,6 +764,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     std::array<mEdge, 4 > edges;
 
     std::vector<boost::fibers::future<mEdge>> products;
+    std::vector<mEdge> products_nofuture;
 
     for(auto i = 0; i < 4; i++){
 
@@ -785,19 +786,33 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
                 y = rcopy;     
             }
 
-            
-            boost::fibers::packaged_task<mEdge()> pt(std::bind(mm_multiply_fiber2, x, y, current_var - 1)); 
-            products.emplace_back(pt.get_future());
-            boost::fibers::fiber f(std::move(pt));
-            f.detach();
+            if(current_var > LIMIT){ 
+                boost::fibers::packaged_task<mEdge()> pt(std::bind(mm_multiply_fiber2, x, y, current_var - 1)); 
+                products.emplace_back(pt.get_future());
+                boost::fibers::fiber f(std::move(pt));
+                f.detach();
+            }else{
+                products_nofuture.emplace_back(mm_multiply_fiber2(x,y, current_var - 1));
+            }
 
             
         }
         
     }
-    assert(products.size() == 8);
-    for(int i = 0; i < 8; i += 2){
-        edges[i/2] = mm_add_fiber2(products[i].get(), products[i+1].get(), current_var - 1);
+    if(current_var > LIMIT){
+        assert(products.size() == 8);
+
+        for(int i = 0; i < 8; i += 2){
+            edges[i/2] = mm_add_fiber2(products[i].get(), products[i+1].get(), current_var - 1);
+        
+        }
+    }else{
+        assert(products_nofuture.size() == 8);
+        for(int i = 0; i < 8; i += 2){
+            edges[i/2] = mm_add_fiber2(products_nofuture[i], products_nofuture[i+1], current_var - 1);
+        
+        }
+
     
     }
 
@@ -1337,11 +1352,12 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
 
     }
 
-    assert(products.size() == 4 );
 if(current_var > LIMIT){
+    assert(products.size() == 4 );
     edges[0] = vv_add_fiber2(products[0].get(), products[1].get(), current_var - 1);
     edges[1] = vv_add_fiber2(products[2].get(), products[3].get(), current_var - 1);
 }else{
+    assert(products_nofuture.size() == 4 );
     edges[0] = vv_add_fiber2(products_nofuture[0], products_nofuture[1], current_var - 1);
     edges[1] = vv_add_fiber2(products_nofuture[2], products_nofuture[3], current_var - 1);
 }
