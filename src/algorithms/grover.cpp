@@ -273,7 +273,7 @@ static mEdge groverIterationFiber(Scheduler& s, const std::string& oracle, Qubit
     
     mEdge o = makeGate(total_qubits, Zmat, n_qubits, controls );
     g.push_back(o);
-    o.printMatrix();
+//    o.printMatrix();
 
 
     //std::cout<<"ocale"<<std::endl;
@@ -324,8 +324,8 @@ static mEdge groverIterationFiber(Scheduler& s, const std::string& oracle, Qubit
     //d.printMatrix();
 
     mEdge full = s.buildUnitary(g);
-    std::cout<<"full"<<std::endl;
-    full.printMatrix();
+    //std::cout<<"full"<<std::endl;
+    //full.printMatrix();
     //std::cout<<"full ite"<<std::endl;
     //full.printMatrix();
     return full;
@@ -350,11 +350,14 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
             oracle[i] = '1';
         }
     }
-    std::cout<<"orcale: "<<oracle<<std::endl;
+    //oracle = "011";
+    //std::cout<<"orcale: "<<oracle<<std::endl;
 
     QubitCount total_qubits = n_qubits + 1;
 
     mEdge full_iteration = groverIterationFiber(s, oracle, n_qubits);
+    full_iteration.incRef();
+    std::cout<<"after full: "<<std::endl;
 
 
     //set it up
@@ -365,19 +368,21 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
         setup_gates.emplace_back(makeGate(total_qubits, Hmat,i));
     }
     mEdge setup = s.buildUnitary(setup_gates);
-    std::cout<<"setup"<<std::endl;
-    setup.printMatrix();
+    //std::cout<<"setup"<<std::endl;
+    //setup.printMatrix();
     s.addGate(setup);
 
 
     unsigned int j_pre = 0;
+    std::cout<<"iterations: "<<iterations<<std::endl;
 
     while ((iterations - j_pre) % 8 != 0) {
         s.addGate(full_iteration);
         j_pre++;
     }
-
+    int i = 0;
     for (unsigned long long j = j_pre; j < iterations; j += 8) {
+        //std::cout<<"ite: "<<j_pre<<std::endl;
         s.addGate(full_iteration);
         s.addGate(full_iteration);
         s.addGate(full_iteration);

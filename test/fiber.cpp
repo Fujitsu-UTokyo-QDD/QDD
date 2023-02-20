@@ -174,12 +174,14 @@ int main(int argc, char* argv[]){
     std::cout<<"run with "<<nworkers<<" workers, "<<nqubits<<" qubits"<<std::endl;
 
     Scheduler s(nworkers, gcfreq);
+    auto t1 = std::chrono::high_resolution_clock::now();
     auto output = groverFiber(s, nqubits);
-    std::cout<<"output"<<std::endl;
-    output.printVector();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
     return 0;
 
-
+    /*
     s.addGate(RZ(15,0,1.7952706710012407));
     s.addGate(RY(15, 0, 1.0056905557557458));
     s.addGate(RZ(15,0,-2.860782987649066));
@@ -1504,4 +1506,5 @@ int main(int argc, char* argv[]){
     duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
     return 0;
+*/
 }
