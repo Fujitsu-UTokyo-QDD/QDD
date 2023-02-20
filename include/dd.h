@@ -65,6 +65,11 @@ struct Complex{
 
     
     }
+
+    bool isApproximatelyOne() const noexcept {
+        return isApproximatelyEqual({1.0,0.0});
+    }
+
     bool isOne()const noexcept{
         return r == 1.0 && i == 0.0;
     }
@@ -135,6 +140,7 @@ struct vEdge {
 
 
     void printVector() const;
+    void printVector_sparse() const;
     std_complex* getVector(std::size_t* dim) const;
 
     inline bool operator==(const vEdge& e) const noexcept {

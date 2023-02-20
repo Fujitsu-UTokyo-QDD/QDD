@@ -170,9 +170,10 @@ void fiber_channel(){
 int main(int argc, char* argv[]){
     const int nworkers = std::stoi(argv[1]);
     const int nqubits = std::stoi(argv[2]);
+    const int gcfreq = std::stoi(argv[3]);
     std::cout<<"run with "<<nworkers<<" workers, "<<nqubits<<" qubits"<<std::endl;
 
-    Scheduler s(nworkers);
+    Scheduler s(nworkers, gcfreq);
     auto output = groverFiber(s, nqubits);
     std::cout<<"output"<<std::endl;
     output.printVector();
@@ -1498,7 +1499,7 @@ int main(int argc, char* argv[]){
     s.addGate(RZ(15,9,-2.7886360394649663));
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    vEdge result = s.buildCircuit(makeZeroState(15), std::atoi(argv[2]));
+    vEdge result = s.buildCircuit(makeZeroState(15));
     auto t2 = std::chrono::high_resolution_clock::now();
     duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()/1000000<<" seconds"<<std::endl;

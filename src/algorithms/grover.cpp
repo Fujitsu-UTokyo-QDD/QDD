@@ -350,7 +350,6 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
             oracle[i] = '1';
         }
     }
-    oracle = "011";
     std::cout<<"orcale: "<<oracle<<std::endl;
 
     QubitCount total_qubits = n_qubits + 1;

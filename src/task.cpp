@@ -56,7 +56,7 @@ void Scheduler::spawn(){
     boost::fibers::use_scheduling_algorithm<boost::fibers::algo::work_stealing>(this->_nworkers + 1);
 }
 
-Scheduler::Scheduler(int n ): _nworkers(n){
+Scheduler::Scheduler(int n, int gcfreq ): _nworkers(n), _gcfreq(gcfreq){
 
     for(int i = 0; i < _nworkers; i++){
         _workers.emplace_back(WorkerThread());
@@ -79,13 +79,13 @@ void Scheduler::addGate(const mEdge& e){
 }
 
 
-vEdge Scheduler::buildCircuit(vEdge input, int gcfreq){
+vEdge Scheduler::buildCircuit(vEdge input){
 
     vEdge v = input;
 
     for(auto i = 0; i < _gates.size(); i++){
         v = mv_multiply_fiber(_gates[i], v);
-        if(i%gcfreq==0 && i){
+        if(i%_gcfreq==0 && i){
             v.incRef();
             vUnique.gc();
         }
@@ -105,6 +105,10 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
     mEdge lhs = g[0];
     for(int i = 1; i < g.size(); i++){
         lhs = mm_multiply_fiber(lhs, g[i]);
+        if(i%_gcfreq==0 & i){
+            lhs.incRef();
+            mUnique.gc();
+        }
     }
     return lhs;
 

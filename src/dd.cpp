@@ -30,7 +30,7 @@ vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
 
-static int LIMIT =11;
+static Qubit LIMIT = 1000;
 
 static mEdge normalizeM(const mEdge& e){
 
@@ -764,6 +764,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     std::array<mEdge, 4 > edges;
 
     std::vector<boost::fibers::future<mEdge>> products;
+    std::vector<mEdge> products_nofiber;
 
     for(auto i = 0; i < 4; i++){
 
@@ -785,20 +786,26 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
                 y = rcopy;     
             }
 
-            
-            boost::fibers::packaged_task<mEdge()> pt(std::bind(mm_multiply_fiber2, x, y, current_var - 1)); 
-            products.emplace_back(pt.get_future());
-            boost::fibers::fiber f(std::move(pt));
-            f.detach();
-
-            
+            if(current_var > LIMIT){
+                boost::fibers::packaged_task<mEdge()> pt(std::bind(mm_multiply_fiber2, x, y, current_var - 1)); 
+                products.emplace_back(pt.get_future());
+                boost::fibers::fiber f(std::move(pt));
+                f.detach();
+            }else{
+                products_nofiber.emplace_back(mm_multiply_fiber2(x, y, current_var - 1));
+            }
         }
         
     }
-    assert(products.size() == 8);
-    for(int i = 0; i < 8; i += 2){
-        edges[i/2] = mm_add_fiber2(products[i].get(), products[i+1].get(), current_var - 1);
-    
+    if(current_var > LIMIT){
+        assert(products.size() == 8);
+        for(int i = 0; i < 8; i += 2){
+            edges[i/2] = mm_add_fiber2(products[i].get(), products[i+1].get(), current_var - 1);
+        }
+    }else{
+        for(int i = 0; i < 8; i += 2){
+            edges[i/2] = mm_add_fiber2(products_nofiber[i], products_nofiber[i+1], current_var - 1);
+        }
     }
 
 
@@ -807,7 +814,8 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()) return mEdge::zero;
-    else return result;
+    if(result.w.isApproximatelyOne()) result.w = {1.0,0.0};
+    return result;
 
     
 }
@@ -832,6 +840,7 @@ mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs){
 
 
     Qubit root = rootVar(lhs, rhs);
+    LIMIT = root-3;
     mEdge result = mm_multiply_fiber2( lhs, rhs, root);
     return result;
 }
@@ -1094,6 +1103,28 @@ void vEdge::printVector() const {
     delete[] vector;
 }
 
+void vEdge::printVector_sparse() const {
+    if(this->isTerminal()) {
+        std::cout<<this->w<<std::endl;
+        return;
+    }
+    Qubit q = this->getVar();   
+    std::size_t dim = 1 << (q+1);
+
+    std_complex* vector = new std_complex[dim];
+
+    printVector2(*this, 0, {1.0,0.0}, q+1, vector);
+
+    for(size_t i = 0 ; i < dim; i++){
+        if(!vector[i].isApproximatelyZero()){
+            std::cout << i << ": " << vector[i] << std::endl;
+        }
+    }
+    std::cout<<std::endl;
+
+    delete[] vector;
+}
+
 static void fillVector(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std_complex* m){
         
     std_complex wp = edge.w * w;
@@ -1337,8 +1368,8 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
 
     }
 
-    assert(products.size() == 4 );
 if(current_var > LIMIT){
+    assert(products.size() == 4 );
     edges[0] = vv_add_fiber2(products[0].get(), products[1].get(), current_var - 1);
     edges[1] = vv_add_fiber2(products[2].get(), products[3].get(), current_var - 1);
 }else{
@@ -1355,9 +1386,11 @@ if(current_var > LIMIT){
     if(result.w.isApproximatelyZero()){ 
         return vEdge::zero;
     }
-    else {
-        return result;    
+    if(result.w.isApproximatelyOne()){
+        result.w = {1.0, 0.0};
     }
+    return result;    
+
 }
 
 vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
@@ -1370,6 +1403,7 @@ vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
 
     // assume lhs and rhs are the same length.
     assert(lhs.getVar() == rhs.getVar());
+    LIMIT = lhs.getVar()-3;
     vEdge v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
     return v;
 }
