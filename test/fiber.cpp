@@ -18,8 +18,8 @@ using std::chrono::milliseconds;
 
 
 static int fiber_counts = 50;
-using task = std::packaged_task<int(int)>;
-boost::fibers::buffered_channel<task> ch{1024};
+using ttask = std::packaged_task<int(int)>;
+boost::fibers::buffered_channel<ttask> ch{1024};
 
 int bar(int i){
     for(int j = 0; j < 10000; j++){}
@@ -94,14 +94,14 @@ void fiber_channel(){
             for (int i=0; i<10; ++i) {
                 boost::fibers::fiber{
                     []{
-                        task tsk;
+                        ttask tsk;
                         // dequeue and process tasks
                         while (boost::fibers::channel_op_status::closed!=ch.pop(tsk)){
                             tsk(2);
                         }
                     }}.detach();
             }
-            task tsk;
+            ttask tsk;
             // dequeue and process tasks
             while (boost::fibers::channel_op_status::closed!=ch.pop(tsk)){
                 tsk(2);
@@ -115,7 +115,7 @@ void fiber_channel(){
                 boost::fibers::fiber{
                     []{
                         int c = 0;
-                        task tsk;
+                        ttask tsk;
                         // dequeue and process tasks
                         while (boost::fibers::channel_op_status::closed!=ch.pop(tsk)){
                             tsk(4);
@@ -128,7 +128,7 @@ void fiber_channel(){
                     }}.detach();
             }
             int c = 0;
-            task tsk;
+            ttask tsk;
             // dequeue and process tasks
             while (boost::fibers::channel_op_status::closed!=ch.pop(tsk)){
                 tsk(4);

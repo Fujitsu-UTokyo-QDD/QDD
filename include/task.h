@@ -12,6 +12,7 @@
 #include <atomic>
 #include <vector>
 #include "dd.h"
+#include "table.hpp"
 
 struct Scheduler;
 
@@ -104,3 +105,8 @@ private:
     boost::fibers::condition_variable_any cond_stop;
     boost::fibers::mutex mtx_stop;
 };
+
+
+
+void makeUniqueForV(vEdge& root, CHashTable<vNode>& v);
+

@@ -197,9 +197,14 @@ vEdge Scheduler::buildCircuit(vEdge input, int gcfreq){
     for(auto i = 0; i < _gates.size(); i++){
         v = mv_multiply_fiber(_gates[i], v);
         if(i%gcfreq==0 && i){
-            v.incRef();
-            vUnique.gc();
+            std::cout<<"gc"<<std::endl;
+            //v.incRef();
+            //vUnique.gc();
             //mUnique.gc();
+            //
+            CHashTable<vNode> u(vUnique.getQubitCount());
+            makeUniqueForV(v, u);
+            vUnique = std::move(u);
         }
     }
 
@@ -226,3 +231,17 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
 
 
 
+void makeUniqueForV(vEdge& root, CHashTable<vNode>& v){
+    if(root.isTerminal()) return;
+    
+    makeUniqueForV(root.n->children[0], v);
+    makeUniqueForV(root.n->children[1], v);
+
+    vNode* n = v.getNode();
+    n->v = root.n->v;
+    n->children = root.n->children;
+    n = v.lookup(n);
+    root.n = n;
+    return;
+    
+}

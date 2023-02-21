@@ -29,7 +29,7 @@ public:
 
 
 
-    CHashTable(QubitCount n): _tables{n}{
+    CHashTable(QubitCount n): _tables{n}, _qn(n){
         
         for(Table& t: _tables){
             for(auto i = 0; i < NBUCKETS; i++) t._gc_flags[i] = false;
@@ -59,6 +59,18 @@ public:
         
     }
 
+    CHashTable& operator=(CHashTable&& other){
+    
+       //this->~CHashTable();
+        _tables = std::move(other._tables);
+        _caches = std::move(other._caches);
+        _qn = other.getQubitCount();
+        return *this;
+    }
+
+    QubitCount getQubitCount() const {
+        return _qn;
+    }
 
    T* getNode() {
         Cache& c = _caches.local();
@@ -186,6 +198,8 @@ private:
     std::size_t collected;
 
     enumerable_thread_specific<Cache> _caches;
+
+    QubitCount _qn;
 
     void bucket_gc( Table& t,  std::size_t key){
         t._gc_flags[key] = true;

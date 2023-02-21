@@ -394,7 +394,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
          
     }
 
-    vEdge result = s.buildCircuit(makeZeroState(total_qubits), 20);
+    vEdge result = s.buildCircuit(makeZeroState(total_qubits), 10);
 
 
     return result; 

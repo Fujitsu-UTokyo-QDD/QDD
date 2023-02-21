@@ -1268,8 +1268,8 @@ struct vEdgeRefGuard{
 };
 
 vEdge mv_multiply(Worker *w, mEdge lhs, vEdge rhs){
-    mEdgeRefGuard mg(lhs);
-    vEdgeRefGuard vg(rhs);
+    //mEdgeRefGuard mg(lhs);
+    //vEdgeRefGuard vg(rhs);
     
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, vNode::terminal};
