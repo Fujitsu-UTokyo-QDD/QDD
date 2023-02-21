@@ -356,7 +356,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
     QubitCount total_qubits = n_qubits + 1;
 
     mEdge full_iteration = groverIterationFiber(s, oracle, n_qubits);
-    full_iteration.incRef();
+    //full_iteration.incRef();
     std::cout<<"after full: "<<std::endl;
 
 
