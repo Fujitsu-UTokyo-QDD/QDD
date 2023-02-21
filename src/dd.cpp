@@ -31,6 +31,7 @@ oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
 
 static int LIMIT =8;
+const int MINUS = 3;
 
 static mEdge normalizeM(const mEdge& e){
 
@@ -298,7 +299,7 @@ mEdge makeIdent( Qubit q){
     }
     
     identityTable[q] = e;
-    e.incRef();
+    //e.incRef();
     return e;
 
 
@@ -822,7 +823,8 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()) return mEdge::zero;
-    else return result;
+    if(result.w.isApproximatelyOne()) result.w = {1.0,0.0};
+    return result;
 
     
 }
@@ -847,6 +849,7 @@ mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs){
 
 
     Qubit root = rootVar(lhs, rhs);
+    LIMIT = root-MINUS;
     mEdge result = mm_multiply_fiber2( lhs, rhs, root);
     return result;
 }
@@ -1024,26 +1027,25 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
         }else{
             y = rhs;
         }
-        /*
+        if(current_var>LIMIT)
         {
             boost::fibers::packaged_task<vEdge()> pt(std::bind(vv_add_fiber2,x,y, current_var - 1));
             sums.emplace_back(pt.get_future());
             boost::fibers::fiber f(std::move(pt));
             f.detach();
+        }else{
+            edges[i] = vv_add_fiber2(x, y, current_var - 1);
         }
-        */
-        edges[i] = vv_add_fiber2(x, y, current_var - 1);
     }
-    /*
-    assert(sums.size() == 2);
-    edges[0] = sums[0].get();
-    edges[1] = sums[1].get();
-    */
+    if(current_var>LIMIT){
+        assert(sums.size() == 2);
+        edges[0] = sums[0].get();
+        edges[1] = sums[1].get();
+    }
     result =  makeVEdge( current_var, edges);
 #ifdef CACHE
     local_aCache.set(lhs, rhs, result);
 #endif
-
     return result;
 
 
@@ -1112,6 +1114,49 @@ void vEdge::printVector() const {
     std::cout<<std::endl;
 
     delete[] vector;
+}
+
+static void printVector_sparse2(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std::map<int,std_complex> &m){
+        
+    std_complex wp = edge.w * w;
+
+    const double thr = 0.001;
+
+    if(edge.isTerminal() && left == 0){
+        if(norm(wp) > thr)
+            m[row] = wp;
+        return;
+    }else if (edge.isTerminal()){
+        if(norm(wp) > thr){
+          row = row << left;
+          for(std::size_t i = 0; i < (1<<left); i++){
+              m[row|i] = wp;  
+          }
+        }
+        return;
+    }
+    
+    vNode* node = edge.getNode();
+    printVector_sparse2(node->getEdge(0), (row<<1)|0, wp, left-1, m);
+    printVector_sparse2(node->getEdge(1), (row<<1)|1, wp, left-1, m);
+
+}
+
+void vEdge::printVector_sparse() const {
+    if(this->isTerminal()) {
+        std::cout<<this->w<<std::endl;
+        return;
+    }
+    Qubit q = this->getVar();   
+    std::size_t dim = 1 << (q+1);
+
+    std::map<int, std_complex> map;
+
+    printVector_sparse2(*this, 0, {1.0,0.0}, q+1, map);
+
+    for (auto itr = map.begin(); itr != map.end(); itr++){
+        std::cout << std::bitset<30>(itr->first) << ": " << itr->second << std::endl;
+    }
 }
 
 static void fillVector(const vEdge& edge, std::size_t row, const std_complex& w, uint64_t left, std_complex* m){
@@ -1376,14 +1421,16 @@ if(current_var > LIMIT){
     if(result.w.isApproximatelyZero()){ 
         return vEdge::zero;
     }
-    else {
-        return result;    
+    if(result.w.isApproximatelyOne()){
+        result.w = {1.0, 0.0};
     }
+    return result;    
+
 }
 
 vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
-    mEdgeRefGuard mg(lhs);
-    vEdgeRefGuard vg(rhs);
+    //mEdgeRefGuard mg(lhs);
+    //vEdgeRefGuard vg(rhs);
     
     if(lhs.isTerminal() && rhs.isTerminal()){
         return {lhs.w * rhs.w, vNode::terminal};
@@ -1391,6 +1438,7 @@ vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
 
     // assume lhs and rhs are the same length.
     assert(lhs.getVar() == rhs.getVar());
+    LIMIT = lhs.getVar()-MINUS;
     vEdge v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
     return v;
 }

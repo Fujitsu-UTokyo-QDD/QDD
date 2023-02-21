@@ -167,7 +167,7 @@ void Scheduler::spawn(){
     boost::fibers::use_scheduling_algorithm<boost::fibers::algo::my_ws>(this->_nworkers + 1);
 }
 
-Scheduler::Scheduler(int n ): _nworkers(n){
+Scheduler::Scheduler(int n, int gcfreq ): _nworkers(n), _gcfreq(gcfreq){
 
     for(int i = 0; i < _nworkers; i++){
         _workers.emplace_back(WorkerThread());
@@ -190,18 +190,16 @@ void Scheduler::addGate(const mEdge& e){
 }
 
 
-vEdge Scheduler::buildCircuit(vEdge input, int gcfreq){
+vEdge Scheduler::buildCircuit(vEdge input){
 
     vEdge v = input;
 
     for(auto i = 0; i < _gates.size(); i++){
         v = mv_multiply_fiber(_gates[i], v);
-        if(i%gcfreq==0 && i){
-            std::cout<<"gc"<<std::endl;
-            //v.incRef();
-            //vUnique.gc();
-            //mUnique.gc();
-            //
+
+        if(i%_gcfreq==0 && i){
+            v.incRef();
+
             CHashTable<vNode> u(vUnique.getQubitCount());
             makeUniqueForV(v, u);
             vUnique = std::move(u);
@@ -223,6 +221,10 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
     for(int i = 1; i < g.size(); i++){
         //std::cout<<"i: "<<i<<std::endl;
         lhs = mm_multiply_fiber(lhs, g[i]);
+        if(i%_gcfreq==0 & i){
+            lhs.incRef();
+            mUnique.gc();
+        }
     }
     return lhs;
 

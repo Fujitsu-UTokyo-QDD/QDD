@@ -88,16 +88,17 @@ class Scheduler{
     friend struct WorkerThread;
     
 public:
-    Scheduler(int n);
+    Scheduler(int n, int gcfreq);
     ~Scheduler();
 
     void addGate(const mEdge& e);
-    vEdge buildCircuit(vEdge v, int gcfreq=1000000);
+    vEdge buildCircuit(vEdge v);
     mEdge buildUnitary(const std::vector<mEdge>& g);
 private:
     void spawn();
     
     const int _nworkers;
+    const int _gcfreq;
 
     std::vector<WorkerThread> _workers;
     std::vector<mEdge> _gates;
