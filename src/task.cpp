@@ -199,10 +199,8 @@ vEdge Scheduler::buildCircuit(vEdge input){
 
         if(i%_gcfreq==0 && i){
             v.incRef();
-
-            CHashTable<vNode> u(vUnique.getQubitCount());
-            makeUniqueForV(v, u);
-            vUnique = std::move(u);
+            vUnique.gc();
+            v.decRef();
         }
     }
 

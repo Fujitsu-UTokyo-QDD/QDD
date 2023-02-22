@@ -1486,8 +1486,9 @@ void mEdge::decRef() {
     assert(n->ref > 0);     
     n->ref--;
     
-    for(auto i = 0; i < 4; i++)  n->getEdge(i).decRef();
-    
+    if(n->ref==0){
+        for(auto i = 0; i < 4; i++)  n->getEdge(i).decRef();
+    }
 }
 void vEdge::decRef() {
     if (isTerminal()) return;
@@ -1495,8 +1496,9 @@ void vEdge::decRef() {
     assert(n->ref > 0);     
     n->ref--;
     
-    for(auto i = 0; i < 2; i++)  n->getEdge(i).decRef();
-    
+    if(n->ref==0){
+        for(auto i = 0; i < 2; i++)  n->getEdge(i).decRef();
+    }
 }
 void mEdge::incRef() {
     if (isTerminal()) return;
@@ -1505,7 +1507,9 @@ void mEdge::incRef() {
         n->ref++;
     }
     
-    for(auto i = 0; i < 4; i++)  n->getEdge(i).incRef();
+    if(n->ref==1){
+        for(auto i = 0; i < 4; i++)  n->getEdge(i).incRef();
+    }
     
 }
 void vEdge::incRef() {
@@ -1515,7 +1519,9 @@ void vEdge::incRef() {
         n->ref++;
     }
     
-    for(auto i = 0; i < 2; i++)  n->getEdge(i).incRef();
+    if(n->ref==1){
+        for(auto i = 0; i < 2; i++)  n->getEdge(i).incRef();
+    }
     
 }
 void mEdge::check(){
