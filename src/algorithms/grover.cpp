@@ -341,7 +341,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
     std::random_device                                                    rd;
     std::generate(std::begin(random_data), std::end(random_data), [&rd]() { return rd(); });
     std::seed_seq seeds(std::begin(random_data), std::end(random_data));
-    mt.seed(seeds);
+    mt.seed(100);
     //Generate random oracle
     std::uniform_int_distribution<int> dist(0, 1); // range is inclusive
     std::string oracle = std::string(n_qubits, '0');
@@ -351,7 +351,7 @@ vEdge groverFiber(Scheduler& s, QubitCount n_qubits){
         }
     }
     //oracle = "011";
-    //std::cout<<"orcale: "<<oracle<<std::endl;
+    std::cout<<"orcale: "<<oracle<<std::endl;
 
     QubitCount total_qubits = n_qubits + 1;
 

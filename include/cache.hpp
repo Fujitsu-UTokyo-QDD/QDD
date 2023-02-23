@@ -8,6 +8,8 @@
 #include "dd.h"
 #include <cassert>
 #include <random>
+#include <mutex>
+#include <shared_mutex>
 
 
 #ifdef __cpp_lib_hardware_interference_size
@@ -99,8 +101,8 @@ class AddCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE*4096;
         for(Bucket& b : c.chunks[0]){
             b.e.valid = false;
         }
@@ -131,7 +133,9 @@ class AddCache{
             unsigned rversion;
             Edge result;
             bool valid;
-
+            #ifdef CACHE_GLOBAL
+            mutable std::shared_mutex _mtx;
+            #endif
         };
 
         struct alignas(hardware_constructive_interference_size) // the same cacheline
@@ -143,12 +147,17 @@ class AddCache{
 
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
-            std::vector<std::vector<Bucket>>       chunks{1, std::vector<Bucket>{INITIAL_ALLOCATION_SIZE}};
+            Cache(){
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunkIt = chunks[0].begin();
+                chunkEndIt = chunks[0].end();
+            }
+            std::vector<std::vector<Bucket>>       chunks;
             std::size_t                          chunkID{0};
-            typename std::vector<Bucket>::iterator chunkIt{chunks[0].begin()};
-            typename std::vector<Bucket>::iterator chunkEndIt{chunks[0].end()};
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
+            typename std::vector<Bucket>::iterator chunkIt;
+            typename std::vector<Bucket>::iterator chunkEndIt;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
         };
 
         Cache c;
@@ -198,7 +207,9 @@ class AddCache{
                 Bucket* b = t._table[key];
 
                 Entry& e = b->e;
-
+                #ifdef CACHE_GLOBAL
+                std::shared_lock<std::shared_mutex> lock(e._mtx);
+                #endif
                 if constexpr(std::is_same_v<T, mEdge>){
                     if(e.valid && e.lhs.m == l && e.rhs.m ==r && e.lversion == l.n->version && e.rversion == r.n->version){
                         if(e.result.m.getVar() != -2){
@@ -243,6 +254,9 @@ class AddCache{
 
         template<typename T>
             void set(Entry& e, const T& l , const T& r, const T& res){
+                #ifdef CACHE_GLOBAL
+                    std::unique_lock<std::shared_mutex> lock(e._mtx);
+                #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         e.lhs.m = l;
                         e.lversion = l.n->version;
@@ -350,8 +364,8 @@ class MulCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE*4096;
         for(Bucket& b : c.chunks[0]){
             for(Entry& e : b.es){
                 e.valid = false;
@@ -386,6 +400,9 @@ class MulCache{
             
             bool valid;
             int picked;
+        #ifdef CACHE_GLOBAL
+            mutable std::shared_mutex _mtx;
+        #endif
         };
 
         static_assert(std::is_default_constructible_v<Entry>);
@@ -398,12 +415,17 @@ class MulCache{
 
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
-            std::vector<std::vector<Bucket>>       chunks{1, std::vector<Bucket>{INITIAL_ALLOCATION_SIZE}};
+            Cache(){
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunkIt = chunks[0].begin();
+                chunkEndIt = chunks[0].end();
+            }
+            std::vector<std::vector<Bucket>>       chunks;
             std::size_t                          chunkID{0};
-            typename std::vector<Bucket>::iterator chunkIt{chunks[0].begin()};
-            typename std::vector<Bucket>::iterator chunkEndIt{chunks[0].end()};
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
+            typename std::vector<Bucket>::iterator chunkIt;
+            typename std::vector<Bucket>::iterator chunkEndIt;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
         };
 
         Cache c;
@@ -450,7 +472,10 @@ class MulCache{
                     mNode* lp = reinterpret_cast<mNode*>(l); 
                     mNode* rp = reinterpret_cast<mNode*>(r); 
                     
-                    for(Entry& e: b->es){
+                    for(Entry& e: b->es){            
+                        #ifdef CACHE_GLOBAL
+                        std::shared_lock<std::shared_mutex> lock(e._mtx);
+                        #endif
                         if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
                             if(e.result.m.getVar() != -2){
                                 hits++;
@@ -477,6 +502,9 @@ class MulCache{
                     vNode* rp = reinterpret_cast<vNode*>(r); 
 
                     for(Entry& e: b->es){
+                    #ifdef CACHE_GLOBAL
+                        std::shared_lock<std::shared_mutex> lock(e._mtx);
+                    #endif
                         if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
                             if(e.result.v.getVar() != -2){
                                 hits++;
@@ -504,6 +532,9 @@ class MulCache{
 
         template<typename T>
             void set(Entry& e, uintptr_t& l , uintptr_t& r, const T& res){
+                #ifdef CACHE_GLOBAL
+                    std::unique_lock<std::shared_mutex> lock(e._mtx);
+                #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         mNode* lp = reinterpret_cast<mNode*>(l); 
                         mNode* rp = reinterpret_cast<mNode*>(r); 

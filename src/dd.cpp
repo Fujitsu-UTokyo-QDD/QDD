@@ -30,7 +30,10 @@ vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
 
-static int LIMIT =8;
+AddCache _aCache_global(40);
+MulCache _mCache_global(40);
+
+static int LIMIT = 10000;
 const int MINUS = 3;
 
 static mEdge normalizeM(const mEdge& e){
@@ -451,8 +454,15 @@ mEdge mm_add_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
         return {lhs.w + rhs.w, mNode::terminal};
     }
 
+    mEdge result;
+#ifdef CACHE
     AddCache& local_aCache = _aCache.local();
-    mEdge result = local_aCache.find(lhs,rhs);
+#endif
+#ifdef CACHE_GLOBAL
+    AddCache& local_aCache = _aCache_global;
+#endif
+#if defined(CACHE) || defined(CACHE_GLOBAL)
+    result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return mEdge::zero;
@@ -460,6 +470,7 @@ mEdge mm_add_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
             return result;
         }
     }
+#endif
 
     mEdge x, y;
 
@@ -491,8 +502,9 @@ mEdge mm_add_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
 
     result =  makeMEdge(current_var, edges);
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     local_aCache.set(lhs, rhs, result);
-    
+#endif
 
     return result;
 
@@ -736,9 +748,16 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
-    
-    MulCache& local_mCache = _mCache.local();
-    mEdge result = local_mCache.find(lhs.n, rhs.n);
+
+    mEdge result;
+#ifdef CACHE
+    MulCache &local_mCache = _mCache.local();
+#endif
+#ifdef CACHE_GLOBAL
+    MulCache &local_mCache = _mCache_global;
+#endif
+#if defined(CACHE) || defined(CACHE_GLOBAL)
+    result = local_mCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return mEdge::zero;
@@ -748,7 +767,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
             else return result;
         }
     }
-    
+#endif    
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -765,15 +784,15 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     std::array<mEdge, 4 > edges;
 
     std::vector<boost::fibers::future<mEdge>> products;
-    std::vector<mEdge> products_nofuture;
+    std::array<mEdge, 8> products_wo_future;
 
-    for(auto i = 0; i < 4; i++){
 
-        std::size_t row = i >> 1;
-        std::size_t col = i & 0x1;
-        
-        std::array<mEdge, 2> product;
-        for(auto k = 0; k < 2; k++){
+#pragma omp parallel
+#pragma omp taskloop collapse(2) num_tasks(8) default(shared) private(x,y)
+    for(int i = 0; i < 4; i++){
+        for(int k = 0; k < 2; k++){
+            std::size_t row = i >> 1;
+            std::size_t col = i & 0x1;
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((row<<1) | k);
             }else{
@@ -793,7 +812,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
                 boost::fibers::fiber f(std::move(pt));
                 f.detach();
             }else{
-                products_nofuture.emplace_back(mm_multiply_fiber2(x,y, current_var - 1));
+                products_wo_future[i*2+k] = mm_multiply_fiber2(x,y, current_var - 1);
             }
 
             
@@ -808,10 +827,8 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
         
         }
     }else{
-        assert(products_nofuture.size() == 8);
         for(int i = 0; i < 8; i += 2){
-            edges[i/2] = mm_add_fiber2(products_nofuture[i], products_nofuture[i+1], current_var - 1);
-        
+            edges[i/2] = mm_add_fiber2(products_wo_future[i], products_wo_future[i+1], current_var - 1);
         }
 
     
@@ -819,8 +836,9 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
 
     result = makeMEdge(current_var, edges);
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     local_mCache.set(lhs.n, rhs.n, result);
-
+#endif
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()) return mEdge::zero;
     if(result.w.isApproximatelyOne()) result.w = {1.0,0.0};
@@ -849,7 +867,9 @@ mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs){
 
 
     Qubit root = rootVar(lhs, rhs);
+#ifdef THREADPOOL
     LIMIT = root-MINUS;
+#endif
     mEdge result = mm_multiply_fiber2( lhs, rhs, root);
     return result;
 }
@@ -997,6 +1017,11 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
     vEdge result;
 #ifdef CACHE
     AddCache& local_aCache = _aCache.local();
+#endif
+#ifdef CACHE_GLOBAL
+    AddCache &local_aCache = _aCache_global;
+#endif
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
         return result;
@@ -1014,6 +1039,9 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
 
     std::vector<boost::fibers::future<vEdge>> sums;
 
+
+#pragma omp parallel
+#pragma omp taskloop num_tasks(2) default(shared) private(x,y)
     for(auto i = 0; i < 2; i++){
         if(lv == current_var && !lhs.isTerminal()){
             x = lnode->getEdge(i);
@@ -1043,7 +1071,7 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
         edges[1] = sums[1].get();
     }
     result =  makeVEdge( current_var, edges);
-#ifdef CACHE
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     local_aCache.set(lhs, rhs, result);
 #endif
     return result;
@@ -1342,6 +1370,11 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
     vEdge result;
 #ifdef CACHE
     MulCache& local_mCache = _mCache.local();
+#endif
+#ifdef CACHE_GLOBAL
+    MulCache &local_mCache = _mCache_global;
+#endif
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     result = local_mCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
@@ -1368,12 +1401,14 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
 
     
     std::vector<boost::fibers::future<vEdge>> products;
-    std::vector<vEdge> products_nofuture;
+    std::array<vEdge, 4> products_wo_future;
     std::array<vEdge, 2> edges;
 
-    for(auto i = 0; i < 2; i++){
-        std::array<vEdge, 2> product;
-        for(auto k = 0; k < 2; k++){
+
+#pragma omp parallel
+#pragma omp taskloop collapse(2) num_tasks(4) default(shared) private(x,y)
+    for(int i = 0; i < 2; i++){
+        for(int k = 0; k < 2; k++){
             if(lv == current_var && !lhs.isTerminal()){
                 x = lnode->getEdge((i<<1) | k);
             }else{
@@ -1394,7 +1429,7 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
                     boost::fibers::fiber f(std::move(pt));
                     f.detach();
                 }else{
-                    products_nofuture.emplace_back(mv_multiply_fiber2(x,y, current_var - 1));
+                    products_wo_future[i*2+k] = mv_multiply_fiber2(x,y, current_var - 1);
                 }
             }
             
@@ -1407,14 +1442,13 @@ if(current_var > LIMIT){
     edges[0] = vv_add_fiber2(products[0].get(), products[1].get(), current_var - 1);
     edges[1] = vv_add_fiber2(products[2].get(), products[3].get(), current_var - 1);
 }else{
-    assert(products_nofuture.size() == 4 );
-    edges[0] = vv_add_fiber2(products_nofuture[0], products_nofuture[1], current_var - 1);
-    edges[1] = vv_add_fiber2(products_nofuture[2], products_nofuture[3], current_var - 1);
+    edges[0] = vv_add_fiber2(products_wo_future[0], products_wo_future[1], current_var - 1);
+    edges[1] = vv_add_fiber2(products_wo_future[2], products_wo_future[3], current_var - 1);
 }
 
 
     result = makeVEdge(current_var, edges);
-#ifdef CACHE
+#if defined(CACHE) || defined(CACHE_GLOBAL)
     local_mCache.set(lhs.n, rhs.n, result);
 #endif
     result.w = result.w * lhs.w * rhs.w;
@@ -1438,7 +1472,9 @@ vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
 
     // assume lhs and rhs are the same length.
     assert(lhs.getVar() == rhs.getVar());
+#ifdef THREADPOOL
     LIMIT = lhs.getVar()-MINUS;
+#endif
     vEdge v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
     return v;
 }

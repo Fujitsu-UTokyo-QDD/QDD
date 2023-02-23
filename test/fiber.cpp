@@ -10,6 +10,9 @@
 #include <boost/fiber/future/future.hpp>
 #include <boost/fiber/future/packaged_task.hpp>
 #include <boost/fiber/buffered_channel.hpp>
+#if OPENMP
+#include <omp.h>
+#endif
 using namespace std::chrono_literals;
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
@@ -168,6 +171,11 @@ void fiber_channel(){
 
 
 int main(int argc, char* argv[]){
+    #if OPENMP
+    omp_set_num_threads(std::atoi(argv[1]));
+    std::cout << "OMP threads = " << omp_get_max_threads() << std::endl;
+#endif
+
     const int nworkers = std::stoi(argv[1]);
     const int nqubits = std::stoi(argv[2]);
     const int gcfreq = std::stoi(argv[3]);
