@@ -27,11 +27,14 @@ vEdge vEdge::zero{{0.0,0.0}, vNode::terminal};
 mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
 vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 
+#ifdef CACHE
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
-
+#endif
+#ifdef CACHE_GLOBAL
 AddCache _aCache_global(40);
 MulCache _mCache_global(40);
+#endif
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -394,8 +397,10 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
         return {lhs.w + rhs.w, mNode::terminal};
     }
 
+    mEdge result;
+#ifdef CACHE
     AddCache& local_aCache = _aCache.local();
-    mEdge result = local_aCache.find(lhs,rhs);
+    result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return mEdge::zero;
@@ -403,6 +408,7 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
             return result;
         }
     }
+#endif
 
     mEdge x, y;
 
@@ -434,8 +440,9 @@ mEdge mm_add2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t current_var
 
 
     result =  makeMEdge(current_var, edges);
+#ifdef CACHE
     local_aCache.set(lhs, rhs, result);
-    
+#endif
 
     return result;
 
@@ -598,8 +605,10 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
         return {lhs.w * rhs.w, mNode::terminal};
     }
     
+    mEdge result;
+#ifdef CACHE
     MulCache& local_mCache = _mCache.local();
-    mEdge result = local_mCache.find(lhs.n, rhs.n);
+    result = local_mCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return mEdge::zero;
@@ -609,7 +618,7 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
             else return result;
         }
     }
-    
+#endif
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -656,7 +665,9 @@ mEdge mm_multiply2(Worker* w, const mEdge& lhs, const mEdge& rhs, int32_t curren
 
 
     result = makeMEdge(current_var, edges);
+#ifdef CACHE
     local_mCache.set(lhs.n, rhs.n, result);
+#endif
 
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()) return mEdge::zero;
@@ -955,13 +966,15 @@ vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w + rhs.w, vNode::terminal};
     }
-    
+
+    vEdge result;
+#ifdef CACHE
     AddCache& local_aCache = _aCache.local();
-    vEdge result = local_aCache.find(lhs,rhs);
+    result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
         return result;
     }
-
+#endif
 
     vEdge x, y;
 
@@ -989,8 +1002,9 @@ vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var
     }
 
     result =  makeVEdge( current_var, edges);
+#ifdef CACHE
     local_aCache.set(lhs, rhs, result);
-    
+#endif
 
     return result;
 
@@ -1266,9 +1280,11 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
-    
+
+    vEdge result;
+#ifdef CACHE
     MulCache& local_mCache = _mCache.local();
-    vEdge result = local_mCache.find(lhs.n, rhs.n);
+    result = local_mCache.find(lhs.n, rhs.n);
     if(result.n != nullptr){
         if(result.w.isApproximatelyZero()){
             return vEdge::zero;
@@ -1278,7 +1294,7 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
             else return result;
         }
     }
-    
+#endif
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -1319,7 +1335,9 @@ vEdge mv_multiply2(Worker* w, const mEdge& lhs, const vEdge& rhs, int32_t curren
     }
 
     result = makeVEdge(current_var, edges);
+#ifdef CACHE
     local_mCache.set(lhs.n, rhs.n, result);
+#endif
     result.w = result.w * lhs.w * rhs.w;
     if(result.w.isApproximatelyZero()){ 
         return vEdge::zero;
