@@ -1014,6 +1014,9 @@ vEdge vv_add2(Worker* w, const vEdge& lhs, const vEdge& rhs, int32_t current_var
 
 vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
     if(lhs.w.isApproximatelyZero()){
+        if(rhs.w.isApproximatelyZero()){
+            return vEdge::zero;
+        }
         return rhs;
     }else if(rhs.w.isApproximatelyZero()){
         return lhs;
@@ -1027,7 +1030,10 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w + rhs.w, vNode::terminal};
     }
-    
+    if(lhs.n == rhs.n){
+        return {lhs.w+rhs.w, lhs.n};
+    }
+
     vEdge result;
 #ifdef CACHE
     AddCache& local_aCache = _aCache.local();
@@ -1038,6 +1044,9 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
 #if defined(CACHE) || defined(CACHE_GLOBAL)
     result = local_aCache.find(lhs,rhs);
     if(result.n != nullptr){
+        if(result.w.isApproximatelyZero()){
+            return vEdge::zero;
+        }
         return result;
     }
 #endif

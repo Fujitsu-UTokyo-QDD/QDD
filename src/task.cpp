@@ -222,6 +222,7 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
         if(i%_gcfreq==0 & i){
             lhs.incRef();
             mUnique.gc();
+            lhs.decRef();
         }
     }
     return lhs;
