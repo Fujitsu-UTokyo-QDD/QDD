@@ -1,0 +1,42 @@
+run with 16 workers, 30 qubits
+orcale: 101010111110101100101110100101
+after full: 
+iterations: 25735
+15.4876 seconds
+run with 16 workers, 30 qubits
+orcale: 101010111110101100101110100101
+after full: 
+iterations: 25735
+16.2987 seconds
+run with 16 workers, 30 qubits
+orcale: 101010111110101100101110100101
+after full: 
+iterations: 25735
+10.1557 seconds
+run with 16 workers, 33 qubits
+orcale: 101010111110101100101110100101011
+after full: 
+iterations: 72792
+run with 16 workers, 33 qubits
+orcale: 101010111110101100101110100101011
+after full: 
+iterations: 72792
+209.783 seconds
+run with 16 workers, 33 qubits
+orcale: 101010111110101100101110100101011
+after full: 
+iterations: 72792
+503.925 seconds
+
+run with 16 workers, 36 qubits
+orcale: 101010111110101100101110100101011011
+after full: 
+iterations: 205887
+run with 16 workers, 36 qubits
+orcale: 101010111110101100101110100101011011
+after full: 
+iterations: 205887
+run with 16 workers, 36 qubits
+orcale: 101010111110101100101110100101011011
+after full: 
+iterations: 205887
