@@ -489,7 +489,7 @@ mEdge mm_add_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var){
 
     std::array<mEdge, 4> edges;
 
-
+#pragma omp taskloop num_tasks(4) default(shared) private(x,y)
     for(auto i = 0; i < 4; i++){
         if(lv == current_var && !lhs.isTerminal()){
             x = lnode->getEdge(i);
@@ -798,7 +798,6 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     std::array<mEdge, 8> products_wo_future;
 
 
-#pragma omp parallel
 #pragma omp taskloop collapse(2) num_tasks(8) default(shared) private(x,y)
     for(int i = 0; i < 4; i++){
         for(int k = 0; k < 2; k++){
@@ -881,7 +880,10 @@ mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs){
 #ifdef THREADPOOL
     LIMIT = root-MINUS;
 #endif
-    mEdge result = mm_multiply_fiber2( lhs, rhs, root);
+    mEdge result;
+#pragma omp parallel
+#pragma omp single
+    result = mm_multiply_fiber2( lhs, rhs, root);
     return result;
 }
 
@@ -1062,8 +1064,6 @@ vEdge vv_add_fiber2(const vEdge& lhs, const vEdge& rhs, int32_t current_var){
 
     std::vector<boost::fibers::future<vEdge>> sums;
 
-
-#pragma omp parallel
 #pragma omp taskloop num_tasks(2) default(shared) private(x,y)
     for(auto i = 0; i < 2; i++){
         if(lv == current_var && !lhs.isTerminal()){
@@ -1432,7 +1432,6 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
     std::array<vEdge, 2> edges;
 
 
-#pragma omp parallel
 #pragma omp taskloop collapse(2) num_tasks(4) default(shared) private(x,y)
     for(int i = 0; i < 2; i++){
         for(int k = 0; k < 2; k++){
@@ -1502,7 +1501,10 @@ vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
 #ifdef THREADPOOL
     LIMIT = lhs.getVar()-MINUS;
 #endif
-    vEdge v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
+    vEdge v;
+#pragma omp parallel
+#pragma omp single
+    v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
     return v;
 }
 
