@@ -798,7 +798,7 @@ mEdge mm_multiply_fiber2(const mEdge& lhs, const mEdge& rhs, int32_t current_var
     std::array<mEdge, 8> products_wo_future;
 
 
-#pragma omp taskloop collapse(2) num_tasks(8) default(shared) private(x,y)
+#pragma omp taskloop collapse(2) num_tasks(8) default(shared) private(x,y) if(current_var>LIMIT)
     for(int i = 0; i < 4; i++){
         for(int k = 0; k < 2; k++){
             std::size_t row = i >> 1;
@@ -877,7 +877,7 @@ mEdge mm_multiply_fiber(const mEdge& lhs, const mEdge& rhs){
 
 
     Qubit root = rootVar(lhs, rhs);
-#ifdef THREADPOOL
+#if defined(THREADPOOL) || defined(OPENMP)
     LIMIT = root-MINUS;
 #endif
     mEdge result;
@@ -1432,7 +1432,7 @@ vEdge mv_multiply_fiber2(const mEdge& lhs, const vEdge& rhs, int32_t current_var
     std::array<vEdge, 2> edges;
 
 
-#pragma omp taskloop collapse(2) num_tasks(4) default(shared) private(x,y)
+#pragma omp taskloop collapse(2) num_tasks(4) default(shared) private(x,y) if(current_var>LIMIT)
     for(int i = 0; i < 2; i++){
         for(int k = 0; k < 2; k++){
             if(lv == current_var && !lhs.isTerminal()){
@@ -1498,7 +1498,7 @@ vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs){
 
     // assume lhs and rhs are the same length.
     assert(lhs.getVar() == rhs.getVar());
-#ifdef THREADPOOL
+#if defined(THREADPOOL) || defined(OPENMP)
     LIMIT = lhs.getVar()-MINUS;
 #endif
     vEdge v;
