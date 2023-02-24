@@ -431,6 +431,9 @@ class MulCache{
             typename std::vector<Bucket>::iterator chunkEndIt;
             std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
             std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
+            #ifdef CACHE_GLOBAL
+            mutable std::mutex _mtx;
+            #endif
         };
 
         Cache c;
@@ -451,7 +454,9 @@ class MulCache{
 
 
         Bucket* getBucket() {
-
+            #ifdef CACHE_GLOBAL
+            std::unique_lock(c._mtx);
+            #endif
             if (c.chunkIt == c.chunkEndIt) {
                 c.chunks.emplace_back(c.allocationSize);
                 c.allocations += c.allocationSize;
