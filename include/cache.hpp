@@ -21,8 +21,11 @@
     constexpr std::size_t hardware_destructive_interference_size = 64;
 #endif
 
+struct Scheduler;
+
 
 class AddCache{
+    friend struct Scheduler;
     public:
         AddCache(QubitCount q):_tables{2}, rng(std::random_device()()), dist(0,1){
 
@@ -32,6 +35,7 @@ class AddCache{
             }
 
         }
+
 
         template<typename T>
             T find(T lhs, T rhs){
@@ -291,6 +295,7 @@ class AddCache{
 };
 
 class MulCache{
+    friend struct Scheduler;
 
     public:
         MulCache(QubitCount q):_tables{3}, rng(std::random_device()()), dist(0,1){
@@ -301,6 +306,8 @@ class MulCache{
             }
 
         }
+
+
 
         template<typename LT, typename RT, typename RetT = std::conditional_t<std::is_same_v<RT, vNode>, vEdge, mEdge>>
             RetT find(const LT* lhs, const RT* rhs){
@@ -381,7 +388,9 @@ class MulCache{
 
     }
 
+
         double hitRatio() const noexcept {
+            std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
             return static_cast<double>(hits)/static_cast<double>(lookups); 
         }
 

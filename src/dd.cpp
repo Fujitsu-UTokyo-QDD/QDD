@@ -4,9 +4,10 @@
 #include "table.hpp"
 #include "graph.hpp"
 #include <bitset>
-#include <oneapi/tbb/enumerable_thread_specific.h>
 #include <boost/fiber/future/future.hpp>
 #include <boost/fiber/future/packaged_task.hpp>
+#include <oneapi/tbb/enumerable_thread_specific.h>
+#include "task.h"
 
 #define SUBTASK_THRESHOLD 5
 

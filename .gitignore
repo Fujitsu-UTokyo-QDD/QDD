@@ -1,9 +1,10 @@
 .DS_Store
 .DS_Store?
-tags
-.tags
+tags*
+.tags*
 build/
 .cache/
 .vscode/
 tmp/
 lib/
+result/

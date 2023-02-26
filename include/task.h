@@ -13,6 +13,17 @@
 #include <vector>
 #include "dd.h"
 #include "table.hpp"
+#include "cache.hpp"
+
+
+#ifdef CACHE
+extern oneapi::tbb::enumerable_thread_specific<AddCache> _aCache;
+extern oneapi::tbb::enumerable_thread_specific<MulCache> _mCache;
+#endif
+#ifdef CACHE_GLOBAL
+extern AddCache _aCache_global;
+extern MulCache _mCache_global;
+#endif
 
 struct Scheduler;
 
