@@ -217,9 +217,11 @@ void Scheduler::addGate(const mEdge& e){
 void Scheduler::clearCache(){
 #ifdef CACHE
     for(auto _alocal: _aCache){
+        _alocal.hitRatio();
         _alocal.clearAll();
     }
     for(auto _mlocal: _mCache){
+        _mlocal.hitRatio();
         _mlocal.clearAll();
     }
 #endif
@@ -235,6 +237,8 @@ vEdge Scheduler::buildCircuit(vEdge input){
     vEdge v = input;
 
     for(auto i = 0; i < _gates.size(); i++){
+        if(i%100==0)
+            std::cout << "### " << i << " ###\n";
         v = mv_multiply_fiber(_gates[i], v);
 
         if(i%_gcfreq==0 && i){

@@ -110,9 +110,8 @@ class AddCache{
         for(Bucket& b : c.chunks[0]){
             b.e.valid = false;
         }
-    
-
-
+        hits = 0;
+        lookups = 0;
     }
 
         double hitRatio() const noexcept {
@@ -373,9 +372,8 @@ class MulCache{
                 e.valid = false;
             }
         }
-    
-
-
+        hits = 0;
+        lookups = 0;
     }
 
 
