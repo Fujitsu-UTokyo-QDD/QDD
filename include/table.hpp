@@ -104,7 +104,6 @@ public:
 
         p->v = -2;
         p->ref = 0;
-        p->version++;
         Cache& c = _caches.local();
         p->next   = c.available;
         c.available = p;

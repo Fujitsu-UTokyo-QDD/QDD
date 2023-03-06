@@ -105,8 +105,8 @@ class AddCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE*4096;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE;
         for(Bucket& b : c.chunks[0]){
             b.e.valid = false;
         }
@@ -132,9 +132,7 @@ class AddCache{
         struct Entry{
             Entry():valid(false){}
             Edge lhs;
-            unsigned lversion;
             Edge rhs;
-            unsigned rversion;
             Edge result;
             bool valid;
             #ifdef CACHE_GLOBAL
@@ -152,7 +150,7 @@ class AddCache{
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
             Cache(){
-                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE));
                 chunkIt = chunks[0].begin();
                 chunkEndIt = chunks[0].end();
             }
@@ -160,8 +158,8 @@ class AddCache{
             std::size_t                          chunkID{0};
             typename std::vector<Bucket>::iterator chunkIt;
             typename std::vector<Bucket>::iterator chunkEndIt;
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
             #ifdef CACHE_GLOBAL
             mutable std::mutex _mtx;
             #endif
@@ -220,7 +218,7 @@ class AddCache{
                 std::shared_lock<std::shared_mutex> lock(e._mtx);
                 #endif
                 if constexpr(std::is_same_v<T, mEdge>){
-                    if(e.valid && e.lhs.m == l && e.rhs.m ==r && e.lversion == l.n->version && e.rversion == r.n->version){
+                    if(e.valid && e.lhs.m == l && e.rhs.m ==r){
                         if(e.result.m.getVar() != -2){
                             hits++;
                             return e.result.m;
@@ -229,8 +227,6 @@ class AddCache{
                         }
                         /*
                         if(e.result.m.getVar() == -2){
-                            std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
-                            std::cout<<"lpversion: "<<l.n->version<<", rpversion: "<< r.n->version<<std::endl;
                             assert(false);
                         }
                        return e.result.m; 
@@ -239,7 +235,7 @@ class AddCache{
                         return T{};
                     }
                 }else{
-                    if(e.valid && e.lhs.v == l && e.rhs.v ==r && e.lversion == l.n->version && e.rversion == r.n->version){
+                    if(e.valid && e.lhs.v == l && e.rhs.v ==r){
                         if(e.result.v.getVar() != -2){
                             hits++;
                             return e.result.v;
@@ -248,8 +244,6 @@ class AddCache{
                         }
                         /*
                         if(e.result.v.getVar() == -2){
-                            std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
-                            std::cout<<"lpversion: "<<l.n->version<<", rpversion: "<< r.n->version<<std::endl;
                             assert(false);
                         }
                        return e.result.v; 
@@ -268,15 +262,11 @@ class AddCache{
                 #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         e.lhs.m = l;
-                        e.lversion = l.n->version;
                         e.rhs.m = r;
-                        e.rversion = r.n->version;
                         e.result.m = res;
                     }else{
                         e.lhs.v = l;
-                        e.lversion = l.n->version;
                         e.rhs.v = r;
-                        e.rversion = r.n->version;
                         e.result.v = res;
                     }
                     e.valid = true;
@@ -376,8 +366,8 @@ class MulCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE*4096;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE;
         for(Bucket& b : c.chunks[0]){
             for(Entry& e : b.es){
                 e.valid = false;
@@ -404,13 +394,10 @@ class MulCache{
         };
 
         struct Entry{
-            Entry(): lhs(0), rhs(0), valid(false), lversion(0), rversion(0), picked{0}{};
+            Entry(): lhs(0), rhs(0), valid(false), picked{0}{};
             uintptr_t lhs;
             uintptr_t rhs;
             Edge result;
-
-            unsigned lversion;
-            unsigned rversion;
             
             bool valid;
             int picked;
@@ -430,7 +417,7 @@ class MulCache{
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
             Cache(){
-                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE));
                 chunkIt = chunks[0].begin();
                 chunkEndIt = chunks[0].end();
             }
@@ -438,8 +425,8 @@ class MulCache{
             std::size_t                          chunkID{0};
             typename std::vector<Bucket>::iterator chunkIt;
             typename std::vector<Bucket>::iterator chunkEndIt;
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
             #ifdef CACHE_GLOBAL
             mutable std::mutex _mtx;
             #endif
@@ -495,7 +482,7 @@ class MulCache{
                         #ifdef CACHE_GLOBAL
                         std::shared_lock<std::shared_mutex> lock(e._mtx);
                         #endif
-                        if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
+                        if(e.valid && e.lhs == l && e.rhs == r){
                             if(e.result.m.getVar() != -2){
                                 hits++;
                                 e.picked++;
@@ -506,8 +493,6 @@ class MulCache{
                             }
                             /*
                             if(e.result.m.getVar() == -2){
-                                std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
-                                std::cout<<"lpversion: "<<lp->version<<", rpversion: "<< rp->version<<std::endl;
                                 assert(false);
                             }
                             return e.result.m;
@@ -524,7 +509,7 @@ class MulCache{
                     #ifdef CACHE_GLOBAL
                         std::shared_lock<std::shared_mutex> lock(e._mtx);
                     #endif
-                        if(e.valid && e.lhs == l && e.rhs == r && e.lversion == lp->version && e.rversion == rp->version){
+                        if(e.valid && e.lhs == l && e.rhs == r){
                             if(e.result.v.getVar() != -2){
                                 hits++;
                                 e.picked++;
@@ -535,8 +520,6 @@ class MulCache{
                             }
                             /*
                             if(e.result.v.getVar() == -2){
-                                std::cout<<"lversion: "<<e.lversion<<", rversion: "<< e.rversion<<std::endl;
-                                std::cout<<"lpversion: "<<lp->version<<", rpversion: "<< rp->version<<std::endl;
                                 assert(false);
                             }
                             return e.result.v;
@@ -558,18 +541,14 @@ class MulCache{
                         mNode* lp = reinterpret_cast<mNode*>(l); 
                         mNode* rp = reinterpret_cast<mNode*>(r); 
                         e.lhs = l;
-                        e.lversion = lp->version;
                         e.rhs = r;
-                        e.rversion = rp->version;
                         e.result.m = res;
                         e.picked = 1;
                     }else{
                         mNode* lp = reinterpret_cast<mNode*>(l); 
                         vNode* rp = reinterpret_cast<vNode*>(r); 
                         e.lhs = l;
-                        e.lversion = lp->version;
                         e.rhs = r;
-                        e.rversion = rp->version;
                         e.result.v = res;
                         e.picked = 1;
                     }

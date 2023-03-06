@@ -107,7 +107,8 @@ public:
     mEdge buildUnitary(const std::vector<mEdge>& g);
 private:
     void spawn();
-    
+    void clearCache();
+
     const int _nworkers;
     const int _gcfreq;
 

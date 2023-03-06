@@ -214,6 +214,21 @@ void Scheduler::addGate(const mEdge& e){
     _gates.emplace_back(e);
 }
 
+void Scheduler::clearCache(){
+#ifdef CACHE
+    for(auto _alocal: _aCache){
+        _alocal.clearAll();
+    }
+    for(auto _mlocal: _mCache){
+        _mlocal.clearAll();
+    }
+#endif
+#ifdef CACHE_GLOBAL
+    _aCache_global.clearAll();
+    _mCache_global.clearAll();
+#endif
+}
+
 
 vEdge Scheduler::buildCircuit(vEdge input){
 
@@ -226,6 +241,7 @@ vEdge Scheduler::buildCircuit(vEdge input){
             v.incRef();
             vUnique.gc();
             v.decRef();
+            clearCache();
         }
     }
 
@@ -244,15 +260,8 @@ mEdge Scheduler::buildUnitary(const std::vector<mEdge>& g){
     for(int i = 1; i < g.size(); i++){
         //std::cout<<"i: "<<i<<std::endl;
         lhs = mm_multiply_fiber(lhs, g[i]);
-        if(i%_gcfreq==0 & i){
-            lhs.incRef();
-            mUnique.gc();
-            lhs.decRef();
-        }
     }
     return lhs;
-
-
 }
 
 
