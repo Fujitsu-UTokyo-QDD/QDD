@@ -420,5 +420,5 @@ mEdge RZ(QubitCount qnum, int target, float angle);
 mEdge CX(QubitCount qnum, int target, int control);
 
 mEdge Dense(QubitCount qnum, int target, float r0, float i0, float r1, float i1, float r2, float i2, float r3, float i3);
-// 1 target, 2 control with both negative (00)
-mEdge Dense1200(QubitCount qnum, int target, int control0, int control1, float r0, float i0, float r1, float i1, float r2, float i2, float r3, float i3);
+// 1 target, 2 control with both positive (11)
+mEdge Dense1211(QubitCount qnum, int target, int control0, int control1, float r0, float i0, float r1, float i1, float r2, float i2, float r3, float i3);
