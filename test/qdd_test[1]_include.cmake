@@ -1,0 +1,5 @@
+if(EXISTS "/home/swli0426/Code/QDD/test/qdd_test[1]_tests.cmake")
+  include("/home/swli0426/Code/QDD/test/qdd_test[1]_tests.cmake")
+else()
+  add_test(qdd_test_NOT_BUILT qdd_test_NOT_BUILT)
+endif()

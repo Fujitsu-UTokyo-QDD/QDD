@@ -10,6 +10,7 @@
 #include <iostream>
 #include "dd.h"
 #include <oneapi/tbb/enumerable_thread_specific.h>
+#include <random>
 
 using namespace oneapi::tbb;
 
@@ -29,13 +30,15 @@ public:
 
 
 
-    CHashTable(QubitCount n): _tables{n}, _qn(n){
+    CHashTable(QubitCount n): _tables{n}, _qn(n), gen(rd()), dist(0,101){
         
         for(Table& t: _tables){
             for(auto i = 0; i < NBUCKETS; i++) t._gc_flags[i] = false;
         }
     
     };
+
+
 
     ~CHashTable(){
         _tables.clear();
@@ -59,12 +62,34 @@ public:
         
     }
 
+    void reset(){
+        _tables.clear();
+
+        for(auto it = _caches.begin(); it != _caches.end(); it++){
+            it->available = nullptr;
+
+            while(it->chunkID > 0){
+                it->chunks.pop_back();
+                it->chunkID--;
+            }
+
+            it->chunkIt = it->chunks[0].begin();
+            it->chunkEndIt = it->chunks[0].end();
+
+            it->allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+            it->allocations = INITIAL_ALLOCATION_SIZE;
+        
+        }
+    
+    }
+
     CHashTable& operator=(CHashTable&& other){
     
        //this->~CHashTable();
         _tables = std::move(other._tables);
         _caches = std::move(other._caches);
         _qn = other.getQubitCount();
+	collected = other.collected;
         return *this;
     }
 
@@ -96,7 +121,7 @@ public:
         return p;
     }
 
-    void returnNode(T* p) {
+    void returnNode(T* p, bool isGC = false) {
         if constexpr(std::is_same_v<T, mNode>){
             if(p == mNode::terminal) return; 
         }
@@ -104,6 +129,16 @@ public:
 
         p->v = -2;
         p->ref = 0;
+
+        if(isGC){
+            Cache& c = *(_caches.begin() + dist(gen)%_caches.size());
+            p->next   = c.available;
+            c.available = p;
+            return;
+        
+        }
+
+
         Cache& c = _caches.local();
         p->next   = c.available;
         c.available = p;
@@ -157,6 +192,7 @@ RELOAD:
 
     void gc(){
         std::cout<<"gc"<<std::endl;
+
         collected = 0;
        for(Table& t: _tables){
             for(auto i = 0; i < NBUCKETS; i++){
@@ -200,6 +236,11 @@ private:
 
     QubitCount _qn;
 
+    std::random_device rd;
+    std::mt19937 gen;
+    std::uniform_int_distribution<int> dist;
+
+
     void bucket_gc( Table& t,  std::size_t key){
         t._gc_flags[key] = true;
 
@@ -216,7 +257,7 @@ private:
                 }else{
                     previous->next = current;                    
                 }
-                returnNode(to_return);
+                returnNode(to_return, true);
                 collected++;
 
             }else{

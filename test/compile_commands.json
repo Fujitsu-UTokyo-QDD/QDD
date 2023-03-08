@@ -1,0 +1,72 @@
+[
+{
+  "directory": "/home/swli0426/Code/QDD/test/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++ -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/include -I/home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest -O2 -g -DNDEBUG -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++20 -o CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/src/gmock-all.cc",
+  "file": "/home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/src/gmock-all.cc"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/_deps/googletest-build/googlemock",
+  "command": "/usr/bin/c++ -DCACHE -DTHREADPOOL -D_GUN_SOURCE -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest -O2 -g -DNDEBUG -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++20 -o CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/src/gmock_main.cc",
+  "file": "/home/swli0426/Code/QDD/test/_deps/googletest-src/googlemock/src/gmock_main.cc"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++ -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/include -I/home/swli0426/Code/QDD/test/_deps/googletest-src/googletest -O2 -g -DNDEBUG -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++20 -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/src/gtest-all.cc",
+  "file": "/home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/src/gtest-all.cc"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/_deps/googletest-build/googletest",
+  "command": "/usr/bin/c++ -DCACHE -DTHREADPOOL -D_GUN_SOURCE -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest -O2 -g -DNDEBUG -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++20 -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/src/gtest_main.cc",
+  "file": "/home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/src/gtest_main.cc"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/engine.dir/dd.cpp.o -c /home/swli0426/Code/QDD/src/dd.cpp",
+  "file": "/home/swli0426/Code/QDD/src/dd.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/engine.dir/graph.cpp.o -c /home/swli0426/Code/QDD/src/graph.cpp",
+  "file": "/home/swli0426/Code/QDD/src/graph.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/engine.dir/epoch.cpp.o -c /home/swli0426/Code/QDD/src/epoch.cpp",
+  "file": "/home/swli0426/Code/QDD/src/epoch.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/task.dir/task.cpp.o -c /home/swli0426/Code/QDD/src/task.cpp",
+  "file": "/home/swli0426/Code/QDD/src/task.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/alg.dir/algorithms/grover.cpp.o -c /home/swli0426/Code/QDD/src/algorithms/grover.cpp",
+  "file": "/home/swli0426/Code/QDD/src/algorithms/grover.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/src",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/alg.dir/algorithms/shor.cpp.o -c /home/swli0426/Code/QDD/src/algorithms/shor.cpp",
+  "file": "/home/swli0426/Code/QDD/src/algorithms/shor.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/test",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -I/home/swli0426/Code/QDD/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest/include -isystem /home/swli0426/Code/QDD/test/_deps/googletest-src/googletest -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/qdd_test.dir/test.cpp.o -c /home/swli0426/Code/QDD/test/test.cpp",
+  "file": "/home/swli0426/Code/QDD/test/test.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/test",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/benchmark.dir/main.cpp.o -c /home/swli0426/Code/QDD/test/main.cpp",
+  "file": "/home/swli0426/Code/QDD/test/main.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/test",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/gc_test.dir/qv15.cpp.o -c /home/swli0426/Code/QDD/test/qv15.cpp",
+  "file": "/home/swli0426/Code/QDD/test/qv15.cpp"
+},
+{
+  "directory": "/home/swli0426/Code/QDD/test/test",
+  "command": "/usr/bin/c++ -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DCACHE -DTHREADPOOL -D_GUN_SOURCE -I/home/swli0426/Code/QDD/include -I/home/swli0426/Code/QDD/lib/eigen-3.4.0 -I/home/swli0426/Code/QDD/lib/eigen-3.4.0/unsupported -O2 -g -DNDEBUG -std=gnu++20 -o CMakeFiles/fiber_test.dir/fiber.cpp.o -c /home/swli0426/Code/QDD/test/fiber.cpp",
+  "file": "/home/swli0426/Code/QDD/test/fiber.cpp"
+}
+]

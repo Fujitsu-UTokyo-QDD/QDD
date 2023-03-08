@@ -1,0 +1,371 @@
+NO CACHE
+run with 1 workers, 10 qubits, 100 gates
+0.0133406 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 10 qubits, 100 gates
+0.0116767 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 10 qubits, 100 gates
+0.116864 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 10 qubits, 100 gates
+0.861637 seconds
+add cache hit ratio: 0.000913057
+mul cache hit ratio: 0.00707206
+run with 16 workers, 10 qubits, 100 gates
+10.3717 seconds
+add cache hit ratio: 0
+mul cache hit ratio: 0.0142792
+OMP threads = 16
+run with 16 workers, 10 qubits, 100 gates
+5.12147 seconds
+add cache hit ratio: 0.00107919
+mul cache hit ratio: 0.00708046
+ 
+GLOBAL CACHE
+run with 16 workers, 10 qubits, 100 gates
+0.0430661 seconds
+add cache hit ratio: 0.0840764
+mul cache hit ratio: 0.0184405
+OMP threads = 16
+run with 16 workers, 10 qubits, 100 gates
+0.7234 seconds
+add cache hit ratio: 0.544483
+mul cache hit ratio: 0.0341841
+NO CACHE
+run with 1 workers, 12 qubits, 100 gates
+0.0528196 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 12 qubits, 100 gates
+0.0227872 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 12 qubits, 100 gates
+0.406201 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 12 qubits, 100 gates
+0.903913 seconds
+add cache hit ratio: 0.000934787
+mul cache hit ratio: 0.0033645
+run with 16 workers, 12 qubits, 100 gates
+11.1068 seconds
+add cache hit ratio: 0
+mul cache hit ratio: 0.00512996
+OMP threads = 16
+run with 16 workers, 12 qubits, 100 gates
+5.33849 seconds
+add cache hit ratio: 0.00097812
+mul cache hit ratio: 0.00337981
+ 
+GLOBAL CACHE
+run with 16 workers, 12 qubits, 100 gates
+0.166822 seconds
+add cache hit ratio: 0.0651211
+mul cache hit ratio: 0.00639677
+OMP threads = 16
+run with 16 workers, 12 qubits, 100 gates
+2.07499 seconds
+add cache hit ratio: 0.512432
+mul cache hit ratio: 0.0184943
+NO CACHE
+run with 1 workers, 14 qubits, 100 gates
+0.159269 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 14 qubits, 100 gates
+0.0495854 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 14 qubits, 100 gates
+1.31638 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 14 qubits, 100 gates
+1.00614 seconds
+add cache hit ratio: 0.0100059
+mul cache hit ratio: 0.202879
+run with 16 workers, 14 qubits, 100 gates
+10.5222 seconds
+add cache hit ratio: 0
+mul cache hit ratio: 0.276275
+OMP threads = 16
+run with 16 workers, 14 qubits, 100 gates
+5.82801 seconds
+add cache hit ratio: 0.0100622
+mul cache hit ratio: 0.201879
+ 
+GLOBAL CACHE
+run with 16 workers, 14 qubits, 100 gates
+0.365456 seconds
+add cache hit ratio: 0.0359337
+mul cache hit ratio: 0.274967
+OMP threads = 16
+run with 16 workers, 14 qubits, 100 gates
+5.75536 seconds
+add cache hit ratio: 0.49058
+mul cache hit ratio: 0.206601
+NO CACHE
+run with 1 workers, 16 qubits, 100 gates
+0.302354 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 16 qubits, 100 gates
+0.0747105 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 16 qubits, 100 gates
+2.8938 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 16 qubits, 100 gates
+0.892504 seconds
+add cache hit ratio: 0.00178087
+mul cache hit ratio: 0.356902
+run with 16 workers, 16 qubits, 100 gates
+11.1906 seconds
+add cache hit ratio: 9.55133e-05
+mul cache hit ratio: 0.3959
+OMP threads = 16
+run with 16 workers, 16 qubits, 100 gates
+5.25058 seconds
+add cache hit ratio: 0.00186551
+mul cache hit ratio: 0.357184
+ 
+GLOBAL CACHE
+run with 16 workers, 16 qubits, 100 gates
+0.21263 seconds
+add cache hit ratio: 0.150505
+mul cache hit ratio: 0.409987
+OMP threads = 16
+run with 16 workers, 16 qubits, 100 gates
+1.60509 seconds
+add cache hit ratio: 0.53785
+mul cache hit ratio: 0.364327
+NO CACHE
+run with 1 workers, 18 qubits, 100 gates
+2.17851 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 18 qubits, 100 gates
+0.301159 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 18 qubits, 100 gates
+11.0096 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 18 qubits, 100 gates
+2.66022 seconds
+add cache hit ratio: 1.53402e-05
+mul cache hit ratio: 0.113856
+run with 16 workers, 18 qubits, 100 gates
+10.3024 seconds
+add cache hit ratio: 4.36709e-05
+mul cache hit ratio: 0.226861
+OMP threads = 16
+run with 16 workers, 18 qubits, 100 gates
+12.438 seconds
+add cache hit ratio: 1.53408e-05
+mul cache hit ratio: 0.114771
+ 
+GLOBAL CACHE
+run with 16 workers, 18 qubits, 100 gates
+3.16642 seconds
+add cache hit ratio: 0.0273111
+mul cache hit ratio: 0.222747
+OMP threads = 16
+run with 16 workers, 18 qubits, 100 gates
+53.6671 seconds
+add cache hit ratio: 0.450763
+mul cache hit ratio: 0.114561
+NO CACHE
+run with 1 workers, 20 qubits, 100 gates
+4.03773 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 20 qubits, 100 gates
+0.784915 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 20 qubits, 100 gates
+23.1908 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 20 qubits, 100 gates
+3.26966 seconds
+add cache hit ratio: 0.00104039
+mul cache hit ratio: 0.508575
+run with 16 workers, 20 qubits, 100 gates
+13.3687 seconds
+add cache hit ratio: 0.0011856
+mul cache hit ratio: 0.504397
+OMP threads = 16
+run with 16 workers, 20 qubits, 100 gates
+15.7863 seconds
+add cache hit ratio: 0.0010493
+mul cache hit ratio: 0.508581
+ 
+GLOBAL CACHE
+run with 16 workers, 20 qubits, 100 gates
+4.49309 seconds
+add cache hit ratio: 0.0487588
+mul cache hit ratio: 0.49382
+OMP threads = 16
+run with 16 workers, 20 qubits, 100 gates
+92.5666 seconds
+add cache hit ratio: 0.461983
+mul cache hit ratio: 0.507566
+NO CACHE
+run with 1 workers, 22 qubits, 100 gates
+38.2724 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 22 qubits, 100 gates
+5.66235 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 22 qubits, 100 gates
+114.503 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 22 qubits, 100 gates
+44.8474 seconds
+add cache hit ratio: 0.000119675
+mul cache hit ratio: 0.0435456
+run with 16 workers, 22 qubits, 100 gates
+18.9632 seconds
+add cache hit ratio: 0.000443454
+mul cache hit ratio: 0.0946356
+OMP threads = 16
+run with 16 workers, 22 qubits, 100 gates
+113.119 seconds
+add cache hit ratio: 0.000119247
+mul cache hit ratio: 0.0404603
+ 
+GLOBAL CACHE
+run with 16 workers, 22 qubits, 100 gates
+36.5601 seconds
+add cache hit ratio: 0.013755
+mul cache hit ratio: 0.0863521
+OMP threads = 16
+run with 16 workers, 22 qubits, 100 gates
+692.313 seconds
+add cache hit ratio: 0.344148
+mul cache hit ratio: 0.040276
+NO CACHE
+run with 1 workers, 24 qubits, 100 gates
+34.3656 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 24 qubits, 100 gates
+5.21563 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 24 qubits, 100 gates
+204.386 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 24 qubits, 100 gates
+15.9753 seconds
+add cache hit ratio: 0.00345159
+mul cache hit ratio: 0.391774
+run with 16 workers, 24 qubits, 100 gates
+15.9686 seconds
+add cache hit ratio: 0.000271801
+mul cache hit ratio: 0.400675
+OMP threads = 16
+run with 16 workers, 24 qubits, 100 gates
+58.3589 seconds
+add cache hit ratio: 0.00354157
+mul cache hit ratio: 0.39179
+ 
+GLOBAL CACHE
+run with 16 workers, 24 qubits, 100 gates
+40.9397 seconds
+add cache hit ratio: 0.12941
+mul cache hit ratio: 0.406977
+OMP threads = 16
+run with 16 workers, 24 qubits, 100 gates
+416.718 seconds
+add cache hit ratio: 0.485473
+mul cache hit ratio: 0.39038
+NO CACHE
+run with 1 workers, 26 qubits, 100 gates
+65.9479 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 26 qubits, 100 gates
+9.4719 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 26 qubits, 100 gates
+391.525 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+ 
+LOCAL CACHE
+run with 1 workers, 26 qubits, 100 gates
+27.9074 seconds
+add cache hit ratio: 0.137697
+mul cache hit ratio: 0.517082
+run with 16 workers, 26 qubits, 100 gates
+20.2781 seconds
+add cache hit ratio: 0.10562
+mul cache hit ratio: 0.515743
+OMP threads = 16
+run with 16 workers, 26 qubits, 100 gates
+101.734 seconds
+add cache hit ratio: 0.137704
+mul cache hit ratio: 0.517076
+ 
+GLOBAL CACHE
+run with 16 workers, 26 qubits, 100 gates
+86.9884 seconds
+add cache hit ratio: 0.337317
+mul cache hit ratio: 0.520661
+OMP threads = 16
+run with 16 workers, 26 qubits, 100 gates
+918.184 seconds
+add cache hit ratio: 0.80879
+mul cache hit ratio: 0.51608
+NO CACHE
+run with 1 workers, 28 qubits, 100 gates
+357.023 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+run with 16 workers, 28 qubits, 100 gates
+49.95 seconds
+add cache hit ratio: -nan
+mul cache hit ratio: -nan
+OMP threads = 16
+run with 16 workers, 28 qubits, 100 gates

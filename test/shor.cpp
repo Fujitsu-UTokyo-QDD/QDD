@@ -234,8 +234,8 @@ int main(int argc, char* argv[]){
             std::smatch m;
             if(std::regex_match(line,m,std::regex(R"(DenseMatrix\(1,2,(.+),(.+),(.+),(.+),(.+),(.+),(.+),(.+),1,1\) q\[(\d+)\],q\[(\d+)\],q\[(\d+)\];)"))){
                 s.addGate(Dense1211(34,std::stoi(m[9].str()),std::stoi(m[10].str()),std::stoi(m[11].str()),std::stof(m[1].str()),std::stof(m[2].str()),std::stof(m[3].str()),std::stof(m[4].str()),std::stof(m[5].str()),std::stof(m[6].str()),std::stof(m[7].str()),std::stof(m[8].str())));
-                std::cout << "Dense " << std::stof(m[1].str()) << "," << std::stof(m[2].str()) << "," << std::stof(m[3].str()) << "," << std::stof(m[4].str()) << std::endl << "      " << std::stof(m[5].str()) << "," << std::stof(m[6].str()) << "," << std::stof(m[7].str()) << "," << std::stof(m[8].str()) << std::endl;
-                std::cout << "      " << std::stoi(m[9].str()) << "," <<std::stoi(m[10].str()) << "," << std::stoi(m[11].str()) << std::endl;
+//                std::cout << "Dense " << std::stof(m[1].str()) << "," << std::stof(m[2].str()) << "," << std::stof(m[3].str()) << "," << std::stof(m[4].str()) << std::endl << "      " << std::stof(m[5].str()) << "," << std::stof(m[6].str()) << "," << std::stof(m[7].str()) << "," << std::stof(m[8].str()) << std::endl;
+  //              std::cout << "      " << std::stoi(m[9].str()) << "," <<std::stoi(m[10].str()) << "," << std::stoi(m[11].str()) << std::endl;
             }
         }else{
             assert(1);

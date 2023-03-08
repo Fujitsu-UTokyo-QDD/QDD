@@ -1,0 +1,2 @@
+/usr/bin/ar qc libalg.a CMakeFiles/alg.dir/algorithms/grover.cpp.o CMakeFiles/alg.dir/algorithms/shor.cpp.o
+/usr/bin/ranlib libalg.a

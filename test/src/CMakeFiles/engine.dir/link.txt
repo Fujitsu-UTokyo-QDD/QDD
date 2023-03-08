@@ -1,0 +1,2 @@
+/usr/bin/ar qc libengine.a CMakeFiles/engine.dir/dd.cpp.o CMakeFiles/engine.dir/graph.cpp.o CMakeFiles/engine.dir/epoch.cpp.o
+/usr/bin/ranlib libengine.a

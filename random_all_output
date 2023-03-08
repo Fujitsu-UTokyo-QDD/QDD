@@ -1,0 +1,174 @@
+ 
+NO CACHE
+run with 1 workers, 10 qubits, 200 gates
+0.0378234 seconds
+run with 16 workers, 10 qubits, 200 gates
+0.0237169 seconds
+OMP threads = 16
+run with 16 workers, 10 qubits, 200 gates
+0.260712 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 10 qubits, 200 gates
+0.903472 seconds
+run with 16 workers, 10 qubits, 200 gates
+10.5508 seconds
+OMP threads = 16
+run with 16 workers, 10 qubits, 200 gates
+5.28967 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 10 qubits, 200 gates
+0.125816 seconds
+OMP threads = 16
+run with 16 workers, 10 qubits, 200 gates
+1.85004 seconds
+ 
+NO CACHE
+run with 1 workers, 12 qubits, 200 gates
+0.151628 seconds
+run with 16 workers, 12 qubits, 200 gates
+0.0580285 seconds
+OMP threads = 16
+run with 16 workers, 12 qubits, 200 gates
+1.04874 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 12 qubits, 200 gates
+1.05987 seconds
+run with 16 workers, 12 qubits, 200 gates
+11.7271 seconds
+OMP threads = 16
+run with 16 workers, 12 qubits, 200 gates
+6.04886 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 12 qubits, 200 gates
+0.437246 seconds
+OMP threads = 16
+run with 16 workers, 12 qubits, 200 gates
+7.68015 seconds
+ 
+NO CACHE
+run with 1 workers, 14 qubits, 200 gates
+0.638697 seconds
+run with 16 workers, 14 qubits, 200 gates
+0.159464 seconds
+OMP threads = 16
+run with 16 workers, 14 qubits, 200 gates
+3.99039 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 14 qubits, 200 gates
+1.7544 seconds
+run with 16 workers, 14 qubits, 200 gates
+10.965 seconds
+OMP threads = 16
+run with 16 workers, 14 qubits, 200 gates
+8.92131 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 14 qubits, 200 gates
+1.41012 seconds
+OMP threads = 16
+run with 16 workers, 14 qubits, 200 gates
+28.847 seconds
+ 
+NO CACHE
+run with 1 workers, 16 qubits, 200 gates
+3.14 seconds
+run with 16 workers, 16 qubits, 200 gates
+0.573494 seconds
+OMP threads = 16
+run with 16 workers, 16 qubits, 200 gates
+14.7331 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 16 qubits, 200 gates
+5.01218 seconds
+run with 16 workers, 16 qubits, 200 gates
+12.5788 seconds
+OMP threads = 16
+run with 16 workers, 16 qubits, 200 gates
+18.7863 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 16 qubits, 200 gates
+4.47695 seconds
+OMP threads = 16
+run with 16 workers, 16 qubits, 200 gates
+95.3375 seconds
+ 
+NO CACHE
+run with 1 workers, 18 qubits, 200 gates
+35.8475 seconds
+run with 16 workers, 18 qubits, 200 gates
+5.37745 seconds
+OMP threads = 16
+run with 16 workers, 18 qubits, 200 gates
+82.5524 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 18 qubits, 200 gates
+42.2165 seconds
+run with 16 workers, 18 qubits, 200 gates
+17.6499 seconds
+OMP threads = 16
+run with 16 workers, 18 qubits, 200 gates
+92.2323 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 18 qubits, 200 gates
+26.0903 seconds
+OMP threads = 16
+run with 16 workers, 18 qubits, 200 gates
+460.021 seconds
+ 
+NO CACHE
+run with 1 workers, 20 qubits, 200 gates
+147.693 seconds
+run with 16 workers, 20 qubits, 200 gates
+21.1808 seconds
+OMP threads = 16
+run with 16 workers, 20 qubits, 200 gates
+314.501 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 20 qubits, 200 gates
+159.873 seconds
+run with 16 workers, 20 qubits, 200 gates
+35.6505 seconds
+OMP threads = 16
+run with 16 workers, 20 qubits, 200 gates
+305.364 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 20 qubits, 200 gates
+78.1914 seconds
+OMP threads = 16
+run with 16 workers, 20 qubits, 200 gates
+1353.52 seconds
+ 
+NO CACHE
+run with 1 workers, 22 qubits, 200 gates
+4804.88 seconds
+run with 16 workers, 22 qubits, 200 gates
+631.768 seconds
+OMP threads = 16
+run with 16 workers, 22 qubits, 200 gates
+6226.24 seconds
+ 
+LOCAL CACHE
+run with 1 workers, 22 qubits, 200 gates
+4935.11 seconds
+run with 16 workers, 22 qubits, 200 gates
+656.172 seconds
+OMP threads = 16
+run with 16 workers, 22 qubits, 200 gates
+6403.26 seconds
+ 
+GLOBAL CACHE
+run with 16 workers, 22 qubits, 200 gates
+731.654 seconds
+OMP threads = 16
+run with 16 workers, 22 qubits, 200 gates

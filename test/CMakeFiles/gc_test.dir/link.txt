@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/gc_test.dir/qv15.cpp.o -o gc_test  -Wl,-rpath,/usr/local/lib ../src/libengine.a ../src/libalg.a ../src/libtask.a ../src/libengine.a /usr/local/lib/libtbb.so.12.9 /usr/local/lib/libboost_fiber.so.1.81.0 /usr/local/lib/libboost_filesystem.so.1.81.0 /usr/local/lib/libboost_atomic.so.1.81.0 /usr/local/lib/libboost_context.so.1.81.0 
