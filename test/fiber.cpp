@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include "algorithms/grover.hpp"
+#include "algorithms/shor.hpp"
 #include <condition_variable>
 #include <boost/fiber/future/future.hpp>
 #include <boost/fiber/future/packaged_task.hpp>
@@ -177,14 +178,15 @@ int main(int argc, char* argv[]){
 #endif
 
     const int nworkers = std::stoi(argv[1]);
-    const int nqubits = std::stoi(argv[2]);
+    //const int nqubits = std::stoi(argv[2]);
+    const int number = std::stoi(argv[2]);
     const int gcfreq = std::stoi(argv[3]);
-    std::cout<<"run with "<<nworkers<<" workers, "<<nqubits<<" qubits"<<std::endl;
+    std::cout<<"run with "<<nworkers<<" workers, "<<", factor: "<<number<<std::endl;
 
-    Scheduler s(nworkers, gcfreq);
     
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto output = groverFiber(s, nqubits);
+    auto output = Shor(number, nworkers, gcfreq);
+    output.run();
     auto t2 = std::chrono::high_resolution_clock::now();
     duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()/1000000<<" seconds"<<std::endl;

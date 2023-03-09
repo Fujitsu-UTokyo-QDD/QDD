@@ -5,7 +5,7 @@
 #include <vector>
 #include <random>
 #include <atomic>
-#include <Eigen/Dense>
+#include "Eigen/Dense"
 using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
 

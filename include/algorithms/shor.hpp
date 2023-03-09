@@ -5,18 +5,19 @@
 #include <vector>
 #include <random>
 #include <algorithm>
-#include "graph.hpp"
+#include "task.h"
 
 
 class Shor{
     public:
-        Shor(int composite_number, int w, int r, bool v = false ):
-            n(composite_number), coprime_a(2), _nworkers(w), _reduce(r), verbose(v), 
+        Shor(int composite_number, int w, int gcfreq,  bool v = false ):
+            n(composite_number), coprime_a(2), _nworkers(w), verbose(v), s(w, gcfreq), 
             required_bits(std::ceil(std::log2(composite_number))), n_qubits(2 * required_bits + 3),  approximate(false) {
                 if(n%2 == 0){
                     std::cout<<"only support factorizing odd numbers"<<std::endl;
                     exit(1);
                 }
+                std::cout<<"total qubits: "<<n_qubits<<std::endl;
                 std::array<std::mt19937_64::result_type, std::mt19937_64::state_size> random_data{};
                 std::random_device                                                    rd;
                 std::generate(std::begin(random_data), std::end(random_data), [&rd]() { return rd(); });
@@ -55,25 +56,25 @@ class Shor{
         }
 
 
-        void cmult_inv(QuantumCircuit& qc,int a, int N, int c);
+        void cmult_inv(int a, int N, int c);
 
-        void cmult(QuantumCircuit& qc, int a, int N, int c);
+        void cmult( int a, int N, int c);
 
-        void mod_add_phi_inv(QuantumCircuit& qc, int a, int N, int c1, int c2);
+        void mod_add_phi_inv( int a, int N, int c1, int c2);
 
-        void mod_add_phi(QuantumCircuit& qc, int a, int N, int c1, int c2);
+        void mod_add_phi( int a, int N, int c1, int c2);
 
-        void qft_inv(QuantumCircuit& qc);
+        void qft_inv();
 
-        void qft(QuantumCircuit& qc);
+        void qft();
 
-        void add_phi_inv(QuantumCircuit& qc,int a, int c1, int c2);
+        void add_phi_inv(int a, int c1, int c2);
 
-        void add_phi(QuantumCircuit& qc, int a, int c1, int c2);
+        void add_phi( int a, int c1, int c2);
 
         static int inverse_mod(int a, int n);
 
-        void u_a(QuantumCircuit& qc, unsigned long long a, int N, int c) ;
+        void u_a( unsigned long long a, int N, int c) ;
 
 
         std::vector<unsigned long long> ts;
@@ -111,7 +112,8 @@ class Shor{
 
         int _nworkers;
 
-        int _reduce;
+
+        Scheduler s;
 
 
 

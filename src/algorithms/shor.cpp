@@ -1,5 +1,6 @@
 #include "algorithms/shor.hpp"
 #include "graph.hpp"
+#include "dd.h"
 
 int Shor::inverse_mod(int a, int n) {
     int t    = 0;
@@ -25,7 +26,7 @@ int Shor::inverse_mod(int a, int n) {
     return t;
 }
 
-void Shor::add_phi(QuantumCircuit& qc, int a, int c1, int c2) {
+void Shor::add_phi( int a, int c1, int c2) {
     for (int i = required_bits; i >= 0; --i) {
         double       q   = 1;
         unsigned int fac = 0;
@@ -49,11 +50,12 @@ void Shor::add_phi(QuantumCircuit& qc, int a, int c1, int c2) {
         float         q_i = QDDsin(fac, q);
         GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
 
-        qc.emplace_back(Qm, (n_qubits - 1)-(1+2*required_bits - i), controls);
+
+        s.addGate(makeGate(n_qubits, Qm, (n_qubits - 1)-(1+2*required_bits - i), controls));
     }
 }
 
-void Shor::add_phi_inv(QuantumCircuit& qc, int a, int c1, int c2) {
+void Shor::add_phi_inv( int a, int c1, int c2) {
     for (int i = required_bits; i >= 0; --i) {
         double       q   = 1;
         unsigned int fac = 0;
@@ -75,88 +77,56 @@ void Shor::add_phi_inv(QuantumCircuit& qc, int a, int c1, int c2) {
         float         q_r = QDDcos(fac, -q);
         float         q_i = QDDsin(fac, -q);
         GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
-        qc.emplace_back(Qm, (n_qubits - 1)-(1+2*required_bits - i), controls);
+        s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1)-(1+2*required_bits - i), controls));
     }
 }
 
 
-void Shor::mod_add_phi(QuantumCircuit& qc, int a, int N, int c1, int c2) {
-    add_phi(qc, a, c1, c2);
-    add_phi_inv(qc, N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+void Shor::mod_add_phi(int a, int N, int c1, int c2) {
+    add_phi(a, c1, c2);
+    add_phi_inv(N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
 
-    qft_inv(qc);
+    qft_inv();
 
-    qc.emplace_back(Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}});
+    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}}));
 
-    qft(qc);
-    add_phi(qc,N, 2 * required_bits + 2, std::numeric_limits<int>::min());
-    add_phi_inv(qc,a, c1, c2);
-    qft_inv(qc);
+    qft();
+    add_phi(N, 2 * required_bits + 2, std::numeric_limits<int>::min());
+    add_phi_inv(a, c1, c2);
+    qft_inv();
 
 
 
-    qc.emplace_back(Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}});
-    qft(qc);
-    add_phi(qc,a, c1, c2);
+    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}}));
+    qft();
+    add_phi(a, c1, c2);
 }
 
-void Shor::mod_add_phi_inv(QuantumCircuit& qc, int a, int N, int c1, int c2) {
-    add_phi_inv(qc,a, c1, c2);
-    qft_inv(qc);
+void Shor::mod_add_phi_inv( int a, int N, int c1, int c2) {
+    add_phi_inv(a, c1, c2);
+    qft_inv();
 
-    qc.emplace_back(Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}});
+    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}}));
 
-    qft(qc);
-    add_phi(qc,a, c1, c2);
-    add_phi_inv(qc,N, 2 * required_bits + 2, std::numeric_limits<int>::min());
-    qft_inv(qc);
+    qft();
+    add_phi(a, c1, c2);
+    add_phi_inv(N, 2 * required_bits + 2, std::numeric_limits<int>::min());
+    qft_inv();
 
 
-    qc.emplace_back(Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}});
+    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}}));
 
-    qft(qc);
-    add_phi(qc,N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
-    add_phi_inv(qc,a, c1, c2);
-}
-
-//[start, end)
-static void qft_rotations(QuantumCircuit& qc, Qubit start, Qubit end){
-    if(start == end) 
-        return;
-
-    end -= 1;
-    qc.emplace_back(Hmat, end);
-
-    for(Qubit q = start; q < end; q++){
-        Controls c{Control{q, Control::Type::pos}};
-        float r = std::cos(std::numbers::pi/(std::pow(2, end - q))); 
-        float i = std::sin(std::numbers::pi/(std::pow(2, end - q))); 
-        GateMatrix g{cf_one, cf_zero, cf_zero, {r,i}}; 
-        qc.emplace_back(g, end, c);
-    }
-
-    qft_rotations(qc, start, end);
-    
+    qft();
+    add_phi(N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    add_phi_inv(a, c1, c2);
 }
 
 
-//[start, end)
-static void qft_swap(QuantumCircuit& qc, Qubit start, Qubit end){
-    QubitCount total_qubits = qc.getQubits();
-    Qubit e = end-1;
-    for(Qubit q = start; q < (start+end)/2; q++){
-        qc.emplace_gate(makeSwap(total_qubits, q, e-- ));
-    }
-}
 
-static void full_qft(QuantumCircuit& qc, Qubit start, Qubit end){
-    qft_rotations(qc, start, end);
-    qft_swap(qc, start, end);
-}
 
-void Shor::qft(QuantumCircuit& qc) {
+void Shor::qft() {
     for (unsigned int i = required_bits + 1; i < 2 * required_bits + 2; i++) {
-        qc.emplace_back(Hmat, (n_qubits-1) - i);
+        s.addGate(makeGate(n_qubits,Hmat, (n_qubits-1) - i));
 
         double q = 2;
         for (unsigned int j = i + 1; j < 2 * required_bits + 2; j++) {
@@ -165,13 +135,13 @@ void Shor::qft(QuantumCircuit& qc) {
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
             Controls c;
             c.emplace(Control{(Qubit)((n_qubits - 1)- j), Control::Type::pos});
-            qc.emplace_back(Qm, (n_qubits - 1) - i, c );
+            s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1) - i, c ));
             q *= 2;
         }
     }
 }
 
-void Shor::qft_inv(QuantumCircuit& qc) {
+void Shor::qft_inv() {
     for (unsigned int i = 2 * required_bits + 1; i >= required_bits + 1; i--) {
         double q = 2;
         for (unsigned int j = i + 1; j < 2 * required_bits + 2; j++) {
@@ -180,54 +150,51 @@ void Shor::qft_inv(QuantumCircuit& qc) {
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
             Controls c;
             c.emplace(Control{(Qubit)((n_qubits - 1)- j), Control::Type::pos});
-            qc.emplace_back(Qm, (n_qubits - 1) - i, c );
+            s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1) - i, c ));
             q *= 2;
         }
-        qc.emplace_back(Hmat, (n_qubits- 1)- i);
+        s.addGate(makeGate(n_qubits,Hmat, (n_qubits- 1)- i));
     }
 }
-void Shor::cmult(QuantumCircuit& qc, int a, int N, int c) {
-    qft(qc);
+void Shor::cmult( int a, int N, int c) {
+    qft();
 
     int t = a;
     for (int i = required_bits; i >= 1; i--) {
-        mod_add_phi(qc,t, N, i, c);
+        mod_add_phi(t, N, i, c);
         t = (2 * t) % N;
     }
-    qft_inv(qc);
+    qft_inv();
 }
 
-void Shor::cmult_inv(QuantumCircuit& qc, int a, int N, int c) {
-    qft(qc);
+void Shor::cmult_inv( int a, int N, int c) {
+    qft();
     int t = a;
     for (int i = required_bits; i >= 1; i--) {
-        mod_add_phi_inv(qc,t, N, i, c);
+        mod_add_phi_inv(t, N, i, c);
         t = (2 * t) % N;
     }
-    qft_inv(qc);
+    qft_inv();
 }
-void Shor::u_a(QuantumCircuit& qc,unsigned long long a, int N, int c) {
-    cmult(qc,a, N, c);
+void Shor::u_a(unsigned long long a, int N, int c) {
+    cmult(a, N, c);
     for (unsigned int i = 0; i < required_bits; i++) {
-        qc.emplace_back(Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}});
+        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}}));
 
-        qc.emplace_back(Xmat, (n_qubits-1)-(required_bits + 2 + i), Controls{Control{(Qubit)((n_qubits - 1)-(i + 1)), Control::Type::pos}, Control{(Qubit)(n_qubits-1-c), Control::Type::pos}});
+        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(required_bits + 2 + i), Controls{Control{(Qubit)((n_qubits - 1)-(i + 1)), Control::Type::pos}, Control{(Qubit)(n_qubits-1-c), Control::Type::pos}}));
 
-        qc.emplace_back(Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}});
+        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}}));
     }
 
-    cmult_inv(qc,inverse_mod(a, N), N, c);
+    cmult_inv(inverse_mod(a, N), N, c);
 }
 
 void Shor::run(){
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    vEdge rootEdge;
 
-    QuantumCircuit qc(n_qubits, _nworkers, _reduce);
-    qc.setInput(makeZeroState(n_qubits));
 
-    qc.emplace_back(Xmat, n_qubits - 1);
+    s.addGate(makeGate(n_qubits,Xmat, n_qubits - 1));
 
     std::cout<<"coprime_a = "<< coprime_a<<std::endl;
 
@@ -241,11 +208,11 @@ void Shor::run(){
     }
 
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
-        qc.emplace_back(Hmat, (n_qubits-1) - i);
+        s.addGate(makeGate(n_qubits,Hmat, (n_qubits-1) - i));
     }
     const int mod = std::ceil(2 * required_bits / 6.0); // log_0.9(0.5) is about 6
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
-        u_a(qc,as[i], n, 0);
+        u_a(as[i], n, 0);
     }
 
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
@@ -256,15 +223,14 @@ void Shor::run(){
             float         q_r = QDDcos(1, -q);
             float         q_i = QDDsin(1, -q);
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
-            qc.emplace_back(Qm, n_qubits -1 - i, Controls{Control{(Qubit)(n_qubits- 1- j), Control::Type::pos}});
+            s.addGate(makeGate(n_qubits,Qm, n_qubits -1 - i, Controls{Control{(Qubit)(n_qubits- 1- j), Control::Type::pos}}));
             q *= 2;
         }
 
-        qc.emplace_back(Hmat, n_qubits - 1 - i);
+        s.addGate(makeGate(n_qubits,Hmat, n_qubits - 1 - i));
     }
-    qc.buildCircuit();
+    vEdge result = s.buildCircuit(makeZeroState(n_qubits));
 
-    vEdge result = qc.wait().vectorResult();
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()<<" micro s"<<std::endl;
