@@ -1,23 +1,24 @@
 #include "algorithms/shor.hpp"
-#include "graph.hpp"
 #include "dd.h"
+#include "graph.hpp"
 
 int Shor::inverse_mod(int a, int n) {
-    int t    = 0;
+    int t = 0;
     int newt = 1;
-    int r    = n;
+    int r = n;
     int newr = a;
     while (newr != 0) {
         int quotient = r / newr;
-        int h        = t;
-        t            = newt;
-        newt         = h - quotient * newt;
-        h            = r;
-        r            = newr;
-        newr         = h - quotient * newr;
+        int h = t;
+        t = newt;
+        newt = h - quotient * newt;
+        h = r;
+        r = newr;
+        newr = h - quotient * newr;
     }
     if (r > 1) {
-        std::cerr << "ERROR: a=" << a << " with n=" << n << " is not invertible\n";
+        std::cerr << "ERROR: a=" << a << " with n=" << n
+                  << " is not invertible\n";
         std::exit(3);
     }
     if (t < 0) {
@@ -26,9 +27,9 @@ int Shor::inverse_mod(int a, int n) {
     return t;
 }
 
-void Shor::add_phi( int a, int c1, int c2) {
+void Shor::add_phi(int a, int c1, int c2) {
     for (int i = required_bits; i >= 0; --i) {
-        double       q   = 1;
+        double q = 1;
         unsigned int fac = 0;
         for (int j = i; j >= 0; --j) {
             if ((a >> j) & 1u) {
@@ -46,18 +47,19 @@ void Shor::add_phi( int a, int c1, int c2) {
             controls.emplace(Control{static_cast<Qubit>((n_qubits - 1) - c2)});
         }
 
-        float         q_r = QDDcos(fac, q);
-        float         q_i = QDDsin(fac, q);
+        float q_r = QDDcos(fac, q);
+        float q_i = QDDsin(fac, q);
         GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
 
-
-        s.addGate(makeGate(n_qubits, Qm, (n_qubits - 1)-(1+2*required_bits - i), controls));
+        s.addGate(makeGate(n_qubits, Qm,
+                           (n_qubits - 1) - (1 + 2 * required_bits - i),
+                           controls));
     }
 }
 
-void Shor::add_phi_inv( int a, int c1, int c2) {
+void Shor::add_phi_inv(int a, int c1, int c2) {
     for (int i = required_bits; i >= 0; --i) {
-        double       q   = 1;
+        double q = 1;
         unsigned int fac = 0;
         for (int j = i; j >= 0; --j) {
             if ((a >> j) & 1u) {
@@ -74,68 +76,77 @@ void Shor::add_phi_inv( int a, int c1, int c2) {
             controls.emplace(Control{static_cast<Qubit>((n_qubits - 1) - c2)});
         }
 
-        float         q_r = QDDcos(fac, -q);
-        float         q_i = QDDsin(fac, -q);
+        float q_r = QDDcos(fac, -q);
+        float q_i = QDDsin(fac, -q);
         GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
-        s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1)-(1+2*required_bits - i), controls));
+        s.addGate(makeGate(n_qubits, Qm,
+                           (n_qubits - 1) - (1 + 2 * required_bits - i),
+                           controls));
     }
 }
-
 
 void Shor::mod_add_phi(int a, int N, int c1, int c2) {
     add_phi(a, c1, c2);
-    add_phi_inv(N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    add_phi_inv(N, std::numeric_limits<int>::min(),
+                std::numeric_limits<int>::min());
 
     qft_inv();
 
-    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}}));
+    s.addGate(
+        makeGate(n_qubits, Xmat, (n_qubits - 1) - (2 * required_bits + 2),
+                 Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 1)),
+                                  Control::Type::pos}}));
 
     qft();
     add_phi(N, 2 * required_bits + 2, std::numeric_limits<int>::min());
     add_phi_inv(a, c1, c2);
     qft_inv();
 
-
-
-    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}}));
+    s.addGate(
+        makeGate(n_qubits, Xmat, (n_qubits - 1) - (2 * required_bits + 2),
+                 Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 1)),
+                                  Control::Type::neg}}));
     qft();
     add_phi(a, c1, c2);
 }
 
-void Shor::mod_add_phi_inv( int a, int N, int c1, int c2) {
+void Shor::mod_add_phi_inv(int a, int N, int c1, int c2) {
     add_phi_inv(a, c1, c2);
     qft_inv();
 
-    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::neg}}));
+    s.addGate(
+        makeGate(n_qubits, Xmat, (n_qubits - 1) - (2 * required_bits + 2),
+                 Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 1)),
+                                  Control::Type::neg}}));
 
     qft();
     add_phi(a, c1, c2);
     add_phi_inv(N, 2 * required_bits + 2, std::numeric_limits<int>::min());
     qft_inv();
 
-
-    s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(2*required_bits +2), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 1)), Control::Type::pos}}));
+    s.addGate(
+        makeGate(n_qubits, Xmat, (n_qubits - 1) - (2 * required_bits + 2),
+                 Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 1)),
+                                  Control::Type::pos}}));
 
     qft();
-    add_phi(N, std::numeric_limits<int>::min(), std::numeric_limits<int>::min());
+    add_phi(N, std::numeric_limits<int>::min(),
+            std::numeric_limits<int>::min());
     add_phi_inv(a, c1, c2);
 }
 
-
-
-
 void Shor::qft() {
     for (unsigned int i = required_bits + 1; i < 2 * required_bits + 2; i++) {
-        s.addGate(makeGate(n_qubits,Hmat, (n_qubits-1) - i));
+        s.addGate(makeGate(n_qubits, Hmat, (n_qubits - 1) - i));
 
         double q = 2;
         for (unsigned int j = i + 1; j < 2 * required_bits + 2; j++) {
-            float         q_r = QDDcos(1, q);
-            float         q_i = QDDsin(1, q);
+            float q_r = QDDcos(1, q);
+            float q_i = QDDsin(1, q);
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
             Controls c;
-            c.emplace(Control{(Qubit)((n_qubits - 1)- j), Control::Type::pos});
-            s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1) - i, c ));
+            c.emplace(Control{(Qubit)((n_qubits - 1) - j), Control::Type::pos});
+            s.addGate(makeGate(n_qubits, Qm, (n_qubits - 1) - i, c));
             q *= 2;
         }
     }
@@ -145,18 +156,18 @@ void Shor::qft_inv() {
     for (unsigned int i = 2 * required_bits + 1; i >= required_bits + 1; i--) {
         double q = 2;
         for (unsigned int j = i + 1; j < 2 * required_bits + 2; j++) {
-            float         q_r = QDDcos(1, -q);
-            float         q_i = QDDsin(1, -q);
+            float q_r = QDDcos(1, -q);
+            float q_i = QDDsin(1, -q);
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
             Controls c;
-            c.emplace(Control{(Qubit)((n_qubits - 1)- j), Control::Type::pos});
-            s.addGate(makeGate(n_qubits,Qm, (n_qubits - 1) - i, c ));
+            c.emplace(Control{(Qubit)((n_qubits - 1) - j), Control::Type::pos});
+            s.addGate(makeGate(n_qubits, Qm, (n_qubits - 1) - i, c));
             q *= 2;
         }
-        s.addGate(makeGate(n_qubits,Hmat, (n_qubits- 1)- i));
+        s.addGate(makeGate(n_qubits, Hmat, (n_qubits - 1) - i));
     }
 }
-void Shor::cmult( int a, int N, int c) {
+void Shor::cmult(int a, int N, int c) {
     qft();
 
     int t = a;
@@ -167,7 +178,7 @@ void Shor::cmult( int a, int N, int c) {
     qft_inv();
 }
 
-void Shor::cmult_inv( int a, int N, int c) {
+void Shor::cmult_inv(int a, int N, int c) {
     qft();
     int t = a;
     for (int i = required_bits; i >= 1; i--) {
@@ -179,28 +190,37 @@ void Shor::cmult_inv( int a, int N, int c) {
 void Shor::u_a(unsigned long long a, int N, int c) {
     cmult(a, N, c);
     for (unsigned int i = 0; i < required_bits; i++) {
-        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}}));
+        s.addGate(makeGate(
+            n_qubits, Xmat, (n_qubits - 1) - (i + 1),
+            Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 2 + i)),
+                             Control::Type::pos}}));
 
-        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(required_bits + 2 + i), Controls{Control{(Qubit)((n_qubits - 1)-(i + 1)), Control::Type::pos}, Control{(Qubit)(n_qubits-1-c), Control::Type::pos}}));
+        s.addGate(makeGate(
+            n_qubits, Xmat, (n_qubits - 1) - (required_bits + 2 + i),
+            Controls{
+                Control{(Qubit)((n_qubits - 1) - (i + 1)), Control::Type::pos},
+                Control{(Qubit)(n_qubits - 1 - c), Control::Type::pos}}));
 
-        s.addGate(makeGate(n_qubits,Xmat, (n_qubits-1)-(i + 1), Controls{Control{(Qubit)((n_qubits - 1)-(required_bits + 2 + i)), Control::Type::pos}}));
+        s.addGate(makeGate(
+            n_qubits, Xmat, (n_qubits - 1) - (i + 1),
+            Controls{Control{(Qubit)((n_qubits - 1) - (required_bits + 2 + i)),
+                             Control::Type::pos}}));
     }
 
     cmult_inv(inverse_mod(a, N), N, c);
 }
 
-void Shor::run(){
+void Shor::run() {
 
     auto t1 = std::chrono::high_resolution_clock::now();
 
+    s.addGate(makeGate(n_qubits, Xmat, n_qubits - 1));
 
-    s.addGate(makeGate(n_qubits,Xmat, n_qubits - 1));
+    std::cout << "coprime_a = " << coprime_a << std::endl;
 
-    std::cout<<"coprime_a = "<< coprime_a<<std::endl;
-
-    auto* as                  = new unsigned long long[2 * required_bits];
+    auto *as = new unsigned long long[2 * required_bits];
     as[2 * required_bits - 1] = coprime_a;
-    unsigned long long new_a  = coprime_a;
+    unsigned long long new_a = coprime_a;
     for (int i = 2 * required_bits - 2; i >= 0; i--) {
         new_a = new_a * new_a;
         new_a = new_a % n;
@@ -208,9 +228,10 @@ void Shor::run(){
     }
 
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
-        s.addGate(makeGate(n_qubits,Hmat, (n_qubits-1) - i));
+        s.addGate(makeGate(n_qubits, Hmat, (n_qubits - 1) - i));
     }
-    const int mod = std::ceil(2 * required_bits / 6.0); // log_0.9(0.5) is about 6
+    const int mod =
+        std::ceil(2 * required_bits / 6.0); // log_0.9(0.5) is about 6
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
         u_a(as[i], n, 0);
     }
@@ -220,20 +241,22 @@ void Shor::run(){
         double q = 2;
 
         for (int j = i - 1; j >= 0; j--) {
-            float         q_r = QDDcos(1, -q);
-            float         q_i = QDDsin(1, -q);
+            float q_r = QDDcos(1, -q);
+            float q_i = QDDsin(1, -q);
             GateMatrix Qm{cf_one, cf_zero, cf_zero, {q_r, q_i}};
-            s.addGate(makeGate(n_qubits,Qm, n_qubits -1 - i, Controls{Control{(Qubit)(n_qubits- 1- j), Control::Type::pos}}));
+            s.addGate(makeGate(n_qubits, Qm, n_qubits - 1 - i,
+                               Controls{Control{(Qubit)(n_qubits - 1 - j),
+                                                Control::Type::pos}}));
             q *= 2;
         }
 
-        s.addGate(makeGate(n_qubits,Hmat, n_qubits - 1 - i));
+        s.addGate(makeGate(n_qubits, Hmat, n_qubits - 1 - i));
     }
     vEdge result = s.buildCircuit(makeZeroState(n_qubits));
 
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
-    std::cout<<ms.count()<<" micro s"<<std::endl;
+    std::cout << ms.count() << " micro s" << std::endl;
     /*
     {
         std::string sample_reversed = measureAll(result, false, mt, 0.001L);
@@ -241,17 +264,16 @@ void Shor::run(){
         sim_factors = post_processing(sample);
         if (sim_factors.first != 0 && sim_factors.second != 0) {
             sim_result =
-                    std::string("SUCCESS(") + std::to_string(sim_factors.first) + "*" +
-                    std::to_string(sim_factors.second) + ")";
-        } else {
-            sim_result = "FAILURE";
+                    std::string("SUCCESS(") + std::to_string(sim_factors.first)
+    + "*" + std::to_string(sim_factors.second) + ")"; } else { sim_result =
+    "FAILURE";
         }
     }
 */
     delete[] as;
-                                                        
 }
-std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& sample) const {
+std::pair<unsigned int, unsigned int>
+Shor::post_processing(const std::string &sample) const {
     unsigned long long res = 0;
     if (verbose) {
         std::clog << "measurement: ";
@@ -268,7 +290,7 @@ std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& s
     }
     unsigned long long denom = 1ull << (2 * required_bits);
 
-    bool               success = false;
+    bool success = false;
     unsigned long long f1{0}, f2{0};
     if (res == 0) {
         if (verbose) {
@@ -276,42 +298,45 @@ std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& s
         }
     } else {
         if (verbose) {
-            std::clog << "Continued fraction expansion of " << res << "/" << denom << " = " << std::flush;
+            std::clog << "Continued fraction expansion of " << res << "/"
+                      << denom << " = " << std::flush;
         }
         std::vector<unsigned long long> cf;
 
-        unsigned long long old_res   = res;
+        unsigned long long old_res = res;
         unsigned long long old_denom = denom;
         while (res != 0) {
             cf.push_back(denom / res);
             unsigned long long tmp = denom % res;
-            denom                  = res;
-            res                    = tmp;
+            denom = res;
+            res = tmp;
         }
 
         if (verbose) {
-            for (const auto i: cf) {
+            for (const auto i : cf) {
                 std::clog << i << " ";
             }
             std::clog << "\n";
         }
 
         for (unsigned int i = 0; i < cf.size(); i++) {
-            //determine candidate
+            // determine candidate
             unsigned long long denominator = cf[i];
-            unsigned long long numerator   = 1;
+            unsigned long long numerator = 1;
 
             for (int j = i - 1; j >= 0; j--) {
                 unsigned long long tmp = numerator + cf[j] * denominator;
-                numerator              = denominator;
-                denominator            = tmp;
+                numerator = denominator;
+                denominator = tmp;
             }
             if (verbose) {
-                std::clog << "  Candidate " << numerator << "/" << denominator << ": ";
+                std::clog << "  Candidate " << numerator << "/" << denominator
+                          << ": ";
             }
             if (denominator > n) {
                 if (verbose) {
-                    std::clog << " denominator too large (greater than " << n << ")!\n";
+                    std::clog << " denominator too large (greater than " << n
+                              << ")!\n";
                 }
                 success = false;
                 if (verbose) {
@@ -319,23 +344,28 @@ std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& s
                 }
                 break;
             } else {
-                double delta = (double)old_res / (double)old_denom - (double)numerator / (double)denominator;
+                double delta = (double)old_res / (double)old_denom -
+                               (double)numerator / (double)denominator;
                 if (std::abs(delta) < 1.0 / (2.0 * old_denom)) {
                     unsigned long long fact = 1;
-                    while (denominator * fact < n && modpow(coprime_a, denominator * fact, n) != 1) {
+                    while (denominator * fact < n &&
+                           modpow(coprime_a, denominator * fact, n) != 1) {
                         fact++;
                     }
                     if (modpow(coprime_a, denominator * fact, n) == 1) {
                         if (verbose) {
-                            std::clog << "found period: " << denominator << " * " << fact << " = "
+                            std::clog << "found period: " << denominator
+                                      << " * " << fact << " = "
                                       << (denominator * fact) << "\n";
                         }
                         if ((denominator * fact) & 1u) {
                             if (verbose) {
-                                std::clog << "Factorization failed (period is odd)!\n";
+                                std::clog << "Factorization failed (period is "
+                                             "odd)!\n";
                             }
                         } else {
-                            f1 = modpow(coprime_a, (denominator * fact) >> 1u, n);
+                            f1 = modpow(coprime_a, (denominator * fact) >> 1u,
+                                        n);
                             f2 = (f1 + 1) % n;
                             f1 = (f1 == 0) ? n - 1 : f1 - 1;
                             f1 = gcd(f1, n);
@@ -343,18 +373,21 @@ std::pair<unsigned int, unsigned int> Shor::post_processing(const std::string& s
 
                             if (f1 == 1ull || f2 == 1ull) {
                                 if (verbose) {
-                                    std::clog << "Factorization failed: found trivial factors " << f1 << " and " << f2
-                                              << "\n";
+                                    std::clog << "Factorization failed: found "
+                                                 "trivial factors "
+                                              << f1 << " and " << f2 << "\n";
                                 }
                             } else {
                                 if (verbose) {
-                                    std::clog << "Factorization succeeded! Non-trivial factors are: \n"
-                                              << "  -- gcd(" << n << "^(" << (denominator * fact) << "/2)-1"
-                                              << "," << n
-                                              << ") = " << f1 << "\n"
-                                              << "  -- gcd(" << n << "^(" << (denominator * fact) << "/2)+1"
-                                              << "," << n
-                                              << ") = " << f2 << "\n";
+                                    std::clog
+                                        << "Factorization succeeded! "
+                                           "Non-trivial factors are: \n"
+                                        << "  -- gcd(" << n << "^("
+                                        << (denominator * fact) << "/2)-1"
+                                        << "," << n << ") = " << f1 << "\n"
+                                        << "  -- gcd(" << n << "^("
+                                        << (denominator * fact) << "/2)+1"
+                                        << "," << n << ") = " << f2 << "\n";
                                 }
                                 success = true;
                             }

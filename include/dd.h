@@ -138,7 +138,6 @@ struct vEdge {
     VectorXcf getEigenVector();
 
 
-
     void printVector() const;
     void printVector_sparse() const;
     std_complex* getVector(std::size_t* dim) const;
@@ -149,7 +148,6 @@ struct vEdge {
 
     std_complex w;
     vNode* n{nullptr};
-
 
 };
 inline void swap(vEdge& lhs, vEdge& rhs){
