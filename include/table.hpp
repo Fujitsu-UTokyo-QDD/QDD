@@ -1,295 +1,162 @@
 #pragma once
 
+#include "common.h"
+#include "dd.h"
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <mutex>
 #include <functional>
-#include <stdio.h>
-#include "common.h"
 #include <iostream>
-#include "dd.h"
-#include <oneapi/tbb/enumerable_thread_specific.h>
+#include <mutex>
 #include <random>
-
-using namespace oneapi::tbb;
-
+#include <stdio.h>
 
 /*
  * CL_MASK and CL_MASK_R are for the probe sequence calculation.
  * With 64 bytes per cacheline, there are 8 64-bit values per cacheline.
  */
-static const uint64_t CL_MASK     = ~(((LINE_SIZE) / 8) - 1);  //  X & CL_MASK = X/8
-static const uint64_t CL_MASK_R   = ((LINE_SIZE) / 8) - 1;    // X&CL_MASK_R = X%8
-                                                              //
-                                                              //
+static const uint64_t CL_MASK = ~(((LINE_SIZE) / 8) - 1); //  X & CL_MASK = X/8
+static const uint64_t CL_MASK_R = ((LINE_SIZE) / 8) - 1;  // X&CL_MASK_R = X%8
+                                                          //
+                                                          //
 
-template<typename T, typename Hash = std::hash<T>, typename ValueEqual = std::equal_to<T>>
-class CHashTable{
-public:
+template <typename T, typename Hash = std::hash<T>,
+          typename ValueEqual = std::equal_to<T>>
+class CHashTable {
+  public:
+    CHashTable(QubitCount n) : _tables{n}, _qn(n){};
 
+    QubitCount getQubitCount() const { return _qn; }
 
-
-    CHashTable(QubitCount n): _tables{n}, _qn(n), gen(rd()), dist(0,101){
-        
-        for(Table& t: _tables){
-            for(auto i = 0; i < NBUCKETS; i++) t._gc_flags[i] = false;
-        }
-    
-    };
-
-
-
-    ~CHashTable(){
-        _tables.clear();
-
-        for(auto it = _caches.begin(); it != _caches.end(); it++){
-            it->available = nullptr;
-
-            while(it->chunkID > 0){
-                it->chunks.pop_back();
-                it->chunkID--;
-            }
-
-            it->chunkIt = it->chunks[0].begin();
-            it->chunkEndIt = it->chunks[0].end();
-
-            it->allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-            it->allocations = INITIAL_ALLOCATION_SIZE;
-        
-        }
-
-        
-    }
-
-    void reset(){
-        _tables.clear();
-
-        for(auto it = _caches.begin(); it != _caches.end(); it++){
-            it->available = nullptr;
-
-            while(it->chunkID > 0){
-                it->chunks.pop_back();
-                it->chunkID--;
-            }
-
-            it->chunkIt = it->chunks[0].begin();
-            it->chunkEndIt = it->chunks[0].end();
-
-            it->allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-            it->allocations = INITIAL_ALLOCATION_SIZE;
-        
-        }
-    
-    }
-
-    CHashTable& operator=(CHashTable&& other){
-    
-       //this->~CHashTable();
-        _tables = std::move(other._tables);
-        _caches = std::move(other._caches);
-        _qn = other.getQubitCount();
-	collected = other.collected;
-        return *this;
-    }
-
-    QubitCount getQubitCount() const {
-        return _qn;
-    }
-
-   T* getNode() {
-        Cache& c = _caches.local();
-        if (c.available != nullptr) {
-            T* p   = c.available;
-            c.available = p->next;
+    T *getNode() {
+        if (_cache.available != nullptr) {
+            T *p = _cache.available;
+            _cache.available = p->next;
             p->next = nullptr;
             return p;
         }
 
-        if (c.chunkIt == c.chunkEndIt) {
-            c.chunks.emplace_back(c.allocationSize);
-            c.allocations += c.allocationSize;
-            c.allocationSize *= GROWTH_FACTOR;
-            c.chunkID++;
-            c.chunkIt    = c.chunks[c.chunkID].begin();
-            c.chunkEndIt = c.chunks[c.chunkID].end();
+        if (_cache.chunkIt == _cache.chunkEndIt) {
+            _cache.chunks.emplace_back(_cache.allocationSize);
+            _cache.allocations += _cache.allocationSize;
+            _cache.allocationSize *= GROWTH_FACTOR;
+            _cache.chunkID++;
+            _cache.chunkIt = _cache.chunks[_cache.chunkID].begin();
+            _cache.chunkEndIt = _cache.chunks[_cache.chunkID].end();
         }
 
-        auto p = &(*c.chunkIt);
+        auto p = &(*_cache.chunkIt);
         p->next = nullptr;
-        ++c.chunkIt;
+        ++_cache.chunkIt;
         return p;
     }
 
-    void returnNode(T* p, bool isGC = false) {
-        if constexpr(std::is_same_v<T, mNode>){
-            if(p == mNode::terminal) return; 
+    void returnNode(T *p) {
+        if constexpr (std::is_same_v<T, mNode>) {
+            if (p == mNode::terminal)
+                return;
         }
-
 
         p->v = -2;
         p->ref = 0;
 
-        if(isGC){
-            Cache& c = *(_caches.begin() + dist(gen)%_caches.size());
-            p->next   = c.available;
-            c.available = p;
-            return;
-        
-        }
+        p->next = _cache.available;
+        _cache.available = p;
+    }
 
-
-        Cache& c = _caches.local();
-        p->next   = c.available;
-        c.available = p;
-    } 
-
-
-    T* lookup(T* node){
+    T *lookup(T *node) {
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
-        
-        //wait for gc completed
-        while(_tables[v]._gc_flags[key]){}
 
+        T *current = _tables[v]._table[key];
+        T *previous = current;
 
-        T* current = _tables[v]._table[key];
-        T* previous = current;
-RELOAD:
-        while(current != nullptr){
-            if(ValueEqual()(*node, *current)){
-                assert(current -> v == node->v);
+        if (current == nullptr) {
+            _tables[v]._table[key] = node;
+            return;
+        }
+
+        while (current != nullptr) {
+            if (ValueEqual()(*node, *current)) {
+                assert(current->v == node->v);
 
                 returnNode(node);
 
                 return current;
             }
 
-
-
             previous = current;
-            current = current ->next;
+            current = current->next;
         }
 
-        if(previous == nullptr){
-            if(cas(_tables[v]._table+key, nullptr, node)){
-                return node;
-            }else{
-                current = _tables[v]._table[key];
-                goto RELOAD;
-            }
-        }else{
-            if(cas(&(previous->next), nullptr, node )){
-                return node;
-            }else{
-               current = previous->next;
-               goto RELOAD;
-            }
-        }
-
-
+        previous->next = node;
+        return;
     }
 
-    void gc(){
-        std::cout<<"gc"<<std::endl;
+    void gc() {
 
         collected = 0;
-       for(Table& t: _tables){
-            for(auto i = 0; i < NBUCKETS; i++){
-                bucket_gc(t,i);
+        for (Table &t : _tables) {
+            for (auto i = 0; i < NBUCKETS; i++) {
+                bucket_gc(t, i);
             }
         }
 
-        //std::cout<<"gc collected "<<collected<<std::endl;
-
-        
+        // std::cout<<"gc collected "<<collected<<std::endl;
     }
 
-
-    
-    
-
-
-private:
-
-
-    struct Table{
-        T* _table[NBUCKETS] = {nullptr};
-        std::atomic_bool _gc_flags[NBUCKETS];
+  private:
+    struct Table {
+        T *_table[NBUCKETS] = {nullptr};
     };
 
     std::vector<Table> _tables;
-    
+
     struct Cache {
-        T*                                available{};
-        std::vector<std::vector<T>>       chunks{1, std::vector<T>{INITIAL_ALLOCATION_SIZE}};
-        std::size_t                          chunkID{0};
+        T *available{};
+        std::vector<std::vector<T>> chunks{
+            1, std::vector<T>{INITIAL_ALLOCATION_SIZE}};
+        std::size_t chunkID{0};
         typename std::vector<T>::iterator chunkIt{chunks[0].begin()};
         typename std::vector<T>::iterator chunkEndIt{chunks[0].end()};
-        std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
-        std::size_t                       allocations = INITIAL_ALLOCATION_SIZE;
+        std::size_t allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
+        std::size_t allocations = INITIAL_ALLOCATION_SIZE;
     };
 
     std::size_t collected;
 
-    enumerable_thread_specific<Cache> _caches;
+    Cache _cache;
 
     QubitCount _qn;
 
-    std::random_device rd;
-    std::mt19937 gen;
-    std::uniform_int_distribution<int> dist;
+    void bucket_gc(Table &t, std::size_t key) {
 
-
-    void bucket_gc( Table& t,  std::size_t key){
-        t._gc_flags[key] = true;
-
-        T* current = t._table[key];
-        T* previous = nullptr;
-        T* to_return = nullptr;
-        while(current != nullptr){
-            if(current->ref == 0){
+        T *current = t._table[key];
+        T *previous = nullptr;
+        T *to_return = nullptr;
+        while (current != nullptr) {
+            if (current->ref == 0) {
 
                 to_return = current;
                 current = current->next;
-                if(previous == nullptr){
+                if (previous == nullptr) {
                     t._table[key] = current;
-                }else{
-                    previous->next = current;                    
+                } else {
+                    previous->next = current;
                 }
-                returnNode(to_return, true);
+                returnNode(to_return);
                 collected++;
 
-            }else{
+            } else {
                 previous = current;
                 current = current->next;
             }
-
         }
-
-        
-
-
-        t._gc_flags[key] = false;
-    
     }
-
-
 };
-
-
-
-
 
 using mNodeTable = CHashTable<mNode>;
 extern mNodeTable mUnique;
 
-
-
 using vNodeTable = CHashTable<vNode>;
 extern vNodeTable vUnique;
-
-
-
-
-

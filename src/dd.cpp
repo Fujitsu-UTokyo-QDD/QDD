@@ -1,13 +1,10 @@
 #include "dd.h"
+#include "cache.hpp"
 #include "common.h"
-#include "graph.hpp"
 #include "table.hpp"
-#include "task.h"
 #include <algorithm>
 #include <bitset>
-#include <boost/fiber/future/future.hpp>
-#include <boost/fiber/future/packaged_task.hpp>
-#include <oneapi/tbb/enumerable_thread_specific.h>
+#include <map>
 
 #define SUBTASK_THRESHOLD 5
 
@@ -21,21 +18,8 @@ mEdge mEdge::zero{{0.0, 0.0}, mNode::terminal};
 vEdge vEdge::one{{1.0, 0.0}, vNode::terminal};
 vEdge vEdge::zero{{0.0, 0.0}, vNode::terminal};
 
-// mNode mNode::terminalNode{.v = -1, .children = {}, .next = nullptr, .ref =
-// MAX_REF }; vNode vNode::terminalNode{.v = -1, .children = {}, .next =
-// nullptr, .ref = MAX_REF };
-
-mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
-vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
-
-#ifdef CACHE
-oneapi::tbb::enumerable_thread_specific<AddCache> _aCache(40);
-oneapi::tbb::enumerable_thread_specific<MulCache> _mCache(40);
-#endif
-#ifdef CACHE_GLOBAL
-AddCache _aCache_global(40);
-MulCache _mCache_global(40);
-#endif
+AddCache _aCache(40);
+MulCache _mCache(40);
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -124,10 +108,6 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
 
     return e;
 }
-
-mNode *mEdge::getNode() const { return n; }
-
-vNode *vEdge::getNode() const { return n; }
 
 Qubit mEdge::getVar() const { return n->v; }
 
@@ -285,7 +265,7 @@ vEdge makeZeroState(QubitCount q) {
     return e;
 }
 
-vEdge makeOneState(Worker *w, QubitCount q) {
+vEdge makeOneState(QubitCount q) {
     vEdge e = makeVEdge(0, {vEdge::zero, vEdge::one});
     for (Qubit i = 1; i < q; i++) {
         e = makeVEdge(i, {{vEdge::zero, e}});
@@ -357,66 +337,6 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
                : lhs.getVar();
 }
 
-mEdge mm_add2(Worker *w, const mEdge &lhs, const mEdge &rhs,
-              int32_t current_var) {
-    if (lhs.w.isApproximatelyZero()) {
-        return rhs;
-    } else if (rhs.w.isApproximatelyZero()) {
-        return lhs;
-    }
-
-    if (current_var == -1) {
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w + rhs.w, mNode::terminal};
-    }
-
-    mEdge result;
-#ifdef CACHE
-    AddCache &local_aCache = _aCache.local();
-    result = local_aCache.find(lhs, rhs);
-    if (result.n != nullptr) {
-        if (result.w.isApproximatelyZero()) {
-            return mEdge::zero;
-        } else {
-            return result;
-        }
-    }
-#endif
-
-    mEdge x, y;
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    mNode *lnode = lhs.getNode();
-    mNode *rnode = rhs.getNode();
-
-    std::array<mEdge, 4> edges;
-
-    for (auto i = 0; i < 4; i++) {
-        if (lv == current_var && !lhs.isTerminal()) {
-            x = lnode->getEdge(i);
-            x.w = lhs.w * x.w;
-        } else {
-            x = lhs;
-        }
-        if (rv == current_var && !rhs.isTerminal()) {
-            y = rnode->getEdge(i);
-            y.w = rhs.w * y.w;
-        } else {
-            y = rhs;
-        }
-
-        edges[i] = mm_add2(w, x, y, current_var - 1);
-    }
-
-    result = makeMEdge(current_var, edges);
-#ifdef CACHE
-    local_aCache.set(lhs, rhs, result);
-#endif
-
-    return result;
-}
-
 mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
@@ -430,14 +350,8 @@ mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     }
 
     mEdge result;
-#ifdef CACHE
-    AddCache &local_aCache = _aCache.local();
-#endif
-#ifdef CACHE_GLOBAL
-    AddCache &local_aCache = _aCache_global;
-#endif
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    result = local_aCache.find(lhs, rhs);
+
+    result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
             return mEdge::zero;
@@ -445,7 +359,6 @@ mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             return result;
         }
     }
-#endif
 
     mEdge x, y;
 
@@ -474,94 +387,34 @@ mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     }
 
     result = makeMEdge(current_var, edges);
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    local_aCache.set(lhs, rhs, result);
-#endif
+    _aCache.set(lhs, rhs, result);
 
     return result;
 }
-mEdge mm_add2_no_worker(const mEdge &lhs, const mEdge &rhs,
-                        int32_t current_var) {
-    if (lhs.w.isApproximatelyZero()) {
-        return rhs;
-    } else if (rhs.w.isApproximatelyZero()) {
-        return lhs;
-    }
 
-    if (current_var == -1) {
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w + rhs.w, mNode::terminal};
-    }
-
-    mEdge x, y;
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    mNode *lnode = lhs.getNode();
-    mNode *rnode = rhs.getNode();
-
-    std::array<mEdge, 4> edges;
-
-    for (auto i = 0; i < 4; i++) {
-        if (lv == current_var && !lhs.isTerminal()) {
-            x = lnode->getEdge(i);
-            x.w = lhs.w * x.w;
-        } else {
-            x = lhs;
-        }
-        if (rv == current_var && !rhs.isTerminal()) {
-            y = rnode->getEdge(i);
-            y.w = rhs.w * y.w;
-        } else {
-            y = rhs;
-        }
-
-        edges[i] = mm_add2_no_worker(x, y, current_var - 1);
-    }
-
-    mEdge result = makeMEdge(current_var, edges);
-
-    return result;
-}
-mEdge mm_add(Worker *w, const mEdge &lhs, const mEdge &rhs) {
+mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w + rhs.w, mNode::terminal};
     }
 
     Qubit root = rootVar(lhs, rhs);
-    return mm_add2(w, lhs, rhs, root);
+    return mm_add2(lhs, rhs, root);
 }
 
-mEdge mm_add_no_worker(const mEdge &lhs, const mEdge &rhs) {
-    if (lhs.isTerminal() && rhs.isTerminal()) {
-        return {lhs.w + rhs.w, mNode::terminal};
-    }
-
-    Qubit root = rootVar(lhs, rhs);
-    return mm_add2_no_worker(lhs, rhs, root);
-}
-
-static void brp() {}
-
-mEdge mm_multiply2(Worker *w, const mEdge &lhs, const mEdge &rhs,
-                   int32_t current_var) {
+mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return mEdge::zero;
     }
 
     if (current_var == -1) {
-        if (!lhs.isTerminal() || !rhs.isTerminal()) {
-            brp();
-        }
+
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
     mEdge result;
-#ifdef CACHE
-    MulCache &local_mCache = _mCache.local();
-    result = local_mCache.find(lhs.n, rhs.n);
+    result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
             return mEdge::zero;
@@ -573,7 +426,6 @@ mEdge mm_multiply2(Worker *w, const mEdge &lhs, const mEdge &rhs,
                 return result;
         }
     }
-#endif
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -607,15 +459,13 @@ mEdge mm_multiply2(Worker *w, const mEdge &lhs, const mEdge &rhs,
                 y = rcopy;
             }
 
-            product[k] = mm_multiply2(w, x, y, current_var - 1);
+            product[k] = mm_multiply2(x, y, current_var - 1);
         }
-        edges[i] = mm_add2(w, product[0], product[1], current_var - 1);
+        edges[i] = mm_add2(product[0], product[1], current_var - 1);
     }
 
     result = makeMEdge(current_var, edges);
-#ifdef CACHE
-    local_mCache.set(lhs.n, rhs.n, result);
-#endif
+    _mCache.set(lhs.n, rhs.n, result);
 
     result.w = result.w * lhs.w * rhs.w;
     if (result.w.isApproximatelyZero())
@@ -624,208 +474,14 @@ mEdge mm_multiply2(Worker *w, const mEdge &lhs, const mEdge &rhs,
         return result;
 }
 
-mEdge mm_test(mEdge lhs, mEdge rhs, int32_t current_var) { return mEdge(); }
-mEdge mm_multiply2_no_worker(const mEdge &lhs, const mEdge &rhs,
-                             int32_t current_var) {
-
-    if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
-        return mEdge::zero;
-    }
-
-    if (current_var == -1) {
-        if (!lhs.isTerminal() || !rhs.isTerminal()) {
-            brp();
-        }
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w * rhs.w, mNode::terminal};
-    }
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    assert(lv <= current_var && rv <= current_var);
-    mNode *lnode = lhs.getNode();
-    mNode *rnode = rhs.getNode();
-    mEdge x, y;
-    mEdge lcopy = lhs;
-    mEdge rcopy = rhs;
-    lcopy.w = {1.0, 0.0};
-    rcopy.w = {1.0, 0.0};
-
-    std::array<mEdge, 4> edges;
-
-    for (auto i = 0; i < 4; i++) {
-
-        std::size_t row = i >> 1;
-        std::size_t col = i & 0x1;
-
-        std::array<mEdge, 2> product;
-        for (auto k = 0; k < 2; k++) {
-            if (lv == current_var && !lhs.isTerminal()) {
-                x = lnode->getEdge((row << 1) | k);
-            } else {
-                x = lhs;
-            }
-
-            if (rv == current_var && !rhs.isTerminal()) {
-                y = rnode->getEdge((k << 1) | col);
-            } else {
-                y = rhs;
-            }
-
-            product[k] = mm_multiply2_no_worker(x, y, current_var - 1);
-        }
-        edges[i] = mm_add2_no_worker(product[0], product[1], current_var - 1);
-    }
-
-    mEdge result = makeMEdge(current_var, edges);
-
-    result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero())
-        return mEdge::zero;
-    else
-        return result;
-}
-mEdge mm_multiply_fiber2(const mEdge &lhs, const mEdge &rhs,
-                         int32_t current_var) {
-
-    if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
-        return mEdge::zero;
-    }
-
-    if (current_var == -1) {
-
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w * rhs.w, mNode::terminal};
-    }
-
-    mEdge result;
-#ifdef CACHE
-    MulCache &local_mCache = _mCache.local();
-#endif
-#ifdef CACHE_GLOBAL
-    MulCache &local_mCache = _mCache_global;
-#endif
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    result = local_mCache.find(lhs.n, rhs.n);
-    if (result.n != nullptr) {
-        if (result.w.isApproximatelyZero()) {
-            return mEdge::zero;
-        } else {
-            result.w = result.w * lhs.w * rhs.w;
-            if (result.w.isApproximatelyZero())
-                return mEdge::zero;
-            else
-                return result;
-        }
-    }
-#endif
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    assert(lv <= current_var && rv <= current_var);
-    mNode *lnode = lhs.getNode();
-    mNode *rnode = rhs.getNode();
-    mEdge x, y;
-    mEdge lcopy = lhs;
-    mEdge rcopy = rhs;
-    lcopy.w = {1.0, 0.0};
-    rcopy.w = {1.0, 0.0};
-
-    std::array<mEdge, 4> edges;
-
-    std::vector<boost::fibers::future<mEdge>> products;
-    std::array<mEdge, 8> products_wo_future;
-
-#pragma omp parallel
-#pragma omp taskloop collapse(2) num_tasks(8) default(shared) private(x, y)
-    for (int i = 0; i < 4; i++) {
-        for (int k = 0; k < 2; k++) {
-            std::size_t row = i >> 1;
-            std::size_t col = i & 0x1;
-            if (lv == current_var && !lhs.isTerminal()) {
-                x = lnode->getEdge((row << 1) | k);
-            } else {
-                x = lcopy;
-            }
-
-            if (rv == current_var && !rhs.isTerminal()) {
-                y = rnode->getEdge((k << 1) | col);
-            } else {
-                y = rcopy;
-            }
-
-            if (current_var > LIMIT) {
-                boost::fibers::packaged_task<mEdge()> pt(
-                    std::bind(mm_multiply_fiber2, x, y, current_var - 1));
-                products.emplace_back(pt.get_future());
-                boost::fibers::fiber f(std::move(pt));
-                f.detach();
-            } else {
-                products_wo_future[i * 2 + k] =
-                    mm_multiply_fiber2(x, y, current_var - 1);
-            }
-        }
-    }
-    if (current_var > LIMIT) {
-        assert(products.size() == 8);
-
-        for (int i = 0; i < 8; i += 2) {
-            edges[i / 2] = mm_add_fiber2(
-                products[i].get(), products[i + 1].get(), current_var - 1);
-        }
-    } else {
-        for (int i = 0; i < 8; i += 2) {
-            edges[i / 2] =
-                mm_add_fiber2(products_wo_future[i], products_wo_future[i + 1],
-                              current_var - 1);
-        }
-    }
-
-    result = makeMEdge(current_var, edges);
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    local_mCache.set(lhs.n, rhs.n, result);
-#endif
-    result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero())
-        return mEdge::zero;
-    if (result.w.isApproximatelyOne())
-        result.w = {1.0, 0.0};
-    return result;
-}
-
-mEdge mm_multiply(Worker *w, const mEdge &lhs, const mEdge &rhs) {
+mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
 
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
     Qubit root = rootVar(lhs, rhs);
-    mEdge result = mm_multiply2(w, lhs, rhs, root);
-    return result;
-}
-
-mEdge mm_multiply_fiber(const mEdge &lhs, const mEdge &rhs) {
-
-    if (lhs.isTerminal() && rhs.isTerminal()) {
-        return {lhs.w * rhs.w, mNode::terminal};
-    }
-
-    Qubit root = rootVar(lhs, rhs);
-#ifdef THREADPOOL
-    LIMIT = root - MINUS;
-#endif
-    mEdge result = mm_multiply_fiber2(lhs, rhs, root);
-    return result;
-}
-
-mEdge mm_multiply_no_worker(const mEdge &lhs, const mEdge &rhs) {
-
-    if (lhs.isTerminal() && rhs.isTerminal()) {
-        return {lhs.w * rhs.w, mNode::terminal};
-    }
-
-    Qubit root = rootVar(lhs, rhs);
-    mEdge result = mm_multiply2_no_worker(lhs, rhs, root);
+    mEdge result = mm_multiply2(lhs, rhs, root);
     return result;
 }
 
@@ -851,7 +507,7 @@ static void printVector2(const vEdge &edge, std::size_t row,
     printVector2(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
 }
 
-mEdge mm_kronecker2(Worker *w, const mEdge &lhs, const mEdge &rhs) {
+mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -865,23 +521,22 @@ mEdge mm_kronecker2(Worker *w, const mEdge &lhs, const mEdge &rhs) {
     for (auto i = 0; i < 4; i++) {
         x = lnode->getEdge(i);
         x.w = lhs.w * x.w;
-        edges[i] = mm_kronecker2(w, x, rhs);
+        edges[i] = mm_kronecker2(x, rhs);
     }
 
     mEdge ret = makeMEdge(lv + rv + 1, edges);
     return ret;
 }
 
-mEdge mm_kronecker(Worker *w, const mEdge &lhs, const mEdge &rhs) {
+mEdge mm_kronecker(const mEdge &lhs, const mEdge &rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
-    return mm_kronecker2(w, lhs, rhs);
+    return mm_kronecker2(lhs, rhs);
 }
 
-vEdge vv_add2(Worker *w, const vEdge &lhs, const vEdge &rhs,
-              int32_t current_var) {
+vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
     } else if (rhs.w.isApproximatelyZero()) {
@@ -894,13 +549,11 @@ vEdge vv_add2(Worker *w, const vEdge &lhs, const vEdge &rhs,
     }
 
     vEdge result;
-#ifdef CACHE
-    AddCache &local_aCache = _aCache.local();
-    result = local_aCache.find(lhs, rhs);
+
+    result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         return result;
     }
-#endif
 
     vEdge x, y;
 
@@ -924,112 +577,26 @@ vEdge vv_add2(Worker *w, const vEdge &lhs, const vEdge &rhs,
             y = rhs;
         }
 
-        edges[i] = vv_add2(w, x, y, current_var - 1);
+        edges[i] = vv_add2(x, y, current_var - 1);
     }
 
     result = makeVEdge(current_var, edges);
-#ifdef CACHE
-    local_aCache.set(lhs, rhs, result);
-#endif
+    _aCache.set(lhs, rhs, result);
 
     return result;
 }
 
-vEdge vv_add_fiber2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
-    if (lhs.w.isApproximatelyZero()) {
-        if (rhs.w.isApproximatelyZero()) {
-            return vEdge::zero;
-        }
-        return rhs;
-    } else if (rhs.w.isApproximatelyZero()) {
-        return lhs;
-    }
-
-    if (current_var == -1) {
-        if (!lhs.isTerminal() || !rhs.isTerminal()) {
-            brp();
-        }
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w + rhs.w, vNode::terminal};
-    }
-    if (lhs.n == rhs.n) {
-        return {lhs.w + rhs.w, lhs.n};
-    }
-
-    vEdge result;
-#ifdef CACHE
-    AddCache &local_aCache = _aCache.local();
-#endif
-#ifdef CACHE_GLOBAL
-    AddCache &local_aCache = _aCache_global;
-#endif
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    result = local_aCache.find(lhs, rhs);
-    if (result.n != nullptr) {
-        if (result.w.isApproximatelyZero()) {
-            return vEdge::zero;
-        }
-        return result;
-    }
-#endif
-
-    vEdge x, y;
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    vNode *lnode = lhs.getNode();
-    vNode *rnode = rhs.getNode();
-    std::array<vEdge, 2> edges;
-
-    std::vector<boost::fibers::future<vEdge>> sums;
-
-#pragma omp parallel
-#pragma omp taskloop num_tasks(2) default(shared) private(x, y)
-    for (auto i = 0; i < 2; i++) {
-        if (lv == current_var && !lhs.isTerminal()) {
-            x = lnode->getEdge(i);
-            x.w = lhs.w * x.w;
-        } else {
-            x = lhs;
-        }
-        if (rv == current_var && !rhs.isTerminal()) {
-            y = rnode->getEdge(i);
-            y.w = rhs.w * y.w;
-        } else {
-            y = rhs;
-        }
-        if (current_var > LIMIT) {
-            boost::fibers::packaged_task<vEdge()> pt(
-                std::bind(vv_add_fiber2, x, y, current_var - 1));
-            sums.emplace_back(pt.get_future());
-            boost::fibers::fiber f(std::move(pt));
-            f.detach();
-        } else {
-            edges[i] = vv_add_fiber2(x, y, current_var - 1);
-        }
-    }
-    if (current_var > LIMIT) {
-        assert(sums.size() == 2);
-        edges[0] = sums[0].get();
-        edges[1] = sums[1].get();
-    }
-    result = makeVEdge(current_var, edges);
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    local_aCache.set(lhs, rhs, result);
-#endif
-    return result;
-}
-vEdge vv_add(Worker *w, const vEdge &lhs, const vEdge &rhs) {
+vEdge vv_add(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w + rhs.w, vNode::terminal};
     }
 
     // assume lhs and rhs are the same size vector.
     assert(lhs.getVar() == rhs.getVar());
-    return vv_add2(w, lhs, rhs, lhs.getVar());
+    return vv_add2(lhs, rhs, lhs.getVar());
 }
 
-vEdge vv_kronecker2(Worker *w, const vEdge &lhs, const vEdge &rhs) {
+vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -1046,19 +613,19 @@ vEdge vv_kronecker2(Worker *w, const vEdge &lhs, const vEdge &rhs) {
     for (auto i = 0; i < 2; i++) {
         x = lnode->getEdge(i);
         x.w = lhs.w * x.w;
-        edges[i] = vv_kronecker2(w, x, rhs);
+        edges[i] = vv_kronecker2(x, rhs);
     }
 
     vEdge ret = makeVEdge(lv + rv + 1, edges);
     return ret;
 }
 
-vEdge vv_kronecker(Worker *w, const vEdge &lhs, const vEdge &rhs) {
+vEdge vv_kronecker(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
-    return vv_kronecker2(w, lhs, rhs);
+    return vv_kronecker2(lhs, rhs);
 }
 
 void vEdge::printVector() const {
@@ -1181,31 +748,21 @@ VectorXcf vEdge::getEigenVector() {
     return V;
 }
 
-vEdge mv_multiply2(Worker *w, const mEdge &lhs, const vEdge &rhs,
-                   int32_t current_var) {
-    /*
-    std::cout<<"lhs\n";
-    lhs.printMatrix();
-    std::cout<<"rhs\n";
-    rhs.printVector();
-    std::cout<<std::endl;
-*/
+vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return vEdge::zero;
     }
 
     if (current_var == -1) {
-        if (!lhs.isTerminal() || !rhs.isTerminal()) {
-            brp();
-        }
+
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
     vEdge result;
-#ifdef CACHE
-    MulCache &local_mCache = _mCache.local();
-    result = local_mCache.find(lhs.n, rhs.n);
+
+    result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
             return vEdge::zero;
@@ -1217,7 +774,6 @@ vEdge mv_multiply2(Worker *w, const mEdge &lhs, const vEdge &rhs,
                 return result;
         }
     }
-#endif
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
@@ -1247,16 +803,14 @@ vEdge mv_multiply2(Worker *w, const mEdge &lhs, const vEdge &rhs,
                 y = rcopy;
             }
 
-            product[k] = mv_multiply2(w, x, y, current_var - 1);
+            product[k] = mv_multiply2(x, y, current_var - 1);
         }
 
-        edges[i] = vv_add2(w, product[0], product[1], current_var - 1);
+        edges[i] = vv_add2(product[0], product[1], current_var - 1);
     }
 
     result = makeVEdge(current_var, edges);
-#ifdef CACHE
-    local_mCache.set(lhs.n, rhs.n, result);
-#endif
+    _mCache.set(lhs.n, rhs.n, result);
     result.w = result.w * lhs.w * rhs.w;
     if (result.w.isApproximatelyZero()) {
         return vEdge::zero;
@@ -1276,9 +830,7 @@ struct vEdgeRefGuard {
     vEdge e;
 };
 
-vEdge mv_multiply(Worker *w, mEdge lhs, vEdge rhs) {
-    // mEdgeRefGuard mg(lhs);
-    // vEdgeRefGuard vg(rhs);
+vEdge mv_multiply(mEdge lhs, vEdge rhs) {
 
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, vNode::terminal};
@@ -1286,137 +838,8 @@ vEdge mv_multiply(Worker *w, mEdge lhs, vEdge rhs) {
 
     // assume lhs and rhs are the same length.
     assert(lhs.getVar() == rhs.getVar());
-    vEdge v = mv_multiply2(w, lhs, rhs, lhs.getVar());
+    vEdge v = mv_multiply2(lhs, rhs, lhs.getVar());
     return v;
-}
-
-vEdge mv_multiply_fiber2(const mEdge &lhs, const vEdge &rhs,
-                         int32_t current_var) {
-
-    if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
-        return vEdge::zero;
-    }
-
-    if (current_var == -1) {
-
-        assert(lhs.isTerminal() && rhs.isTerminal());
-        return {lhs.w * rhs.w, vNode::terminal};
-    }
-
-    vEdge result;
-#ifdef CACHE
-    MulCache &local_mCache = _mCache.local();
-#endif
-#ifdef CACHE_GLOBAL
-    MulCache &local_mCache = _mCache_global;
-#endif
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    result = local_mCache.find(lhs.n, rhs.n);
-    if (result.n != nullptr) {
-        if (result.w.isApproximatelyZero()) {
-            return vEdge::zero;
-        } else {
-            result.w = result.w * lhs.w * rhs.w;
-            if (result.w.isApproximatelyZero())
-                return vEdge::zero;
-            else
-                return result;
-        }
-    }
-#endif
-
-    Qubit lv = lhs.getVar();
-    Qubit rv = rhs.getVar();
-    mNode *lnode = lhs.getNode();
-    vNode *rnode = rhs.getNode();
-    mEdge x;
-    vEdge y;
-    mEdge lcopy = lhs;
-    vEdge rcopy = rhs;
-    lcopy.w = {1.0, 0.0};
-    rcopy.w = {1.0, 0.0};
-
-    std::vector<boost::fibers::future<vEdge>> products;
-    std::array<vEdge, 4> products_wo_future;
-    std::array<vEdge, 2> edges;
-
-#pragma omp parallel
-#pragma omp taskloop collapse(2) num_tasks(4) default(shared) private(x, y)
-    for (int i = 0; i < 2; i++) {
-        for (int k = 0; k < 2; k++) {
-            if (lv == current_var && !lhs.isTerminal()) {
-                x = lnode->getEdge((i << 1) | k);
-            } else {
-                x = lcopy;
-            }
-
-            if (rv == current_var && !rhs.isTerminal()) {
-                y = rnode->getEdge(k);
-            } else {
-                y = rcopy;
-            }
-
-            {
-                if (current_var > LIMIT) {
-                    boost::fibers::packaged_task<vEdge()> pt(
-                        std::bind(mv_multiply_fiber2, x, y, current_var - 1));
-                    products.emplace_back(pt.get_future());
-                    boost::fibers::fiber f(std::move(pt));
-                    f.detach();
-                } else {
-                    products_wo_future[i * 2 + k] =
-                        mv_multiply_fiber2(x, y, current_var - 1);
-                }
-            }
-        }
-    }
-
-    if (current_var > LIMIT) {
-        assert(products.size() == 4);
-        edges[0] = vv_add_fiber2(products[0].get(), products[1].get(),
-                                 current_var - 1);
-        edges[1] = vv_add_fiber2(products[2].get(), products[3].get(),
-                                 current_var - 1);
-    } else {
-        edges[0] = vv_add_fiber2(products_wo_future[0], products_wo_future[1],
-                                 current_var - 1);
-        edges[1] = vv_add_fiber2(products_wo_future[2], products_wo_future[3],
-                                 current_var - 1);
-    }
-
-    result = makeVEdge(current_var, edges);
-#if defined(CACHE) || defined(CACHE_GLOBAL)
-    local_mCache.set(lhs.n, rhs.n, result);
-#endif
-    result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero()) {
-        return vEdge::zero;
-    }
-    if (result.w.isApproximatelyOne()) {
-        result.w = {1.0, 0.0};
-    }
-    return result;
-}
-
-vEdge mv_multiply_fiber(mEdge lhs, vEdge rhs) {
-    // mEdgeRefGuard mg(lhs);
-    // vEdgeRefGuard vg(rhs);
-
-    if (lhs.isTerminal() && rhs.isTerminal()) {
-        return {lhs.w * rhs.w, vNode::terminal};
-    }
-
-    // assume lhs and rhs are the same length.
-    assert(lhs.getVar() == rhs.getVar());
-#ifdef THREADPOOL
-    LIMIT = lhs.getVar() - MINUS;
-#endif
-    vEdge v = mv_multiply_fiber2(lhs, rhs, lhs.getVar());
-    return v;
-}
-
-vEdge vv_multiply(Worker *w, const vEdge &lhs, const vEdge &rhs) {
-    return vEdge{};
 }
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
@@ -1479,8 +902,8 @@ mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
     Controls c2{Control{target1, Control::Type::pos}};
     mEdge e2 = makeGate(q, Xmat, target0, c2);
 
-    mEdge e3 = mm_multiply_no_worker(e2, e1);
-    e3 = mm_multiply_no_worker(e1, e3);
+    mEdge e3 = mm_multiply(e2, e1);
+    e3 = mm_multiply(e1, e3);
 
     return e3;
 }
