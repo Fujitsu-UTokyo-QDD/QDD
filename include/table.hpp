@@ -73,7 +73,7 @@ class CHashTable {
 
         if (current == nullptr) {
             _tables[v]._table[key] = node;
-            return;
+            return node;
         }
 
         while (current != nullptr) {
@@ -90,7 +90,7 @@ class CHashTable {
         }
 
         previous->next = node;
-        return;
+        return node;
     }
 
     void gc() {

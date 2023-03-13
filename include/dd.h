@@ -10,11 +10,15 @@ using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
 
 struct Complex {
-    double r;
-    double i;
+    double r{0.0};
+    double i{0.0};
 
     static inline const double TOLERANCE =
         std::numeric_limits<double>::epsilon() * 1024;
+
+    Complex() = default;
+    Complex(const std::complex<float> &c) : r(c.real()), i(c.imag()) {}
+    Complex(double rr, double ii) : r(rr), i(ii) {}
 
     Complex &operator+=(const Complex &rhs) noexcept {
         r += rhs.r;
@@ -176,21 +180,33 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    Qubit getVar() const;
+    /*
+    ~mEdge() {
+        if (isStateVector()) {
+            for (auto i = 0; i < dim; i++)
+                delete[] mat[i];
+            delete[] mat;
+        }
+    }
+*/
+    Qubit getVar() const { return q; };
     bool isTerminal() const;
     mNode *getNode() const { return n; };
 
     void printMatrix() const;
     void decRef();
     void incRef();
-    void foo() {}
+
+    bool isStateVector() const { return dim != 0; }
 
     void check();
     std_complex **getMatrix(std::size_t *dim) const;
     MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
-        return w.isApproximatelyEqual(e.w) && n == e.n;
+
+        // because nullptr == nullptr
+        return w.isApproximatelyEqual(e.w) && n == e.n && mat == e.mat;
     }
 
     inline bool operator!=(const mEdge &e) const noexcept {
@@ -200,7 +216,12 @@ struct mEdge {
     bool compareNumerically(const mEdge &other) const noexcept;
 
     std_complex w;
+
     mNode *n{nullptr};
+    Complex **mat{nullptr};
+
+    Qubit q;
+    size_t dim{0}; // dim = 1 << (q + 1)
 };
 
 inline void swap(mEdge &lhs, mEdge &rhs) {
@@ -220,7 +241,12 @@ template <> struct std::hash<std_complex> {
 template <> struct std::hash<mEdge> {
     std::size_t operator()(const mEdge &e) const noexcept {
         auto h1 = std::hash<std_complex>()(e.w);
-        auto h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
+        std::size_t h2;
+        if (e.isStateVector())
+            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.mat));
+        else
+            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
+
         return hash_combine(h1, h2);
     }
 };
@@ -327,6 +353,8 @@ mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
+
+mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
 
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);

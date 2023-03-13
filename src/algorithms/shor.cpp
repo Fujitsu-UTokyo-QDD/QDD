@@ -1,6 +1,5 @@
 #include "algorithms/shor.hpp"
 #include "dd.h"
-#include "graph.hpp"
 
 int Shor::inverse_mod(int a, int n) {
     int t = 0;

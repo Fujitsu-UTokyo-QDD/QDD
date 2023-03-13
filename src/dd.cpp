@@ -13,10 +13,13 @@ vNodeTable vUnique(40);
 
 std::vector<mEdge> identityTable(40);
 
-mEdge mEdge::one{{1.0, 0.0}, mNode::terminal};
-mEdge mEdge::zero{{0.0, 0.0}, mNode::terminal};
-vEdge vEdge::one{{1.0, 0.0}, vNode::terminal};
-vEdge vEdge::zero{{0.0, 0.0}, vNode::terminal};
+mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
+vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
+
+mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal, .q = -1};
+mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal, .q = -1};
+vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
+vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
 AddCache _aCache(40);
 MulCache _mCache(40);
@@ -49,7 +52,7 @@ static mEdge normalizeM(const mEdge &e) {
     mNode *n = mUnique.lookup(e.n);
     assert(n->v >= -1);
 
-    return {max_weight * e.w, n};
+    return {.w = max_weight * e.w, .n = n, .q = e.q};
 }
 
 static vEdge normalizeV(const vEdge &e) {
@@ -84,7 +87,7 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
     node->v = q;
     node->children = c;
 
-    mEdge e = normalizeM({{1.0, 0.0}, node});
+    mEdge e = normalizeM({.w = {1.0, 0.0}, .n = node, .q = q});
 
     assert(e.getVar() == q || e.isTerminal());
 
@@ -109,14 +112,13 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
     return e;
 }
 
-Qubit mEdge::getVar() const { return n->v; }
-
 Qubit vEdge::getVar() const { return n->v; }
 
 bool mEdge::isTerminal() const { return n == mNode::terminal; }
 
 bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
+/*
 static void fillMatrix(const mEdge &edge, size_t col, size_t row,
                        const std_complex &w, uint64_t left, std_complex **m) {
 
@@ -147,6 +149,37 @@ static void fillMatrix(const mEdge &edge, size_t col, size_t row,
     fillMatrix(node->getEdge(3), (col << 1) | 1, (row << 1) | 1, wp, left - 1,
                m);
 }
+*/
+static void fillMatrix(const mEdge &edge, size_t row, size_t col,
+                       const std_complex &w, uint64_t dim, std_complex **m) {
+
+    std_complex wp = edge.w * w;
+
+    if (edge.isTerminal()) {
+        for (auto i = row; i < row + dim; i++) {
+            for (auto j = col; j < col + dim; j++) {
+                m[i][j] = wp;
+            }
+        }
+        return;
+    } else if (edge.isStateVector()) {
+        assert(dim == edge.dim);
+        for (auto i = 0; i < dim; i++) {
+            for (auto j = 0; j < dim; j++) {
+                m[row + i][col + j] = edge.mat[i][j];
+            }
+        }
+
+        return;
+    }
+
+    mNode *node = edge.getNode();
+    fillMatrix(node->getEdge(0), row, col, wp, dim / 2, m);
+    fillMatrix(node->getEdge(1), row, col + dim / 2, wp, dim / 2, m);
+    fillMatrix(node->getEdge(2), row + dim / 2, col, wp, dim / 2, m);
+    fillMatrix(node->getEdge(3), row + dim / 2, col + dim / 2, wp, dim / 2, m);
+}
+
 void mEdge::printMatrix() const {
     if (this->isTerminal()) {
         std::cout << this->w << std::endl;
@@ -159,7 +192,7 @@ void mEdge::printMatrix() const {
     for (std::size_t i = 0; i < dim; i++)
         matrix[i] = new std_complex[dim];
 
-    fillMatrix(*this, 0, 0, {1.0, 0.0}, q + 1, matrix);
+    fillMatrix(*this, 0, 0, {1.0, 0.0}, dim, matrix);
 
     for (size_t i = 0; i < dim; i++) {
         for (size_t j = 0; j < dim; j++) {
@@ -328,6 +361,61 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
     return e;
 }
 
+static void set_4_diagonal_submatrice_with(Complex **mat, size_t row,
+                                           size_t col, size_t dim,
+                                           const GateMatrix &gate) {
+
+    assert(row == col);
+
+    const size_t half = dim / 2;
+    // top half
+    for (size_t i = row; i < row + half; i++) {
+        mat[i][i] = gate[0];
+        mat[i][i + half] = gate[1];
+    }
+    // bottom half
+    for (size_t i = row + half; i < row + dim; i++) {
+        mat[i][i - half] = gate[2];
+        mat[i][i] = gate[3];
+    }
+}
+
+// threshold:
+//     qubits < threshold are represented using matrix
+//     e.g., threshold = 4, then q0, q1,  q2 and q3,are represented by a 16x16
+//     matrix
+mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target,
+                     Qubit threshold) {
+
+    // We currently only support  target below threshold
+    assert(threshold <= q && target < threshold);
+    size_t dim = 1 << threshold;
+    Complex **mat = new Complex *[dim];
+    for (auto i = 0; i < dim; i++)
+        mat[i] = new Complex[dim];
+
+    // suppose target = q2, then this is a 8x8 matrix
+    size_t target_dim = 1 << (target + 1);
+
+    // set the diagonal submatrices of size target_dim x target_dim
+    for (auto i = 0; i < dim; i += target_dim) {
+        set_4_diagonal_submatrice_with(mat, i, i, target_dim, g);
+    }
+
+    // the matrix is ready! begin to build the tree..
+    mEdge e;
+    e.w = {1.0, 0.0};
+    e.mat = mat;
+    e.dim = dim;
+    e.q = threshold - 1;
+
+    for (Qubit z = threshold; z < q; z++) {
+        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
+    }
+
+    return e;
+}
+
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
     assert(!(lhs.isTerminal() && rhs.isTerminal()));
 
@@ -337,7 +425,7 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
                : lhs.getVar();
 }
 
-mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
     } else if (rhs.w.isApproximatelyZero()) {
@@ -383,7 +471,7 @@ mEdge mm_add_fiber2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             y = rhs;
         }
 
-        edges[i] = mm_add_fiber2(x, y, current_var - 1);
+        edges[i] = mm_add2(x, y, current_var - 1);
     }
 
     result = makeMEdge(current_var, edges);
@@ -962,7 +1050,6 @@ void mEdge::check() {
         return;
 
     if (n->v == -2 || n->v == -3 || n->v == -4) {
-        foo();
         assert(false);
     }
     for (auto i = 0; i < 4; i++)
