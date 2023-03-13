@@ -118,38 +118,6 @@ bool mEdge::isTerminal() const { return n == mNode::terminal; }
 
 bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
-/*
-static void fillMatrix(const mEdge &edge, size_t col, size_t row,
-                       const std_complex &w, uint64_t left, std_complex **m) {
-
-    std_complex wp = edge.w * w;
-
-    if (edge.isTerminal() && left == 0) {
-        m[row][col] = wp;
-        return;
-    } else if (edge.isTerminal()) {
-        col = col << left;
-        row = row << left;
-
-        for (std::size_t i = 0; i < (1 << left); i++) {
-            for (std::size_t j = 0; j < (1 << left); j++) {
-                m[row | i][col | j] = wp;
-            }
-        }
-        return;
-    }
-
-    mNode *node = edge.getNode();
-    fillMatrix(node->getEdge(0), (col << 1) | 0, (row << 1) | 0, wp, left - 1,
-               m);
-    fillMatrix(node->getEdge(1), (col << 1) | 1, (row << 1) | 0, wp, left - 1,
-               m);
-    fillMatrix(node->getEdge(2), (col << 1) | 0, (row << 1) | 1, wp, left - 1,
-               m);
-    fillMatrix(node->getEdge(3), (col << 1) | 1, (row << 1) | 1, wp, left - 1,
-               m);
-}
-*/
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
 
@@ -166,7 +134,7 @@ static void fillMatrix(const mEdge &edge, size_t row, size_t col,
         assert(dim == edge.dim);
         for (auto i = 0; i < dim; i++) {
             for (auto j = 0; j < dim; j++) {
-                m[row + i][col + j] = edge.mat[i][j];
+                m[row + i][col + j] = w * edge.mat[i][j];
             }
         }
 
@@ -380,15 +348,14 @@ static void set_4_diagonal_submatrice_with(Complex **mat, size_t row,
     }
 }
 
-// threshold:
-//     qubits < threshold are represented using matrix
+//     q's < threshold are represented using matrix
 //     e.g., threshold = 4, then q0, q1,  q2 and q3,are represented by a 16x16
 //     matrix
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target,
-                     Qubit threshold) {
+mEdge make_hybrid_with_small_target(QubitCount q, GateMatrix g, Qubit target,
+                                    Qubit threshold) {
 
     // We currently only support  target below threshold
-    assert(threshold <= q && target < threshold);
+    assert(threshold < q && target < threshold);
     size_t dim = 1 << threshold;
     Complex **mat = new Complex *[dim];
     for (auto i = 0; i < dim; i++)
@@ -414,6 +381,77 @@ mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target,
     }
 
     return e;
+}
+
+static void set_diagonal(Complex **mat, size_t dim, const Complex &c) {
+    for (auto i = 0; i < dim; i++)
+        mat[i][i] = c;
+}
+// target >= threshold
+mEdge make_hybrid_with_large_target(QubitCount q, GateMatrix g, Qubit target,
+                                    Qubit threshold) {
+
+    assert(threshold < q && target >= threshold);
+    size_t dim = 1 << threshold;
+
+    std::array<Complex **, 4> mats;
+
+    for (auto i = 0; i < 4; i++) {
+        mats[i] = new Complex *[dim];
+        for (auto j = 0; j < dim; j++)
+            mats[i][j] = new Complex[dim];
+
+        set_diagonal(mats[i], dim, g[i]);
+    }
+
+    mEdge e;
+    std::array<mEdge, 4> edges;
+    if (threshold == target) {
+        for (auto i = 0; i < 4; i++) {
+            mEdge tmp;
+            tmp.w = {1.0, 0.0};
+            tmp.mat = mats[i];
+            tmp.dim = dim;
+            tmp.q = threshold - 1;
+            edges[i] = tmp;
+        }
+
+    } else {
+        for (auto i = 0; i < 4; i++) {
+            mEdge tmp;
+            tmp.w = {1.0, 0.0};
+            tmp.mat = mats[i];
+            tmp.dim = dim;
+            tmp.q = threshold - 1;
+
+            edges[i] =
+                makeMEdge(threshold, {tmp, mEdge::zero, mEdge::zero, tmp});
+        }
+
+        for (auto z = threshold + 1; z < target; z++) {
+            for (auto i = 0; i < 4; i++) {
+                edges[i] = makeMEdge(
+                    z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
+            }
+        }
+    }
+
+    e = makeMEdge(target, edges);
+
+    for (auto z = target + 1; z < q; z++) {
+        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
+    }
+
+    return e;
+}
+mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target,
+                     Qubit threshold) {
+    assert(target < q);
+
+    if (target < threshold)
+        return make_hybrid_with_small_target(q, g, target, threshold);
+    else
+        return make_hybrid_with_large_target(q, g, target, threshold);
 }
 
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
