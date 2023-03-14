@@ -78,7 +78,6 @@ TEST(QddTest, AddTest){
         vEdge v = vv_add(zero, one);
         size_t dim;
         std_complex* vec = v.getVector(&dim);
-        std::cout << vec[0] << std::endl;
         ASSERT_TRUE(vec[0].isApproximatelyEqual({0.6,0.0}));
         ASSERT_TRUE(vec[1].isApproximatelyEqual({0.0,-0.8}));
     }
@@ -96,5 +95,15 @@ TEST(QddTest, MulTest){
         ASSERT_TRUE(mat[0][1] == (std::complex<double>(-1.0, 0.0)));
         ASSERT_TRUE(mat[1][0] == (std::complex<double>(1.0, 0.0)));
         ASSERT_TRUE(mat[1][1] == (std::complex<double>(0.0, 0.0)));
+    }
+    {
+        // Matrix * Vector (2)
+        mEdge m1 = makeGate(1, SXmat, 0);
+        vEdge zero = makeZeroState(1);
+        vEdge v = mv_multiply(m1, zero);
+        size_t dim;
+        std_complex* vec = v.getVector(&dim);
+        ASSERT_TRUE(vec[0] == (std::complex<double>(0.5, 0.5)));
+        ASSERT_TRUE(vec[1] == (std::complex<double>(0.5, -0.5)));
     }
 }
