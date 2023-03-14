@@ -186,7 +186,7 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
     for (std::size_t i = 0; i < d; i++)
         matrix[i] = new std_complex[d];
 
-    fillMatrix(*this, 0, 0, {1.0, 0.0}, q + 1, matrix);
+    fillMatrix(*this, 0, 0, {1.0, 0.0}, d, matrix);
     if (dim != nullptr)
         *dim = d;
     return matrix;
