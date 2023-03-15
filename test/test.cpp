@@ -107,3 +107,27 @@ TEST(QddTest, MulTest){
         ASSERT_TRUE(vec[1] == (std::complex<double>(0.5, -0.5)));
     }
 }
+
+TEST(QddTest, MeasureTest){
+    std::mt19937_64 mt(0);
+    {
+        vEdge state = makeZeroState(2);
+        state = mv_multiply(makeGate(2,Hmat,0),state);
+        state = mv_multiply(CX(2, 1, 0), state);
+        state.printVector();
+        std::map<std::string, int> resultmap;
+        for (int i = 0; i < 100; i++){
+            std::string result = measureAll(state, false, mt, Complex::TOLERANCE);
+            if(resultmap.contains(result)){
+                resultmap[result] += 1;
+            }else{
+                resultmap[result] = 1;
+            }
+        }
+        for(auto itr: resultmap)
+            std::cout << itr.first << ":" << itr.second << ", ";
+        std::cout << std::endl;
+        ASSERT_TRUE(resultmap["11"] > 40 && resultmap["11"] < 60);
+        ASSERT_TRUE(resultmap["00"] > 40 && resultmap["00"] < 60);
+    }
+}
