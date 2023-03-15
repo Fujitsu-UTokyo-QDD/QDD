@@ -186,7 +186,7 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
     for (std::size_t i = 0; i < d; i++)
         matrix[i] = new std_complex[d];
 
-    fillMatrix(*this, 0, 0, {1.0, 0.0}, q + 1, matrix);
+    fillMatrix(*this, 0, 0, {1.0, 0.0}, d, matrix);
     if (dim != nullptr)
         *dim = d;
     return matrix;
@@ -357,7 +357,7 @@ mEdge make_hybrid_with_small_target(QubitCount q, const GateMatrix &g,
                                     Qubit target, Qubit threshold) {
 
     // We currently only support  target below threshold
-    assert(threshold < q && target < threshold);
+    assert(threshold <= q && target < threshold);
     size_t dim = 1 << threshold;
     Complex **mat = new Complex *[dim];
     for (auto i = 0; i < dim; i++)
@@ -542,7 +542,7 @@ static void greater_than_target(Complex **mat, size_t row, size_t col, Qubit q,
 mEdge make_hybrid_with_small_target_and_control(QubitCount q, GateMatrix g,
                                                 Qubit target, Qubit threshold,
                                                 const Controls &c) {
-    assert(threshold < q && target < threshold);
+    assert(threshold <= q && target < threshold);
     size_t dim = 1 << threshold;
     Complex **mat = new Complex *[dim];
     for (auto i = 0; i < dim; i++)
