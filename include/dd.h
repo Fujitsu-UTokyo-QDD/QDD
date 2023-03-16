@@ -365,6 +365,8 @@ vEdge makeOneState(QubitCount q);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
+char measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization,
+                          std::mt19937_64 &mt, double epsilon = 0.001);
 
 mEdge RX(QubitCount qnum, int target, float angle);
 

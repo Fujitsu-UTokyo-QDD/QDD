@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <bitset>
 #include <map>
+#include <queue>
 
 #define SUBTASK_THRESHOLD 5
 
@@ -1256,6 +1257,133 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
         rootEdge = e;
     }
     return std::string{result.rbegin(), result.rend()};
+}
+
+double assignProbabilities(const vEdge& edge, std::unordered_map<vNode*, double>& probs) {
+    auto it = probs.find(edge.n);
+    if (it != probs.end()) {
+        return edge.w.mag2() * it->second;
+    }
+    double sum{1};
+    if (!edge.isTerminal()) {
+        sum = assignProbabilities(edge.n->children.at(0), probs) + assignProbabilities(edge.n->children.at(1), probs);
+    }
+
+    probs.insert({edge.n, sum});
+
+    return edge.w.mag2() * sum;
+}
+
+std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdge, const Qubit index, const bool assumeProbabilityNormalization) {
+    std::map<vNode*, double> probsMone;
+    std::set<vNode*>     visited;
+    std::queue<vNode*>   q;
+
+    probsMone[rootEdge.n] = rootEdge.w.mag2();
+    visited.insert(rootEdge.n);
+    q.push(rootEdge.n);
+
+    while (q.front()->v != index) {
+        vNode* ptr = q.front();
+        q.pop();
+        const double prob = probsMone[ptr];
+
+        if (!ptr->children.at(0).w.isApproximatelyZero()) {
+            const double tmp1 = prob * ptr->children.at(0).w.mag2();
+
+            if (visited.find(ptr->children.at(0).n) != visited.end()) {
+                probsMone[ptr->children.at(0).n] = probsMone[ptr->children.at(0).n] + tmp1;
+            } else {
+                probsMone[ptr->children.at(0).n] = tmp1;
+                visited.insert(ptr->children.at(0).n);
+                q.push(ptr->children.at(0).n);
+            }
+        }
+
+        if (!ptr->children.at(1).w.isApproximatelyZero()) {
+            const double tmp1 = prob * ptr->children.at(1).w.mag2();
+
+            if (visited.find(ptr->children.at(1).n) != visited.end()) {
+                probsMone[ptr->children.at(1).n] = probsMone[ptr->children.at(1).n] + tmp1;
+            } else {
+                probsMone[ptr->children.at(1).n] = tmp1;
+                visited.insert(ptr->children.at(1).n);
+                q.push(ptr->children.at(1).n);
+            }
+        }
+    }
+
+    double pzero{0};
+    double pone{0};
+
+    if (assumeProbabilityNormalization) {
+        while (!q.empty()) {
+            vNode* ptr = q.front();
+            q.pop();
+
+            if (!ptr->children.at(0).w.isApproximatelyZero()) {
+                pzero += probsMone[ptr] * ptr->children.at(0).w.mag2();
+            }
+
+            if (!ptr->children.at(1).w.isApproximatelyZero()) {
+                pone += probsMone[ptr] * ptr->children.at(1).w.mag2();
+            }
+        }
+    } else {
+        std::unordered_map<vNode*, double> probs;
+        assignProbabilities(rootEdge, probs);
+
+        while (!q.empty()) {
+            vNode* ptr = q.front();
+            q.pop();
+
+            if (!ptr->children.at(0).w.isApproximatelyZero()) {
+                pzero += probsMone[ptr] * probs[ptr->children.at(0).n] * ptr->children.at(0).w.mag2();
+            }
+
+            if (!ptr->children.at(1).w.isApproximatelyZero()) {
+                pone += probsMone[ptr] * probs[ptr->children.at(1).n] * ptr->children.at(1).w.mag2();
+            }
+        }
+    }
+    return {pzero, pone};
+}
+
+char measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization, std::mt19937_64 &mt, double epsilon){
+    const auto& [pzero, pone] = determineMeasurementProbabilities(rootEdge, index, assumeProbabilityNormalization);
+    const double sum = pzero + pone;
+    if (std::abs(sum - 1) > epsilon) {
+        throw std::runtime_error("Numerical instability occurred during measurement: |alpha|^2 + |beta|^2 = " + std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
+                                         std::to_string(pzero + pone) + ", but should be 1!");
+    }
+    GateMatrix measurementMatrix{cf_zero, cf_zero, cf_zero, cf_zero};
+
+    std::uniform_real_distribution<double> dist(0.0, 1.0L);
+
+    double   threshold = dist(mt);
+    double   normalizationFactor; // NOLINT(cppcoreguidelines-init-variables) always assigned a value in the following block
+    char result;              // NOLINT(cppcoreguidelines-init-variables) always assigned a value in the following block
+
+    if (threshold < pzero / sum) {
+        measurementMatrix[0] = cf_one;
+        normalizationFactor  = pzero;
+        result               = '0';
+    } else {
+        measurementMatrix[3] = cf_one;
+        normalizationFactor  = pone;
+        result               = '1';
+    }
+
+    mEdge measurementGate = makeGate(rootEdge.getVar() + 1, measurementMatrix, index);
+
+    vEdge e = mv_multiply(measurementGate, rootEdge);
+
+    std_complex c = {std::sqrt(1.0 / normalizationFactor), 0};
+    c = e.w * c;
+    e.w = c;
+    rootEdge = e;
+
+    return result;
 }
 
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
