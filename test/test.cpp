@@ -117,7 +117,7 @@ TEST(QddTest, MeasureTest){
         state.printVector();
         std::map<std::string, int> resultmap;
         for (int i = 0; i < 100; i++){
-            std::string result = measureAll(state, false, mt, Complex::TOLERANCE);
+            std::string result = measureAll(state, false, mt);
             if(resultmap.contains(result)){
                 resultmap[result] += 1;
             }else{
@@ -129,5 +129,72 @@ TEST(QddTest, MeasureTest){
         std::cout << std::endl;
         ASSERT_TRUE(resultmap["11"] > 40 && resultmap["11"] < 60);
         ASSERT_TRUE(resultmap["00"] > 40 && resultmap["00"] < 60);
+    }
+
+    {
+        vEdge state = makeZeroState(2);
+        state = mv_multiply(makeGate(2,Xmat,0),state);
+        state.printVector();
+        std::map<std::string, int> resultmap;
+        for (int i = 0; i < 100; i++){
+            std::string result = measureAll(state, false, mt);
+            if(resultmap.contains(result)){
+                resultmap[result] += 1;
+            }else{
+                resultmap[result] = 1;
+            }
+        }
+        for(auto itr: resultmap)
+            std::cout << itr.first << ":" << itr.second << ", ";
+        std::cout << std::endl;
+        ASSERT_TRUE(resultmap["01"] == 100);
+    }
+
+    {
+        std::cout << "measureOneCollapsing test" << std::endl;
+        bool isZeroChecked = false, isOneChecked = false;
+        while(isZeroChecked == false || isOneChecked == false){
+            vEdge state = makeZeroState(3);
+            state = mv_multiply(makeGate(3,Hmat,0),state);
+            state = mv_multiply(CX(3, 1, 0), state);
+            state = mv_multiply(CX(3, 2, 0), state);
+            const auto res = measureOneCollapsing(state, 0, true, mt);
+            if(res == '0'){
+                state.printVector();
+                for (int i = 0; i < 10; i++){
+                    std::string allres = measureAll(state, false, mt);
+                    ASSERT_TRUE(allres == "000");
+                }
+                isZeroChecked = true;
+            }else if (res == '1'){
+                state.printVector();
+                for (int i = 0; i < 10; i++){
+                    std::string allres = measureAll(state, false, mt);
+                    ASSERT_TRUE(allres == "111");
+                }
+                isOneChecked = true;
+            }else{
+                FAIL();
+            }
+        }
+    }
+
+    {
+        std::cout << "measureOneCollapsing test" << std::endl;
+        bool isZeroChecked = false, isOneChecked = false;
+        std::map<char, int> resultmap{{'0',0},{'1',0}};
+        for(int i=0;i<100;i++){
+            vEdge state = makeZeroState(3);
+            state = mv_multiply(RX(3,0,std::numbers::pi/3),state);
+            state = mv_multiply(CX(3, 1, 0), state);
+            state = mv_multiply(CX(3, 2, 0), state);
+            const auto res = measureOneCollapsing(state, 0, true, mt);
+            ASSERT_TRUE(resultmap.contains(res));
+            resultmap[res] += 1;
+        }
+        for(auto itr: resultmap)
+            std::cout << itr.first << ":" << itr.second << ", ";
+        std::cout << std::endl;
+        ASSERT_TRUE(resultmap['0'] < 80 && resultmap['0'] > 70);
     }
 }
