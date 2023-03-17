@@ -110,9 +110,6 @@ inline double norm(const Complex &c) {
     return std::sqrt(c.r * c.r + c.i * c.i);
 }
 
-// using std_complex = std::complex<double>;
-using std_complex = Complex;
-
 struct mNode;
 struct vNode;
 
@@ -130,15 +127,19 @@ struct vEdge {
     VectorXcf getEigenVector();
 
     void printVector() const;
-    void printVector_sparse() const;
-    std_complex *getVector(std::size_t *dim) const;
+    Complex *getVector(std::size_t *dim) const;
+    bool isStateVector() const { return dim != 0; }
 
     inline bool operator==(const vEdge &e) const noexcept {
         return w.isApproximatelyEqual(e.w) && n == e.n;
     }
 
-    std_complex w;
+    Complex w;
     vNode *n{nullptr};
+
+    Complex *vec{nullptr};
+    Qubit q;
+    size_t dim{0}; // dim = 1 << (q + 1)
 };
 inline void swap(vEdge &lhs, vEdge &rhs) {
     using std::swap;
@@ -191,7 +192,7 @@ struct mEdge {
     bool isStateVector() const { return dim != 0; }
 
     void check();
-    std_complex **getMatrix(std::size_t *dim) const;
+    Complex **getMatrix(std::size_t *dim) const;
     MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
@@ -206,7 +207,7 @@ struct mEdge {
 
     bool compareNumerically(const mEdge &other) const noexcept;
 
-    std_complex w;
+    Complex w;
 
     mNode *n{nullptr};
     Complex **mat{nullptr};
@@ -221,8 +222,8 @@ inline void swap(mEdge &lhs, mEdge &rhs) {
     swap(lhs.n, rhs.n);
 }
 
-template <> struct std::hash<std_complex> {
-    std::size_t operator()(const std_complex &v) const noexcept {
+template <> struct std::hash<Complex> {
+    std::size_t operator()(const Complex &v) const noexcept {
         auto h1 = std::hash<double>()(v.real());
         auto h2 = std::hash<double>()(v.imag());
         return hash_combine(h1, h2);
@@ -231,7 +232,7 @@ template <> struct std::hash<std_complex> {
 
 template <> struct std::hash<mEdge> {
     std::size_t operator()(const mEdge &e) const noexcept {
-        auto h1 = std::hash<std_complex>()(e.w);
+        auto h1 = std::hash<Complex>()(e.w);
         std::size_t h2;
         if (e.isStateVector())
             h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.mat));
@@ -244,7 +245,7 @@ template <> struct std::hash<mEdge> {
 
 template <> struct std::hash<vEdge> {
     std::size_t operator()(const vEdge &e) const noexcept {
-        auto h1 = std::hash<std_complex>()(e.w);
+        auto h1 = std::hash<Complex>()(e.w);
         auto h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
         return hash_combine(h1, h2);
     }
@@ -362,6 +363,9 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs);
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);
 vEdge makeZeroState(QubitCount q);
 vEdge makeOneState(QubitCount q);
+
+vEdge makeHybridZeroState(QubitCount q, Qubit threshold);
+vEdge makeHybridOneState(QubitCount q, Qubit threshold);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);

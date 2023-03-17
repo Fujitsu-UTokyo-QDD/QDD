@@ -41,11 +41,11 @@ static mEdge normalizeM(const mEdge &e) {
                                        return norm(lhs.w) < norm(rhs.w);
                                    });
 
-    std_complex max_weight = result->w;
+    Complex max_weight = result->w;
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
     for (int i = 0; i < 4; i++) {
-        std_complex r = e.n->children[i].w / max_weight;
+        Complex r = e.n->children[i].w / max_weight;
         e.n->children[i].w = r;
     }
 
@@ -69,11 +69,11 @@ static vEdge normalizeV(const vEdge &e) {
                                        return norm(lhs.w) < norm(rhs.w);
                                    });
 
-    std_complex max_weight = result->w;
+    Complex max_weight = result->w;
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
     for (int i = 0; i < 2; i++) {
-        std_complex r = e.n->children[i].w / max_weight;
+        Complex r = e.n->children[i].w / max_weight;
         e.n->children[i].w = r;
     }
     vNode *n = vUnique.lookup(e.n);
@@ -119,9 +119,9 @@ bool mEdge::isTerminal() const { return n == mNode::terminal; }
 bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
-                       const std_complex &w, uint64_t dim, std_complex **m) {
+                       const Complex &w, uint64_t dim, Complex **m) {
 
-    std_complex wp = edge.w * w;
+    Complex wp = edge.w * w;
 
     if (edge.isTerminal()) {
         for (auto i = row; i < row + dim; i++) {
@@ -156,9 +156,9 @@ void mEdge::printMatrix() const {
     Qubit q = this->getVar();
     std::size_t dim = 1 << (q + 1);
 
-    std_complex **matrix = new std_complex *[dim];
+    Complex **matrix = new Complex *[dim];
     for (std::size_t i = 0; i < dim; i++)
-        matrix[i] = new std_complex[dim];
+        matrix[i] = new Complex[dim];
 
     fillMatrix(*this, 0, 0, {1.0, 0.0}, dim, matrix);
 
@@ -176,15 +176,15 @@ void mEdge::printMatrix() const {
     delete[] matrix;
 }
 
-std_complex **mEdge::getMatrix(std::size_t *dim) const {
+Complex **mEdge::getMatrix(std::size_t *dim) const {
     assert(!this->isTerminal());
 
     Qubit q = this->getVar();
     std::size_t d = 1 << (q + 1);
 
-    std_complex **matrix = new std_complex *[d];
+    Complex **matrix = new Complex *[d];
     for (std::size_t i = 0; i < d; i++)
-        matrix[i] = new std_complex[d];
+        matrix[i] = new Complex[d];
 
     fillMatrix(*this, 0, 0, {1.0, 0.0}, d, matrix);
     if (dim != nullptr)
@@ -192,7 +192,7 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
     return matrix;
 }
 struct MatrixGuard {
-    MatrixGuard(std_complex **m, std::size_t dim) : _m(m), _dim(dim) {}
+    MatrixGuard(Complex **m, std::size_t dim) : _m(m), _dim(dim) {}
     ~MatrixGuard() {
         for (size_t i = 0; i < _dim; i++) {
             delete[] _m[i];
@@ -200,7 +200,7 @@ struct MatrixGuard {
         delete[] _m;
     }
 
-    std_complex **_m;
+    Complex **_m;
     const std::size_t _dim;
 };
 
@@ -697,6 +697,45 @@ mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
                                                          threshold, c);
 }
 
+vEdge makeHybridZeroState(QubitCount q, Qubit threshold) {
+    assert(threshold < q);
+
+    size_t dim = 1 << threshold;
+    Complex *vec = new Complex[dim];
+    vec[0] = Complex{1.0, 0.0};
+
+    vEdge v;
+    v.w = {1.0, 0.0};
+    v.vec = vec;
+    v.q = threshold - 1;
+    v.dim = dim;
+
+    for (auto z = threshold; z < q; z++) {
+        v = makeVEdge(z, {v, vEdge::zero});
+    }
+
+    return v;
+}
+
+vEdge makeHybridOneState(QubitCount q, Qubit threshold) {
+    assert(threshold < q);
+
+    size_t dim = 1 << threshold;
+    Complex *vec = new Complex[dim];
+    vec[dim - 1] = Complex{1.0, 0.0};
+
+    vEdge v;
+    v.w = {1.0, 0.0};
+    v.vec = vec;
+    v.q = threshold - 1;
+    v.dim = dim;
+
+    for (auto z = threshold; z < q; z++) {
+        v = makeVEdge(z, {vEdge::zero, v});
+    }
+
+    return v;
+}
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
     assert(!(lhs.isTerminal() && rhs.isTerminal()));
 
@@ -854,26 +893,27 @@ mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
     return result;
 }
 
-static void printVector2(const vEdge &edge, std::size_t row,
-                         const std_complex &w, uint64_t left, std_complex *m) {
+static void fillVector2(const vEdge &edge, std::size_t start, const Complex &w,
+                        size_t dim, Complex *m) {
 
-    std_complex wp = edge.w * w;
+    Complex wp = edge.w * w;
 
-    if (edge.isTerminal() && left == 0) {
-        m[row] = wp;
-        return;
-    } else if (edge.isTerminal()) {
-        row = row << left;
-
-        for (std::size_t i = 0; i < (1 << left); i++) {
-            m[row | i] = wp;
+    if (edge.isTerminal()) {
+        for (auto i = start; i < start + dim; i++) {
+            m[i] = wp;
         }
+        return;
+    } else if (edge.isStateVector()) {
+        for (auto i = 0; i < dim; i++) {
+            m[start + i] = wp * edge.vec[i];
+        }
+
         return;
     }
 
     vNode *node = edge.getNode();
-    printVector2(node->getEdge(0), (row << 1) | 0, wp, left - 1, m);
-    printVector2(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
+    fillVector2(node->getEdge(0), start, wp, dim / 2, m);
+    fillVector2(node->getEdge(1), start + dim / 2, wp, dim / 2, m);
 }
 
 mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
@@ -1005,9 +1045,9 @@ void vEdge::printVector() const {
     Qubit q = this->getVar();
     std::size_t dim = 1 << (q + 1);
 
-    std_complex *vector = new std_complex[dim];
+    Complex *vector = new Complex[dim];
 
-    printVector2(*this, 0, {1.0, 0.0}, q + 1, vector);
+    fillVector2(*this, 0, {1.0, 0.0}, dim, vector);
 
     for (size_t i = 0; i < dim; i++) {
         std::cout << vector[i] << " ";
@@ -1018,90 +1058,23 @@ void vEdge::printVector() const {
     delete[] vector;
 }
 
-static void printVector_sparse2(const vEdge &edge, std::size_t row,
-                                const std_complex &w, uint64_t left,
-                                std::map<int, std_complex> &m) {
-
-    std_complex wp = edge.w * w;
-
-    const double thr = 0.001;
-
-    if (edge.isTerminal() && left == 0) {
-        if (norm(wp) > thr)
-            m[row] = wp;
-        return;
-    } else if (edge.isTerminal()) {
-        if (norm(wp) > thr) {
-            row = row << left;
-            for (std::size_t i = 0; i < (1 << left); i++) {
-                m[row | i] = wp;
-            }
-        }
-        return;
-    }
-
-    vNode *node = edge.getNode();
-    printVector_sparse2(node->getEdge(0), (row << 1) | 0, wp, left - 1, m);
-    printVector_sparse2(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
-}
-
-void vEdge::printVector_sparse() const {
-    if (this->isTerminal()) {
-        std::cout << this->w << std::endl;
-        return;
-    }
-    Qubit q = this->getVar();
-    std::size_t dim = 1 << (q + 1);
-
-    std::map<int, std_complex> map;
-
-    printVector_sparse2(*this, 0, {1.0, 0.0}, q + 1, map);
-
-    for (auto itr = map.begin(); itr != map.end(); itr++) {
-        std::cout << std::bitset<30>(itr->first) << ": " << itr->second
-                  << std::endl;
-    }
-}
-
-static void fillVector(const vEdge &edge, std::size_t row, const std_complex &w,
-                       uint64_t left, std_complex *m) {
-
-    std_complex wp = edge.w * w;
-
-    if (edge.isTerminal() && left == 0) {
-        m[row] = wp;
-        return;
-    } else if (edge.isTerminal()) {
-        row = row << left;
-
-        for (std::size_t i = 0; i < (1 << left); i++) {
-            m[row | i] = wp;
-        }
-        return;
-    }
-
-    vNode *node = edge.getNode();
-    fillVector(node->getEdge(0), (row << 1) | 0, wp, left - 1, m);
-    fillVector(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
-}
-
-std_complex *vEdge::getVector(std::size_t *dim) const {
+Complex *vEdge::getVector(std::size_t *dim) const {
     assert(!this->isTerminal());
 
     Qubit q = this->getVar();
     std::size_t d = 1 << (q + 1);
 
-    std_complex *vector = new std_complex[d];
-    fillVector(*this, 0, {1.0, 0.0}, q + 1, vector);
+    Complex *vector = new Complex[d];
+    fillVector2(*this, 0, {1.0, 0.0}, d, vector);
     if (dim != nullptr)
         *dim = d;
     return vector;
 }
 struct VectorGuard {
-    VectorGuard(std_complex *m, std::size_t dim) : _m(m), _dim(dim) {}
+    VectorGuard(Complex *m, std::size_t dim) : _m(m), _dim(dim) {}
     ~VectorGuard() { delete[] _m; }
 
-    std_complex *_m;
+    Complex *_m;
     const std::size_t _dim;
 };
 

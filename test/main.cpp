@@ -5,4 +5,7 @@ int main(int argc, char *argv[]) {
     mEdge e2 = makeGate(4, Hmat, 2, Controls{Control{0}, Control{1}});
     e1.printMatrix();
     e2.printMatrix();
+
+    vEdge v = makeHybridOneState(4, 2);
+    v.printVector();
 }
