@@ -180,15 +180,6 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    /*
-    ~mEdge() {
-        if (isStateVector()) {
-            for (auto i = 0; i < dim; i++)
-                delete[] mat[i];
-            delete[] mat;
-        }
-    }
-*/
     Qubit getVar() const { return q; };
     bool isTerminal() const;
     mNode *getNode() const { return n; };
@@ -355,6 +346,8 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
 
 mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
+mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
+                     const Controls &c);
 
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);

@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "bench-ddsim"
+version = "0.0.1"
+description = "ddsim benchmarking"
+authors = ["Fujitsu Limited"]
+
+[tool.poetry.dependencies]
+python = ">=3.8, <3.10"
+qiskit = "^0.32.1"
+scikit-learn = "1.0.2"
+qiskit-finance = "^0.3.1"
+qiskit-optimization = "0.2.3"
+qiskit-nature = {version = "0.2.2", extras = ["pyscf"]}
+mqt-ddsim = "1.12.3"
