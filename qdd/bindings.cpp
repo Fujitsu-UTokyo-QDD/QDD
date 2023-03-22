@@ -40,5 +40,8 @@ PYBIND11_MODULE(pyQDD, m){
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const Controls &>(&makeGate));
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX).def("SWAP", makeSwap);
-    
+
+    // Measure
+    m.def("measureAll", measureAll)
+     .def("measure", measureOneCollapsing);
 }
