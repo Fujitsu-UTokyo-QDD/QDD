@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "qdd"
+version = "0.1.0"
+description = "Qiskit Provider for QDD"
+authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+qiskit = "^0.42.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

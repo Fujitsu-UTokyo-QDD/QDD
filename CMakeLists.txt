@@ -55,3 +55,14 @@ message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
 
 add_subdirectory(src)
 add_subdirectory(test)
+
+option(BINDINGS "Configure for building Python bindings" ON)
+if (BINDINGS)
+  FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11
+    GIT_TAG        v2.10.3
+  )
+  FetchContent_MakeAvailable(pybind11)
+  add_subdirectory(qdd)
+endif ()
