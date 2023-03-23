@@ -378,6 +378,14 @@ mEdge RZ(QubitCount qnum, int target, float angle);
 
 mEdge CX(QubitCount qnum, int target, int control);
 
+mEdge RX_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold);
+
+mEdge RY_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold);
+
+mEdge RZ_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold);
+
+mEdge CX_Hybrid(QubitCount qnum, int target, int control, Qubit threshold);
+
 mEdge Dense(QubitCount qnum, int target, float r0, float i0, float r1, float i1,
             float r2, float i2, float r3, float i3);
 // 1 target, 2 control with both positive (11)

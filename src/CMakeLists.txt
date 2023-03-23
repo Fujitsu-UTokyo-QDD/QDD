@@ -3,7 +3,7 @@ find_package(TBB REQUIRED)
 add_library(engine STATIC dd.cpp  )
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR})
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
-target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads ${Boost_LIBRARIES})
+target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads ${Boost_LIBRARIES} OpenMP::OpenMP_CXX)
 
 if(with_graphviz)
     target_link_libraries(engine PUBLIC PkgConfig::CGRAPH PkgConfig::GVC)

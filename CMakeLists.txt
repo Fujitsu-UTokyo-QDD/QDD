@@ -26,6 +26,14 @@ if(with_graphviz)
     pkg_check_modules(GVC REQUIRED IMPORTED_TARGET libgvc)
 endif()
 
+option(with_parallel      "parallel mm and mv multiplication" OFF)
+if(with_parallel)
+    message(STATUS "run in parallel")
+    add_compile_definitions(PARALLEL)
+else()
+    message(STATUS "run in serial")
+endif()
+
 if(CGRAPH_FOUND)
     message(STATUS ${CGRAPH_INCLUDEDIR})
     message(STATUS ${CGRAPH_LIBDIR})
@@ -51,6 +59,8 @@ FetchContent_MakeAvailable(googletest)
 
 find_package(Boost REQUIRED COMPONENTS fiber context)
 message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
+
+find_package(OpenMP REQUIRED )
 
 
 add_subdirectory(src)

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <bitset>
 #include <map>
+#include <omp.h>
 
 #define SUBTASK_THRESHOLD 5
 
@@ -809,6 +810,37 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
     return mm_add2(lhs, rhs, root);
 }
 
+Complex **mat_mat_multiply_serial(Complex **lhs, Complex **rhs, size_t dim) {
+    Complex **result = new Complex *[dim];
+    for (auto i = 0; i < dim; i++)
+        result[i] = new Complex[dim];
+
+    for (auto i = 0; i < dim; i++) {
+        for (auto j = 0; j < dim; j++) {
+            for (auto k = 0; k < dim; k++)
+                result[i][j] = lhs[i][k] * rhs[k][j];
+        }
+    }
+    return result;
+}
+Complex **mat_mat_multiply_parallel(Complex **lhs, Complex **rhs, size_t dim) {
+
+    Complex **result = new Complex *[dim];
+    for (auto i = 0; i < dim; i++)
+        result[i] = new Complex[dim];
+
+    int i, j, k;
+#pragma omp parallel for collapse(2) private(i, j, k)                          \
+    shared(result, lhs, rhs, dim)
+    for (i = 0; i < dim; i++) {
+        for (j = 0; j < dim; j++) {
+            for (k = 0; k < dim; k++)
+                result[i][j] = lhs[i][k] * rhs[k][j];
+        }
+    }
+    return result;
+}
+
 mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
@@ -822,6 +854,21 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     }
 
     mEdge result;
+    if (lhs.isStateVector()) {
+        assert(rhs.isStateVector() && current_var == lhs.q &&
+               current_var == rhs.q);
+
+        result.w = {1.0, 0.0};
+#ifdef PARALLEL
+        result.mat = mat_mat_multiply_parallel(lhs.mat, rhs.mat, rhs.dim);
+#else
+        result.mat = mat_mat_multiply_serial(lhs.mat, rhs.mat, rhs.dim);
+#endif
+        result.dim = rhs.dim;
+        result.q = rhs.q;
+        return result;
+    }
+
     result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -945,6 +992,26 @@ mEdge mm_kronecker(const mEdge &lhs, const mEdge &rhs) {
     return mm_kronecker2(lhs, rhs);
 }
 
+Complex *vec_vec_add_serial(Complex *lhs, Complex *rhs, size_t dim) {
+    Complex *result = new Complex[dim];
+
+    for (auto i = 0; i < dim; i++) {
+        result[i] = lhs[i] + rhs[i];
+    }
+    return result;
+}
+Complex *vec_vec_add_parallel(Complex *lhs, Complex *rhs, size_t dim) {
+
+    Complex *result = new Complex[dim];
+
+    int i;
+#pragma omp parallel for private(i) shared(result, lhs, rhs, dim)
+    for (i = 0; i < dim; i++) {
+        result[i] = lhs[i] + rhs[i];
+    }
+    return result;
+}
+
 vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
@@ -958,6 +1025,20 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     }
 
     vEdge result;
+    if (lhs.isStateVector()) {
+        assert(rhs.isStateVector() && current_var == lhs.q &&
+               current_var == rhs.q);
+
+        result.w = {1.0, 0.0};
+#ifdef PARALLEL
+        result.vec = vec_vec_add_parallel(lhs.vec, rhs.vec, rhs.dim);
+#else
+        result.vec = vec_vec_add_serial(lhs.vec, rhs.vec, rhs.dim);
+#endif
+        result.dim = rhs.dim;
+        result.q = rhs.q;
+        return result;
+    }
 
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
@@ -1089,6 +1170,29 @@ VectorXcf vEdge::getEigenVector() {
     }
     return V;
 }
+Complex *mat_vec_multiply_serial(Complex **lhs, Complex *rhs, size_t dim) {
+    Complex *result = new Complex[dim];
+
+    for (auto i = 0; i < dim; i++) {
+        for (auto j = 0; j < dim; j++) {
+            result[i] = lhs[i][j] * rhs[j];
+        }
+    }
+    return result;
+}
+Complex *mat_vec_multiply_parallel(Complex **lhs, Complex *rhs, size_t dim) {
+
+    Complex *result = new Complex[dim];
+
+    int i, j;
+#pragma omp parallel for private(i, j) shared(result, lhs, rhs, dim)
+    for (i = 0; i < dim; i++) {
+        for (j = 0; j < dim; j++) {
+            result[i] = lhs[i][j] * rhs[j];
+        }
+    }
+    return result;
+}
 
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
@@ -1103,6 +1207,20 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     }
 
     vEdge result;
+    if (lhs.isStateVector()) {
+        assert(rhs.isStateVector() && current_var == lhs.q &&
+               current_var == rhs.q);
+
+        result.w = {1.0, 0.0};
+#ifdef PARALLEL
+        result.vec = mat_vec_multiply_parallel(lhs.mat, rhs.vec, rhs.dim);
+#else
+        result.vec = mat_vec_multiply_serial(lhs.mat, rhs.vec, rhs.dim);
+#endif
+        result.dim = rhs.dim;
+        result.q = rhs.q;
+        return result;
+    }
 
     result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
@@ -1335,6 +1453,32 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
+mEdge RX_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold) {
+    std::complex<float> i1 = {std::cos(angle / 2), 0};
+    std::complex<float> i2 = {0, -std::sin(angle / 2)};
+    return makeHybridGate(qnum, GateMatrix{i1, i2, i2, i1}, target, threshold);
+}
+mEdge RY_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold) {
+    std::complex<float> i1 = {std::cos(angle / 2), 0};
+    std::complex<float> i2 = {-std::sin(angle / 2), 0};
+    std::complex<float> i3 = {std::sin(angle / 2), 0};
+    return makeHybridGate(qnum, GateMatrix{i1, i2, i3, i1}, target, threshold);
+}
+mEdge RZ_Hybrid(QubitCount qnum, int target, float angle, Qubit threshold) {
+    std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
+    std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
+    return makeHybridGate(qnum, GateMatrix{i1, cf_zero, cf_zero, i2}, target,
+                          threshold);
+}
+
+mEdge CX_Hybrid(QubitCount qnum, int target, int control, Qubit threshold) {
+    std::complex<float> zero = {0, 0};
+    std::complex<float> one = {1, 0};
+    Controls controls;
+    controls.emplace(Control{control, Control::Type::pos});
+    return makeHybridGate(qnum, GateMatrix{zero, one, one, zero}, target,
+                          threshold, controls);
+}
 mEdge Dense(QubitCount qnum, int target, float r0, float i0, float r1, float i1,
             float r2, float i2, float r3, float i3) {
     std::complex<float> c0 = {r0, i0};
