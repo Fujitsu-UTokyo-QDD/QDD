@@ -5,6 +5,7 @@ import sys
 import uuid
 import dataclasses
 from collections import Counter
+from warnings import warn
 
 from qiskit.providers import BackendV1, JobV1, Options, Provider
 from qiskit.providers.models import BackendConfiguration
@@ -17,7 +18,7 @@ from qiskit.extensions import Initialize
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
 from qdd.qdd_job import QddJob
-from circuit_property import CircuitProperty
+from .circuit_property import CircuitProperty
 
 import pyQDD
 
@@ -50,7 +51,6 @@ _supported_qiskit_gates: Dict = {
     **_qiskit_gates_1q,
     **_qiskit_rotations_1q,
     **_qiskit_gates_2q,
-    Measure: None
 }
 
 @dataclasses.dataclass
@@ -195,9 +195,10 @@ class QddBackend(BackendV1):
             return QddFailedJob(self, job_id, result)
 
     def _run_internal(self, qiskit_circs: List[QiskitCircuit], **run_options) -> JobV1:
+        self._validate_run_options(run_options)
         actual_options = {
             'shots': run_options.get('shots', self.options.shots),
-            #'memory': run_options.get('memory', self.options.memory),
+            'memory': run_options.get('memory', self.options.memory),
             'seed_simulator': run_options.get('seed_simulator', self.options.seed_simulator),
         }
 
@@ -249,13 +250,26 @@ class QddBackend(BackendV1):
     def get_qID(self, qubit):
         return self.qubitmap[qubit]
     
-    def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: List[CircuitProperty], options: dict):
+    def _create_cbitmap(self, circ: QiskitCircuit):
+        cbits = circ.clbits
+        mapdata = {}
+        id = 0
+        for cbit in cbits:
+            mapdata[cbit] = id
+            id+=1
+        self.cbitmap = mapdata
+
+    def get_cID(self, cbit):
+        return self.cbitmap[cbit]
+    
+    def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
-        #results = list()
+        self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
         if circ_prop.stable_final_state:
+            print("### stable ###")
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
                 qiskit_gate_type = type(i)
@@ -263,7 +277,7 @@ class QddBackend(BackendV1):
                 # filter out special cases first
                 if qiskit_gate_type == Barrier:
                     continue
-                if (qiskit_gate_type == Measure) and (self.ignore_measure is True):
+                if (qiskit_gate_type == Measure):
                     continue
                 assert(len(cargs) == 0)
 
@@ -275,7 +289,7 @@ class QddBackend(BackendV1):
                         gate = _qiskit_rotations_1q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), i.params[0])
                         current = pyQDD.mv_multiply(gate, current)
                     elif qiskit_gate_type in _qiskit_gates_2q:
-                        gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), self.get_qID(qargs[1]))
+                        gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                         current = pyQDD.mv_multiply(gate, current)
                     else:
                         print("Unsupported gate/operation:", qiskit_gate_type)
@@ -289,14 +303,15 @@ class QddBackend(BackendV1):
                                        f' It needs to transpile the circuit before evaluating it.')
             
             for i in range(options['shots']):
-                result_tmp = pyQDD.measureAll(current, False)
+                result_tmp: str = pyQDD.measureAll(current, False)
                 result_final_tmp = ['0'] * n_cbit
-                mapping: Dict[Clbit, Qubit] = options['clbit_final_values']
+                mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
                 for cbit in mapping:
-                    result_final_tmp[cbit] = result_tmp[mapping[cbit]]
-                sampled_values[i] = result_final_tmp
+                    result_final_tmp[self.get_cID(cbit)] = result_tmp[self.get_qID(mapping[cbit])]
+                sampled_values[i] = ''.join(result_final_tmp)
 
         else:
+            print("### unstable ###")
             for i in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
@@ -306,8 +321,7 @@ class QddBackend(BackendV1):
                     # filter out special cases first
                     if qiskit_gate_type == Barrier:
                         continue
-                    if (qiskit_gate_type == Measure) and (self.ignore_measure is True):
-                        continue
+
                     skipGate = False
                     for c_idx in cargs:
                         if val_cbit[c_idx] == '0':
@@ -326,9 +340,6 @@ class QddBackend(BackendV1):
                         elif qiskit_gate_type in _qiskit_gates_2q:
                             gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), self.get_qID(qargs[1]))
                             current = pyQDD.mv_multiply(gate, current)
-                        else:
-                            print("Unsupported gate/operation:", qiskit_gate_type)
-                            exit(1)
                     else:
                         if qiskit_gate_type == Measure:
                             val_cbit[cargs[0]] = pyQDD.measureOneCollapsing(n_qubit, self.get_qID(qargs[0]))
@@ -341,13 +352,12 @@ class QddBackend(BackendV1):
                         raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                sampled_values[i] = int(''.join(reversed(val_cbit)), 2)
+                sampled_values[i] = ''.join(val_cbit)
 
-        hex_memory = list(map(hex, sampled_values))
-        hex_sampled_counts = Counter(hex_memory)
+        hex_sampled_counts = Counter(sampled_values)
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
         if options['memory']:
-            result_data['memory'] = hex_memory
+            result_data['memory'] = sampled_values
         header = QddBackend._create_experiment_header(circ)
         result = {
             'success': True,
@@ -434,3 +444,27 @@ class QddBackend(BackendV1):
                                f' Every circuit must have measurement gates when using {QddBackend.__name__}.')
 
         return CircuitProperty(stable_final_state=stable_final_state, clbit_final_values=clbit_final_values)
+    
+    def _validate_run_options(self, run_options):
+        """Checks whether the given options are valid to run with (e.g., shots < max_shots)."""
+
+        # Check if invalid options (i.e., causing errors) are specified
+        if 'shots' in run_options:
+            shots = run_options['shots']
+            max_shots = QddBackend._DEFAULT_CONFIG['max_shots']
+            if not (0 < shots <= max_shots):
+                raise RuntimeError(f'Shots={shots} is specified, but #shots must be positive and <= {max_shots}'
+                                   f' when using {QddBackend.__name__}.')
+
+        # Warn if unsupported options are specified
+        # Note: we cannot raise an error here because some Qiskit functions (e.g., execute(...)) adds some options to
+        # the user-specified options (i.e., user-unspecified options sometimes comes to here).
+        for run_opt in run_options:
+            # if the runtime option is not contained in the default option list, output a warning.
+            if not hasattr(self.options, run_opt):
+                # some options can be ignored without warnings (e.g., an option value of no effect)
+                can_ignore = run_opt in QddBackend._OPTIONS_IGNORED_WITHOUT_WARN \
+                    and QddBackend._OPTIONS_IGNORED_WITHOUT_WARN[run_opt](run_options[run_opt])
+                if not can_ignore:
+                    warn(f'Option {run_opt}={run_options[run_opt]} is not used by {QddBackend.__name__}.',
+                         UserWarning, stacklevel=2)

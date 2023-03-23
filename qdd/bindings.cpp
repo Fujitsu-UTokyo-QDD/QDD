@@ -21,11 +21,21 @@ std::map<std::string, GateMatrix> gateMap{
     {"Vdag", Vdagmat}
 };
 
+std::mt19937_64 mt;
+
 mEdge makeGate(QubitCount q, std::string name, Qubit target){
     return makeGate(q, gateMap[name], target);
 }
 mEdge makeGate(QubitCount q, std::string name, Qubit target, const Controls &c){
     return makeGate(q, gateMap[name], target, c);
+}
+
+std::string _measureAll(vEdge &rootEdge, bool collapse){
+    return measureAll(rootEdge, collapse, mt);
+}
+
+char _measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization){
+    return measureOneCollapsing(rootEdge, index, assumeProbabilityNormalization, mt);
 }
 
 PYBIND11_MODULE(pyQDD, m){
@@ -42,6 +52,6 @@ PYBIND11_MODULE(pyQDD, m){
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX).def("SWAP", makeSwap);
 
     // Measure
-    m.def("measureAll", measureAll)
-     .def("measure", measureOneCollapsing);
+    m.def("measureAll", _measureAll)
+     .def("measureOneCollapsing", _measureOneCollapsing);
 }
