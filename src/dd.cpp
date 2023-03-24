@@ -1484,24 +1484,33 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
-mEdge Dense(QubitCount qnum, int target, float r0, float i0, float r1, float i1,
-            float r2, float i2, float r3, float i3) {
-    std::complex<float> c0 = {r0, i0};
-    std::complex<float> c1 = {r1, i1};
-    std::complex<float> c2 = {r2, i2};
-    std::complex<float> c3 = {r3, i3};
-    return makeGate(qnum, GateMatrix{c0, c1, c2, c3}, target);
+void genDot2(vNode* node, std::vector<std::string>& result, int depth){
+    std::stringstream node_ss;
+    node_ss << (uint64_t)node << " [label=\"q"<<depth <<"\"]";
+    result.push_back(node_ss.str());
+    for (int i = 0; i < node->children.size(); i++){
+        std::stringstream ss;
+        ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n << " [label=\"" << i << node->children[i].w << "\"]";
+        result.push_back(ss.str());
+        if(!node->children[i].isTerminal())
+            genDot2(node->children[i].n, result, depth+1);
+    }
 }
 
-mEdge Dense1211(QubitCount qnum, int target, int control0, int control1,
-                float r0, float i0, float r1, float i1, float r2, float i2,
-                float r3, float i3) {
-    std::complex<float> c0 = {r0, i0};
-    std::complex<float> c1 = {r1, i1};
-    std::complex<float> c2 = {r2, i2};
-    std::complex<float> c3 = {r3, i3};
-    Controls controls;
-    controls.emplace(Control{control0, Control::Type::pos});
-    controls.emplace(Control{control1, Control::Type::pos});
-    return makeGate(qnum, GateMatrix{c0, c1, c2, c3}, target, controls);
+std::string genDot(vEdge &rootEdge){
+    std::vector<std::string> result;
+    genDot2(rootEdge.n, result, 0);
+
+    //vNode::terminal
+    std::stringstream node_ss;
+    node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
+    result.push_back(node_ss.str());
+
+    std::stringstream finalresult;
+    finalresult << "digraph qdd {" << std::endl;
+    for(std::string line : result){
+        finalresult << "  " << line << std::endl;
+    }
+    finalresult << "}" << std::endl;
+    return finalresult.str();
 }
