@@ -1483,3 +1483,34 @@ mEdge CX(QubitCount qnum, int target, int control) {
     controls.emplace(Control{control, Control::Type::pos});
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
+
+void genDot2(vNode* node, std::vector<std::string>& result, int depth){
+    std::stringstream node_ss;
+    node_ss << (uint64_t)node << " [label=\"q"<<depth <<"\"]";
+    result.push_back(node_ss.str());
+    for (int i = 0; i < node->children.size(); i++){
+        std::stringstream ss;
+        ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n << " [label=\"" << i << node->children[i].w << "\"]";
+        result.push_back(ss.str());
+        if(!node->children[i].isTerminal())
+            genDot2(node->children[i].n, result, depth+1);
+    }
+}
+
+std::string genDot(vEdge &rootEdge){
+    std::vector<std::string> result;
+    genDot2(rootEdge.n, result, 0);
+
+    //vNode::terminal
+    std::stringstream node_ss;
+    node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
+    result.push_back(node_ss.str());
+
+    std::stringstream finalresult;
+    finalresult << "digraph qdd {" << std::endl;
+    for(std::string line : result){
+        finalresult << "  " << line << std::endl;
+    }
+    finalresult << "}" << std::endl;
+    return finalresult.str();
+}

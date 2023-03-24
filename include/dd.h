@@ -375,3 +375,5 @@ mEdge RY(QubitCount qnum, int target, float angle);
 mEdge RZ(QubitCount qnum, int target, float angle);
 
 mEdge CX(QubitCount qnum, int target, int control);
+
+std::string genDot(vEdge &rootEdge);
