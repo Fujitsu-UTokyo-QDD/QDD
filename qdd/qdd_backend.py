@@ -269,7 +269,6 @@ class QddBackend(BackendV1):
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
         if circ_prop.stable_final_state:
-            print("### stable ###")
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
                 qiskit_gate_type = type(i)
@@ -311,7 +310,6 @@ class QddBackend(BackendV1):
                 sampled_values[i] = ''.join(result_final_tmp)
 
         else:
-            print("### unstable ###")
             for i in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
