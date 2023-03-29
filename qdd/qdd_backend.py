@@ -95,7 +95,7 @@ class QddBackend(BackendV1):
         # 'parameter_binds' is a very exceptional option. The option is always not ignored even though it is not in the
         # default option list; so, ignorance warning should not be emitted.
         'parameter_binds': lambda v: True,
-        'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qulacs simulator
+        'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
     }
 
     def __init__(self, provider: Provider):
@@ -105,7 +105,7 @@ class QddBackend(BackendV1):
 
     @classmethod
     def _default_options(cls) -> Options:
-        # Note: regarding the 'parameter_binds' option, QulacsBackend does not include it in the default option list
+        # Note: regarding the 'parameter_binds' option, QddBackend does not include it in the default option list
         # below because AerSimulator also does not.
         # Normally, user-specified runtime options are filtered out in execute(...) if they are not listed below.
         # However, 'parameter_binds' is an exceptional one; it is not excluded regardless of whether to be listed below.
@@ -212,7 +212,7 @@ class QddBackend(BackendV1):
             param_bound_qiskit_circs = qiskit_circs
         
         circ_props = QddBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs)
-        experiments = QddExperiments(circs=qiskit_circs, circuit_props=circ_props, options=actual_options)
+        experiments = QddExperiments(circs=param_bound_qiskit_circs, circuit_props=circ_props, options=actual_options)
 
         # run circuits via issuing a job
         job_id = str(uuid.uuid4())
@@ -269,7 +269,6 @@ class QddBackend(BackendV1):
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
         if circ_prop.stable_final_state:
-            print("### stable ###")
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
                 qiskit_gate_type = type(i)
@@ -303,16 +302,15 @@ class QddBackend(BackendV1):
                                        f' It needs to transpile the circuit before evaluating it.')
             
             for i in range(options['shots']):
-                result_tmp: str = pyQDD.measureAll(current, False)
+                _, result_tmp = pyQDD.measureAll(current, False)
                 result_final_tmp = ['0'] * n_cbit
                 mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
                 for cbit in mapping:
-                    result_final_tmp[self.get_cID(cbit)] = result_tmp[self.get_qID(mapping[cbit])]
-                sampled_values[i] = ''.join(result_final_tmp)
+                    result_final_tmp[self.get_cID(cbit)] = result_tmp[len(result_tmp)-1-self.get_qID(mapping[cbit])]                
+                sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
-            print("### unstable ###")
-            for i in range(options['shots']):
+            for shot in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
                 for i, qargs, cargs in circ.data:
@@ -322,15 +320,16 @@ class QddBackend(BackendV1):
                     if qiskit_gate_type == Barrier:
                         continue
 
-                    skipGate = False
-                    for c_idx in cargs:
-                        if val_cbit[c_idx] == '0':
-                            skilGate = True
-                            break
-                    if skipGate:
-                        continue
-
                     if qiskit_gate_type in _supported_qiskit_gates:
+                        
+                        skipGate = False
+                        for c_idx in cargs:
+                            if val_cbit[self.get_cID(c_idx)] == '0':
+                                skipGate = True
+                                break
+                        if skipGate:
+                            continue
+
                         if qiskit_gate_type in _qiskit_gates_1q:
                             gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
                             current = pyQDD.mv_multiply(gate, current)
@@ -338,21 +337,24 @@ class QddBackend(BackendV1):
                             gate = _qiskit_rotations_1q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), i.params[0])
                             current = pyQDD.mv_multiply(gate, current)
                         elif qiskit_gate_type in _qiskit_gates_2q:
-                            gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), self.get_qID(qargs[1]))
+                            gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                             current = pyQDD.mv_multiply(gate, current)
+                        else:
+                            raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            val_cbit[cargs[0]] = pyQDD.measureOneCollapsing(n_qubit, self.get_qID(qargs[0]))
+                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
                         elif qiskit_gate_type == Reset:
-                            if pyQDD.measureOneCollapsing(n_qubit, self.get_qID(qargs[0])) == '1':
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
+                            if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
                                 current = pyQDD.mv_multiply(gate, current)
-
-                        # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
-                        raise RuntimeError(f'Unsupported gate or instruction:'
+                        else:
+                            # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
+                            raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                sampled_values[i] = ''.join(val_cbit)
+                sampled_values[shot] = ''.join(reversed(val_cbit))
 
         hex_sampled_counts = Counter(sampled_values)
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
@@ -389,7 +391,7 @@ class QddBackend(BackendV1):
                                f' but #qubits must be <= {max_qubits}.')
 
         # Check whether the final state computed by evaluating the circuit is stable over shots,
-        # which affects the simulation strategy (see QulacsBackend._evaluate_circuit(...) for the details).
+        # which affects the simulation strategy (see QddBackend._evaluate_circuit(...) for the details).
         # If either of the followings holds, the final state is regarded as unstable.
         # - There are conditional gates.
         # - For the same qubit, there are instructions (except for measurements) after a measurement.
