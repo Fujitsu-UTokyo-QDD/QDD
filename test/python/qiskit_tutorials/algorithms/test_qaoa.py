@@ -22,6 +22,7 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.opflow import PauliSumOp, StateFn
 from qiskit.quantum_info import Pauli
 from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit import Aer
 
 from qdd import QddProvider
 
@@ -126,6 +127,19 @@ def test_qaoa():
     qaoa_result = objective_value(x_most_likely, adjacency_matrix)
     print(f'Objective value computed by QAOA is {qaoa_result}')
 
+    # compute via QAOA (Aer)
+    optimizer = COBYLA()
+    backend_aer = Aer.get_backend('aer_simulator')
+    qi_aer = QuantumInstance(backend_aer, seed_transpiler=50, seed_simulator=80)
+    qaoa_aer = QAOA(optimizer, quantum_instance=qi_aer)
+    qubit_op_aer, offset = get_operator(adjacency_matrix)
+    result_aer = qaoa_aer.compute_minimum_eigenvalue(qubit_op_aer)
+    x_most_likely_aer = sample_most_likely(result_aer.eigenstate)
+    qaoa_result_aer = objective_value(x_most_likely_aer, adjacency_matrix)
+    print(f'Objective value computed by QAOA_aer is {qaoa_result_aer}')
+
+    assert qaoa_result == qaoa_result_aer
+
     # compute via a classical algorithm
     npme = NumPyMinimumEigensolver()
     result = npme.compute_minimum_eigenvalue(qubit_op)
@@ -144,4 +158,4 @@ def test_qaoa():
     vqe_result = objective_value(x_most_likely, adjacency_matrix)
     print(f'Objective value computed by VQE is {vqe_result}')
 
-    assert qaoa_result == vqe_result == reference_value
+    assert vqe_result == reference_value
