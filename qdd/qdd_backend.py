@@ -212,7 +212,7 @@ class QddBackend(BackendV1):
             param_bound_qiskit_circs = qiskit_circs
         
         circ_props = QddBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs)
-        experiments = QddExperiments(circs=qiskit_circs, circuit_props=circ_props, options=actual_options)
+        experiments = QddExperiments(circs=param_bound_qiskit_circs, circuit_props=circ_props, options=actual_options)
 
         # run circuits via issuing a job
         job_id = str(uuid.uuid4())
@@ -336,7 +336,7 @@ class QddBackend(BackendV1):
                             gate = _qiskit_rotations_1q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), i.params[0])
                             current = pyQDD.mv_multiply(gate, current)
                         elif qiskit_gate_type in _qiskit_gates_2q:
-                            gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[0]), self.get_qID(qargs[1]))
+                            gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                             current = pyQDD.mv_multiply(gate, current)
                     else:
                         if qiskit_gate_type == Measure:
