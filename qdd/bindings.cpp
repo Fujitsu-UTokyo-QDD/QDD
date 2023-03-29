@@ -30,12 +30,16 @@ mEdge makeGate(QubitCount q, std::string name, Qubit target, const Controls &c){
     return makeGate(q, gateMap[name], target, c);
 }
 
-std::string _measureAll(vEdge &rootEdge, bool collapse){
-    return measureAll(rootEdge, collapse, mt);
+std::pair<vEdge, std::string> _measureAll(vEdge &rootEdge, bool collapse){
+    std::string result = measureAll(rootEdge, collapse, mt);
+    return std::pair<vEdge, std::string>(rootEdge, result);
 }
 
-char _measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization){
-    return measureOneCollapsing(rootEdge, index, assumeProbabilityNormalization, mt);
+
+
+std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization=true){
+    char result = measureOneCollapsing(rootEdge, index, assumeProbabilityNormalization, mt);
+    return std::pair<vEdge, char>(rootEdge, result);
 }
 
 PYBIND11_MODULE(pyQDD, m){

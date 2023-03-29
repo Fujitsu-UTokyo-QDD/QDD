@@ -302,7 +302,7 @@ class QddBackend(BackendV1):
                                        f' It needs to transpile the circuit before evaluating it.')
             
             for i in range(options['shots']):
-                result_tmp: str = pyQDD.measureAll(current, False)
+                _, result_tmp = pyQDD.measureAll(current, False)
                 result_final_tmp = ['0'] * n_cbit
                 mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
                 for cbit in mapping:
@@ -310,7 +310,7 @@ class QddBackend(BackendV1):
                 sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
-            for i in range(options['shots']):
+            for shot in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
                 for i, qargs, cargs in circ.data:
@@ -320,15 +320,16 @@ class QddBackend(BackendV1):
                     if qiskit_gate_type == Barrier:
                         continue
 
-                    skipGate = False
-                    for c_idx in cargs:
-                        if val_cbit[c_idx] == '0':
-                            skilGate = True
-                            break
-                    if skipGate:
-                        continue
-
                     if qiskit_gate_type in _supported_qiskit_gates:
+                        
+                        skipGate = False
+                        for c_idx in cargs:
+                            if val_cbit[self.get_cID(c_idx)] == '0':
+                                skipGate = True
+                                break
+                        if skipGate:
+                            continue
+
                         if qiskit_gate_type in _qiskit_gates_1q:
                             gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
                             current = pyQDD.mv_multiply(gate, current)
@@ -338,19 +339,22 @@ class QddBackend(BackendV1):
                         elif qiskit_gate_type in _qiskit_gates_2q:
                             gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                             current = pyQDD.mv_multiply(gate, current)
+                        else:
+                            raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            val_cbit[cargs[0]] = pyQDD.measureOneCollapsing(n_qubit, self.get_qID(qargs[0]))
+                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
                         elif qiskit_gate_type == Reset:
-                            if pyQDD.measureOneCollapsing(n_qubit, self.get_qID(qargs[0])) == '1':
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
+                            if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
                                 current = pyQDD.mv_multiply(gate, current)
-
-                        # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
-                        raise RuntimeError(f'Unsupported gate or instruction:'
+                        else:
+                            # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
+                            raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                sampled_values[i] = ''.join(reversed(val_cbit))
+                sampled_values[shot] = ''.join(reversed(val_cbit))
 
         hex_sampled_counts = Counter(sampled_values)
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
