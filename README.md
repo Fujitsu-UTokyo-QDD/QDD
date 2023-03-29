@@ -18,5 +18,5 @@ After the above commands, try the following codes.
 ```
 $ ln -s build/qdd/pyQDD.cpython-310-x86_64-linux-gnu.so .
 $ poetry install
-$ poetry run pytest test/
+$ poetry run pytest
 ```
