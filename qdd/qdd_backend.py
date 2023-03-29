@@ -306,8 +306,8 @@ class QddBackend(BackendV1):
                 result_final_tmp = ['0'] * n_cbit
                 mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
                 for cbit in mapping:
-                    result_final_tmp[self.get_cID(cbit)] = result_tmp[self.get_qID(mapping[cbit])]
-                sampled_values[i] = ''.join(result_final_tmp)
+                    result_final_tmp[self.get_cID(cbit)] = result_tmp[len(result_tmp)-1-self.get_qID(mapping[cbit])]                
+                sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
             for i in range(options['shots']):
@@ -350,7 +350,7 @@ class QddBackend(BackendV1):
                         raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                sampled_values[i] = ''.join(val_cbit)
+                sampled_values[i] = ''.join(reversed(val_cbit))
 
         hex_sampled_counts = Counter(sampled_values)
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
