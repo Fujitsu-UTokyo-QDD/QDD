@@ -13,3 +13,12 @@ qiskit = "^0.42.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test/python",
+]
+markers = [
+    "slow: marks tests as taking a long time to run"
+]
+addopts = "-m \"not slow\" --strict-markers"

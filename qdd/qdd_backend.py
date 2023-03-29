@@ -95,7 +95,7 @@ class QddBackend(BackendV1):
         # 'parameter_binds' is a very exceptional option. The option is always not ignored even though it is not in the
         # default option list; so, ignorance warning should not be emitted.
         'parameter_binds': lambda v: True,
-        'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qulacs simulator
+        'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
     }
 
     def __init__(self, provider: Provider):
@@ -105,7 +105,7 @@ class QddBackend(BackendV1):
 
     @classmethod
     def _default_options(cls) -> Options:
-        # Note: regarding the 'parameter_binds' option, QulacsBackend does not include it in the default option list
+        # Note: regarding the 'parameter_binds' option, QddBackend does not include it in the default option list
         # below because AerSimulator also does not.
         # Normally, user-specified runtime options are filtered out in execute(...) if they are not listed below.
         # However, 'parameter_binds' is an exceptional one; it is not excluded regardless of whether to be listed below.
@@ -387,7 +387,7 @@ class QddBackend(BackendV1):
                                f' but #qubits must be <= {max_qubits}.')
 
         # Check whether the final state computed by evaluating the circuit is stable over shots,
-        # which affects the simulation strategy (see QulacsBackend._evaluate_circuit(...) for the details).
+        # which affects the simulation strategy (see QddBackend._evaluate_circuit(...) for the details).
         # If either of the followings holds, the final state is regarded as unstable.
         # - There are conditional gates.
         # - For the same qubit, there are instructions (except for measurements) after a measurement.
