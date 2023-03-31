@@ -10,3 +10,4 @@ lib/
 result/
 __pycache__
 .idea/
+output

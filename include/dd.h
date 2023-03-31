@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Eigen/Dense"
 #include "common.h"
+#include "complex.hpp"
 #include <atomic>
 #include <complex>
 #include <random>
 #include <vector>
-using Eigen::MatrixXcf;
-using Eigen::VectorXcf;
+
+/*
 
 struct Complex {
     double r{0.0};
@@ -112,6 +112,7 @@ inline double norm(const Complex &c) {
 
 // using std_complex = std::complex<double>;
 using std_complex = Complex;
+*/
 
 struct mNode;
 struct vNode;
@@ -127,17 +128,15 @@ struct vEdge {
     void decRef();
     void incRef();
 
-    VectorXcf getEigenVector();
-
     void printVector() const;
     void printVector_sparse() const;
-    std_complex *getVector(std::size_t *dim) const;
+    std::complex<double> *getVector(std::size_t *dim) const;
 
     inline bool operator==(const vEdge &e) const noexcept {
-        return w.isApproximatelyEqual(e.w) && n == e.n;
+        return w.approximatelyEquals(e.w) && n == e.n;
     }
 
-    std_complex w;
+    Complex w;
     vNode *n{nullptr};
 };
 inline void swap(vEdge &lhs, vEdge &rhs) {
@@ -191,13 +190,12 @@ struct mEdge {
     bool isStateVector() const { return dim != 0; }
 
     void check();
-    std_complex **getMatrix(std::size_t *dim) const;
-    MatrixXcf getEigenMatrix();
+    std::complex<double> **getMatrix(std::size_t *dim) const;
 
     inline bool operator==(const mEdge &e) const noexcept {
 
         // because nullptr == nullptr
-        return w.isApproximatelyEqual(e.w) && n == e.n && mat == e.mat;
+        return w.approximatelyEquals(e.w) && n == e.n && mat == e.mat;
     }
 
     inline bool operator!=(const mEdge &e) const noexcept {
@@ -206,7 +204,7 @@ struct mEdge {
 
     bool compareNumerically(const mEdge &other) const noexcept;
 
-    std_complex w;
+    Complex w;
 
     mNode *n{nullptr};
     Complex **mat{nullptr};
@@ -221,17 +219,9 @@ inline void swap(mEdge &lhs, mEdge &rhs) {
     swap(lhs.n, rhs.n);
 }
 
-template <> struct std::hash<std_complex> {
-    std::size_t operator()(const std_complex &v) const noexcept {
-        auto h1 = std::hash<double>()(v.real());
-        auto h2 = std::hash<double>()(v.imag());
-        return hash_combine(h1, h2);
-    }
-};
-
 template <> struct std::hash<mEdge> {
     std::size_t operator()(const mEdge &e) const noexcept {
-        auto h1 = std::hash<std_complex>()(e.w);
+        auto h1 = std::hash<Complex>()(e.w);
         std::size_t h2;
         if (e.isStateVector())
             h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.mat));
@@ -244,7 +234,7 @@ template <> struct std::hash<mEdge> {
 
 template <> struct std::hash<vEdge> {
     std::size_t operator()(const vEdge &e) const noexcept {
-        auto h1 = std::hash<std_complex>()(e.w);
+        auto h1 = std::hash<Complex>()(e.w);
         auto h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
         return hash_combine(h1, h2);
     }
@@ -345,10 +335,6 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
 
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
-                     const Controls &c);
-
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);
 
@@ -365,7 +351,8 @@ vEdge makeOneState(QubitCount q);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
-char measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization,
+char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
+                          const bool assumeProbabilityNormalization,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 
 mEdge RX(QubitCount qnum, int target, float angle);
