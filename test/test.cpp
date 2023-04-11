@@ -35,43 +35,92 @@ TEST(QddTest, GateTest){
         mEdge m = makeGate(1, Hmat, 0);
         size_t dim;
         std_complex** mat = m.getMatrix(&dim);
-        double val = 1.0 / std::sqrt(2);
+        double val = 0.5 / std::sqrt(2);
         ASSERT_TRUE(mat[0][0] == (std::complex<double>(val, 0.0)));
         ASSERT_TRUE(mat[0][1] == (std::complex<double>(val, 0.0)));
         ASSERT_TRUE(mat[1][0] == (std::complex<double>(val, 0.0)));
         ASSERT_TRUE(mat[1][1] == (std::complex<double>(-val, 0.0)));
     }
-    /*
-    | 1 0 0 0 |
-    | 0 1 0 0 |
-    | 0 0 0 1 |
-    | 0 0 1 0 |
-    The first qubit is the control qubit and the second qubit is the target qubit.
-    */
-//    {
-//        mEdge m = makeGate(2, Xmat, 0);
-//        size_t dim;
-//        std_complex**  mat = m.getMatrix(&dim);
-//        ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
-//        ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[0][2] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[0][3] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[1][1] == (std::complex<double>(1.0, 0.0)));
-//        ASSERT_TRUE(mat[1][2] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[1][3] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[2][0] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[2][1] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[2][2] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[2][3] == (std::complex<double>(1.0, 0.0)));
-//        ASSERT_TRUE(mat[3][0] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[3][1] == (std::complex<double>(0.0, 0.0)));
-//        ASSERT_TRUE(mat[3][2] == (std::complex<double>(1.0, 0.0)));
-//        ASSERT_TRUE(mat[3][3] == (std::complex<double>(0.0, 0.0)));
-//    }
-    {
-        // Please write a test for Y gate...
-    }
+   {
+       mEdge m = makeGate(1, Imat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(1.0, 0.0)));
+   }
+   {
+       mEdge m = makeGate(1, Smat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       double s = std::sqrt(0.5);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, -s)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, s)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(1.0, 0.0)));
+   }
+   {
+       mEdge m = makeGate(1, Sdagmat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(0.0, -1.0)));
+   }
+   {
+       mEdge m = makeGate(1, Tmat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       double val = 0.5 * (1.0 + std::sqrt(2));
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(val, val)));
+   }
+   {
+       mEdge m = makeGate(1, Tdagmat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       double val = 1.0 / std::sqrt(2);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(val, -val)));
+   }
+   {
+       mEdge m = makeGate(1, SXmat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       double val = 1.0 / std::sqrt(2);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(val, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(val, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(val, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(-val, 0.0)));
+   }
+   {
+       m = makeGate(1, SXdagmat, 0);
+       mat = m.getMatrix(&dim);
+       val = 1.0 / std::sqrt(2);
+       ASSERT_TRUE(mat[0][0] == (std::complex<double>(val, 0.0)));
+       ASSERT_TRUE(mat[0][1] == (std::complex<double>(-val, 0.0)));
+       ASSERT_TRUE(mat[1][0] == (std::complex<double>(val, 0.0)));
+       ASSERT_TRUE(mat[1][1] == (std::complex<double>(val, 0.0)));
+   }
+   {
+       mEdge m = makeGate(1, Vdagmat, 0);
+       size_t dim;
+       std_complex** mat = m.getMatrix(&dim);
+       ASSERT_TRUE(mat[0][0] == cf_SQRT2_2);
+       ASSERT_TRUE(mat[0][1] == cf_iSQRT2_2);
+       ASSERT_TRUE(mat[1][0] == cf_iSQRT2_2);
+       ASSERT_TRUE(mat[1][1] == cf_SQRT2_2);
+   }
+   {
+        // todo Vmat
+   }
+
 }
 
 TEST(QddTest, InitialStateTest){
@@ -162,7 +211,6 @@ TEST(QddTest, MulTest){
         ASSERT_TRUE(vec[0] == (std::complex<double>(0.5, 0.5)));
         ASSERT_TRUE(vec[1] == (std::complex<double>(0.5, -0.5)));
     }
-
 }
 
 TEST(QddTest, MeasureTest){
@@ -253,14 +301,5 @@ TEST(QddTest, MeasureTest){
             std::cout << itr.first << ":" << itr.second << ", ";
         std::cout << std::endl;
         ASSERT_TRUE(resultmap['0'] < 80 && resultmap['0'] > 70);
-    }
-}
-
-TEST(QddTest, DotTest){
-    {
-        vEdge state = makeZeroState(2);
-        state = mv_multiply(makeGate(2,Hmat,0),state);
-        state = mv_multiply(CX(2, 1, 0), state);
-        std::cout << genDot(state) << std::endl;
     }
 }
