@@ -302,4 +302,14 @@ TEST(QddTest, MeasureTest){
         std::cout << std::endl;
         ASSERT_TRUE(resultmap['0'] < 80 && resultmap['0'] > 70);
     }
+    
+}
+
+TEST(QddTest, DotTest){
+    {
+        vEdge state = makeZeroState(2);
+        state = mv_multiply(makeGate(2,Hmat,0),state);
+        state = mv_multiply(CX(2, 1, 0), state);
+        std::cout << genDot(state) << std::endl;
+    }
 }
