@@ -273,7 +273,6 @@ TEST(QddTest, MulTest){
         ASSERT_TRUE(vec[0] == (std::complex<double>(0.5, 0.5)));
         ASSERT_TRUE(vec[1] == (std::complex<double>(0.5, -0.5)));
     }
-
 }
 
 TEST(QddTest, MeasureTest){
@@ -350,6 +349,7 @@ TEST(QddTest, MeasureTest){
         }
         ASSERT_TRUE(resultmap['0'] < 80 && resultmap['0'] > 70);
     }
+    
 }
 
 TEST(QddTest, DotTest){
