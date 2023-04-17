@@ -14,9 +14,11 @@ $ ./build/test/qdd_test
 ```
 
 ## Python Bindings
-After the above commands, try the following codes.
+After the above commands, try the following commands.
 ```
-$ ln -s build/qdd/pyQDD.cpython-310-x86_64-linux-gnu.so .
+$ cp build/qdd/pyQDD.cpython-310-x86_64-linux-gnu.so .
 $ poetry install
 $ poetry run pytest
+$ poetry build
 ```
+You can find installable files in 'dist' directory.
