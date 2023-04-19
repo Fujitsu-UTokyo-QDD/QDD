@@ -97,7 +97,7 @@ TEST(QddTest, GateTest){
         mEdge m = makeGate(1, Tmat, 0);
         size_t dim;
         std_complex** mat = m.getMatrix(&dim);
-        ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
+        ASSERT_TRUE(isNearlyEqual(mat[0][0], std::complex<double>(1.0, 0.0)));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,std::numbers::pi/4))));
@@ -106,7 +106,7 @@ TEST(QddTest, GateTest){
         mEdge m = makeGate(1, Tdagmat, 0);
         size_t dim;
         std_complex** mat = m.getMatrix(&dim);
-        ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
+        ASSERT_TRUE(isNearlyEqual(mat[0][0], std::complex<double>(1.0, 0.0)));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,-std::numbers::pi/4))));
@@ -247,8 +247,8 @@ TEST(QddTest, AddTest) {
         vEdge v = vv_add(zero, one);
         size_t dim;
         std_complex *vec = v.getVector(&dim);
-        ASSERT_TRUE(vec[0] == std_complex(0.6, 0.0));
-        ASSERT_TRUE(vec[1] == std_complex(0.0, -0.8));
+        ASSERT_TRUE(isNearlyEqual(vec[0], std::complex<double>(0.6, 0.0)));
+        ASSERT_TRUE(isNearlyEqual(vec[1], std::complex<double>(0.0, -0.8)));
     }
 }
 
