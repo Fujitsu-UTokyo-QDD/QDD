@@ -129,7 +129,6 @@ struct vEdge {
     void incRef();
 
     void printVector() const;
-    void printVector_sparse() const;
     std::complex<double> *getVector(std::size_t *dim) const;
 
     inline bool operator==(const vEdge &e) const noexcept {

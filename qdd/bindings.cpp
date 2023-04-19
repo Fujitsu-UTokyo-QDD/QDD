@@ -43,7 +43,7 @@ std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index,
 }
 
 PYBIND11_MODULE(pyQDD, m){
-    py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse);
+    py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector);
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
