@@ -135,7 +135,7 @@ struct vEdge {
         return w.approximatelyEquals(e.w) && n == e.n;
     }
 
-    Complex w;
+    Complex w{Complex::zero};
     vNode *n{nullptr};
 };
 inline void swap(vEdge &lhs, vEdge &rhs) {
@@ -203,7 +203,7 @@ struct mEdge {
 
     bool compareNumerically(const mEdge &other) const noexcept;
 
-    Complex w;
+    Complex w{Complex::zero};
 
     mNode *n{nullptr};
     Complex **mat{nullptr};

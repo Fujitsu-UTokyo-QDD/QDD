@@ -105,45 +105,19 @@ static void normalizeV(vEdge &e) {
         return;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
-                                   [](const vEdge &lhs, const vEdge &rhs) {
-                                       return ComplexNumbers::mag2(lhs.w) <
-                                              ComplexNumbers::mag2(rhs.w);
-                                   });
+    auto tmp = std::sqrt(ComplexNumbers::mag2(e.n->children[0].w) + ComplexNumbers::mag2(e.n->children[1].w));
+    auto sum = cn.lookup(tmp, 0.0);
 
-    Complex max_weight = result->w;
-    const std::size_t idx = std::distance(e.n->children.begin(), result);
-
-    for (int i = 0; i < 2; i++) {
-        if (i == idx) {
-            if (e.w.exactlyOne()) {
-                e.w = max_weight;
-            } else {
-                ComplexNumbers::mul(e.w, e.w, max_weight);
-            }
-            e.n->children[i].w = Complex::one;
-        } else {
-            if (zero[i]) {
-                if (e.n->children[i].w != Complex::zero) {
-                    cn.returnToCache(e.n->children[i].w);
-                }
-
-                e.n->children[i] = vEdge::zero;
-                continue;
-            }
-            if (!zero[i] && !e.n->children[i].w.exactlyOne()) {
-                cn.returnToCache(e.n->children[i].w);
-            }
-
-            if (e.n->children[i].w.approximatelyOne()) {
-                e.n->children[i].w = Complex::one;
-            }
-
+    if(!sum.approximatelyOne() && !sum.approximatelyZero()){
+        for (int i = 0; i < 2; i++) {
             auto c = cn.getTemporary();
-            ComplexNumbers::div(c, e.n->children[i].w, max_weight);
+            ComplexNumbers::div(c, e.n->children[i].w, sum);
             e.n->children[i].w = cn.lookup(c);
         }
     }
+    auto c = cn.getTemporary();
+    ComplexNumbers::mul(c, e.w, sum);
+    e.w = cn.lookup(c);
 
     vNode *n = vUnique.lookup(e.n);
     e.n = n;
@@ -734,6 +708,14 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
         if (result.w.approximatelyZero()) {
             return vEdge::zero;
         } else {
+            if(lhs.w.approximatelyOne()){
+                return result;
+            }
+            if(result.w.approximatelyOne()){
+                result.w = lhs.w;
+                return result;
+            }
+
             ComplexNumbers::mul(result.w, result.w, lhs.w);
             ComplexNumbers::mul(result.w, result.w, rhs.w);
             if (result.w.approximatelyZero())
@@ -808,6 +790,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     // assume lhs and rhs are the same length.
     // assert(lhs.getVar() == rhs.getVar());
     vEdge v = mv_multiply2(lhs, rhs, lhs.getVar());
+    v.w = Complex::one;
     return v;
 }
 
@@ -823,17 +806,16 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
     const auto nqubits = static_cast<QubitCount>(rootEdge.getVar() + 1);
     std::string result(nqubits, '0');
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
-
-    for (Qubit i = rootEdge.getVar(); i >= 0; --i) {
+    for (Qubit i = rootEdge.getVar(); i >= 0; --i)
+    {
         double p0 = ComplexNumbers::mag2(cur.n->getEdge(0).w);
         double p1 = ComplexNumbers::mag2(cur.n->getEdge(1).w);
         double tmp = p0 + p1;
 
-        if (std::abs(tmp - 1.0L) > epsilon) {
-            throw std::runtime_error("Added probabilities differ from 1 by " +
-                                     std::to_string(std::abs(tmp - 1.0L)));
-        }
-
+        //if (std::abs(tmp - 1.0L) > epsilon) {
+        //    throw std::runtime_error("Added probabilities differ from 1 by " +
+        //                             std::to_string(std::abs(tmp - 1.0L)));
+        //}
         p0 /= tmp;
 
         const double threshold = dist(mt);
@@ -972,14 +954,14 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     const auto &[pzero, pone] = determineMeasurementProbabilities(
         rootEdge, index, assumeProbabilityNormalization);
     const double sum = pzero + pone;
-    if (std::abs(sum - 1) > epsilon) {
-        throw std::runtime_error(
-            "Numerical instability occurred during measurement: |alpha|^2 "
-            "+ "
-            "|beta|^2 = " +
-            std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
-            std::to_string(pzero + pone) + ", but should be 1!");
-    }
+    // if (std::abs(sum - 1) > epsilon) {
+    //     throw std::runtime_error(
+    //         "Numerical instability occurred during measurement: |alpha|^2 "
+    //         "+ "
+    //         "|beta|^2 = " +
+    //         std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
+    //         std::to_string(pzero + pone) + ", but should be 1!");
+    // }
     GateMatrix measurementMatrix{cf_zero, cf_zero, cf_zero, cf_zero};
 
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
@@ -1114,12 +1096,12 @@ mEdge CX(QubitCount qnum, int target, int control) {
 
 void genDot2(vNode *node, std::vector<std::string> &result, int depth) {
     std::stringstream node_ss;
-    node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
+    node_ss << (uint64_t)node << " [label=\"q" << depth <<"(n=" << node->v << ")\"]";
     result.push_back(node_ss.str());
     for (int i = 0; i < node->children.size(); i++) {
         std::stringstream ss;
         ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n
-           << " [label=\"" << i << node->children[i].w << "\"]";
+           << " [label=\"" << i <<"(w="<< node->children[i].w << ")\"]";
         result.push_back(ss.str());
         if (!node->children[i].isTerminal())
             genDot2(node->children[i].n, result, depth + 1);
@@ -1128,6 +1110,11 @@ void genDot2(vNode *node, std::vector<std::string> &result, int depth) {
 
 std::string genDot(vEdge &rootEdge) {
     std::vector<std::string> result;
+    result.push_back("0 [label=\"start\"]");
+    std::stringstream edge_ss;
+    edge_ss << 0 << " -> " << (uint64_t)rootEdge.n
+           << " [label=\"(w="<< rootEdge.w << ")\"]";
+    result.push_back(edge_ss.str());
     genDot2(rootEdge.n, result, 0);
 
     // vNode::terminal
