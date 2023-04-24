@@ -834,8 +834,9 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     result.w = result.w * lhs.w * rhs.w;
     if (result.w.isApproximatelyZero())
         return mEdge::zero;
-    else
-        return result;
+    if (result.w.isApproximatelyOne())
+        result.w = {1.0, 0.0};
+    return result;
 }
 
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
@@ -902,6 +903,9 @@ mEdge mm_kronecker(const mEdge &lhs, const mEdge &rhs) {
 
 vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
+        if (rhs.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
         return rhs;
     } else if (rhs.w.isApproximatelyZero()) {
         return lhs;
@@ -911,11 +915,17 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w + rhs.w, vNode::terminal};
     }
+    if (lhs.n == rhs.n) {
+        return {lhs.w + rhs.w, lhs.n};
+    }
 
     vEdge result;
 
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
+        if (result.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
         return result;
     }
 
@@ -1178,9 +1188,11 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     result.w = result.w * lhs.w * rhs.w;
     if (result.w.isApproximatelyZero()) {
         return vEdge::zero;
-    } else {
-        return result;
     }
+    if (result.w.isApproximatelyOne()) {
+        result.w = {1.0, 0.0};
+    }
+    return result;
 }
 
 struct mEdgeRefGuard {
