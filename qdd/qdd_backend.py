@@ -6,6 +6,7 @@ import uuid
 import dataclasses
 from collections import Counter
 from warnings import warn
+import time
 
 from qiskit.providers import BackendV1, JobV1, Options, Provider
 from qiskit.providers.models import BackendConfiguration
@@ -263,6 +264,8 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
+        print("### START Evaluation (1 circuit)")
+        start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
@@ -370,6 +373,7 @@ class QddBackend(BackendV1):
             'header': header,
         }
 
+        print("### END Evaluation: ",time.time()-start)
         return result
 
     
