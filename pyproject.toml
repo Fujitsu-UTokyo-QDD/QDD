@@ -6,12 +6,12 @@ authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
 readme = "README.md"
 packages = [
     { include = "qdd"},
-    { include = "pyQDD.cpython-310-x86_64-linux-gnu.so" },
+    { include = "pyQDD.cpython-38-x86_64-linux-gnu.so" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-qiskit = "^0.42.0"
+python = ">=3.8, <3.10"
+qiskit = ">=0.32.1"
 
 
 [tool.poetry.group.dev.dependencies]
