@@ -21,7 +21,7 @@ from qiskit import Aer, QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Gate, Parameter
 
 from qdd import QddProvider
-from helpers.circuit_helper import assert_probabilities_are_close, get_counts
+from test.python.helpers.circuit_helper import assert_probabilities_are_close, get_counts
 
 
 def test_opaque_gates():

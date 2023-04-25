@@ -19,7 +19,7 @@ from qiskit import QuantumCircuit, pulse, schedule
 from qiskit.pulse import DriveChannel
 
 from qdd import QddProvider
-from helpers.circuit_helper import assert_job_failed
+from test.python.helpers.circuit_helper import assert_job_failed
 
 
 def test_pulse_backend_configuration():
