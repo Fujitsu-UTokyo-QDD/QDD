@@ -4,10 +4,14 @@ version = "0.1.0"
 description = "Qiskit Provider for QDD"
 authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
 readme = "README.md"
+packages = [
+    { include = "qdd"},
+    { include = "pyQDD.cpython-38-x86_64-linux-gnu.so" },
+]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-qiskit = "^0.42.0"
+python = ">=3.8, <3.10"
+qiskit = ">=0.32.1"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -17,6 +21,7 @@ qiskit-finance = "^0.3.4"
 qiskit-optimization = "^0.5.0"
 qiskit-nature = {extras = ["pyscf"], version = "^0.5.2"}
 tweedledum = "^1.1.1"
+pybind11 = "^2.10.4"
 
 [build-system]
 requires = ["poetry-core"]

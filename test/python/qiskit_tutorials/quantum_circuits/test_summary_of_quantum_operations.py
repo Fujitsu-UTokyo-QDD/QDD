@@ -8,7 +8,7 @@ import pytest
 from qiskit import Aer, QuantumCircuit
 
 from qdd import QddProvider
-from helpers.circuit_helper import assert_probabilities_are_close, get_counts
+from test.python.helpers.circuit_helper import assert_probabilities_are_close, get_counts
 
 
 def test_gates_1_to_many_mapping():

@@ -10,3 +10,6 @@ lib/
 result/
 __pycache__
 .idea/
+dist/
+*.so
+.python-version

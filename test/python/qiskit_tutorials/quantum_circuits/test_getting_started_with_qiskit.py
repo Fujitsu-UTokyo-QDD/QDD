@@ -17,7 +17,7 @@ import pytest
 from qiskit import QuantumCircuit, transpile
 
 from qdd import QddProvider
-from helpers.circuit_helper import assert_job_failed
+from test.python.helpers.circuit_helper import assert_job_failed
 
 
 def test_circuit_basics():

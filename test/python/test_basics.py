@@ -14,7 +14,7 @@ from qiskit.circuit import Parameter
 from qiskit.circuit.exceptions import CircuitError
 
 from qdd import QddBackend, QddProvider
-from helpers.circuit_helper import assert_job_failed, get_oracle_counts_of_simple_circuit_run, run_simple_circuit
+from test.python.helpers.circuit_helper import assert_job_failed, get_oracle_counts_of_simple_circuit_run, run_simple_circuit
 
 
 def test_num_qubits_2():

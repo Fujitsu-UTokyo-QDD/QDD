@@ -20,7 +20,7 @@ from qiskit.circuit.library import XGate
 from qiskit.quantum_info import Operator, Pauli, process_fidelity
 
 from qdd import QddProvider
-from helpers.circuit_helper import get_counts
+from test.python.helpers.circuit_helper import get_counts
 
 
 def test_using_operators_in_circuits():
