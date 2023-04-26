@@ -6,8 +6,12 @@
 #include <complex>
 #include <random>
 #include <vector>
+#include <boost/mpi/environment.hpp>
+#include <boost/mpi/communicator.hpp>
 using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
+
+namespace bmpi = boost::mpi;
 
 struct Complex {
     double r{0.0};
@@ -130,6 +134,7 @@ struct vEdge {
     VectorXcf getEigenVector();
 
     void printVector() const;
+    void printVectorMPI(bmpi::communicator &world) const;
     void printVector_sparse() const;
     std_complex *getVector(std::size_t *dim) const;
 
@@ -362,6 +367,8 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs);
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);
 vEdge makeZeroState(QubitCount q);
 vEdge makeOneState(QubitCount q);
+vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world);
+vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);

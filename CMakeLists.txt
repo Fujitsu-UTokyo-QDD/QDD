@@ -49,7 +49,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-find_package(Boost REQUIRED COMPONENTS fiber context)
+set(CMAKE_C_COMPILER "/usr/bin/mpicc" CACHE string "MPI C compiler" FORCE)
+set(CMAKE_CXX_COMPILER "/usr/bin/mpic++" CACHE string "MPI C++ compiler" FORCE)
+find_package(MPI REQUIRED COMPONENTS CXX C)
+
+find_package(Boost REQUIRED COMPONENTS fiber context serialization mpi)
 message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
 
 

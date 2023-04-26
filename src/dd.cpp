@@ -261,6 +261,16 @@ vEdge makeZeroState(QubitCount q) {
     return e;
 }
 
+vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world){
+    if(world.rank()==0){
+        int shift = std::log2(world.size());
+        assert(1 << shift == world.size());
+        return makeZeroState(q - shift);
+    }else{
+        return vEdge::zero;
+    }
+}
+
 vEdge makeOneState(QubitCount q) {
     vEdge e = makeVEdge(0, {vEdge::zero, vEdge::one});
     for (Qubit i = 1; i < q; i++) {
@@ -268,6 +278,17 @@ vEdge makeOneState(QubitCount q) {
     }
     return e;
 }
+
+vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world){
+    if(world.rank()==world.size()-1){
+        int shift = std::log2(world.size());
+        assert(1 << shift == world.size());
+        return makeOneState(q - shift);
+    }else{
+        return vEdge::zero;
+    }
+}
+
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target) {
     return makeGate(q, g, target, {});
 }
@@ -1021,6 +1042,34 @@ void vEdge::printVector() const {
     std::cout << std::endl;
 
     delete[] vector;
+}
+
+void vEdge::printVectorMPI(bmpi::communicator &world) const {
+    std::stringstream ss;
+    if (this->isTerminal()){
+        ss << "(all 0)" << std::endl;
+    }else{
+        Qubit q = this->getVar();
+        std::size_t dim = 1 << (q + 1);
+        std_complex *vector = new std_complex[dim];
+        printVector2(*this, 0, {1.0, 0.0}, q + 1, vector);
+        for (size_t i = 0; i < dim; i++) {
+            ss << vector[i] << std::endl;
+        }
+        delete[] vector;
+    }
+    
+    if(world.rank()==0){
+        std::cout << ss.str();
+        for (int i = 1; i < world.size();i++){
+            std::string msg;
+            world.recv(i, i, msg);
+            std::cout << msg;
+        }
+    }else{
+        world.send(0, world.rank(), ss.str());
+    }
+    return;
 }
 
 static void printVector_sparse2(const vEdge &edge, std::size_t row,

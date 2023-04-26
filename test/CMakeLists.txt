@@ -6,3 +6,9 @@ target_link_libraries(qdd_test PUBLIC engine PUBLIC GTest::gtest_main)
 target_include_directories(qdd_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
 include(GoogleTest)
 gtest_discover_tests(qdd_test)
+
+add_executable(mpi_test mpi_test.cpp)
+target_link_libraries(mpi_test PUBLIC engine)
+target_link_libraries(mpi_test PUBLIC engine PUBLIC GTest::gtest_main)
+gtest_discover_tests(mpi_test)
+
