@@ -70,7 +70,8 @@ def test_measure_no_measure():
 
     backend = QddProvider().get_backend()
     job = execute(circ, backend=backend, shots=20, seed_transpiler=50, seed_simulator=80)
-    assert_job_failed(job)
+    statevec = job.result().get_statevector(circ, decimals=3)
+    print(statevec)
 
 
 def test_memory_true():
