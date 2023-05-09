@@ -64,7 +64,7 @@ class QddBackend(BackendV1):
     """A backend used for evaluating circuits with QDD simulator."""
 
     _DEFAULT_CONFIG: Dict[str, Any] = {
-        'backend_name': 'qdd_backend',
+        'backend_name': 'statevector_simulator',
         'backend_version': __version__,
         'n_qubits': 100,  # inclusive
         'basis_gates': sorted([
@@ -264,7 +264,6 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
-        print("### START Evaluation (1 circuit)")
         start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
@@ -363,6 +362,9 @@ class QddBackend(BackendV1):
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
         if options['memory']:
             result_data['memory'] = sampled_values
+        if circ_prop.store_final_state:
+            dim=0
+            result_data["statevector"] = pyQDD.getVector(current);
         header = QddBackend._create_experiment_header(circ)
         result = {
             'success': True,
@@ -373,7 +375,6 @@ class QddBackend(BackendV1):
             'header': header,
         }
 
-        print("### END Evaluation: ",time.time()-start)
         return result
 
     
@@ -414,6 +415,7 @@ class QddBackend(BackendV1):
         # two measure gates: Measure(0, 0) and Measure(0, 1).
         # Note: all the quantum channel instructions (e.g., Choi, SuperOp, Kraus, ...) have the name of 'kraus'.
         stable_final_state: bool = True
+        store_final_state: bool = False
         measured_qubits = set()
         clbit_final_values: Dict[Clbit, Qubit] = {}  # for each clbit, this holds the qubit last assigned to the clbit.
         for i, (inst, qargs, cargs) in enumerate(circ.data):
@@ -446,10 +448,9 @@ class QddBackend(BackendV1):
 
         # The circuit must have measurement gates
         if not measured_qubits:
-            raise RuntimeError(f'Circuit "{circ.name}" has no measurement gates.'
-                               f' Every circuit must have measurement gates when using {QddBackend.__name__}.')
+            store_final_state = True
 
-        return CircuitProperty(stable_final_state=stable_final_state, clbit_final_values=clbit_final_values)
+        return CircuitProperty(stable_final_state=stable_final_state, clbit_final_values=clbit_final_values, store_final_state=store_final_state)
     
     def _validate_run_options(self, run_options):
         """Checks whether the given options are valid to run with (e.g., shots < max_shots)."""

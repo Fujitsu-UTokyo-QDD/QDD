@@ -18,3 +18,4 @@ class CircuitProperty:
 
     stable_final_state: bool
     clbit_final_values: Dict[Clbit, Qubit]
+    store_final_state: bool
