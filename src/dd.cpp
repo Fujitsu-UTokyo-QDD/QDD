@@ -741,6 +741,24 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size){
     return getMPIGate(tmp, row % border, col % border, border);
 }
 
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, int rank, int world_size){
+    int row = rank;
+    int col = rank;
+
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+
+    for (int i = 1; i<world_size; i++){
+        col = (row + i) % world_size;
+        mEdge gate = getMPIGate(lhs, row, col, world_size);
+        vEdge stat;
+        // stat = receive_from_neighbor(); //TODO: implementation
+        result = vv_add(result, mv_multiply(gate, stat));
+        // send_to_next(stat); //TODO: implementation
+    }
+    return result;
+}
+
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
     assert(!(lhs.isTerminal() && rhs.isTerminal()));
 
