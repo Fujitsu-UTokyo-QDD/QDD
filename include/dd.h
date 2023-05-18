@@ -354,6 +354,8 @@ mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
 mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
                      const Controls &c);
 
+mEdge getMPIGate(mEdge root, int row, int col, int world_size);
+
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);
 

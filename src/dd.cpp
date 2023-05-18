@@ -713,6 +713,34 @@ mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
                                                          threshold, c);
 }
 
+mEdge getMPIGate(mEdge root, int row, int col, int world_size){
+    if(root.isTerminal() || world_size<=1){
+        return root;
+    }
+
+    // Check world_size is 2^n
+    assert((world_size & world_size - 1) == 0);
+    assert(row < world_size && col < world_size);
+
+    /*
+    sub-matrix index
+        0|1
+        ---
+        2|3
+    */
+    int index = 0;
+    int border = world_size / 2;
+    if (row >= border){
+        index += 2;
+    }
+    if(col >= border){
+        index += 1;
+    }
+    mEdge tmp = root.getNode()->children[index];
+    tmp.w *= root.w;
+    return getMPIGate(tmp, row % border, col % border, border);
+}
+
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
     assert(!(lhs.isTerminal() && rhs.isTerminal()));
 
