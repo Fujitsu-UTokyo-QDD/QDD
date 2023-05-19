@@ -3,17 +3,26 @@
 #include "Eigen/Dense"
 #include "common.h"
 #include <atomic>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 #include <complex>
 #include <random>
 #include <vector>
-#include <boost/mpi/environment.hpp>
-#include <boost/mpi/communicator.hpp>
 using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
 
 namespace bmpi = boost::mpi;
 
 struct Complex {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &r;
+        ar &i;
+    }
     double r{0.0};
     double i{0.0};
 
@@ -121,6 +130,13 @@ struct mNode;
 struct vNode;
 
 struct vEdge {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &w;
+        ar &n;
+    }
 
     static vEdge one;
     static vEdge zero;
@@ -152,6 +168,14 @@ inline void swap(vEdge &lhs, vEdge &rhs) {
 }
 
 struct vNode {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &v;
+        ar &children;
+        ar &next;
+    }
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
@@ -181,6 +205,13 @@ struct vNode {
 };
 
 struct mEdge {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &w;
+        ar &n;
+    }
 
     static mEdge one;
     static mEdge zero;
@@ -261,6 +292,14 @@ inline std::ostream &operator<<(std::ostream &os, const mEdge &c) {
 }
 
 struct mNode {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &v;
+        ar &children;
+        ar &next;
+    }
 
     mNode() = default;
     mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, unsigned int r)
@@ -374,7 +413,8 @@ vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
-char measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization,
+char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
+                          const bool assumeProbabilityNormalization,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 
 mEdge RX(QubitCount qnum, int target, float angle);
