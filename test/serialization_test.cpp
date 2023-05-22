@@ -33,6 +33,6 @@ TEST(SerializationTest, InitTest2) {
         // archive and stream closed when destructors are called
     }
     std::cout << "input:" << std::endl;
-    v.printVector() std::cout << "output:" << std::endl;
+    v.printVector(); std::cout << "output:" << std::endl;
     newv.printVector();
 }

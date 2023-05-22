@@ -7,6 +7,9 @@
 
 
 TEST(MPITest, MPIAllTest){
+    // With GoogleTest, all tests with MPI must be included in the single test,
+    // unless MPI library makes an error.
+
     int argc=0;
     char **argv;
     boost::mpi::environment env(argc, argv);
@@ -48,6 +51,20 @@ TEST(MPITest, MPIAllTest){
             mat01.printMatrix();
             mat10.printMatrix();
             mat11.printMatrix();
+        }
+    }
+    world.barrier();
+    {
+        vEdge v = makeZeroState(3);
+        int tag = 0;
+        if (world.rank() == 0){
+            world.send(1, tag, v);
+        }
+        if(world.rank()==1){
+            vEdge new_v;
+            world.recv(0, tag, new_v);
+            std::cout << "----" << std::endl;
+            new_v.printVector();
         }
     }
 }

@@ -12,3 +12,7 @@ target_link_libraries(mpi_test PUBLIC engine)
 target_link_libraries(mpi_test PUBLIC engine PUBLIC GTest::gtest_main)
 gtest_discover_tests(mpi_test)
 
+add_executable(serialization_test serialization_test.cpp)
+target_link_libraries(serialization_test PUBLIC engine)
+target_link_libraries(serialization_test PUBLIC engine PUBLIC GTest::gtest_main)
+gtest_discover_tests(serialization_test)
