@@ -1621,3 +1621,62 @@ std::string genDot(vEdge &rootEdge){
     finalresult << "}" << std::endl;
     return finalresult.str();
 }
+
+struct vContent{
+    Qubit v;
+    std::array<std_complex,2> w;
+    std::array<int,2> index;
+
+    vContent(Qubit qpos, std_complex w1, std_complex w2, int i1, int i2)
+        :v(qpos), w({w1,w2}), index({i1,i2}){};
+};
+
+int vNode_to_vec(vNode* node, std::vector<vContent> &table, std::unordered_map<vNode*, int> &map){
+    /*
+    This function is to serialize vNode* recursively.
+    'table' is the outcome for serialization.
+    */
+
+    // If table is empty, always add a terminal node as id=0.
+    // 'map' remember the processed vNode*, so you can avoid adding the same vNode* for multiple times.
+    if(table.size()==0){
+        vContent terminal(-1,{0.0, 0.0},{0.0, 0.0},0,0);
+        table.push_back(terminal);
+        map[node->terminal] = 0;
+    }
+    if(map.contains(node)){
+        return map[node];
+    }
+
+    // If the given vNode* is not included in 'table', new data is pushed.
+    int i0 = vNode_to_vec(node->children[0].getNode(), table, map);
+    int i1 = vNode_to_vec(node->children[1].getNode(), table, map);
+    vContent nodeData(node->v, node->children[0].w, node->children[1].w, i0, i1);
+    table.push_back(nodeData);
+    map[node] = table.size() - 1;
+    return table.size() - 1;
+}
+
+vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable & uniqTable){
+    /*
+    This function is to de-serialize table into vNode*.
+    You can specify which uniqueTable to be used. (usually vUnique ?)
+    */
+
+    // The node(0) must be terminal node.
+    std::unordered_map<int, vNode *> map;
+    map[0] = &vNode::terminalNode;
+
+    for (int i = 1; i < table.size();i++){
+        vNode *node = uniqTable.getNode();
+        node->v = table[i].v;
+        vNode *i0 = map[table[i].index[0]];
+        vNode *i1 = map[table[i].index[1]];
+        vEdge e0 = {table[i].w[0],i0};
+        vEdge e1 = {table[i].w[1],i1};
+        node->children = {e0, e1};
+        node = uniqTable.lookup(node);
+        map[i] = node;
+    }
+    return map[table.size() - 1];
+}
