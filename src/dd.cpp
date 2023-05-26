@@ -4,6 +4,8 @@
 #include "table.hpp"
 #include <algorithm>
 #include <bitset>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
 #include <map>
 #include <queue>
 
@@ -11,6 +13,7 @@
 
 mNodeTable mUnique(40);
 vNodeTable vUnique(40);
+std::unordered_map<vNode *, int> mpi_map;
 
 std::vector<mEdge> identityTable(40);
 
@@ -66,7 +69,7 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     double tmp = sqrt(e.n->children[0].w.mag2() + e.n->children[1].w.mag2());
-    std_complex norm = {e.w.r>0? tmp:-tmp, 0};
+    std_complex norm = {e.w.r > 0 ? tmp : -tmp, 0};
 
     for (int i = 0; i < 2; i++) {
         e.n->children[i].w /= norm;
@@ -261,12 +264,12 @@ vEdge makeZeroState(QubitCount q) {
     return e;
 }
 
-vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world){
-    if(world.rank()==0){
+vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world) {
+    if (world.rank() == 0) {
         int shift = std::log2(world.size());
         assert(1 << shift == world.size());
         return makeZeroState(q - shift);
-    }else{
+    } else {
         return vEdge::zero;
     }
 }
@@ -279,12 +282,12 @@ vEdge makeOneState(QubitCount q) {
     return e;
 }
 
-vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world){
-    if(world.rank()==world.size()-1){
+vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world) {
+    if (world.rank() == world.size() - 1) {
         int shift = std::log2(world.size());
         assert(1 << shift == world.size());
         return makeOneState(q - shift);
-    }else{
+    } else {
         return vEdge::zero;
     }
 }
@@ -713,8 +716,8 @@ mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
                                                          threshold, c);
 }
 
-mEdge getMPIGate(mEdge root, int row, int col, int world_size){
-    if(root.isTerminal() || world_size<=1){
+mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
+    if (root.isTerminal() || world_size <= 1) {
         return root;
     }
 
@@ -730,10 +733,10 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size){
     */
     int index = 0;
     int border = world_size / 2;
-    if (row >= border){
+    if (row >= border) {
         index += 2;
     }
-    if(col >= border){
+    if (col >= border) {
         index += 1;
     }
     mEdge tmp = root.getNode()->children[index];
@@ -741,14 +744,14 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size){
     return getMPIGate(tmp, row % border, col % border, border);
 }
 
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, int rank, int world_size){
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, int rank, int world_size) {
     int row = rank;
     int col = rank;
 
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
 
-    for (int i = 1; i<world_size; i++){
+    for (int i = 1; i < world_size; i++) {
         col = (row + i) % world_size;
         mEdge gate = getMPIGate(lhs, row, col, world_size);
         vEdge stat;
@@ -1092,9 +1095,9 @@ void vEdge::printVector() const {
 
 void vEdge::printVectorMPI(bmpi::communicator &world) const {
     std::stringstream ss;
-    if (this->isTerminal()){
+    if (this->isTerminal()) {
         ss << "(all 0)" << std::endl;
-    }else{
+    } else {
         Qubit q = this->getVar();
         std::size_t dim = 1 << (q + 1);
         std_complex *vector = new std_complex[dim];
@@ -1104,15 +1107,15 @@ void vEdge::printVectorMPI(bmpi::communicator &world) const {
         }
         delete[] vector;
     }
-    
-    if(world.rank()==0){
+
+    if (world.rank() == 0) {
         std::cout << ss.str();
-        for (int i = 1; i < world.size();i++){
+        for (int i = 1; i < world.size(); i++) {
             std::string msg;
             world.recv(i, i, msg);
             std::cout << msg;
         }
-    }else{
+    } else {
         world.send(0, world.rank(), ss.str());
     }
     return;
@@ -1366,14 +1369,16 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
     return std::string{result.rbegin(), result.rend()};
 }
 
-double assignProbabilities(const vEdge& edge, std::unordered_map<vNode*, double>& probs) {
+double assignProbabilities(const vEdge &edge,
+                           std::unordered_map<vNode *, double> &probs) {
     auto it = probs.find(edge.n);
     if (it != probs.end()) {
         return edge.w.mag2() * it->second;
     }
     double sum{1};
     if (!edge.isTerminal()) {
-        sum = assignProbabilities(edge.n->children.at(0), probs) + assignProbabilities(edge.n->children.at(1), probs);
+        sum = assignProbabilities(edge.n->children.at(0), probs) +
+              assignProbabilities(edge.n->children.at(1), probs);
     }
 
     probs.insert({edge.n, sum});
@@ -1381,17 +1386,19 @@ double assignProbabilities(const vEdge& edge, std::unordered_map<vNode*, double>
     return edge.w.mag2() * sum;
 }
 
-std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdge, const Qubit index, const bool assumeProbabilityNormalization) {
-    std::map<vNode*, double> probsMone;
-    std::set<vNode*>     visited;
-    std::queue<vNode*>   q;
+std::pair<double, double>
+determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index,
+                                  const bool assumeProbabilityNormalization) {
+    std::map<vNode *, double> probsMone;
+    std::set<vNode *> visited;
+    std::queue<vNode *> q;
 
     probsMone[rootEdge.n] = rootEdge.w.mag2();
     visited.insert(rootEdge.n);
     q.push(rootEdge.n);
 
     while (q.front()->v != index) {
-        vNode* ptr = q.front();
+        vNode *ptr = q.front();
         q.pop();
         const double prob = probsMone[ptr];
 
@@ -1399,7 +1406,8 @@ std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdg
             const double tmp1 = prob * ptr->children.at(0).w.mag2();
 
             if (visited.find(ptr->children.at(0).n) != visited.end()) {
-                probsMone[ptr->children.at(0).n] = probsMone[ptr->children.at(0).n] + tmp1;
+                probsMone[ptr->children.at(0).n] =
+                    probsMone[ptr->children.at(0).n] + tmp1;
             } else {
                 probsMone[ptr->children.at(0).n] = tmp1;
                 visited.insert(ptr->children.at(0).n);
@@ -1411,7 +1419,8 @@ std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdg
             const double tmp1 = prob * ptr->children.at(1).w.mag2();
 
             if (visited.find(ptr->children.at(1).n) != visited.end()) {
-                probsMone[ptr->children.at(1).n] = probsMone[ptr->children.at(1).n] + tmp1;
+                probsMone[ptr->children.at(1).n] =
+                    probsMone[ptr->children.at(1).n] + tmp1;
             } else {
                 probsMone[ptr->children.at(1).n] = tmp1;
                 visited.insert(ptr->children.at(1).n);
@@ -1425,7 +1434,7 @@ std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdg
 
     if (assumeProbabilityNormalization) {
         while (!q.empty()) {
-            vNode* ptr = q.front();
+            vNode *ptr = q.front();
             q.pop();
 
             if (!ptr->children.at(0).w.isApproximatelyZero()) {
@@ -1437,51 +1446,63 @@ std::pair<double, double> determineMeasurementProbabilities(const vEdge& rootEdg
             }
         }
     } else {
-        std::unordered_map<vNode*, double> probs;
+        std::unordered_map<vNode *, double> probs;
         assignProbabilities(rootEdge, probs);
 
         while (!q.empty()) {
-            vNode* ptr = q.front();
+            vNode *ptr = q.front();
             q.pop();
 
             if (!ptr->children.at(0).w.isApproximatelyZero()) {
-                pzero += probsMone[ptr] * probs[ptr->children.at(0).n] * ptr->children.at(0).w.mag2();
+                pzero += probsMone[ptr] * probs[ptr->children.at(0).n] *
+                         ptr->children.at(0).w.mag2();
             }
 
             if (!ptr->children.at(1).w.isApproximatelyZero()) {
-                pone += probsMone[ptr] * probs[ptr->children.at(1).n] * ptr->children.at(1).w.mag2();
+                pone += probsMone[ptr] * probs[ptr->children.at(1).n] *
+                        ptr->children.at(1).w.mag2();
             }
         }
     }
     return {pzero, pone};
 }
 
-char measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization, std::mt19937_64 &mt, double epsilon){
-    const auto& [pzero, pone] = determineMeasurementProbabilities(rootEdge, index, assumeProbabilityNormalization);
+char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
+                          const bool assumeProbabilityNormalization,
+                          std::mt19937_64 &mt, double epsilon) {
+    const auto &[pzero, pone] = determineMeasurementProbabilities(
+        rootEdge, index, assumeProbabilityNormalization);
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
-        throw std::runtime_error("Numerical instability occurred during measurement: |alpha|^2 + |beta|^2 = " + std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
-                                         std::to_string(pzero + pone) + ", but should be 1!");
+        throw std::runtime_error(
+            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "|beta|^2 = " +
+            std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
+            std::to_string(pzero + pone) + ", but should be 1!");
     }
     GateMatrix measurementMatrix{cf_zero, cf_zero, cf_zero, cf_zero};
 
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
-    double   threshold = dist(mt);
-    double   normalizationFactor; // NOLINT(cppcoreguidelines-init-variables) always assigned a value in the following block
-    char result;              // NOLINT(cppcoreguidelines-init-variables) always assigned a value in the following block
+    double threshold = dist(mt);
+    double
+        normalizationFactor; // NOLINT(cppcoreguidelines-init-variables) always
+                             // assigned a value in the following block
+    char result; // NOLINT(cppcoreguidelines-init-variables) always assigned a
+                 // value in the following block
 
     if (threshold < pzero / sum) {
         measurementMatrix[0] = cf_one;
-        normalizationFactor  = pzero;
-        result               = '0';
+        normalizationFactor = pzero;
+        result = '0';
     } else {
         measurementMatrix[3] = cf_one;
-        normalizationFactor  = pone;
-        result               = '1';
+        normalizationFactor = pone;
+        result = '1';
     }
 
-    mEdge measurementGate = makeGate(rootEdge.getVar() + 1, measurementMatrix, index);
+    mEdge measurementGate =
+        makeGate(rootEdge.getVar() + 1, measurementMatrix, index);
 
     vEdge e = mv_multiply(measurementGate, rootEdge);
 
@@ -1591,73 +1612,68 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
-void genDot2(vNode* node, std::vector<std::string>& result, int depth){
+void genDot2(vNode *node, std::vector<std::string> &result, int depth) {
     std::stringstream node_ss;
-    node_ss << (uint64_t)node << " [label=\"q"<<depth <<"\"]";
+    node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
     result.push_back(node_ss.str());
-    for (int i = 0; i < node->children.size(); i++){
+    for (int i = 0; i < node->children.size(); i++) {
         std::stringstream ss;
-        ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n << " [label=\"" << i << node->children[i].w << "\"]";
+        ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n
+           << " [label=\"" << i << node->children[i].w << "\"]";
         result.push_back(ss.str());
-        if(!node->children[i].isTerminal())
-            genDot2(node->children[i].n, result, depth+1);
+        if (!node->children[i].isTerminal())
+            genDot2(node->children[i].n, result, depth + 1);
     }
 }
 
-std::string genDot(vEdge &rootEdge){
+std::string genDot(vEdge &rootEdge) {
     std::vector<std::string> result;
     genDot2(rootEdge.n, result, 0);
 
-    //vNode::terminal
+    // vNode::terminal
     std::stringstream node_ss;
     node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
     result.push_back(node_ss.str());
 
     std::stringstream finalresult;
     finalresult << "digraph qdd {" << std::endl;
-    for(std::string line : result){
+    for (std::string line : result) {
         finalresult << "  " << line << std::endl;
     }
     finalresult << "}" << std::endl;
     return finalresult.str();
 }
 
-struct vContent{
-    Qubit v;
-    std::array<std_complex,2> w;
-    std::array<int,2> index;
-
-    vContent(Qubit qpos, std_complex w1, std_complex w2, int i1, int i2)
-        :v(qpos), w({w1,w2}), index({i1,i2}){};
-};
-
-int vNode_to_vec(vNode* node, std::vector<vContent> &table, std::unordered_map<vNode*, int> &map){
+int vNode_to_vec(vNode *node, std::vector<vContent> &table,
+                 std::unordered_map<vNode *, int> &map) {
     /*
     This function is to serialize vNode* recursively.
     'table' is the outcome for serialization.
     */
 
     // If table is empty, always add a terminal node as id=0.
-    // 'map' remember the processed vNode*, so you can avoid adding the same vNode* for multiple times.
-    if(table.size()==0){
-        vContent terminal(-1,{0.0, 0.0},{0.0, 0.0},0,0);
+    // 'map' remember the processed vNode*, so you can avoid adding the same
+    // vNode* for multiple times.
+    if (table.size() == 0) {
+        vContent terminal(-1, {0.0, 0.0}, {0.0, 0.0}, 0, 0);
         table.push_back(terminal);
         map[node->terminal] = 0;
     }
-    if(map.contains(node)){
+    if (map.contains(node)) {
         return map[node];
     }
 
     // If the given vNode* is not included in 'table', new data is pushed.
     int i0 = vNode_to_vec(node->children[0].getNode(), table, map);
     int i1 = vNode_to_vec(node->children[1].getNode(), table, map);
-    vContent nodeData(node->v, node->children[0].w, node->children[1].w, i0, i1);
+    vContent nodeData(node->v, node->children[0].w, node->children[1].w, i0,
+                      i1);
     table.push_back(nodeData);
     map[node] = table.size() - 1;
     return table.size() - 1;
 }
 
-vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable & uniqTable){
+vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
     /*
     This function is to de-serialize table into vNode*.
     You can specify which uniqueTable to be used. (usually vUnique ?)
@@ -1667,16 +1683,29 @@ vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable & uniqTable){
     std::unordered_map<int, vNode *> map;
     map[0] = &vNode::terminalNode;
 
-    for (int i = 1; i < table.size();i++){
+    for (int i = 1; i < table.size(); i++) {
         vNode *node = uniqTable.getNode();
         node->v = table[i].v;
         vNode *i0 = map[table[i].index[0]];
         vNode *i1 = map[table[i].index[1]];
-        vEdge e0 = {table[i].w[0],i0};
-        vEdge e1 = {table[i].w[1],i1};
+        vEdge e0 = {table[i].w[0], i0};
+        vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
         node = uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
 }
+
+
+vNode receive_dd(boost::mpi::communicator &world, int source_node_id) {
+    std::vector<vContent> v;
+    world.recv(source_node_id, 0, &v);
+    return *vec_to_vNode(v, &vUnique);
+}
+void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id) {
+    std::vector<vContent> v;
+    vNode_to_vec(e.n, &v, &mpi_map);
+    world.send(dest_node_id, 0, &v);
+    return;
+};

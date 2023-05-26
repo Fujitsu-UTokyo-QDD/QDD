@@ -378,6 +378,22 @@ struct ControlComparator {
         return lhs.qubit < rhs;
     }
 };
+struct vContent {
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &v;
+        ar &w;
+        ar &index;
+    }
+    Qubit v;
+    std::array<std_complex, 2> w;
+    std::array<int, 2> index;
+
+    vContent(Qubit qpos, std_complex w1, std_complex w2, int i1, int i2)
+        : v(qpos), w({w1, w2}), index({i1, i2}){};
+};
 
 using Controls = std::set<Control, ControlComparator>;
 
@@ -426,3 +442,6 @@ mEdge RZ(QubitCount qnum, int target, float angle);
 mEdge CX(QubitCount qnum, int target, int control);
 
 std::string genDot(vEdge &rootEdge);
+
+vEdge receive_dd(int source_node_id);
+void send_dd(vEdge e, int dest_node_id);
