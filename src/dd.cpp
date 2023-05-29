@@ -758,7 +758,8 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
         mEdge gate = getMPIGate(lhs, row, col, world_size);
         vEdge received = receive_dd(world, (world.rank() - 1) % world_size);
         result = vv_add(result, mv_multiply(gate, received));
-        send_dd(world, received, (world.rank() + 1) % world_size, false);
+        if(i != world_size - 1)
+            send_dd(world, received, (world.rank() + 1) % world_size, false);
     }
     return result;
 }
