@@ -8,9 +8,11 @@ include(GoogleTest)
 gtest_discover_tests(qdd_test)
 
 add_executable(mpi_test mpi_test.cpp)
-target_link_libraries(mpi_test PUBLIC engine)
 target_link_libraries(mpi_test PUBLIC engine PUBLIC GTest::gtest_main)
 gtest_discover_tests(mpi_test)
+
+add_executable(mpi_test_grover mpi_test_grover.cpp)
+target_link_libraries(mpi_test_grover PUBLIC engine)
 
 add_executable(serialization_test serialization_test.cpp)
 target_link_libraries(serialization_test PUBLIC engine)
