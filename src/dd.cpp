@@ -13,7 +13,6 @@
 
 mNodeTable mUnique(40);
 vNodeTable vUnique(40);
-std::unordered_map<vNode *, int> mpi_map;
 
 std::vector<mEdge> identityTable(40);
 
@@ -744,20 +743,22 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     return getMPIGate(tmp, row % border, col % border, border);
 }
 
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, int rank, int world_size) {
-    int row = rank;
-    int col = rank;
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
+    int row = world.rank();
+    int world_size = world.size();
 
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
+    //std::cout << "step0 fin #" << world.rank() << std::endl;
+    send_dd(world, rhs, (world.rank() + 1) % world_size, false);
+    //std::cout << "step1 fin #" << world.rank() << std::endl;
 
     for (int i = 1; i < world_size; i++) {
-        col = (row + i) % world_size;
+        int col = (row - i) % world_size;
         mEdge gate = getMPIGate(lhs, row, col, world_size);
-        vEdge stat;
-        // stat = receive_from_neighbor(); //TODO: implementation
-        result = vv_add(result, mv_multiply(gate, stat));
-        // send_to_next(stat); //TODO: implementation
+        vEdge received = receive_dd(world, (world.rank() - 1) % world_size);
+        result = vv_add(result, mv_multiply(gate, received));
+        send_dd(world, received, (world.rank() + 1) % world_size, false);
     }
     return result;
 }
@@ -1035,9 +1036,7 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs) {
         return {lhs.w + rhs.w, vNode::terminal};
     }
 
-    // assume lhs and rhs are the same size vector.
-    assert(lhs.getVar() == rhs.getVar());
-    return vv_add2(lhs, rhs, lhs.getVar());
+    return vv_add2(lhs, rhs, rhs.getVar());
 }
 
 vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
@@ -1310,9 +1309,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
-    // assume lhs and rhs are the same length.
-    assert(lhs.getVar() == rhs.getVar());
-    vEdge v = mv_multiply2(lhs, rhs, lhs.getVar());
+    vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
     return v;
 }
 
@@ -1698,14 +1695,29 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
 }
 
 
-vNode receive_dd(boost::mpi::communicator &world, int source_node_id) {
+vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking) {
     std::vector<vContent> v;
-    world.recv(source_node_id, 0, &v);
-    return *vec_to_vNode(v, &vUnique);
+    std_complex w;
+    if(isBlocking){
+        world.recv(source_node_id, 0, w);
+        world.recv(source_node_id, 1, v);
+    }else{
+        world.irecv(source_node_id, 0, w);
+        world.irecv(source_node_id, 1, v);
+    }
+    return {w, vec_to_vNode(v, vUnique)};
 }
-void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id) {
+
+void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking) {
     std::vector<vContent> v;
-    vNode_to_vec(e.n, &v, &mpi_map);
-    world.send(dest_node_id, 0, &v);
+    std::unordered_map<vNode *, int> mpi_map;
+    vNode_to_vec(e.n, v, mpi_map);
+    if(isBlocking){
+        world.send(dest_node_id, 0, e.w);
+        world.send(dest_node_id, 1, v);
+    }else{
+        world.isend(dest_node_id, 0, e.w);
+        world.isend(dest_node_id, 1, v);
+    }
     return;
 };

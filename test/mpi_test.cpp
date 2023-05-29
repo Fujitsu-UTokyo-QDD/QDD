@@ -31,14 +31,14 @@ TEST(MPITest, MPIAllTest){
             std::cout << "----" << std::endl;
     world.barrier();
     {
-            assert(world.size() > 1);
-            mEdge cnot = CX(2, 0, 1);
-            mEdge rz = RZ(2, 0, 1.0);
-            mEdge h = makeGate(2, Hmat, 1);
-            mEdge tmp0 = mm_multiply(rz, cnot);
-            mEdge tmp = mm_multiply(h, tmp0);
-            if (world.rank() == 0)
-            {
+        assert(world.size() > 1);
+        mEdge cnot = CX(2, 0, 1);
+        mEdge rz = RZ(2, 0, 1.0);
+        mEdge h = makeGate(2, Hmat, 1);
+        mEdge tmp0 = mm_multiply(rz, cnot);
+        mEdge tmp = mm_multiply(h, tmp0);
+        if (world.rank() == 0)
+        {
             tmp.printMatrix();
             std::cout << "----" << std::endl;
         }
@@ -55,16 +55,17 @@ TEST(MPITest, MPIAllTest){
     }
     world.barrier();
     {
-        vEdge v = makeZeroState(3);
-        int tag = 0;
+        if(world.rank()==0)
+            std::cout << "mv_multiply_MPI" << std::endl;
+        vEdge v = makeZeroStateMPI(3, world);
+        mEdge h = makeGate(3, Hmat,2);
+        v = mv_multiply_MPI(h, v, world);
+        v.printVectorMPI(world);
+        world.barrier();
         if (world.rank() == 0){
-            world.send(1, tag, v);
-        }
-        if(world.rank()==1){
-            vEdge new_v;
-            world.recv(0, tag, new_v);
-            std::cout << "----" << std::endl;
-            new_v.printVector();
+            std::cout << "mv_multipl" << std::endl;
+            vEdge v_single = makeZeroState(3);
+            mv_multiply(h,v_single).printVector();
         }
     }
 }

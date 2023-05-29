@@ -7,6 +7,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/environment.hpp>
+#include <boost/serialization/vector.hpp>
 #include <complex>
 #include <random>
 #include <vector>
@@ -393,6 +394,8 @@ struct vContent {
 
     vContent(Qubit qpos, std_complex w1, std_complex w2, int i1, int i2)
         : v(qpos), w({w1, w2}), index({i1, i2}){};
+    vContent()
+        : v(-1), w({cf_zero, cf_zero}), index({-1,-1}){};
 };
 
 using Controls = std::set<Control, ControlComparator>;
@@ -420,6 +423,7 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs);
 vEdge vv_kronecker(const vEdge &lhs, const vEdge &rhs);
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs);
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world);
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);
 vEdge makeZeroState(QubitCount q);
@@ -443,5 +447,5 @@ mEdge CX(QubitCount qnum, int target, int control);
 
 std::string genDot(vEdge &rootEdge);
 
-vEdge receive_dd(int source_node_id);
-void send_dd(vEdge e, int dest_node_id);
+vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
+void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
