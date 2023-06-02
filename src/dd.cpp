@@ -743,23 +743,41 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     return getMPIGate(tmp, row % border, col % border, border);
 }
 
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
+int vNode_to_vec(vNode *node, std::vector<vContent> &table,
+                 std::unordered_map<vNode *, int> &map);
+vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
+
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    world.barrier();
     int row = world.rank();
     int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
 
+    std_complex send_w, recv_w;
+    std::vector<vContent> send_buffer, recv_buffer;
+    std::unordered_map<vNode *, int> rhs_map;
+
+    send_w = rhs.w;
+    vNode_to_vec(rhs.n, send_buffer, rhs_map);
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    //std::cout << "step0 fin #" << world.rank() << std::endl;
-    send_dd(world, rhs, (world.rank() + 1) % world_size, false);
-    //std::cout << "step1 fin #" << world.rank() << std::endl;
 
     for (int i = 1; i < world_size; i++) {
+        std::vector<bmpi::request> recv_reqs;
+        std::vector<bmpi::request> send_reqs;
+        recv_buffer.clear();
+        send_reqs.push_back(world.isend(right_neighbor, 2 * i - 2, send_w));
+        send_reqs.push_back(world.isend(right_neighbor, 2 * i - 1, send_buffer));
+        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, recv_w));
+        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, recv_buffer));        
         int col = (row - i) % world_size;
         mEdge gate = getMPIGate(lhs, row, col, world_size);
-        vEdge received = receive_dd(world, (world.rank() - 1) % world_size);
+        bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
+        vEdge received = {recv_w, vec_to_vNode(recv_buffer, vUnique)};
         result = vv_add(result, mv_multiply(gate, received));
-        if(i != world_size - 1)
-            send_dd(world, received, (world.rank() + 1) % world_size, false);
+        bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
+        send_buffer = std::move(recv_buffer);
     }
     return result;
 }
