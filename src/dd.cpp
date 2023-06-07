@@ -771,13 +771,14 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
         send_reqs.push_back(world.isend(right_neighbor, 2 * i - 1, send_buffer));
         recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, recv_w));
         recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, recv_buffer));        
-        int col = (row - i) % world_size;
-        mEdge gate = getMPIGate(lhs, row, col, world_size);
+        int col = (row - i + world.size()) % world_size;
+        gate = getMPIGate(lhs, row, col, world_size);
         bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
         vEdge received = {recv_w, vec_to_vNode(recv_buffer, vUnique)};
         result = vv_add(result, mv_multiply(gate, received));
         bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
-        send_buffer = std::move(recv_buffer);
+        send_buffer = recv_buffer;
+        send_w = recv_w;
     }
     return result;
 }
