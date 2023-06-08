@@ -16,8 +16,8 @@ vNodeTable vUnique(40);
 
 std::vector<mEdge> identityTable(40);
 
-mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
-vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
+mNode mNode::terminalNode = mNode(-1, {}, nullptr);
+vNode vNode::terminalNode = vNode(-1, {}, nullptr);
 
 mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal};
 mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
@@ -242,7 +242,6 @@ mEdge makeIdent(Qubit q) {
     }
 
     identityTable[q] = e;
-    // e.incRef();
     return e;
 }
 
@@ -937,17 +936,6 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     return result;
 }
 
-struct mEdgeRefGuard {
-    mEdgeRefGuard(mEdge &ee) : e(ee) { e.incRef(); }
-    ~mEdgeRefGuard() { e.decRef(); };
-    mEdge e;
-};
-struct vEdgeRefGuard {
-    vEdgeRefGuard(vEdge &ee) : e(ee) { e.incRef(); }
-    ~vEdgeRefGuard() { e.decRef(); };
-    vEdge e;
-};
-
 vEdge mv_multiply(mEdge lhs, vEdge rhs) {
 
     if (lhs.isTerminal() && rhs.isTerminal()) {
@@ -1169,55 +1157,6 @@ mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
     return e3;
 }
 
-void mEdge::decRef() {
-    if (isTerminal())
-        return;
-    assert(n->ref > 0);
-    n->ref--;
-
-    if (n->ref == 0) {
-        for (auto i = 0; i < 4; i++)
-            n->getEdge(i).decRef();
-    }
-}
-void vEdge::decRef() {
-    if (isTerminal())
-        return;
-
-    assert(n->ref > 0);
-    n->ref--;
-
-    if (n->ref == 0) {
-        for (auto i = 0; i < 2; i++)
-            n->getEdge(i).decRef();
-    }
-}
-void mEdge::incRef() {
-    if (isTerminal())
-        return;
-
-    if (n->ref < MAX_REF) {
-        n->ref++;
-    }
-
-    if (n->ref == 1) {
-        for (auto i = 0; i < 4; i++)
-            n->getEdge(i).incRef();
-    }
-}
-void vEdge::incRef() {
-    if (isTerminal())
-        return;
-
-    if (n->ref < MAX_REF) {
-        n->ref++;
-    }
-
-    if (n->ref == 1) {
-        for (auto i = 0; i < 2; i++)
-            n->getEdge(i).incRef();
-    }
-}
 void mEdge::check() {
     if (isTerminal())
         return;

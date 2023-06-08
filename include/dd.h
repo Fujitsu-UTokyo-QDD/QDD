@@ -145,8 +145,6 @@ struct vEdge {
     Qubit getVar() const;
     bool isTerminal() const;
     vNode *getNode() const { return n; };
-    void decRef();
-    void incRef();
 
     VectorXcf getEigenVector();
 
@@ -180,8 +178,8 @@ struct vNode {
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
-    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, unsigned int r)
-        : v(q), children(c), next(n), ref(r) {}
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n)
+        : v(q), children(c), next(n) {}
 
     vEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -198,11 +196,6 @@ struct vNode {
     std::array<vEdge, 2> children;
     vNode *next{nullptr};
 
-#ifdef MT
-    std::atomic_uint ref{0};
-#else
-    unsigned int ref{0};
-#endif
 };
 
 struct mEdge {
@@ -222,8 +215,6 @@ struct mEdge {
     mNode *getNode() const { return n; };
 
     void printMatrix() const;
-    void decRef();
-    void incRef();
 
     void check();
     std_complex **getMatrix(std::size_t *dim) const;
@@ -294,8 +285,8 @@ struct mNode {
     }
 
     mNode() = default;
-    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, unsigned int r)
-        : v(q), children(c), next(n), ref(r) {}
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
+        : v(q), children(c), next(n){}
     mNode(const mNode &vv) : v(vv.v), children(vv.children) {}
     mEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -312,11 +303,6 @@ struct mNode {
     std::array<mEdge, 4> children;
     mNode *next{nullptr};
 
-#ifdef MT
-    std::atomic_uint ref{0};
-#else
-    unsigned int ref{0};
-#endif
 };
 
 template <> struct std::hash<mNode> {

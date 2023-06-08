@@ -58,7 +58,6 @@ class CHashTable {
         }
 
         p->v = -2;
-        p->ref = 0;
 
         p->next = _cache.available;
         _cache.available = p;
@@ -93,18 +92,6 @@ class CHashTable {
         return node;
     }
 
-    void gc() {
-
-        collected = 0;
-        for (Table &t : _tables) {
-            for (auto i = 0; i < NBUCKETS; i++) {
-                bucket_gc(t, i);
-            }
-        }
-
-        // std::cout<<"gc collected "<<collected<<std::endl;
-    }
-
   private:
     struct Table {
         T *_table[NBUCKETS] = {nullptr};
@@ -129,30 +116,6 @@ class CHashTable {
 
     QubitCount _qn;
 
-    void bucket_gc(Table &t, std::size_t key) {
-
-        T *current = t._table[key];
-        T *previous = nullptr;
-        T *to_return = nullptr;
-        while (current != nullptr) {
-            if (current->ref == 0) {
-
-                to_return = current;
-                current = current->next;
-                if (previous == nullptr) {
-                    t._table[key] = current;
-                } else {
-                    previous->next = current;
-                }
-                returnNode(to_return);
-                collected++;
-
-            } else {
-                previous = current;
-                current = current->next;
-            }
-        }
-    }
 };
 
 using mNodeTable = CHashTable<mNode>;
