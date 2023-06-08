@@ -217,15 +217,13 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    Qubit getVar() const { return q; };
+    Qubit getVar() const;
     bool isTerminal() const;
     mNode *getNode() const { return n; };
 
     void printMatrix() const;
     void decRef();
     void incRef();
-
-    bool isStateVector() const { return dim != 0; }
 
     void check();
     std_complex **getMatrix(std::size_t *dim) const;
@@ -234,7 +232,7 @@ struct mEdge {
     inline bool operator==(const mEdge &e) const noexcept {
 
         // because nullptr == nullptr
-        return w.isApproximatelyEqual(e.w) && n == e.n && mat == e.mat;
+        return w.isApproximatelyEqual(e.w) && n == e.n;
     }
 
     inline bool operator!=(const mEdge &e) const noexcept {
@@ -246,10 +244,6 @@ struct mEdge {
     std_complex w;
 
     mNode *n{nullptr};
-    Complex **mat{nullptr};
-
-    Qubit q;
-    size_t dim{0}; // dim = 1 << (q + 1)
 };
 
 inline void swap(mEdge &lhs, mEdge &rhs) {
@@ -270,10 +264,7 @@ template <> struct std::hash<mEdge> {
     std::size_t operator()(const mEdge &e) const noexcept {
         auto h1 = std::hash<std_complex>()(e.w);
         std::size_t h2;
-        if (e.isStateVector())
-            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.mat));
-        else
-            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
+        h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
 
         return hash_combine(h1, h2);
     }
@@ -407,10 +398,6 @@ mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
-
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
-                     const Controls &c);
 
 mEdge getMPIGate(mEdge root, int row, int col, int world_size);
 

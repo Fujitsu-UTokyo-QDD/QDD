@@ -19,8 +19,8 @@ std::vector<mEdge> identityTable(40);
 mNode mNode::terminalNode = mNode(-1, {}, nullptr, MAX_REF);
 vNode vNode::terminalNode = vNode(-1, {}, nullptr, MAX_REF);
 
-mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal, .q = -1};
-mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal, .q = -1};
+mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal};
+mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
@@ -55,7 +55,7 @@ static mEdge normalizeM(const mEdge &e) {
     mNode *n = mUnique.lookup(e.n);
     assert(n->v >= -1);
 
-    return {.w = max_weight * e.w, .n = n, .q = e.q};
+    return {.w = max_weight * e.w, .n = n};
 }
 
 static vEdge normalizeV(const vEdge &e) {
@@ -84,9 +84,7 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
     node->v = q;
     node->children = c;
 
-    mEdge e = normalizeM({.w = {1.0, 0.0}, .n = node, .q = q});
-
-    assert(e.getVar() == q || e.isTerminal());
+    mEdge e = normalizeM({.w = {1.0, 0.0}, .n = node});
 
     return e;
 }
@@ -109,6 +107,8 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
     return e;
 }
 
+Qubit mEdge::getVar() const { return n->v; }
+
 Qubit vEdge::getVar() const { return n->v; }
 
 bool mEdge::isTerminal() const { return n == mNode::terminal; }
@@ -127,15 +127,6 @@ static void fillMatrix(const mEdge &edge, size_t row, size_t col,
             }
         }
         return;
-    } else if (edge.isStateVector()) {
-        assert(dim == edge.dim);
-        for (auto i = 0; i < dim; i++) {
-            for (auto j = 0; j < dim; j++) {
-                m[row + i][col + j] = w * edge.mat[i][j];
-            }
-        }
-
-        return;
     }
 
     mNode *node = edge.getNode();
@@ -150,7 +141,7 @@ void mEdge::printMatrix() const {
         std::cout << this->w << std::endl;
         return;
     }
-    Qubit q = this->getVar();
+    Qubit q = this->getVar();   
     std::size_t dim = 1 << (q + 1);
 
     std_complex **matrix = new std_complex *[dim];
@@ -347,372 +338,6 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
     }
 
     return e;
-}
-
-static void set_4_diagonal_submatrice_with(Complex **mat, size_t row,
-                                           size_t col, size_t dim,
-                                           const GateMatrix &gate) {
-
-    assert(row == col);
-
-    const size_t half = dim / 2;
-    // top half
-    for (size_t i = row; i < row + half; i++) {
-        mat[i][i] = gate[0];
-        mat[i][i + half] = gate[1];
-    }
-    // bottom half
-    for (size_t i = row + half; i < row + dim; i++) {
-        mat[i][i - half] = gate[2];
-        mat[i][i] = gate[3];
-    }
-}
-
-//     q's < threshold are represented using matrix
-//     e.g., threshold = 4, then q0, q1,  q2 and q3,are represented by a 16x16
-//     matrix
-mEdge make_hybrid_with_small_target(QubitCount q, const GateMatrix &g,
-                                    Qubit target, Qubit threshold) {
-
-    // We currently only support  target below threshold
-    assert(threshold <= q && target < threshold);
-    size_t dim = 1 << threshold;
-    Complex **mat = new Complex *[dim];
-    for (auto i = 0; i < dim; i++)
-        mat[i] = new Complex[dim];
-
-    // suppose target = q2, then this is a 8x8 matrix
-    size_t target_dim = 1 << (target + 1);
-
-    // set the diagonal submatrices of size target_dim x target_dim
-    for (auto i = 0; i < dim; i += target_dim) {
-        set_4_diagonal_submatrice_with(mat, i, i, target_dim, g);
-    }
-
-    // the matrix is ready! begin to build the tree..
-    mEdge e;
-    e.w = {1.0, 0.0};
-    e.mat = mat;
-    e.dim = dim;
-    e.q = threshold - 1;
-
-    for (Qubit z = threshold; z < q; z++) {
-        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
-    }
-
-    return e;
-}
-
-static void set_diagonal(Complex **mat, size_t dim, const Complex &c) {
-    for (auto i = 0; i < dim; i++)
-        mat[i][i] = c;
-}
-// target >= threshold
-mEdge make_hybrid_with_large_target(QubitCount q, const GateMatrix &g,
-                                    Qubit target, Qubit threshold) {
-
-    assert(threshold < q && target >= threshold);
-    size_t dim = 1 << threshold;
-
-    std::array<Complex **, 4> mats;
-
-    for (auto i = 0; i < 4; i++) {
-        mats[i] = new Complex *[dim];
-        for (auto j = 0; j < dim; j++)
-            mats[i][j] = new Complex[dim];
-
-        set_diagonal(mats[i], dim, g[i]);
-    }
-
-    mEdge e;
-    std::array<mEdge, 4> edges;
-    if (threshold == target) {
-        for (auto i = 0; i < 4; i++) {
-            mEdge tmp;
-            tmp.w = {1.0, 0.0};
-            tmp.mat = mats[i];
-            tmp.dim = dim;
-            tmp.q = threshold - 1;
-            edges[i] = tmp;
-        }
-
-    } else {
-        for (auto i = 0; i < 4; i++) {
-            mEdge tmp;
-            tmp.w = {1.0, 0.0};
-            tmp.mat = mats[i];
-            tmp.dim = dim;
-            tmp.q = threshold - 1;
-
-            edges[i] =
-                makeMEdge(threshold, {tmp, mEdge::zero, mEdge::zero, tmp});
-        }
-
-        for (auto z = threshold + 1; z < target; z++) {
-            for (auto i = 0; i < 4; i++) {
-                edges[i] = makeMEdge(
-                    z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
-            }
-        }
-    }
-
-    e = makeMEdge(target, edges);
-
-    for (auto z = target + 1; z < q; z++) {
-        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
-    }
-
-    return e;
-}
-
-void set_identity(Complex **mat, size_t row, size_t col, size_t dim) {
-    for (auto i = 0; i < dim; i++) {
-        mat[row + i][col + i] = {1.0, 0.0};
-    }
-}
-// cit SHOULDNOT be reference. we need to copy it so we can call this function
-// on multiple submatrices
-static void less_than_target(Complex **mat, size_t row, size_t col, Qubit q,
-                             const std::complex<float> &g,
-                             Controls::reverse_iterator cit,
-                             const Controls::reverse_iterator &cend,
-                             bool ident) {
-    if (q == -1) {
-        mat[row][col] = g;
-        return;
-    }
-
-    size_t dim = 1 << q;
-
-    if (cit != cend && cit->qubit == q) {
-        if (cit->type == Control::Type::neg) {
-            cit++;
-            if (ident) {
-                set_identity(mat, row + dim, col + dim, dim);
-            }
-            less_than_target(mat, row, col, q - 1, g, cit, cend, ident);
-        } else {
-            cit++;
-            if (ident) {
-                set_identity(mat, row, col, dim);
-            }
-            less_than_target(mat, row + dim, col + dim, q - 1, g, cit, cend,
-                             ident);
-        }
-
-    } else {
-        less_than_target(mat, row, col, q - 1, g, cit, cend, ident);
-        less_than_target(mat, row + dim / 2, col + dim / 2, q - 1, g, cit, cend,
-                         ident);
-    }
-}
-
-static void equal_than_target(Complex **mat, size_t row, size_t col, Qubit q,
-                              Qubit target, const GateMatrix &gate,
-                              Controls::reverse_iterator cit,
-                              const Controls::reverse_iterator &cend) {
-
-    assert(q == target);
-
-    size_t half = 1 << q;
-
-    less_than_target(mat, row, col, q - 1, gate[0], cit, cend, true);
-    less_than_target(mat, row, col + half, q - 1, gate[1], cit, cend, false);
-    less_than_target(mat, row + half, col, q - 1, gate[2], cit, cend, false);
-    less_than_target(mat, row + half, col + half, q - 1, gate[3], cit, cend,
-                     true);
-}
-
-static void greater_than_target(Complex **mat, size_t row, size_t col, Qubit q,
-                                Qubit target, const GateMatrix &gate,
-                                Controls::reverse_iterator cit,
-                                const Controls::reverse_iterator &cend) {
-    if (q == target) {
-        return equal_than_target(mat, row, col, q, target, gate, cit, cend);
-    }
-
-    assert(q > target);
-
-    size_t dim = 1 << (q + 1);
-
-    if (cit != cend && cit->qubit == q) {
-
-        if (cit->type == Control::Type::neg) {
-            ++cit;
-            greater_than_target(mat, row, col, q - 1, target, gate, cit, cend);
-            set_identity(mat, row + dim / 2, col + dim / 2, dim / 2);
-        } else {
-            ++cit;
-            set_identity(mat, row, col, dim / 2);
-            greater_than_target(mat, row + dim / 2, col + dim / 2, q - 1,
-                                target, gate, cit, cend);
-        }
-        return;
-
-    } else {
-        greater_than_target(mat, row, col, q - 1, target, gate, cit, cend);
-        greater_than_target(mat, row + dim / 2, col + dim / 2, q - 1, target,
-                            gate, cit, cend);
-        return;
-    }
-}
-
-mEdge make_hybrid_with_small_target_and_control(QubitCount q, GateMatrix g,
-                                                Qubit target, Qubit threshold,
-                                                const Controls &c) {
-    assert(threshold <= q && target < threshold);
-    size_t dim = 1 << threshold;
-    Complex **mat = new Complex *[dim];
-    for (auto i = 0; i < dim; i++)
-        mat[i] = new Complex[dim];
-
-    auto rit = c.rbegin();
-    auto rend = c.rend();
-    while (rit != rend && rit->qubit >= threshold) {
-        rit++;
-    }
-
-    greater_than_target(mat, 0, 0, threshold - 1, target, g, rit, rend);
-
-    mEdge e;
-    e.w = {1.0, 0.0};
-    e.mat = mat;
-    e.dim = dim;
-    e.q = threshold - 1;
-
-    auto cit = c.begin();
-    auto cend = c.end();
-    while (cit != cend && cit->qubit < threshold)
-        cit++;
-
-    for (auto z = threshold; z < q; z++) {
-        if (cit != cend && cit->qubit == z) {
-            if (cit->type == Control::Type::neg) {
-                e = makeMEdge(z,
-                              {e, mEdge::zero, mEdge::zero, makeIdent(z - 1)});
-            } else {
-                e = makeMEdge(z,
-                              {makeIdent(z - 1), mEdge::zero, mEdge::zero, e});
-            }
-
-            ++cit;
-        } else {
-            e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
-        }
-    }
-
-    return e;
-}
-mEdge make_hybrid_with_large_target_and_control(QubitCount q, GateMatrix gate,
-                                                Qubit target, Qubit threshold,
-                                                const Controls &c) {
-    assert(threshold < q && target >= threshold);
-
-    size_t dim = 1 << threshold;
-    std::array<Complex **, 4> mats;
-    for (auto i = 0; i < 4; i++) {
-        mats[i] = new Complex *[dim];
-        for (auto j = 0; j < dim; j++) {
-            mats[i][j] = new Complex[dim];
-        }
-    }
-
-    auto rit = c.rbegin();
-    auto rend = c.rend();
-
-    while (rit != rend && rit->qubit >= threshold)
-        rit++;
-
-    less_than_target(mats[0], 0, 0, threshold - 1, gate[0], rit, rend, true);
-    less_than_target(mats[1], 0, 0, threshold - 1, gate[1], rit, rend, false);
-    less_than_target(mats[2], 0, 0, threshold - 1, gate[2], rit, rend, false);
-    less_than_target(mats[3], 0, 0, threshold - 1, gate[3], rit, rend, true);
-
-    std::array<mEdge, 4> edges;
-    for (auto b1 = 0; b1 < 2; b1++) {
-        for (auto b0 = 0; b0 < 2; b0++) {
-            auto idx = (b1 << 1) | b0;
-
-            mEdge e;
-            e.w = {1.0, 0.0};
-            e.mat = mats[idx];
-            e.dim = dim;
-            e.q = threshold - 1;
-            edges[idx] = e;
-        }
-    }
-
-    auto cit = c.begin();
-    auto cend = c.end();
-    while (cit != cend && cit->qubit < threshold)
-        cit++;
-
-    Qubit z = threshold;
-    for (; z < target; z++) {
-
-        for (int b1 = 0; b1 < 2; b1++) {
-            for (int b0 = 0; b0 < 2; b0++) {
-                std::size_t i = (b1 << 1) | b0;
-                if (cit != cend && cit->qubit == z) {
-                    if (cit->type == Control::Type::neg)
-                        edges[i] = makeMEdge(
-                            z, {edges[i], mEdge::zero, mEdge::zero,
-                                (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
-                    else
-                        edges[i] = makeMEdge(
-                            z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
-                                mEdge::zero, mEdge::zero, edges[i]});
-
-                } else {
-                    edges[i] = makeMEdge(
-                        z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
-                }
-            }
-        }
-
-        if (cit != c.end() && cit->qubit == z)
-            ++cit;
-    }
-
-    auto e = makeMEdge(z, edges);
-
-    for (z = z + 1; z < q; z++) {
-        if (cit != cend && cit->qubit == z) {
-            if (cit->type == Control::Type::neg)
-                e = makeMEdge(z,
-                              {e, mEdge::zero, mEdge::zero, makeIdent(z - 1)});
-            else
-                e = makeMEdge(z,
-                              {makeIdent(z - 1), mEdge::zero, mEdge::zero, e});
-            ++cit;
-        } else {
-            e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
-        }
-    }
-
-    return e;
-}
-
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target,
-                     Qubit threshold) {
-    assert(target < q);
-
-    if (target < threshold)
-        return make_hybrid_with_small_target(q, g, target, threshold);
-    else
-        return make_hybrid_with_large_target(q, g, target, threshold);
-}
-
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
-                     const Controls &c) {
-    assert(target < q);
-
-    if (target < threshold)
-        return make_hybrid_with_small_target_and_control(q, g, target,
-                                                         threshold, c);
-    else
-        return make_hybrid_with_large_target_and_control(q, g, target,
-                                                         threshold, c);
 }
 
 mEdge getMPIGate(mEdge root, int row, int col, int world_size) {

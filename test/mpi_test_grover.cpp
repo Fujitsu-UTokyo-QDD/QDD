@@ -85,6 +85,7 @@ static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
 }
 
 vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
+    auto t1 = std::chrono::high_resolution_clock::now();
     std::size_t iterations = CalculateIterations(n_qubits);
     std::mt19937_64 mt;
     std::array<std::mt19937_64::result_type, std::mt19937_64::state_size>
@@ -117,7 +118,12 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         setup_gates.emplace_back(makeGate(total_qubits, Hmat, i));
     }
     mEdge setup = buildUnitary(setup_gates);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::micro> ms = t2 - t1;
+    std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
+    world.barrier();
 
+    auto t3 = std::chrono::high_resolution_clock::now();
     vEdge state = makeZeroStateMPI(total_qubits, world);
     state = mv_multiply_MPI(setup, state, world);
 
@@ -140,16 +146,15 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
     }
-
+    auto t4 = std::chrono::high_resolution_clock::now();
+    ms = t4 - t3;
+    std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
     return state;
 }
 
 int main(int argc, char** argv){
     bmpi::environment env(argc, argv);
     bmpi::communicator world;
-    auto result = grover_MPI(10, world);
+    auto result = grover_MPI(20, world);
     world.barrier();
-    if(world.rank()==0)
-        std::cout << "### Fin calculation" << std::endl;
-    result.printVectorMPI(world);
 }
