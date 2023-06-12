@@ -18,12 +18,12 @@ mEdge buildUnitary(const std::vector<mEdge> &g) {
         return mEdge();
     }
 
-    mEdge rhs = g[0];
+    mEdge lhs = g[0];
     for (int i = 1; i < g.size(); i++) {
         // std::cout<<"i: "<<i<<std::endl;
-        rhs = mm_multiply(g[i], rhs);
+        lhs = mm_multiply(lhs, g[i]);
     }
-    return rhs;
+    return lhs;
 }
 
 static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
