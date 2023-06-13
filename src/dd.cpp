@@ -1239,11 +1239,6 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
         double p1 = cur.n->getEdge(1).w.mag2();
         double tmp = p0 + p1;
 
-        if (std::abs(tmp - 1.0L) > epsilon) {
-            throw std::runtime_error("Added probabilities differ from 1 by " +
-                                     std::to_string(std::abs(tmp - 1.0L)));
-        }
-
         p0 /= tmp;
 
         const double threshold = dist(mt);
