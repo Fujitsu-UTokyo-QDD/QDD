@@ -65,15 +65,18 @@ static vEdge normalizeV(const vEdge &e) {
         return vEdge::zero;
     }
 
-    double tmp = sqrt(e.n->children[0].w.mag2() + e.n->children[1].w.mag2());
-    std_complex norm = {e.w.r>0? tmp:-tmp, 0};
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
+            return norm(lhs.w) < norm(rhs.w);
+    });
+    std_complex max_weight = result->w;
 
-    for (int i = 0; i < 2; i++) {
-        e.n->children[i].w /= norm;
+    for(int i = 0; i < 2; i++){
+        std_complex r = e.n->children[i].w/max_weight;
+        e.n->children[i].w = r;
     }
     vNode *n = vUnique.lookup(e.n);
 
-    return {norm * e.w, n};
+    return {max_weight * e.w, n};
 }
 
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
