@@ -107,3 +107,38 @@ def test_vqe_with_gradient_framework_and_logging():
 
     reference_value = -1.85728
     assert result.eigenvalue.real == pytest.approx(reference_value, abs=0.1)
+
+def test_vqe_with_gradient_framework_and_logging_statevector():
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger('qiskit.algorithms.minimum_eigen_solvers.vqe').setLevel(logging.INFO)
+
+    h2_op = (-1.052373245772859 * I ^ I) + \
+            (0.39793742484318045 * I ^ Z) + \
+            (-0.39793742484318045 * Z ^ I) + \
+            (-0.01128010425623538 * Z ^ Z) + \
+            (0.18093119978423156 * X ^ X)
+
+    algorithm_globals.random_seed = 50
+    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+
+    # although the Qiskit tutorial uses SLSQP, we use COBYLA instead because SLSQP produces imprecise results
+    optimizer = COBYLA(maxiter=80)
+
+    counts = []
+    values = []
+
+    def store_intermediate_result(eval_count, parameters, mean, std):
+        counts.append(eval_count)
+        values.append(mean)
+
+    backend = QddProvider().get_backend("statevector_simulator")
+    vqe = VQE(ansatz, optimizer, callback=store_intermediate_result,
+              gradient=Gradient(grad_method='fin_diff'),
+              quantum_instance=QuantumInstance(backend=backend, seed_transpiler=50, seed_simulator=80))
+    result = vqe.compute_minimum_eigenvalue(operator=h2_op)
+    print(f'Value using Gradient: {result.eigenvalue.real:.5f}')
+
+    print(result)
+
+    reference_value = -1.85728
+    assert result.eigenvalue.real == pytest.approx(reference_value, abs=0.1)
