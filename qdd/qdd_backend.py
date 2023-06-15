@@ -293,8 +293,9 @@ class QddBackend(BackendV1):
                         gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                         current = pyQDD.mv_multiply(gate, current)
                     else:
-                        print("Unsupported gate/operation:", qiskit_gate_type)
-                        exit(1)
+                        raise RuntimeError(f'Unsupported gate or instruction:'
+                                       f' type={qiskit_gate_type.__name__}, name={i.name}.'
+                                       f' It needs to transpile the circuit before evaluating it.')
                 else:
                     if qiskit_gate_type == Measure:
                         continue
