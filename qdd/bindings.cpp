@@ -39,8 +39,8 @@ std::pair<vEdge, std::string> _measureAll(vEdge &rootEdge, bool collapse){
 
 
 
-std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization=true){
-    char result = measureOneCollapsing(rootEdge, index, assumeProbabilityNormalization, mt);
+std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index){
+    char result = measureOneCollapsing(rootEdge, index, mt);
     return std::pair<vEdge, char>(rootEdge, result);
 }
 

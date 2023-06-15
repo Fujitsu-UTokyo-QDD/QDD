@@ -316,7 +316,7 @@ TEST(QddTest, MeasureTest){
             state = mv_multiply(makeGate(3,Hmat,0),state);
             state = mv_multiply(CX(3, 1, 0), state);
             state = mv_multiply(CX(3, 2, 0), state);
-            const auto res = measureOneCollapsing(state, 0, true, mt);
+            const auto res = measureOneCollapsing(state, 0, mt);
             if(res == '0'){
                 for (int i = 0; i < 10; i++){
                     std::string allres = measureAll(state, false, mt);
@@ -343,7 +343,7 @@ TEST(QddTest, MeasureTest){
             state = mv_multiply(RX(3,0,std::numbers::pi/3),state);
             state = mv_multiply(CX(3, 1, 0), state);
             state = mv_multiply(CX(3, 2, 0), state);
-            const auto res = measureOneCollapsing(state, 0, true, mt);
+            const auto res = measureOneCollapsing(state, 0, mt);
             ASSERT_TRUE(resultmap.contains(res));
             resultmap[res] += 1;
         }

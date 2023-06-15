@@ -346,9 +346,9 @@ class QddBackend(BackendV1):
                             raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
+                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
                         elif qiskit_gate_type == Reset:
-                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
                             if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
                                 current = pyQDD.mv_multiply(gate, current)
