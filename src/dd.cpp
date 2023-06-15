@@ -949,6 +949,23 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     return v;
 }
 
+double assignProbabilities(const vEdge &edge,
+                           std::unordered_map<vNode *, double> &probs) {
+    auto it = probs.find(edge.n);
+    if (it != probs.end()) {
+        return edge.w.mag2() * it->second;
+    }
+    double sum{1};
+    if (!edge.isTerminal()) {
+        sum = assignProbabilities(edge.n->children.at(0), probs) +
+              assignProbabilities(edge.n->children.at(1), probs);
+    }
+
+    probs.insert({edge.n, sum});
+
+    return edge.w.mag2() * sum;
+}
+
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon) {
     if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
@@ -957,20 +974,18 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
         }
     }
 
+    std::unordered_map<vNode *, double> probs;
+    assignProbabilities(rootEdge, probs);
+
     vEdge cur = rootEdge;
     const auto nqubits = static_cast<QubitCount>(rootEdge.getVar() + 1);
     std::string result(nqubits, '0');
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
     for (Qubit i = rootEdge.getVar(); i >= 0; --i) {
-        double p0 = cur.n->getEdge(0).w.mag2();
-        double p1 = cur.n->getEdge(1).w.mag2();
+        double p0 = probs[cur.n->getEdge(0).n] * cur.n->getEdge(0).w.mag2();
+        double p1 = probs[cur.n->getEdge(1).n] * cur.n->getEdge(1).w.mag2();
         double tmp = p0 + p1;
-
-        if (std::abs(tmp - 1.0L) > epsilon) {
-            throw std::runtime_error("Added probabilities differ from 1 by " +
-                                     std::to_string(std::abs(tmp - 1.0L)));
-        }
 
         p0 /= tmp;
 
@@ -1002,27 +1017,9 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
     return std::string{result.rbegin(), result.rend()};
 }
 
-double assignProbabilities(const vEdge &edge,
-                           std::unordered_map<vNode *, double> &probs) {
-    auto it = probs.find(edge.n);
-    if (it != probs.end()) {
-        return edge.w.mag2() * it->second;
-    }
-    double sum{1};
-    if (!edge.isTerminal()) {
-        sum = assignProbabilities(edge.n->children.at(0), probs) +
-              assignProbabilities(edge.n->children.at(1), probs);
-    }
-
-    probs.insert({edge.n, sum});
-
-    return edge.w.mag2() * sum;
-}
-
 std::pair<double, double>
-determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index,
-                                  const bool assumeProbabilityNormalization) {
-    std::map<vNode *, double> probsMone;
+determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
+    std::unordered_map<vNode *, double> probsMone;
     std::set<vNode *> visited;
     std::queue<vNode *> q;
 
@@ -1065,46 +1062,29 @@ determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index,
     double pzero{0};
     double pone{0};
 
-    if (assumeProbabilityNormalization) {
-        while (!q.empty()) {
-            vNode *ptr = q.front();
-            q.pop();
+    
+    std::unordered_map<vNode *, double> probs;
+    assignProbabilities(rootEdge, probs);
 
-            if (!ptr->children.at(0).w.isApproximatelyZero()) {
-                pzero += probsMone[ptr] * ptr->children.at(0).w.mag2();
-            }
+    while (!q.empty()) {
+        vNode *ptr = q.front();
+        q.pop();
 
-            if (!ptr->children.at(1).w.isApproximatelyZero()) {
-                pone += probsMone[ptr] * ptr->children.at(1).w.mag2();
-            }
+        if (!ptr->children.at(0).w.isApproximatelyZero()) {
+            pzero += probsMone[ptr] * probs[ptr->children.at(0).n] *
+                        ptr->children.at(0).w.mag2();
         }
-    } else {
-        std::unordered_map<vNode *, double> probs;
-        assignProbabilities(rootEdge, probs);
 
-        while (!q.empty()) {
-            vNode *ptr = q.front();
-            q.pop();
-
-            if (!ptr->children.at(0).w.isApproximatelyZero()) {
-                pzero += probsMone[ptr] * probs[ptr->children.at(0).n] *
-                         ptr->children.at(0).w.mag2();
-            }
-
-            if (!ptr->children.at(1).w.isApproximatelyZero()) {
-                pone += probsMone[ptr] * probs[ptr->children.at(1).n] *
-                        ptr->children.at(1).w.mag2();
-            }
+        if (!ptr->children.at(1).w.isApproximatelyZero()) {
+            pone += probsMone[ptr] * probs[ptr->children.at(1).n] * ptr->children.at(1).w.mag2();
         }
     }
     return {pzero, pone};
 }
 
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
-                          const bool assumeProbabilityNormalization,
                           std::mt19937_64 &mt, double epsilon) {
-    const auto &[pzero, pone] = determineMeasurementProbabilities(
-        rootEdge, index, assumeProbabilityNormalization);
+    const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, index);
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(

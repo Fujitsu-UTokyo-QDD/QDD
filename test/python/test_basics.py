@@ -73,6 +73,7 @@ def test_measure_no_measure():
     assert_job_failed(job)
 
 
+
 def test_memory_true():
     """Tests the behavior of memory=True"""
 

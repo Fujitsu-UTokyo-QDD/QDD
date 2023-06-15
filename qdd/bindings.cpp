@@ -1,4 +1,6 @@
 #include <pybind11/pybind11.h>
+#include <pybind11/complex.h>
+#include <pybind11/stl.h>
 #include <map>
 #include "dd.h"
 #include "common.h"
@@ -37,9 +39,22 @@ std::pair<vEdge, std::string> _measureAll(vEdge &rootEdge, bool collapse){
 
 
 
-std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index, const bool assumeProbabilityNormalization=true){
-    char result = measureOneCollapsing(rootEdge, index, assumeProbabilityNormalization, mt);
+std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index){
+    char result = measureOneCollapsing(rootEdge, index, mt);
     return std::pair<vEdge, char>(rootEdge, result);
+}
+
+
+
+std::vector<std::complex<double>> _getVector(vEdge &rootEdge){
+    size_t dim;
+    std_complex *vec = rootEdge.getVector(&dim);
+    std::vector<std::complex<double>> result;
+    for (int i = 0; i < dim;i++){
+        std::complex<double> tmp(vec[i].r, vec[i].i);
+        result.push_back(tmp);
+    }
+    return result;
 }
 
 PYBIND11_MODULE(pyQDD, m){
@@ -58,4 +73,5 @@ PYBIND11_MODULE(pyQDD, m){
     // Measure
     m.def("measureAll", _measureAll)
      .def("measureOneCollapsing", _measureOneCollapsing);
+    m.def("getVector", _getVector);
 }

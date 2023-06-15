@@ -60,11 +60,11 @@ class QddExperiments:
     circuit_props: List[CircuitProperty]
     options: dict
 
-class QddBackend(BackendV1):
+class QddStateVectorBackend(BackendV1):
     """A backend used for evaluating circuits with QDD simulator."""
 
     _DEFAULT_CONFIG: Dict[str, Any] = {
-        'backend_name': 'qdd_backend',
+        'backend_name': 'statevector_simulator',
         'backend_version': __version__,
         'n_qubits': 100,  # inclusive
         'basis_gates': sorted([
@@ -99,19 +99,21 @@ class QddBackend(BackendV1):
         'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
     }
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider, configuration=None):
+        if configuration == None:
+            configuration = BackendConfiguration.from_dict(QddStateVectorBackend._DEFAULT_CONFIG)
         super().__init__(
-            configuration=BackendConfiguration.from_dict(QddBackend._DEFAULT_CONFIG),
+            configuration=configuration,
             provider=provider)
 
     @classmethod
     def _default_options(cls) -> Options:
-        # Note: regarding the 'parameter_binds' option, QddBackend does not include it in the default option list
+        # Note: regarding the 'parameter_binds' option, QddStateVectorBackend does not include it in the default option list
         # below because AerSimulator also does not.
         # Normally, user-specified runtime options are filtered out in execute(...) if they are not listed below.
         # However, 'parameter_binds' is an exceptional one; it is not excluded regardless of whether to be listed below.
         return Options(
-            shots=QddBackend._DEFAULT_SHOTS,
+            shots=QddStateVectorBackend._DEFAULT_SHOTS,
             memory=False,
             seed_simulator=None,
         )
@@ -166,7 +168,7 @@ class QddBackend(BackendV1):
                 else:
                     arg_circ_type = str(type(circuits))
                 raise RuntimeError(
-                    f'{QddBackend.__name__}.run(...) accepts one or more'
+                    f'{QddStateVectorBackend.__name__}.run(...) accepts one or more'
                     f' qiskit.{QiskitCircuit.__qualname__} objects only,'
                     f' but the following arguments were specified.{os.linesep}'
                     f'    type={arg_circ_type},{os.linesep}'
@@ -212,7 +214,7 @@ class QddBackend(BackendV1):
             # no parameter bindings are specified
             param_bound_qiskit_circs = qiskit_circs
         
-        circ_props = QddBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs)
+        circ_props = QddStateVectorBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs)
         experiments = QddExperiments(circs=param_bound_qiskit_circs, circuit_props=circ_props, options=actual_options)
 
         # run circuits via issuing a job
@@ -293,9 +295,8 @@ class QddBackend(BackendV1):
                         gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
                         current = pyQDD.mv_multiply(gate, current)
                     else:
-                        raise RuntimeError(f'Unsupported gate or instruction:'
-                                       f' type={qiskit_gate_type.__name__}, name={i.name}.'
-                                       f' It needs to transpile the circuit before evaluating it.')
+                        print("Unsupported gate/operation:", qiskit_gate_type)
+                        exit(1)
                 else:
                     if qiskit_gate_type == Measure:
                         continue
@@ -346,9 +347,9 @@ class QddBackend(BackendV1):
                             raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
                         elif qiskit_gate_type == Reset:
-                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]), True)
                             if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
                                 current = pyQDD.mv_multiply(gate, current)
@@ -363,7 +364,8 @@ class QddBackend(BackendV1):
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
         if options['memory']:
             result_data['memory'] = sampled_values
-        header = QddBackend._create_experiment_header(circ)
+        result_data["statevector"] = pyQDD.getVector(current);
+        header = QddStateVectorBackend._create_experiment_header(circ)
         result = {
             'success': True,
             'shots': options['shots'],
@@ -379,7 +381,7 @@ class QddBackend(BackendV1):
 
     @staticmethod
     def _validate_and_get_circuit_properties(qiskit_circs: List[QiskitCircuit]) -> List[CircuitProperty]:
-        circ_props = [QddBackend._validate_and_get_circuit_property(circ) for circ in qiskit_circs]
+        circ_props = [QddStateVectorBackend._validate_and_get_circuit_property(circ) for circ in qiskit_circs]
         return circ_props
 
     @staticmethod
@@ -388,13 +390,13 @@ class QddBackend(BackendV1):
          and, if valid, returns a CircuitProperty instance that will be used for simulation."""
 
         # #qubit must be lower than #max-qubits
-        max_qubits: int = QddBackend._DEFAULT_CONFIG['n_qubits']
+        max_qubits: int = QddStateVectorBackend._DEFAULT_CONFIG['n_qubits']
         if circ.num_qubits > max_qubits:  # num_qubits includes ancilla registers
             raise RuntimeError(f'Circuit "{circ.name}" has {circ.num_qubits} qubits,'
                                f' but #qubits must be <= {max_qubits}.')
 
         # Check whether the final state computed by evaluating the circuit is stable over shots,
-        # which affects the simulation strategy (see QddBackend._evaluate_circuit(...) for the details).
+        # which affects the simulation strategy (see QddStateVectorBackend._evaluate_circuit(...) for the details).
         # If either of the followings holds, the final state is regarded as unstable.
         # - There are conditional gates.
         # - For the same qubit, there are instructions (except for measurements) after a measurement.
@@ -442,11 +444,8 @@ class QddBackend(BackendV1):
                 break
 
         # Notice: here, 'measured_qubits' may not contain all measured qubits due to 'break' above
-
-        # The circuit must have measurement gates
-        if not measured_qubits:
-            raise RuntimeError(f'Circuit "{circ.name}" has no measurement gates.'
-                               f' Every circuit must have measurement gates when using {QddBackend.__name__}.')
+        #if not measured_qubits:
+        #    print("Not including measure gates")
 
         return CircuitProperty(stable_final_state=stable_final_state, clbit_final_values=clbit_final_values)
     
@@ -456,10 +455,10 @@ class QddBackend(BackendV1):
         # Check if invalid options (i.e., causing errors) are specified
         if 'shots' in run_options:
             shots = run_options['shots']
-            max_shots = QddBackend._DEFAULT_CONFIG['max_shots']
+            max_shots = QddStateVectorBackend._DEFAULT_CONFIG['max_shots']
             if not (0 < shots <= max_shots):
                 raise RuntimeError(f'Shots={shots} is specified, but #shots must be positive and <= {max_shots}'
-                                   f' when using {QddBackend.__name__}.')
+                                   f' when using {QddStateVectorBackend.__name__}.')
 
         # Warn if unsupported options are specified
         # Note: we cannot raise an error here because some Qiskit functions (e.g., execute(...)) adds some options to
@@ -468,8 +467,8 @@ class QddBackend(BackendV1):
             # if the runtime option is not contained in the default option list, output a warning.
             if not hasattr(self.options, run_opt):
                 # some options can be ignored without warnings (e.g., an option value of no effect)
-                can_ignore = run_opt in QddBackend._OPTIONS_IGNORED_WITHOUT_WARN \
-                    and QddBackend._OPTIONS_IGNORED_WITHOUT_WARN[run_opt](run_options[run_opt])
+                can_ignore = run_opt in QddStateVectorBackend._OPTIONS_IGNORED_WITHOUT_WARN \
+                    and QddStateVectorBackend._OPTIONS_IGNORED_WITHOUT_WARN[run_opt](run_options[run_opt])
                 if not can_ignore:
-                    warn(f'Option {run_opt}={run_options[run_opt]} is not used by {QddBackend.__name__}.',
+                    warn(f'Option {run_opt}={run_options[run_opt]} is not used by {QddStateVectorBackend.__name__}.',
                          UserWarning, stacklevel=2)

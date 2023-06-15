@@ -36,3 +36,18 @@ def test_gates_1_to_many_mapping():
         print(aer_counts)
         print(qdd_counts)
         assert_probabilities_are_close(aer_counts, qdd_counts)
+
+def test_ccx():
+    aer_backend = Aer.get_backend('aer_simulator')
+    qdd_backend = QddProvider().get_backend()
+    circ = QuantumCircuit(3)
+    circ.h(0)
+    circ.h(1)
+    circ.ccx(0,1,2)
+    circ.measure_all()
+    print(circ)
+    _, aer_counts = get_counts(circ, aer_backend, n_shots=5000, optimization_level=0)
+    _, qdd_counts = get_counts(circ, qdd_backend, n_shots=5000, optimization_level=0)
+    print(aer_counts)
+    print(qdd_counts)
+    assert_probabilities_are_close(aer_counts, qdd_counts)
