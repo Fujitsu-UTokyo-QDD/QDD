@@ -30,8 +30,6 @@ const std::size_t NBUCKETS = 524288;
 const std::size_t INITIAL_ALLOCATION_SIZE = 2048;
 const std::size_t GROWTH_FACTOR = 2;
 
-const unsigned int MAX_REF = std::numeric_limits<unsigned int>::max();
-
 using Qubit = int32_t;
 using QubitCount = uint32_t;
 using Index = std::size_t;

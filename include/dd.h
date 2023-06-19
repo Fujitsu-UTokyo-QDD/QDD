@@ -124,10 +124,6 @@ struct vEdge {
     Qubit getVar() const;
     bool isTerminal() const;
     vNode *getNode() const { return n; };
-    void decRef();
-    void incRef();
-
-    VectorXcf getEigenVector();
 
     void printVector() const;
     void printVector_sparse() const;
@@ -150,8 +146,8 @@ struct vNode {
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
-    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, unsigned int r)
-        : v(q), children(c), next(n), ref(r) {}
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n)
+        : v(q), children(c), next(n) {}
 
     vEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -167,12 +163,6 @@ struct vNode {
     Qubit v;
     std::array<vEdge, 2> children;
     vNode *next{nullptr};
-
-#ifdef MT
-    std::atomic_uint ref{0};
-#else
-    unsigned int ref{0};
-#endif
 };
 
 struct mEdge {
@@ -180,39 +170,28 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    Qubit getVar() const { return q; };
+    Qubit getVar() const;
     bool isTerminal() const;
     mNode *getNode() const { return n; };
 
     void printMatrix() const;
-    void decRef();
-    void incRef();
 
-    bool isStateVector() const { return dim != 0; }
-
-    void check();
     std_complex **getMatrix(std::size_t *dim) const;
-    MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
 
         // because nullptr == nullptr
-        return w.isApproximatelyEqual(e.w) && n == e.n && mat == e.mat;
+        return w.isApproximatelyEqual(e.w) && n == e.n;
     }
 
     inline bool operator!=(const mEdge &e) const noexcept {
         return !(this->operator==(e));
     }
 
-    bool compareNumerically(const mEdge &other) const noexcept;
-
     std_complex w;
 
     mNode *n{nullptr};
     Complex **mat{nullptr};
-
-    Qubit q;
-    size_t dim{0}; // dim = 1 << (q + 1)
 };
 
 inline void swap(mEdge &lhs, mEdge &rhs) {
@@ -232,12 +211,7 @@ template <> struct std::hash<std_complex> {
 template <> struct std::hash<mEdge> {
     std::size_t operator()(const mEdge &e) const noexcept {
         auto h1 = std::hash<std_complex>()(e.w);
-        std::size_t h2;
-        if (e.isStateVector())
-            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.mat));
-        else
-            h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
-
+        std::size_t h2 = std::hash<std::size_t>()(reinterpret_cast<std::size_t>(e.n));
         return hash_combine(h1, h2);
     }
 };
@@ -258,8 +232,8 @@ inline std::ostream &operator<<(std::ostream &os, const mEdge &c) {
 struct mNode {
 
     mNode() = default;
-    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, unsigned int r)
-        : v(q), children(c), next(n), ref(r) {}
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
+        : v(q), children(c), next(n) {}
     mNode(const mNode &vv) : v(vv.v), children(vv.children) {}
     mEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -275,12 +249,6 @@ struct mNode {
     Qubit v;
     std::array<mEdge, 4> children;
     mNode *next{nullptr};
-
-#ifdef MT
-    std::atomic_uint ref{0};
-#else
-    unsigned int ref{0};
-#endif
 };
 
 template <> struct std::hash<mNode> {
@@ -344,10 +312,6 @@ mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
-
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold);
-mEdge makeHybridGate(QubitCount q, GateMatrix g, Qubit target, Qubit threshold,
-                     const Controls &c);
 
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);
