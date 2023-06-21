@@ -92,6 +92,10 @@ class CHashTable {
         return node;
     }
 
+    void dump(){
+        std::cout << "#chunk = " << _cache.chunkID << std::endl;
+    }
+
   private:
     struct Table {
         T *_table[NBUCKETS] = {nullptr};

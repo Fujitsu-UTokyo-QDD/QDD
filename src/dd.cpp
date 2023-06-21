@@ -8,6 +8,7 @@
 #include <boost/mpi/environment.hpp>
 #include <map>
 #include <queue>
+#include <unordered_set>
 
 #define SUBTASK_THRESHOLD 5
 
@@ -881,6 +882,11 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     }
 
     vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
+    //_mCache.hitRatio();
+    //_aCache.hitRatio();
+    //vUnique.dump();
+    //mUnique.dump();
+    //genDot(v);
     return v;
 }
 
@@ -1100,7 +1106,11 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
-void genDot2(vNode *node, std::vector<std::string> &result, int depth) {
+void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unordered_set<vNode *> &done) {
+    if(done.find(node)!=done.end()){
+        return;
+    }
+    done.insert(node);
     std::stringstream node_ss;
     node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
     result.push_back(node_ss.str());
@@ -1110,13 +1120,14 @@ void genDot2(vNode *node, std::vector<std::string> &result, int depth) {
            << " [label=\"" << i << node->children[i].w << "\"]";
         result.push_back(ss.str());
         if (!node->children[i].isTerminal())
-            genDot2(node->children[i].n, result, depth + 1);
+            genDot2(node->children[i].n, result, depth + 1, done);
     }
 }
 
 std::string genDot(vEdge &rootEdge) {
     std::vector<std::string> result;
-    genDot2(rootEdge.n, result, 0);
+    std::unordered_set<vNode *> done;
+    genDot2(rootEdge.n, result, 0, done);
 
     // vNode::terminal
     std::stringstream node_ss;
@@ -1129,6 +1140,45 @@ std::string genDot(vEdge &rootEdge) {
         finalresult << "  " << line << std::endl;
     }
     finalresult << "}" << std::endl;
+    std::cout << done.size() << " nodes" << std::endl;
+    return finalresult.str();
+}
+
+void genDot2(mNode *node, std::vector<std::string> &result, int depth, std::unordered_set<mNode *> &done) {
+    if(done.find(node)!=done.end()){
+        return;
+    }
+    done.insert(node);
+    std::stringstream node_ss;
+    node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
+    result.push_back(node_ss.str());
+    for (int i = 0; i < node->children.size(); i++) {
+        std::stringstream ss;
+        ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n
+           << " [label=\"" << i << node->children[i].w << "\"]";
+        result.push_back(ss.str());
+        if (!node->children[i].isTerminal())
+            genDot2(node->children[i].n, result, depth + 1, done);
+    }
+}
+
+std::string genDot(mEdge &rootEdge) {
+    std::vector<std::string> result;
+    std::unordered_set<mNode *> done;
+    genDot2(rootEdge.n, result, 0, done);
+
+    // vNode::terminal
+    std::stringstream node_ss;
+    node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
+    result.push_back(node_ss.str());
+
+    std::stringstream finalresult;
+    finalresult << "digraph qdd {" << std::endl;
+    for (std::string line : result) {
+        finalresult << "  " << line << std::endl;
+    }
+    finalresult << "}" << std::endl;
+    std::cout << done.size() << " nodes" << std::endl;
     return finalresult.str();
 }
 

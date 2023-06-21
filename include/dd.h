@@ -412,6 +412,7 @@ mEdge RZ(QubitCount qnum, int target, float angle);
 mEdge CX(QubitCount qnum, int target, int control);
 
 std::string genDot(vEdge &rootEdge);
+std::string genDot(mEdge &rootEdge);
 
 vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
