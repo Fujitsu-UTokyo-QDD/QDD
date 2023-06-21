@@ -146,8 +146,6 @@ struct vEdge {
     bool isTerminal() const;
     vNode *getNode() const { return n; };
 
-    VectorXcf getEigenVector();
-
     void printVector() const;
     void printVectorMPI(bmpi::communicator &world) const;
     void printVector_sparse() const;
@@ -216,9 +214,7 @@ struct mEdge {
 
     void printMatrix() const;
 
-    void check();
     std_complex **getMatrix(std::size_t *dim) const;
-    MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
 
@@ -229,8 +225,6 @@ struct mEdge {
     inline bool operator!=(const mEdge &e) const noexcept {
         return !(this->operator==(e));
     }
-
-    bool compareNumerically(const mEdge &other) const noexcept;
 
     std_complex w;
 

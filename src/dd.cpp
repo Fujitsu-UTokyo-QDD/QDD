@@ -182,52 +182,6 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
         *dim = d;
     return matrix;
 }
-struct MatrixGuard {
-    MatrixGuard(std_complex **m, std::size_t dim) : _m(m), _dim(dim) {}
-    ~MatrixGuard() {
-        for (size_t i = 0; i < _dim; i++) {
-            delete[] _m[i];
-        }
-        delete[] _m;
-    }
-
-    std_complex **_m;
-    const std::size_t _dim;
-};
-
-MatrixXcf mEdge::getEigenMatrix() {
-    std::size_t dim;
-    auto m = getMatrix(&dim);
-    MatrixGuard g(m, dim);
-    MatrixXcf M(dim, dim);
-
-    for (auto i = 0; i < dim; i++) {
-        for (auto j = 0; j < dim; j++) {
-            M(i, j) = std::complex<double>{m[i][j].r, m[i][j].i};
-        }
-    }
-    return M;
-}
-
-bool mEdge::compareNumerically(const mEdge &other) const noexcept {
-    if (this->getVar() != other.getVar())
-        return false;
-
-    auto m1 = this->getMatrix(nullptr);
-    auto m2 = other.getMatrix(nullptr);
-    Qubit q = this->getVar();
-    std::size_t dim = 1 << (q + 1);
-    MatrixGuard mg1(m1, dim);
-    MatrixGuard mg2(m2, dim);
-
-    for (auto i = 0; i < dim; i++) {
-        for (auto j = 0; j < dim; j++) {
-            if (m1[i][j] != m2[i][j])
-                return false;
-        }
-    }
-    return true;
-}
 
 mEdge makeIdent(Qubit q) {
 
@@ -846,25 +800,6 @@ std_complex *vEdge::getVector(std::size_t *dim) const {
         *dim = d;
     return vector;
 }
-struct VectorGuard {
-    VectorGuard(std_complex *m, std::size_t dim) : _m(m), _dim(dim) {}
-    ~VectorGuard() { delete[] _m; }
-
-    std_complex *_m;
-    const std::size_t _dim;
-};
-
-VectorXcf vEdge::getEigenVector() {
-    std::size_t dim;
-    auto v = getVector(&dim);
-    VectorGuard g(v, dim);
-    VectorXcf V(dim);
-
-    for (auto i = 0; i < dim; i++) {
-        V(i) = std::complex<double>{v[i].r, v[i].i};
-    }
-    return V;
-}
 
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
@@ -1138,17 +1073,6 @@ mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
     e3 = mm_multiply(e1, e3);
 
     return e3;
-}
-
-void mEdge::check() {
-    if (isTerminal())
-        return;
-
-    if (n->v == -2 || n->v == -3 || n->v == -4) {
-        assert(false);
-    }
-    for (auto i = 0; i < 4; i++)
-        n->getEdge(i).check();
 }
 
 mEdge RX(QubitCount qnum, int target, float angle) {
