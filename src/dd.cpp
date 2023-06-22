@@ -63,7 +63,7 @@ static vEdge normalizeV(const vEdge &e) {
 
     // check for all zero weights
     if (std::all_of(e.n->children.begin(), e.n->children.end(),
-                    [](const vEdge &e) { return norm(e.w) == 0.0; })) {
+                    [](const vEdge &e) { return e.w.isApproximatelyZero(); })) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
     }
@@ -73,13 +73,31 @@ static vEdge normalizeV(const vEdge &e) {
     });
     std_complex max_weight = result->w;
 
-    for(int i = 0; i < 2; i++){
-        std_complex r = e.n->children[i].w/max_weight;
-        e.n->children[i].w = r;
+    // parents weight
+    std_complex new_weight = max_weight * e.w;
+    if(new_weight.isApproximatelyZero()){
+        vUnique.returnNode(e.n);
+        return vEdge::zero;
+    }else if (new_weight.isApproximatelyOne()){
+        new_weight = {1.0, 0.0};
     }
-    vNode *n = vUnique.lookup(e.n);
 
-    return {max_weight * e.w, n};
+    // child weight (larger one)
+    size_t max_idx = std::distance(e.n->children.begin(), result);
+    e.n->children[max_idx].w = {1.0, 0.0};
+
+    // child weight (smaller one)
+    size_t min_idx = (max_idx == 1) ? 0 : 1;
+    e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
+    if(e.n->children[min_idx].w.isApproximatelyOne()){
+        e.n->children[min_idx].w = {1.0, 0.0};
+    }else if(e.n->children[min_idx].w.isApproximatelyZero()){
+        e.n->children[min_idx] = vEdge::zero;
+    }
+
+    // making new node
+    vNode *n = vUnique.lookup(e.n);
+    return {new_weight, n};
 }
 
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
@@ -1125,6 +1143,7 @@ void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unor
 }
 
 std::string genDot(vEdge &rootEdge) {
+    assert(!rootEdge.isTerminal());
     std::vector<std::string> result;
     std::unordered_set<vNode *> done;
     genDot2(rootEdge.n, result, 0, done);
@@ -1163,6 +1182,7 @@ void genDot2(mNode *node, std::vector<std::string> &result, int depth, std::unor
 }
 
 std::string genDot(mEdge &rootEdge) {
+    assert(!rootEdge.isTerminal());
     std::vector<std::string> result;
     std::unordered_set<mNode *> done;
     genDot2(rootEdge.n, result, 0, done);
