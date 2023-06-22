@@ -155,6 +155,7 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
 int main(int argc, char** argv){
     bmpi::environment env(argc, argv);
     bmpi::communicator world;
-    auto result = grover_MPI(20, world);
+    assert(argc == 2);
+    auto result = grover_MPI(std::atoi(argv[1]), world);
     world.barrier();
 }
