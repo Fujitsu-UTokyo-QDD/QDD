@@ -81,7 +81,7 @@ TEST(QddTest, GateTest){
         ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,std::numbers::pi/2))));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,PI/2))));
     }
     {
         mEdge m = makeGate(1, Sdagmat, 0);
@@ -90,7 +90,7 @@ TEST(QddTest, GateTest){
         ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,-std::numbers::pi/2))));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,-PI/2))));
     }
     {
         mEdge m = makeGate(1, Tmat, 0);
@@ -99,7 +99,7 @@ TEST(QddTest, GateTest){
         ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,std::numbers::pi/4))));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,PI/4))));
     }
     {
         mEdge m = makeGate(1, Tdagmat, 0);
@@ -108,7 +108,7 @@ TEST(QddTest, GateTest){
         ASSERT_TRUE(mat[0][0] == std::complex<double>(1.0, 0.0));
         ASSERT_TRUE(mat[0][1] == std::complex<double>(0.0, 0.0));
         ASSERT_TRUE(mat[1][0] == std::complex<double>(0.0, 0.0));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,-std::numbers::pi/4))));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,-PI/4))));
     }
     {
         mEdge m = makeGate(1, SXmat, 0);
@@ -133,23 +133,23 @@ TEST(QddTest, GateTest){
         mEdge m = makeGate(1, Vmat, 0);
         size_t dim;
         std_complex** mat = m.getMatrix(&dim);
-        ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(std::numbers::pi/4),0}));
-        ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,-std::sin(std::numbers::pi/4)}));
-        ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,-std::sin(std::numbers::pi/4)}));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(std::numbers::pi/4),0}));
+        ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(PI/4),0}));
+        ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,-std::sin(PI/4)}));
+        ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,-std::sin(PI/4)}));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(PI/4),0}));
     }
     {
         mEdge m = makeGate(1, Vdagmat, 0);
         size_t dim;
         std_complex** mat = m.getMatrix(&dim);
-        ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(-std::numbers::pi/4),0}));
-        ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,-std::sin(-std::numbers::pi/4)}));
-        ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,-std::sin(-std::numbers::pi/4)}));
-        ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(-std::numbers::pi/4),0}));
+        ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(-PI/4),0}));
+        ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,-std::sin(-PI/4)}));
+        ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,-std::sin(-PI/4)}));
+        ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(-PI/4),0}));
     }
     {
         for (int i = 0; i<16; i++){
-            float angle = std::numbers::pi * 2 * i / 16;
+            float angle = PI * 2 * i / 16;
             mEdge m = RX(1, 0, angle);
             size_t dim;
             std_complex** mat = m.getMatrix(&dim);
@@ -161,7 +161,7 @@ TEST(QddTest, GateTest){
     }
     {
         for (int i = 0; i<16; i++){
-            float angle = std::numbers::pi * 2 * i / 16;
+            float angle = PI * 2 * i / 16;
             mEdge m = RY(1, 0, angle);
             size_t dim;
             std_complex** mat = m.getMatrix(&dim);
@@ -173,7 +173,7 @@ TEST(QddTest, GateTest){
     }
     {
         for (int i = 0; i<16; i++){
-            float angle = std::numbers::pi * 2 * i / 16;
+            float angle = PI * 2 * i / 16;
             mEdge m = RZ(1, 0, angle);
             size_t dim;
             std_complex** mat = m.getMatrix(&dim);
@@ -284,7 +284,7 @@ TEST(QddTest, MeasureTest){
         std::map<std::string, int> resultmap;
         for (int i = 0; i < 100; i++){
             std::string result = measureAll(state, false, mt);
-            if(resultmap.contains(result)){
+            if(resultmap.find(result) != resultmap.end()){
                 resultmap[result] += 1;
             }else{
                 resultmap[result] = 1;
@@ -300,7 +300,7 @@ TEST(QddTest, MeasureTest){
         std::map<std::string, int> resultmap;
         for (int i = 0; i < 100; i++){
             std::string result = measureAll(state, false, mt);
-            if(resultmap.contains(result)){
+            if(resultmap.find(result) != resultmap.end()){
                 resultmap[result] += 1;
             }else{
                 resultmap[result] = 1;
@@ -340,11 +340,11 @@ TEST(QddTest, MeasureTest){
         std::map<char, int> resultmap{{'0',0},{'1',0}};
         for(int i=0;i<100;i++){
             vEdge state = makeZeroState(3);
-            state = mv_multiply(RX(3,0,std::numbers::pi/3),state);
+            state = mv_multiply(RX(3,0,PI/3),state);
             state = mv_multiply(CX(3, 1, 0), state);
             state = mv_multiply(CX(3, 2, 0), state);
             const auto res = measureOneCollapsing(state, 0, mt);
-            ASSERT_TRUE(resultmap.contains(res));
+            ASSERT_TRUE(resultmap.find(res) != resultmap.end());
             resultmap[res] += 1;
         }
         ASSERT_TRUE(resultmap['0'] < 80 && resultmap['0'] > 70);
