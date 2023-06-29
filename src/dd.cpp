@@ -1217,7 +1217,7 @@ int vNode_to_vec(vNode *node, std::vector<vContent> &table,
         table.push_back(terminal);
         map[node->terminal] = 0;
     }
-    if (map.contains(node)) {
+    if (map.find(node) != map.end()) {
         return map[node];
     }
 
