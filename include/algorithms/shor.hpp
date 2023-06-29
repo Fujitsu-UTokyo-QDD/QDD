@@ -48,11 +48,11 @@ class Shor{
         }
 
         static float QDDcos(float fac, float div) {
-            return std::cos((std::numbers::pi * fac) / div);
+            return std::cos((PI * fac) / div);
         }
 
         static float QDDsin(float fac, float div) {
-            return std::sin((std::numbers::pi * fac) / div);
+            return std::sin((PI * fac) / div);
         }
 
 
