@@ -1124,6 +1124,53 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
+GateMatrix rx(float angle){
+    std::complex<float> i1 = {std::cos(angle / 2), 0};
+    std::complex<float> i2 = {0, -std::sin(angle / 2)};
+    return GateMatrix{i1, i2, i2, i1};
+}
+
+GateMatrix ry(float angle){
+    std::complex<float> i1 = {std::cos(angle / 2), 0};
+    std::complex<float> i2 = {-std::sin(angle / 2), 0};
+    std::complex<float> i3 = {std::sin(angle / 2), 0};
+    return GateMatrix{i1, i2, i3, i1};
+}
+
+GateMatrix rz(float angle){
+    std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
+    std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
+    return GateMatrix{i1, cf_zero, cf_zero, i2};
+}
+
+
+
+GateMatrix u3(float theta, float phi, float lambda){
+    std::complex<float> i1 = {std::cos(theta / 2), 0};
+    std::complex<float> i2 = -std::exp(std::complex<float>(0,lambda))*std::sin(theta/2);
+    std::complex<float> i3 = std::exp(std::complex<float>(0,phi))*std::sin(theta/2);
+    std::complex<float> i4 = std::exp(std::complex<float>(0,lambda+phi))*std::cos(theta/2);
+    return GateMatrix{i1, i2, i3, i4};
+}
+
+GateMatrix u1(float lambda){ return u3(0, 0, lambda); }
+
+GateMatrix u2(float phi, float lambda){ return u3(PI/2, phi, lambda); }
+
+GateMatrix u(float theta, float phi, float lambda){ return u3(theta, phi, lambda); }
+
+GateMatrix p(float angle){
+    std::complex<float> i1 = {std::cos(angle), std::sin(angle)};
+    return GateMatrix{1, 0, 0, i1};
+}
+
+GateMatrix r(float theta, float phi){
+    std::complex<float> i1 = {std::cos(theta / 2), 0};
+    std::complex<float> i2 = std::complex<float>(0, -1) * std::exp(std::complex<float>(0, -phi)) * std::sin(theta / 2);
+    std::complex<float> i3 = std::complex<float>(0, -1) * std::exp(std::complex<float>(0, phi)) * std::sin(theta / 2);
+    return GateMatrix{i1, i2, i3, i1};
+}
+
 void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unordered_set<vNode *> &done) {
     if(done.find(node)!=done.end()){
         return;

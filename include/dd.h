@@ -411,6 +411,16 @@ mEdge RZ(QubitCount qnum, int target, float angle);
 
 mEdge CX(QubitCount qnum, int target, int control);
 
+GateMatrix rx(float angle);
+GateMatrix ry(float angle);
+GateMatrix rz(float angle);
+GateMatrix u3(float theta, float phi, float lambda);
+GateMatrix u1(float lambda);
+GateMatrix u2(float phi, float lambda);
+GateMatrix u(float theta, float phi, float lambda);
+GateMatrix p(float angle);
+GateMatrix r(float theta, float phi);
+
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
 
