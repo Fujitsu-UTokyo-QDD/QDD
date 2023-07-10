@@ -215,6 +215,7 @@ struct mEdge {
     void printMatrix() const;
 
     std_complex **getMatrix(std::size_t *dim) const;
+    MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
 

@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/complex.h>
 #include <pybind11/stl.h>
+#include <pybind11/eigen.h>
 #include <map>
 #include "dd.h"
 #include "common.h"
@@ -59,7 +60,7 @@ std::vector<std::complex<double>> _getVector(vEdge &rootEdge){
 
 PYBIND11_MODULE(pyQDD, m){
     py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse);
-    py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix);
+    py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
 

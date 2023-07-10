@@ -202,6 +202,34 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
     return matrix;
 }
 
+struct MatrixGuard{
+    MatrixGuard(std_complex** m, std::size_t dim): _m(m), _dim(dim){} 
+    ~MatrixGuard(){
+        for(size_t i = 0; i < _dim; i++){
+            delete[] _m[i];
+        }
+        delete[] _m;
+    
+    }
+
+    std_complex** _m;
+    const std::size_t _dim;
+};
+
+MatrixXcf mEdge::getEigenMatrix(){
+    std::size_t dim;
+    auto m = getMatrix(&dim);
+    MatrixGuard g(m, dim);
+    MatrixXcf M(dim,dim);
+
+    for(auto i = 0; i < dim; i++){
+        for(auto j = 0; j < dim; j++ ){
+           M(i,j) = std::complex<double>{m[i][j].r, m[i][j].i}; 
+        }
+    }
+    return M;
+}
+
 mEdge makeIdent(Qubit q) {
 
     if (q < 0)
