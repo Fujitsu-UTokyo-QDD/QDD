@@ -21,7 +21,7 @@ from qdd.qdd_failed_job import QddFailedJob
 from qdd.qdd_job import QddJob
 from .circuit_property import CircuitProperty
 
-import pyQDD
+from qdd import pyQDD
 
 _qiskit_gates_1q: Dict = {
     qiskit_gates.HGate: "H",

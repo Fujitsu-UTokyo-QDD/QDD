@@ -16,7 +16,7 @@ $ ./build/test/qdd_test
 ## Python Bindings
 After the above commands, try the following commands.
 ```
-$ cp build/qdd/pyQDD.*.so .
+$ cp build/qdd/pyQDD.*.so qdd
 $ poetry install
 $ poetry run pytest
 $ poetry build
