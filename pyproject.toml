@@ -4,9 +4,13 @@ version = "0.1.0"
 description = "Qiskit Provider for QDD"
 authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
 readme = "README.md"
-packages = [
-    { include = "qdd"},
-    { include = "pyQDD.cpython-38-x86_64-linux-gnu.so" },
+#packages = [
+#    { include = "qdd" },
+#    { include = "pyQDD.*.so" },
+#]
+#include = ["pyQDD.*.so"]
+include = [
+    { path = "qdd/pyQDD.*.so" },
 ]
 
 [tool.poetry.dependencies]
