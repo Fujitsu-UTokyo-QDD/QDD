@@ -1,5 +1,5 @@
 import pytest
-import pyQDD
+from qdd import pyQDD
 import qiskit.circuit.library.standard_gates as qiskit_gates
 from qiskit import QuantumCircuit as QiskitCircuit, QuantumRegister
 from qiskit.quantum_info import Operator
