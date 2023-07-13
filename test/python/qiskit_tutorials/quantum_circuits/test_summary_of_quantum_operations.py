@@ -14,10 +14,14 @@ from test.python.helpers.circuit_helper import assert_probabilities_are_close, g
 def test_gates_1_to_many_mapping():
     gates = [
         ('cy', [], [1, 3]),
+        ('cz', [], [1, 3]),
+        ('csx', [], [1, 3]),
         ('ch', [], [1, 3]),
         ('crz', [1], [1, 3]),
         ('cp', [1], [1, 3]),
         ('ccx', [], [1, 2, 5]),
+        ('mcx', [], [[1, 2, 3], 5]),
+        ('mcx', [], [[1, 2, 5], 4]),
         ('cswap', [], [1, 2, 5])
     ]
 

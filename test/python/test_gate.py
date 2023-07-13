@@ -1,6 +1,8 @@
 import pytest
 import pyQDD
 import qiskit.circuit.library.standard_gates as qiskit_gates
+from qiskit import QuantumCircuit as QiskitCircuit, QuantumRegister
+from qiskit.quantum_info import Operator
 import numpy as np
 import math
 import random
@@ -84,4 +86,22 @@ def test_1q_rotation_1():
             qis_mat = qis(para1, para2, para3).to_matrix()
             norm = np.linalg.norm(qdd_mat-qis_mat)
             assert(norm < 0.000001)
+
+def test_1q_control():
+    _qiskit_1q_control = {
+        qiskit_gates.CYGate: "Y",
+        qiskit_gates.CZGate: "Z",
+        qiskit_gates.CSXGate: "SX",
+    }
+
+    for qis,qdd in _qiskit_1q_control.items():
+        reg = QuantumRegister(2)
+        circ = QiskitCircuit(reg)
+        circ.append(qis(),reg)
+        qis_mat = Operator(circ).data
+
+        gate = pyQDD.makeControlGate(2, qdd, 1, [0])
+        qdd_mat = gate.getEigenMatrix()
+        norm = np.linalg.norm(qdd_mat-qis_mat)
+        assert(norm < 0.000001)
 
