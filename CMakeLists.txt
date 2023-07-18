@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project(QDD)
 
 
@@ -13,25 +14,6 @@ if(NOT EXISTS ${EIGEN_PATH})
     file(DOWNLOAD https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip "${EIGEN}.zip")
     file(ARCHIVE_EXTRACT INPUT "${EIGEN}.zip" DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 endif()
-
-
-
-option(with_graphviz      "Use graphviz to draw task graph for debugging" OFF)
-if(with_graphviz)
-    find_package(PkgConfig REQUIRED)
-    if(${USER} STREQUAL "lsw")
-        set(ENV{PKG_CONFIG_PATH} /Users/lsw/Code/graphviz/build/install/lib/pkgconfig)
-    endif()
-    pkg_check_modules(CGRAPH REQUIRED IMPORTED_TARGET libcgraph)
-    pkg_check_modules(GVC REQUIRED IMPORTED_TARGET libgvc)
-endif()
-
-if(CGRAPH_FOUND)
-    message(STATUS ${CGRAPH_INCLUDEDIR})
-    message(STATUS ${CGRAPH_LIBDIR})
-    add_compile_definitions(GRAPHVIZ)
-endif()
-
 
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -49,10 +31,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-set(CMAKE_C_COMPILER "/usr/bin/mpicc" CACHE string "MPI C compiler" FORCE)
-set(CMAKE_CXX_COMPILER "/usr/bin/mpic++" CACHE string "MPI C++ compiler" FORCE)
 find_package(MPI REQUIRED COMPONENTS CXX C)
-
 find_package(Boost REQUIRED COMPONENTS fiber context serialization mpi)
 message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
 

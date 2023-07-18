@@ -7,6 +7,22 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "auditwheel"
+version = "5.4.0"
+description = "Cross-distribution Linux wheels"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+pyelftools = ">=0.24"
+
+[package.extras]
+coverage = ["docker", "jsonschema", "pretend", "pypatchelf", "pytest (>=3.4)", "pytest-cov"]
+develop = ["docker", "jsonschema", "pretend", "pypatchelf", "pytest (>=3.4)", "pytest-cov"]
+test = ["docker", "jsonschema", "pretend", "pypatchelf", "pytest (>=3.4)"]
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.12.2"
 description = "Screen-scraping library"
@@ -425,6 +441,14 @@ description = "C parser in Python"
 category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "pyelftools"
+version = "0.29"
+description = "Library for analyzing ELF files and DWARF debugging information"
+category = "dev"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "pyscf"
@@ -953,12 +977,16 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.10"
-content-hash = "9f7fdb3a5dd9d5e3dc0f7d9adc9b56ade67323452755a56fcb89f80512f1b37d"
+content-hash = "9d39885ffab01f2721ee80a7b172fc22a6f1a3c6150de598bcf6a6ad553b6cea"
 
 [metadata.files]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
     {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
+]
+auditwheel = [
+    {file = "auditwheel-5.4.0-py3-none-any.whl", hash = "sha256:d8410a17523427ba3f7b60c9701d23de28b8f94fa5dab732aa6c30d160df8127"},
+    {file = "auditwheel-5.4.0.tar.gz", hash = "sha256:aaf8153ab7a29cc99a663ce2498804daf1887ea1b7a3231ba0d3fee68a3ccf19"},
 ]
 beautifulsoup4 = [
     {file = "beautifulsoup4-4.12.2-py3-none-any.whl", hash = "sha256:bd2520ca0d9d7d12694a53d44ac482d181b4ec1888909b035a3dbf40d0f57d4a"},
@@ -1499,6 +1527,10 @@ pybind11 = [
 pycparser = [
     {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
+]
+pyelftools = [
+    {file = "pyelftools-0.29-py2.py3-none-any.whl", hash = "sha256:519f38cf412f073b2d7393aa4682b0190fa901f7c3fa0bff2b82d537690c7fc1"},
+    {file = "pyelftools-0.29.tar.gz", hash = "sha256:ec761596aafa16e282a31de188737e5485552469ac63b60cfcccf22263fd24ff"},
 ]
 pyscf = [
     {file = "pyscf-2.2.1-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:c57c02b01caef2ecb7e173d3d244e8aef88c347baae50bd536e5e2ed344d1b06"},
