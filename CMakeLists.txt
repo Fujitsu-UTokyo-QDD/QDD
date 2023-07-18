@@ -16,8 +16,6 @@ if(NOT EXISTS ${EIGEN_PATH})
 endif()
 
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
 add_compile_definitions(_GUN_SOURCE)
 
 enable_testing()
@@ -31,9 +29,23 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-find_package(MPI REQUIRED COMPONENTS CXX C)
-find_package(Boost REQUIRED COMPONENTS fiber context serialization mpi)
-message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
+option(isMPI "Configure for using MPI" OFF)
+if (isMPI)
+  add_compile_definitions(isMPI)
+  find_package(MPI REQUIRED COMPONENTS CXX C)
+  find_package(Boost REQUIRED COMPONENTS serialization mpi)
+  message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
+endif()
+
+option(isMT "Configure for using multi-threading" OFF)
+if (isMT)
+  add_compile_definitions(isMT)
+  set(THREADS_PREFER_PTHREAD_FLAG ON)
+  find_package(Threads REQUIRED)
+  find_package(TBB REQUIRED)
+  find_package(Boost REQUIRED COMPONENTS fiber context)
+  message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
+endif()
 
 
 add_subdirectory(src)

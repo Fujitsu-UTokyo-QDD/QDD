@@ -3,20 +3,24 @@
 #include "Eigen/Dense"
 #include "common.h"
 #include <atomic>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/mpi/communicator.hpp>
-#include <boost/mpi/environment.hpp>
-#include <boost/serialization/vector.hpp>
 #include <complex>
 #include <random>
 #include <vector>
 using Eigen::MatrixXcf;
 using Eigen::VectorXcf;
 
+
+#ifdef isMPI
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
+#include <boost/serialization/vector.hpp>
 namespace bmpi = boost::mpi;
+#endif
 
 struct Complex {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -24,6 +28,7 @@ struct Complex {
         ar &r;
         ar &i;
     }
+#endif
     double r{0.0};
     double i{0.0};
 
@@ -131,6 +136,7 @@ struct mNode;
 struct vNode;
 
 struct vEdge {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -138,6 +144,7 @@ struct vEdge {
         ar &w;
         ar &n;
     }
+#endif
 
     static vEdge one;
     static vEdge zero;
@@ -147,7 +154,9 @@ struct vEdge {
     vNode *getNode() const { return n; };
 
     void printVector() const;
+#ifdef isMPI
     void printVectorMPI(bmpi::communicator &world) const;
+#endif
     void printVector_sparse() const;
     std_complex *getVector(std::size_t *dim) const;
 
@@ -165,6 +174,7 @@ inline void swap(vEdge &lhs, vEdge &rhs) {
 }
 
 struct vNode {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -173,6 +183,7 @@ struct vNode {
         ar &children;
         ar &next;
     }
+#endif
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
@@ -197,6 +208,7 @@ struct vNode {
 };
 
 struct mEdge {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -204,6 +216,7 @@ struct mEdge {
         ar &w;
         ar &n;
     }
+#endif
 
     static mEdge one;
     static mEdge zero;
@@ -270,6 +283,7 @@ inline std::ostream &operator<<(std::ostream &os, const mEdge &c) {
 }
 
 struct mNode {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -278,6 +292,7 @@ struct mNode {
         ar &children;
         ar &next;
     }
+#endif
 
     mNode() = default;
     mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
@@ -352,6 +367,7 @@ struct ControlComparator {
     }
 };
 struct vContent {
+#ifdef isMPI
     friend class boost::serialization::access;
 
     template <class Archive>
@@ -360,6 +376,8 @@ struct vContent {
         ar &w;
         ar &index;
     }
+#endif
+
     Qubit v;
     std::array<std_complex, 2> w;
     std::array<int, 2> index;
@@ -391,13 +409,17 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs);
 vEdge vv_kronecker(const vEdge &lhs, const vEdge &rhs);
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs);
+#ifdef isMPI
 vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world);
+#endif
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);
 vEdge makeZeroState(QubitCount q);
 vEdge makeOneState(QubitCount q);
+#ifdef isMPI
 vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world);
 vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world);
+#endif
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
@@ -425,5 +447,7 @@ GateMatrix r(float theta, float phi);
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
 
+#ifdef isMPI
 vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
+#endif

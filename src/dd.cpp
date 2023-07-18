@@ -4,11 +4,14 @@
 #include "table.hpp"
 #include <algorithm>
 #include <bitset>
-#include <boost/mpi/communicator.hpp>
-#include <boost/mpi/environment.hpp>
 #include <map>
 #include <queue>
 #include <unordered_set>
+
+#ifdef isMPI
+  #include <boost/mpi/communicator.hpp>
+  #include <boost/mpi/environment.hpp>
+#endif
 
 #define SUBTASK_THRESHOLD 5
 
@@ -257,6 +260,7 @@ vEdge makeZeroState(QubitCount q) {
     return e;
 }
 
+#ifdef isMPI
 vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world) {
     if (world.rank() == 0) {
         int shift = std::log2(world.size());
@@ -266,6 +270,7 @@ vEdge makeZeroStateMPI(QubitCount q, bmpi::communicator &world) {
         return vEdge::zero;
     }
 }
+#endif
 
 vEdge makeOneState(QubitCount q) {
     vEdge e = makeVEdge(0, {vEdge::zero, vEdge::one});
@@ -275,6 +280,7 @@ vEdge makeOneState(QubitCount q) {
     return e;
 }
 
+#ifdef isMPI
 vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world) {
     if (world.rank() == world.size() - 1) {
         int shift = std::log2(world.size());
@@ -284,6 +290,7 @@ vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world) {
         return vEdge::zero;
     }
 }
+#endif
 
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target) {
     return makeGate(q, g, target, {});
@@ -343,6 +350,7 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
     return e;
 }
 
+#ifdef isMPI
 mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     if (root.isTerminal() || world_size <= 1) {
         return root;
@@ -370,11 +378,13 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     tmp.w *= root.w;
     return getMPIGate(tmp, row % border, col % border, border);
 }
+#endif
 
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map);
 vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
 
+#ifdef isMPI
 vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     world.barrier();
     int row = world.rank();
@@ -410,6 +420,7 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     }
     return result;
 }
+#endif
 
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
     assert(!(lhs.isTerminal() && rhs.isTerminal()));
@@ -740,6 +751,7 @@ void vEdge::printVector() const {
     delete[] vector;
 }
 
+#ifdef isMPI
 void vEdge::printVectorMPI(bmpi::communicator &world) const {
     std::stringstream ss;
     if (this->isTerminal()) {
@@ -767,6 +779,7 @@ void vEdge::printVectorMPI(bmpi::communicator &world) const {
     }
     return;
 }
+#endif
 
 static void printVector_sparse2(const vEdge &edge, std::size_t row,
                                 const std_complex &w, uint64_t left,
@@ -1330,7 +1343,7 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
     return map[table.size() - 1];
 }
 
-
+#ifdef isMPI
 vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking) {
     std::vector<vContent> v;
     std_complex w;
@@ -1357,3 +1370,4 @@ void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool is
     }
     return;
 };
+#endif

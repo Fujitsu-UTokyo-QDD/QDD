@@ -3,7 +3,7 @@
 ## Build and Test
 You can build the repository as follows.
 ```
-$ CC=mpicc CXX=mpicxx Boost_DIR=/usr/lib/x86_64-linux-gnu/cmake cmake -B build -DCMAKE_BUILD_TYPE=Release
+$ cmake -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build -j
 ```
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
@@ -23,7 +23,13 @@ $ poetry build
 ```
 You can find installable files in 'dist' directory.
 
-## MPI Test
+## MPI
+You need to add some options.
+```
+$ CC=mpicc CXX=mpicxx Boost_DIR=/usr/lib/x86_64-linux-gnu/cmake cmake -B build -DCMAKE_BUILD_TYPE=Release -DisMPI=ON
+$ cmake --build build -j
+```
+
 You can run the MPI programs as follows.
 ```
 $ mpirun -np 4 ./build/test/mpt_test

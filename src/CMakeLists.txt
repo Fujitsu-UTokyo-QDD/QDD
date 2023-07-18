@@ -1,9 +1,12 @@
-
-find_package(TBB REQUIRED)
-add_library(engine STATIC dd.cpp  )
+add_library(engine STATIC dd.cpp)
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR})
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
-target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads ${Boost_LIBRARIES})
+if(isMT)
+  target_link_libraries(engine PUBLIC TBB::tbb Threads::Threads)
+endif()
+if(isMPI OR isMT)
+  target_link_libraries(engine PUBLIC ${Boost_LIBRARIES})
+endif()
 
 add_library(alg STATIC algorithms/grover.cpp algorithms/shor.cpp)
 target_include_directories(alg PUBLIC ${PROJECT_SOURCE_DIR}/include)
