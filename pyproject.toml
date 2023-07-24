@@ -16,6 +16,7 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.8, <3.10"
 qiskit = ">=0.32.1"
+qiskit-aer = "<=0.12.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,6 +28,7 @@ qiskit-nature = {extras = ["pyscf"], version = "^0.5.2"}
 tweedledum = "^1.1.1"
 pybind11 = "^2.10.4"
 auditwheel = "^5.4.0"
+cmake = "^3.26.4"
 
 [build-system]
 requires = ["poetry-core"]
