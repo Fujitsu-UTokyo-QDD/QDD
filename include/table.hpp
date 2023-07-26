@@ -96,6 +96,10 @@ class CHashTable {
         std::cout << "#chunk = " << _cache.chunkID << std::endl;
     }
 
+    std::size_t get_allocations(){
+        return _cache.allocations;
+    }
+
   private:
     struct Table {
         T *_table[NBUCKETS] = {nullptr};

@@ -606,4 +606,5 @@ class MulCache{
 };
 
 
-
+extern AddCache _aCache;
+extern MulCache _mCache;
