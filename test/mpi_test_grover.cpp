@@ -193,7 +193,6 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
     }
     int i = 0;
     for (unsigned long long j = j_pre; j < iterations; j += 8) {
-        dump(world, state, j);
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
@@ -202,7 +201,8 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
-        if(j % 100 < 8){
+        if(j%100000<8 && j>100000){
+            dump(world, state, j);
             std::cout << world.rank() << " gc" << std::endl;
             std::vector<vContent> v;
             std::unordered_map<vNode *, int> map;
@@ -212,8 +212,11 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
             vUnique = std::move(new_table);
             state.n = vec_to_vNode2(v, vUnique);
 
-            _aCache.clearAll();
-            _mCache.clearAll();
+            AddCache newA(40);
+            MulCache newM(40);
+            _aCache = std::move(newA);
+            _mCache = std::move(newM);
+            dump(world, state, j);
         }
     }
     auto t4 = std::chrono::high_resolution_clock::now();
@@ -227,5 +230,5 @@ int main(int argc, char** argv){
     bmpi::communicator world;
     assert(argc == 2);
     auto result = grover_MPI(std::atoi(argv[1]), world);
-    world.barrier();
+    std::cout << std::endl << genDot(result);
 }
