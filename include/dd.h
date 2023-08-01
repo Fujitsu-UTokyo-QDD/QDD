@@ -102,6 +102,12 @@ struct Complex {
     double real() const noexcept { return r; }
     double imag() const noexcept { return i; }
 };
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(Complex, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(Complex)
+BOOST_CLASS_TRACKING(Complex, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(Complex)
+#endif
 
 inline Complex operator+(Complex lhs, const Complex &rhs) noexcept {
 
@@ -387,6 +393,12 @@ struct vContent {
     vContent()
         : v(-1), w({cf_zero, cf_zero}), index({-1,-1}){};
 };
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(vContent, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(vContent)
+BOOST_CLASS_TRACKING(vContent, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(vContent)
+#endif
 
 using Controls = std::set<Control, ControlComparator>;
 
@@ -451,3 +463,5 @@ std::string genDot(mEdge &rootEdge);
 vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
 #endif
+
+void dump(boost::mpi::communicator &world, vEdge e, int cycle);
