@@ -13,3 +13,5 @@ __pycache__
 dist/
 *.so
 .python-version
+.zip
+compile_commands.json
