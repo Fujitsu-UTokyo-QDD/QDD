@@ -217,6 +217,7 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
             _aCache = std::move(newA);
             _mCache = std::move(newM);
             dump(world, state, j);
+            std::cout << "Weight adjustment x" << adjust_weight(world, state) << std::endl;
         }
     }
     auto t4 = std::chrono::high_resolution_clock::now();

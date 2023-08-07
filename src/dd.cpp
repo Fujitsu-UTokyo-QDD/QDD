@@ -1562,4 +1562,13 @@ void dump(boost::mpi::communicator &world, vEdge e, int cycle){
 
     std::cout << rank << " " << cycle << " " << nNode << " " << send_Byte << " " << uniq_nNode << " " << uniq_Byte << std::endl;
 }
+
+double adjust_weight(bmpi::communicator &world, vEdge rootEdge){
+    const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, 0);
+    double amp = pzero + pone;
+    double amp_sum = bmpi::all_reduce(world, amp, std::plus<double>());
+    assert(amp_sum > 0);
+    rootEdge.w = rootEdge.w / std_complex(std::sqrt(amp_sum), 0);
+    return 1/std::sqrt(amp_sum);
+}
 #endif

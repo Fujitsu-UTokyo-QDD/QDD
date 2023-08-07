@@ -462,6 +462,7 @@ std::string genDot(mEdge &rootEdge);
 #ifdef isMPI
 vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
+double adjust_weight(bmpi::communicator &world, vEdge rootEdge);
 #endif
 
 void dump(boost::mpi::communicator &world, vEdge e, int cycle);
