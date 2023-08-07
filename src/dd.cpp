@@ -11,14 +11,16 @@
 #ifdef isMPI
   #include <boost/mpi/communicator.hpp>
   #include <boost/mpi/environment.hpp>
+  #include <boost/mpi/collectives.hpp>
+  #include <boost/serialization/utility.hpp>
 #endif
 
 #define SUBTASK_THRESHOLD 5
 
-mNodeTable mUnique(40);
-vNodeTable vUnique(40);
+mNodeTable mUnique(NQUBITS);
+vNodeTable vUnique(NQUBITS);
 
-std::vector<mEdge> identityTable(40);
+std::vector<mEdge> identityTable(NQUBITS);
 
 mNode mNode::terminalNode = mNode(-1, {}, nullptr);
 vNode vNode::terminalNode = vNode(-1, {}, nullptr);
@@ -28,8 +30,8 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
-AddCache _aCache(40);
-MulCache _mCache(40);
+AddCache _aCache(NQUBITS);
+MulCache _mCache(NQUBITS);
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -385,8 +387,7 @@ int vNode_to_vec(vNode *node, std::vector<vContent> &table,
 vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
 
 #ifdef isMPI
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
-    world.barrier();
+vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     int row = world.rank();
     int world_size = world.size();
     int left_neighbor  = (world.rank() - 1) % world_size;
@@ -420,6 +421,175 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     }
     return result;
 }
+
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    int row = world.rank();
+    int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
+
+    std_complex send_w, recv_w;
+    //std::vector<vContent> send_buffer, recv_buffer;
+    std::pair<std_complex, std::vector<vContent>> send_data, recv_data;
+    std::unordered_map<vNode *, int> rhs_map;
+
+    send_data.first = rhs.w;
+    if(world.size()>1)
+        vNode_to_vec(rhs.n, send_data.second, rhs_map);
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+
+    for (int i = 1; i < world_size; i++) {
+        //std::vector<bmpi::request> recv_reqs;
+        std::vector<bmpi::request> send_reqs;
+        send_reqs.push_back(world.isend(right_neighbor, i, send_data));
+        world.recv(left_neighbor, i, recv_data);        
+        int col = (row - i + world.size()) % world_size;
+        gate = getMPIGate(lhs, row, col, world_size);
+        //bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
+        vEdge received = {recv_data.first, vec_to_vNode(recv_data.second, vUnique)};
+        result = vv_add(result, mv_multiply(gate, received));
+        bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
+        send_data = recv_data;
+    }
+    return result;
+}
+
+vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    int row = world.rank();
+    int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
+
+    std::vector<std_complex> buffer_w(world_size);
+    buffer_w[0] = rhs.w;
+
+    std::vector<std::vector<vContent>> buffer_table(world_size);
+    std::unordered_map<vNode *, int> rhs_map;
+    vNode_to_vec(rhs.n, buffer_table[0], rhs_map);
+
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+    
+    for (int i = 1; i < world_size; i++) {
+        std::vector<bmpi::request> recv_reqs;
+        world.isend(right_neighbor, 2 * i - 2, buffer_w[i-1]);
+        world.isend(right_neighbor, 2 * i - 1, buffer_table[i-1]);
+        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, buffer_w[i]));
+        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, buffer_table[i]));
+        bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
+    }
+
+    for(int i = 1; i < world_size; i++){
+        int col = (row - i + world.size()) % world_size;
+        gate = getMPIGate(lhs, row, col, world_size);
+        vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
+        result = vv_add(result, mv_multiply(gate, received));
+    }
+
+    return result;
+}
+
+vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    int row = world.rank();
+    int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
+
+    std::vector<std_complex> buffer_w(world_size);
+    buffer_w[row] = rhs.w;
+
+    std::vector<std::vector<vContent>> buffer_table(world_size);
+    std::unordered_map<vNode *, int> rhs_map;
+    vNode_to_vec(rhs.n, buffer_table[row], rhs_map);
+
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+    
+    for (int i = 0; i < world_size; i++) {
+        bmpi::broadcast(world, buffer_w[i], i);
+        bmpi::broadcast(world, buffer_table[i], i);
+    }
+
+    for(int i = 0; i < world_size; i++){
+        int col = i;
+        if (col == row)
+            continue;
+        gate = getMPIGate(lhs, row, col, world_size);
+        vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
+        result = vv_add(result, mv_multiply(gate, received));
+    }
+
+    return result;
+}
+
+vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    int row = world.rank();
+    int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
+
+    // prepare data to be sent
+    std_complex send_w = rhs.w;
+    std::vector<vContent> send_table;
+    std::unordered_map<vNode *, int> rhs_map;
+    vNode_to_vec(rhs.n, send_table, rhs_map);
+
+    // calculate initial result
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+    
+    for (int i = 0; i < world_size; i++) {
+        if(row == i){
+            bmpi::broadcast(world, send_w, i);
+            bmpi::broadcast(world, send_table, i);
+        }else{
+            std_complex buffer_w;
+            std::vector<vContent> buffer_table;
+            bmpi::broadcast(world, buffer_w, i);
+            bmpi::broadcast(world, buffer_table, i);
+            gate = getMPIGate(lhs, row, i, world_size);
+            vEdge received = {buffer_w, vec_to_vNode(buffer_table, vUnique)};
+            result = vv_add(result, mv_multiply(gate, received));
+        }
+    }
+
+    return result;
+}
+
+vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+    int row = world.rank();
+    int world_size = world.size();
+    int left_neighbor  = (world.rank() - 1) % world_size;
+    int right_neighbor = (world.rank() + 1) % world_size;
+
+    // prepare data to be sent
+    std::pair<std_complex, std::vector<vContent>> send_data;
+    send_data.first = rhs.w;
+    std::unordered_map<vNode *, int> rhs_map;
+    vNode_to_vec(rhs.n, send_data.second, rhs_map);
+
+    // calculate initial result
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    std::cout << world.rank() << " gate created" << std::endl;
+    vEdge result = mv_multiply(gate, rhs);
+    std::cout << world.rank() << " Before MPI" << std::endl;
+
+    for (int i = 0; i < world_size; i++) {
+        if(row == i){
+            bmpi::broadcast(world, send_data, i);
+        }else{
+            std::pair<std_complex, std::vector<vContent>> recv_data;
+            bmpi::broadcast(world, recv_data, i);
+            gate = getMPIGate(lhs, row, i, world_size);
+            vEdge received = {recv_data.first, vec_to_vNode(recv_data.second, vUnique)};
+            result = vv_add(result, mv_multiply(gate, received));
+        }
+    }
+
+    return result;
+}
+
 #endif
 
 static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
@@ -1231,14 +1401,16 @@ void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unor
 }
 
 std::string genDot(vEdge &rootEdge) {
-    assert(!rootEdge.isTerminal());
+    if(rootEdge.isTerminal()){
+        return "";
+    }
     std::vector<std::string> result;
     std::unordered_set<vNode *> done;
     genDot2(rootEdge.n, result, 0, done);
 
     // vNode::terminal
     std::stringstream node_ss;
-    node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
+    node_ss << (uint64_t)vNode::terminal << " [label=\"Term w=" << rootEdge.w << "\"]";
     result.push_back(node_ss.str());
 
     std::stringstream finalresult;
@@ -1370,4 +1542,24 @@ void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool is
     }
     return;
 };
+
+
+void dump(boost::mpi::communicator &world, vEdge e, int cycle){
+    int rank = world.rank();
+    std::size_t nNode;
+    std::size_t send_Byte;
+    std::size_t uniq_nNode;
+    std::size_t uniq_Byte;
+
+    std::vector<vContent> v;
+    std::unordered_map<vNode *, int> map;
+    vNode_to_vec(e.n, v, map);
+    nNode = v.size();
+    send_Byte = nNode * sizeof(vContent);
+
+    uniq_nNode = vUnique.get_allocations();
+    uniq_Byte = sizeof(vNode) * uniq_nNode;
+
+    std::cout << rank << " " << cycle << " " << nNode << " " << send_Byte << " " << uniq_nNode << " " << uniq_Byte << std::endl;
+}
 #endif
