@@ -17,10 +17,10 @@
 
 #define SUBTASK_THRESHOLD 5
 
-mNodeTable mUnique(40);
-vNodeTable vUnique(40);
+mNodeTable mUnique(NQUBITS);
+vNodeTable vUnique(NQUBITS);
 
-std::vector<mEdge> identityTable(40);
+std::vector<mEdge> identityTable(NQUBITS);
 
 mNode mNode::terminalNode = mNode(-1, {}, nullptr);
 vNode vNode::terminalNode = vNode(-1, {}, nullptr);
@@ -30,8 +30,8 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
-AddCache _aCache(40);
-MulCache _mCache(40);
+AddCache _aCache(NQUBITS);
+MulCache _mCache(NQUBITS);
 
 static int LIMIT = 10000;
 const int MINUS = 3;

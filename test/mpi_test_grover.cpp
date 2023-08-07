@@ -208,12 +208,12 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
             std::unordered_map<vNode *, int> map;
             vNode_to_vec2(state.n, v, map);
 
-            vNodeTable new_table(40);
+            vNodeTable new_table(NQUBITS);
             vUnique = std::move(new_table);
             state.n = vec_to_vNode2(v, vUnique);
 
-            AddCache newA(40);
-            MulCache newM(40);
+            AddCache newA(NQUBITS);
+            MulCache newM(NQUBITS);
             _aCache = std::move(newA);
             _mCache = std::move(newM);
             dump(world, state, j);
