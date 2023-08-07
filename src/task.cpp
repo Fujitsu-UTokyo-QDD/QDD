@@ -222,7 +222,7 @@ vEdge Scheduler::buildCircuit(vEdge input) {
             //            v.incRef();
             //            vUnique.gc();
             //            v.decRef();
-            vNodeTable new_table(40);
+            vNodeTable new_table(NQUBITS);
             makeUniqueForV(v, new_table);
             vUnique = std::move(new_table);
             clearCache();
