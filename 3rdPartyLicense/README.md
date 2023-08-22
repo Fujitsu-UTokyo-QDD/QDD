@@ -14,3 +14,6 @@ QDD was created with reference to the following projects:
 * ddsim: https://github.com/cda-tum
 
 The licenses for the above programs are stored in this folder.
+
+The python interface is refered to Qiskit code.
+It has been changed by Fujitsu from the original version.
