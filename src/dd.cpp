@@ -1310,75 +1310,75 @@ mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
     return e3;
 }
 
-mEdge RX(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {0, -std::sin(angle / 2)};
+mEdge RX(QubitCount qnum, int target, double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {0, -std::sin(angle / 2)};
     return makeGate(qnum, GateMatrix{i1, i2, i2, i1}, target);
 }
-mEdge RY(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {-std::sin(angle / 2), 0};
-    std::complex<float> i3 = {std::sin(angle / 2), 0};
+mEdge RY(QubitCount qnum, int target, double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {-std::sin(angle / 2), 0};
+    std::complex<double> i3 = {std::sin(angle / 2), 0};
     return makeGate(qnum, GateMatrix{i1, i2, i3, i1}, target);
 }
-mEdge RZ(QubitCount qnum, int target, float angle) {
-    std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
-    std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
+mEdge RZ(QubitCount qnum, int target, double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
+    std::complex<double> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
     return makeGate(qnum, GateMatrix{i1, cf_zero, cf_zero, i2}, target);
 }
 
 mEdge CX(QubitCount qnum, int target, int control) {
-    std::complex<float> zero = {0, 0};
-    std::complex<float> one = {1, 0};
+    std::complex<double> zero = {0, 0};
+    std::complex<double> one = {1, 0};
     Controls controls;
     controls.emplace(Control{control, Control::Type::pos});
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
-GateMatrix rx(float angle){
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {0, -std::sin(angle / 2)};
+GateMatrix rx(double angle){
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {0, -std::sin(angle / 2)};
     return GateMatrix{i1, i2, i2, i1};
 }
 
-GateMatrix ry(float angle){
-    std::complex<float> i1 = {std::cos(angle / 2), 0};
-    std::complex<float> i2 = {-std::sin(angle / 2), 0};
-    std::complex<float> i3 = {std::sin(angle / 2), 0};
+GateMatrix ry(double angle){
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {-std::sin(angle / 2), 0};
+    std::complex<double> i3 = {std::sin(angle / 2), 0};
     return GateMatrix{i1, i2, i3, i1};
 }
 
-GateMatrix rz(float angle){
-    std::complex<float> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
-    std::complex<float> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
+GateMatrix rz(double angle){
+    std::complex<double> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
+    std::complex<double> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
     return GateMatrix{i1, cf_zero, cf_zero, i2};
 }
 
 
 
-GateMatrix u3(float theta, float phi, float lambda){
-    std::complex<float> i1 = {std::cos(theta / 2), 0};
-    std::complex<float> i2 = -std::exp(std::complex<float>(0,lambda))*std::sin(theta/2);
-    std::complex<float> i3 = std::exp(std::complex<float>(0,phi))*std::sin(theta/2);
-    std::complex<float> i4 = std::exp(std::complex<float>(0,lambda+phi))*std::cos(theta/2);
+GateMatrix u3(double theta, double phi, double lambda){
+    std::complex<double> i1 = {std::cos(theta / 2), 0};
+    std::complex<double> i2 = -std::exp(std::complex<double>(0,lambda))*std::sin(theta/2);
+    std::complex<double> i3 = std::exp(std::complex<double>(0,phi))*std::sin(theta/2);
+    std::complex<double> i4 = std::exp(std::complex<double>(0,lambda+phi))*std::cos(theta/2);
     return GateMatrix{i1, i2, i3, i4};
 }
 
-GateMatrix u1(float lambda){ return u3(0, 0, lambda); }
+GateMatrix u1(double lambda){ return u3(0, 0, lambda); }
 
-GateMatrix u2(float phi, float lambda){ return u3(PI/2, phi, lambda); }
+GateMatrix u2(double phi, double lambda){ return u3(PI/2, phi, lambda); }
 
-GateMatrix u(float theta, float phi, float lambda){ return u3(theta, phi, lambda); }
+GateMatrix u(double theta, double phi, double lambda){ return u3(theta, phi, lambda); }
 
-GateMatrix p(float angle){
-    std::complex<float> i1 = {std::cos(angle), std::sin(angle)};
+GateMatrix p(double angle){
+    std::complex<double> i1 = {std::cos(angle), std::sin(angle)};
     return GateMatrix{1, 0, 0, i1};
 }
 
-GateMatrix r(float theta, float phi){
-    std::complex<float> i1 = {std::cos(theta / 2), 0};
-    std::complex<float> i2 = std::complex<float>(0, -1) * std::exp(std::complex<float>(0, -phi)) * std::sin(theta / 2);
-    std::complex<float> i3 = std::complex<float>(0, -1) * std::exp(std::complex<float>(0, phi)) * std::sin(theta / 2);
+GateMatrix r(double theta, double phi){
+    std::complex<double> i1 = {std::cos(theta / 2), 0};
+    std::complex<double> i2 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, -phi)) * std::sin(theta / 2);
+    std::complex<double> i3 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, phi)) * std::sin(theta / 2);
     return GateMatrix{i1, i2, i3, i1};
 }
 

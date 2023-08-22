@@ -36,7 +36,7 @@ struct Complex {
         std::numeric_limits<double>::epsilon() * 1024;
 
     Complex() = default;
-    Complex(const std::complex<float> &c) : r(c.real()), i(c.imag()) {}
+    Complex(const std::complex<double> &c) : r(c.real()), i(c.imag()) {}
     Complex(double rr, double ii) : r(rr), i(ii) {}
 
     Complex &operator+=(const Complex &rhs) noexcept {
@@ -438,23 +438,23 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 
-mEdge RX(QubitCount qnum, int target, float angle);
+mEdge RX(QubitCount qnum, int target, double angle);
 
-mEdge RY(QubitCount qnum, int target, float angle);
+mEdge RY(QubitCount qnum, int target, double angle);
 
-mEdge RZ(QubitCount qnum, int target, float angle);
+mEdge RZ(QubitCount qnum, int target, double angle);
 
 mEdge CX(QubitCount qnum, int target, int control);
 
-GateMatrix rx(float angle);
-GateMatrix ry(float angle);
-GateMatrix rz(float angle);
-GateMatrix u3(float theta, float phi, float lambda);
-GateMatrix u1(float lambda);
-GateMatrix u2(float phi, float lambda);
-GateMatrix u(float theta, float phi, float lambda);
-GateMatrix p(float angle);
-GateMatrix r(float theta, float phi);
+GateMatrix rx(double angle);
+GateMatrix ry(double angle);
+GateMatrix rz(double angle);
+GateMatrix u3(double theta, double phi, double lambda);
+GateMatrix u1(double lambda);
+GateMatrix u2(double phi, double lambda);
+GateMatrix u(double theta, double phi, double lambda);
+GateMatrix p(double angle);
+GateMatrix r(double theta, double phi);
 
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
