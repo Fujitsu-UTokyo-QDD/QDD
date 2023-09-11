@@ -20,12 +20,44 @@ mEdge buildUnitary(const std::vector<mEdge> &g) {
         return mEdge();
     }
 
-    mEdge lhs = g[0];
+    mEdge rhs = g[0];
     for (int i = 1; i < g.size(); i++) {
-        // std::cout<<"i: "<<i<<std::endl;
-        lhs = mm_multiply(lhs, g[i]);
+        rhs = mm_multiply(g[i], rhs);
+        std::cout << i << "/"<<g.size() <<" Alloc " << mUnique.get_allocations() << std::endl;
     }
-    return lhs;
+    return rhs;
+}
+
+mEdge allH(int total_qubits){
+    std::vector<mEdge> g;
+    for (auto i = 0; i < total_qubits-1; i++) {
+        g.emplace_back(makeGate(total_qubits, Hmat, i));
+    }
+    mEdge rhs = g[0];
+    for (int i = 1; i < g.size(); i++) {
+        rhs = mm_multiply(g[i], rhs);
+    }
+    return rhs;
+}
+
+mEdge allX(int total_qubits){
+    std::vector<mEdge> g;
+    for (auto i = 0; i < total_qubits-1; i++) {
+        g.emplace_back(makeGate(total_qubits, Xmat, i));
+    }
+    mEdge rhs = g[0];
+    for (int i = 1; i < g.size(); i++) {
+        rhs = mm_multiply(g[i], rhs);
+    }
+    return rhs;
+}
+
+mEdge allXthenH(int total_qubits){
+    return mm_multiply(allH(total_qubits), allX(total_qubits));
+}
+
+mEdge allHthenX(int total_qubits){
+    return mm_multiply(allX(total_qubits), allH(total_qubits));
 }
 
 static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
@@ -42,22 +74,10 @@ static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
 
     mEdge o = makeGate(total_qubits, Zmat, n_qubits, controls);
     g.push_back(o);
-    //    o.printMatrix();
 
-    // std::cout<<"ocale"<<std::endl;
-    // o.printMatrix();
-
-    // prepare diffusioin
-    mEdge d = makeIdent(n_qubits);
-    g.push_back(d);
     // 1. H to data qubits
-    for (auto i = 0; i < n_qubits; i++) {
-        g.emplace_back(makeGate(total_qubits, Hmat, i));
-    }
     // 2. X to data qubits
-    for (auto i = 0; i < n_qubits; i++) {
-        g.emplace_back(makeGate(total_qubits, Xmat, i));
-    }
+    g.push_back(allHthenX(total_qubits));
 
     // 3. H to the last data qubit
     g.emplace_back(makeGate(total_qubits, Hmat, n_qubits - 1));
@@ -73,15 +93,8 @@ static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
     g.emplace_back(makeGate(total_qubits, Hmat, n_qubits - 1));
 
     // 6. X to data qubits
-    for (auto i = 0; i < n_qubits; i++) {
-        g.emplace_back(makeGate(total_qubits, Xmat, i));
-    }
-
     // 7. H to all qubits
-
-    for (auto i = 0; i < n_qubits; i++) {
-        g.emplace_back(makeGate(total_qubits, Hmat, i));
-    }
+    g.push_back(allXthenH(total_qubits));
 
     return buildUnitary(g);
 }
@@ -167,21 +180,13 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
     mEdge full_iteration = groverIteration(oracle, n_qubits);
 
     // set it up
-    std::vector<mEdge> setup_gates;
-    setup_gates.emplace_back(makeGate(total_qubits, Xmat, n_qubits));
-    // apply H to all qubits
-    for (auto i = 0; i < n_qubits; i++) {
-        setup_gates.emplace_back(makeGate(total_qubits, Hmat, i));
-    }
-    mEdge setup = buildUnitary(setup_gates);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::micro> ms = t2 - t1;
-    std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
-    world.barrier();
-
-    auto t3 = std::chrono::high_resolution_clock::now();
     vEdge state = makeZeroStateMPI(total_qubits, world);
-    state = mv_multiply_MPI(setup, state, world);
+    state = mv_multiply_MPI(makeGate(total_qubits, Xmat, n_qubits), state, world);
+    for (auto i = 0; i < n_qubits; i++) {
+        state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world);
+    }
+    std::cout << "Setup fin" << std::endl;
+
 
     unsigned int j_pre = 0;
     if(world.rank()==0)
@@ -201,28 +206,16 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
         state = mv_multiply_MPI(full_iteration, state, world);
-        if(j%100000<8 && j>100000){
-            dump(world, state, j);
-            std::cout << world.rank() << " gc" << std::endl;
-            std::vector<vContent> v;
-            std::unordered_map<vNode *, int> map;
-            vNode_to_vec2(state.n, v, map);
-
-            vNodeTable new_table(NQUBITS);
-            vUnique = std::move(new_table);
-            state.n = vec_to_vNode2(v, vUnique);
-
-            AddCache newA(NQUBITS);
-            MulCache newM(NQUBITS);
-            _aCache = std::move(newA);
-            _mCache = std::move(newM);
-            dump(world, state, j);
-            std::cout << "Weight adjustment x" << adjust_weight(world, state) << std::endl;
+        if(j%10000<8 && j>10000){
+            std::cout << j << std::endl;
+            state = gc(state);
         }
     }
-    auto t4 = std::chrono::high_resolution_clock::now();
-    ms = t4 - t3;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::micro> ms = t2 - t1;
     std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
+    std::cout << "nQubit nNodes" << std::endl;
+    std::cout << total_qubits << " " << get_nNodes(state) << std::endl;
     return state;
 }
 

@@ -24,7 +24,7 @@
 
 using duration_micro = std::chrono::duration<double, std::micro>;
 
-const std::size_t NQUBITS = 50;
+const std::size_t NQUBITS = 100;
 // const std::size_t NBUCKETS = 32768;
 const std::size_t NBUCKETS = 524288;
 //const std::size_t NBUCKETS = 1024288;

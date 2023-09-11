@@ -1572,3 +1572,39 @@ double adjust_weight(bmpi::communicator &world, vEdge rootEdge){
     return 1/std::sqrt(amp_sum);
 }
 #endif
+
+int get_nNodes(vEdge e){
+    std::vector<vContent> v;
+    std::unordered_map<vNode *, int> map;
+    int num = vNode_to_vec(e.n, v, map);
+    return num;
+}
+
+int GC_SIZE = 131072*16;
+vEdge gc(vEdge state){
+    if(vUnique.get_allocations()<GC_SIZE){
+        return state;
+    }
+    std::cout << "vSize="<<vUnique.get_allocations() << " mSize=" << mUnique.get_allocations() << " vLimit="<<GC_SIZE;
+
+    std::vector<vContent> v;
+    std::unordered_map<vNode *, int> map;
+    int nNodes = vNode_to_vec(state.n, v, map);
+    if(nNodes>GC_SIZE){
+        GC_SIZE += nNodes;
+    }
+    std::cout << " Current nNodes = " << nNodes << std::endl;
+
+    vNodeTable new_table(NQUBITS);
+    vUnique = std::move(new_table);
+    //mNodeTable new_table_m(NQUBITS);
+    //mUnique = std::move(new_table_m);
+    state.n = vec_to_vNode(v, vUnique);
+
+    AddCache newA(NQUBITS);
+    MulCache newM(NQUBITS);
+    _aCache = std::move(newA);
+    _mCache = std::move(newM);
+    std::cout << " gc_done " << std::endl;
+    return state;
+}
