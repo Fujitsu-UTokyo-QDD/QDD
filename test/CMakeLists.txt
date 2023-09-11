@@ -4,6 +4,9 @@ target_include_directories(qdd_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.
 include(GoogleTest)
 gtest_discover_tests(qdd_test)
 
+add_executable(qcbm qcbm.cpp)
+target_link_libraries(qcbm PUBLIC engine)
+
 if(isMPI)
   add_executable(mpi_test mpi_test.cpp)
   target_link_libraries(mpi_test PUBLIC engine PUBLIC GTest::gtest_main)
