@@ -1432,6 +1432,9 @@ void genDot2(mNode *node, std::vector<std::string> &result, int depth, std::unor
     node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
     result.push_back(node_ss.str());
     for (int i = 0; i < node->children.size(); i++) {
+        if(node->children[i].w.isApproximatelyZero()){
+            continue;
+        }
         std::stringstream ss;
         ss << (uint64_t)node << " -> " << (uint64_t)node->children[i].n
            << " [label=\"" << i << node->children[i].w << "\"]";
@@ -1449,7 +1452,7 @@ std::string genDot(mEdge &rootEdge) {
 
     // vNode::terminal
     std::stringstream node_ss;
-    node_ss << (uint64_t)vNode::terminal << " [label=\"Term\"]";
+    node_ss << (uint64_t)mNode::terminal << " [label=\"Term w=" << rootEdge.w << "\"]";
     result.push_back(node_ss.str());
 
     std::stringstream finalresult;

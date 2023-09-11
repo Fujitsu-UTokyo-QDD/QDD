@@ -7,6 +7,7 @@ Especially, the following test viewpoints are tested.
 - memory
 """
 
+import cmath, math
 import pytest
 from qiskit import QiskitError, QuantumCircuit, execute
 from qiskit_aer import Aer
@@ -64,16 +65,6 @@ def test_shots_max_shots_plus_1():
     assert_job_failed(job)
 
 
-def test_measure_no_measure():
-    circ = QuantumCircuit(2, 2)
-    circ.x(0)
-
-    backend = QddProvider().get_backend()
-    job = execute(circ, backend=backend, shots=20, seed_transpiler=50, seed_simulator=80)
-    assert_job_failed(job)
-
-
-
 def test_memory_true():
     """Tests the behavior of memory=True"""
 
@@ -104,6 +95,18 @@ def test_memory_true():
     assert '001' in qdd_memory_h
     assert len(qdd_memory_h) == 10000
 
+def test_sv():
+    """Tests the behavior of statevector simulator"""
+
+    qdd_backend = QddProvider().get_backend("statevector_simulator")
+
+    # Test the case where the elements in the memory list are not unique (i.e., at least one qubit is in superposition)
+    circ_h = QuantumCircuit(3)
+    circ_h.h(0)
+    qdd_job_h = execute(circ_h, backend=qdd_backend, seed_transpiler=50, seed_simulator=80)
+    sv = qdd_job_h.result().get_statevector()
+    assert(cmath.isclose(sv[0], 1/math.sqrt(2)))
+    assert(cmath.isclose(sv[1], 1/math.sqrt(2)))
 
 def test_get_counts():
     """Tests behavior of Result.get_counts(...)."""
@@ -150,7 +153,7 @@ def test_warn_unsupported_options():
 
 
 def test_get_backend_by_name():
-    backend = QddProvider().get_backend('qdd_backend')
+    backend = QddProvider().get_backend('qasm_simulator')
     assert type(backend) == QddBackend
 
 

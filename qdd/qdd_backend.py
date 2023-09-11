@@ -80,8 +80,10 @@ class QddExperiments:
 class QddBackend(BackendV1):
     """A backend used for evaluating circuits with QDD simulator."""
 
+    _save_SV = False
+
     _DEFAULT_CONFIG: Dict[str, Any] = {
-        'backend_name': 'qdd_backend',
+        'backend_name': 'qasm_simulator',
         'backend_version': __version__,
         'n_qubits': 100,  # inclusive
         'basis_gates': sorted([
@@ -123,9 +125,11 @@ class QddBackend(BackendV1):
         'max_credits': lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
     }
 
-    def __init__(self, provider: Provider):
+    def __init__(self, provider: Provider, configuration=None):
+        if configuration==None:
+            configuration = BackendConfiguration.from_dict(QddBackend._DEFAULT_CONFIG)
         super().__init__(
-            configuration=BackendConfiguration.from_dict(QddBackend._DEFAULT_CONFIG),
+            configuration=configuration,
             provider=provider)
 
     @classmethod
@@ -236,7 +240,7 @@ class QddBackend(BackendV1):
             # no parameter bindings are specified
             param_bound_qiskit_circs = qiskit_circs
         
-        circ_props = QddBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs)
+        circ_props = QddBackend._validate_and_get_circuit_properties(param_bound_qiskit_circs, self._save_SV==False)
         experiments = QddExperiments(circs=param_bound_qiskit_circs, circuit_props=circ_props, options=actual_options)
 
         # run circuits via issuing a job
@@ -414,6 +418,8 @@ class QddBackend(BackendV1):
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
         if options['memory']:
             result_data['memory'] = sampled_values
+        if self._save_SV:
+            result_data["statevector"] = pyQDD.getVector(current)
         header = QddBackend._create_experiment_header(circ)
         result = {
             'success': True,
@@ -430,12 +436,12 @@ class QddBackend(BackendV1):
     
 
     @staticmethod
-    def _validate_and_get_circuit_properties(qiskit_circs: List[QiskitCircuit]) -> List[CircuitProperty]:
-        circ_props = [QddBackend._validate_and_get_circuit_property(circ) for circ in qiskit_circs]
+    def _validate_and_get_circuit_properties(qiskit_circs: List[QiskitCircuit], require_measurement=True) -> List[CircuitProperty]:
+        circ_props = [QddBackend._validate_and_get_circuit_property(circ, require_measurement) for circ in qiskit_circs]
         return circ_props
 
     @staticmethod
-    def _validate_and_get_circuit_property(circ: QiskitCircuit) -> CircuitProperty:
+    def _validate_and_get_circuit_property(circ: QiskitCircuit, require_measurement=True) -> CircuitProperty:
         """Checks whether the given circuit is valid to run (e.g., #qubits <= #max-qubits),
          and, if valid, returns a CircuitProperty instance that will be used for simulation."""
 
@@ -497,7 +503,8 @@ class QddBackend(BackendV1):
 
         # The circuit must have measurement gates
         if not measured_qubits:
-            raise RuntimeError(f'Circuit "{circ.name}" has no measurement gates.'
+            if require_measurement:
+                raise RuntimeError(f'Circuit "{circ.name}" has no measurement gates.'
                                f' Every circuit must have measurement gates when using {QddBackend.__name__}.')
 
         return CircuitProperty(stable_final_state=stable_final_state, clbit_final_values=clbit_final_values)
