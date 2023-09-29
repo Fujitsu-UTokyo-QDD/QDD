@@ -6,8 +6,6 @@ gtest_discover_tests(qdd_test)
 
 add_executable(qcbm qcbm.cpp)
 target_link_libraries(qcbm PUBLIC engine)
-add_executable(mpi_qcbm mpi_qcbm.cpp)
-target_link_libraries(mpi_qcbm PUBLIC engine)
 
 if(isMPI)
   add_executable(mpi_test mpi_test.cpp)
@@ -16,6 +14,9 @@ if(isMPI)
 
   add_executable(mpi_test_grover mpi_test_grover.cpp)
   target_link_libraries(mpi_test_grover PUBLIC engine)
+
+  add_executable(mpi_qcbm mpi_qcbm.cpp)
+  target_link_libraries(mpi_qcbm PUBLIC engine)
 
   add_executable(serialization_test serialization_test.cpp)
   target_link_libraries(serialization_test PUBLIC engine)

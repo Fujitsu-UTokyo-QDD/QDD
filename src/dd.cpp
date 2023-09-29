@@ -53,15 +53,32 @@ static mEdge normalizeM(const mEdge &e) {
     std_complex max_weight = result->w;
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
+
+    // parents weight
+    std_complex new_weight = max_weight * e.w;
+    if(new_weight.isApproximatelyZero()){
+        mUnique.returnNode(e.n);
+        return mEdge::zero;
+    }else if (new_weight.isApproximatelyOne()){
+        new_weight = {1.0, 0.0};
+    }
+
     for (int i = 0; i < 4; i++) {
         std_complex r = e.n->children[i].w / max_weight;
-        e.n->children[i].w = r;
+        if(r.isApproximatelyZero()){
+            e.n->children[i] = mEdge::zero;
+        }else{
+            if(r.isApproximatelyOne()){
+                r = {1.0, 0.0};
+            }
+            e.n->children[i].w = r;
+        }
     }
 
     mNode *n = mUnique.lookup(e.n);
     assert(n->v >= -1);
 
-    return {.w = max_weight * e.w, .n = n};
+    return {.w = new_weight, .n = n};
 }
 
 static vEdge normalizeV(const vEdge &e) {
@@ -611,6 +628,9 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if (current_var == -1) {
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w + rhs.w, mNode::terminal};
+    }
+    if (lhs.n == rhs.n) {
+        return {lhs.w + rhs.w, lhs.n};
     }
 
     mEdge result;

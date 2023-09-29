@@ -4,9 +4,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project(QDD)
 
-set(CMAKE_C_FLAGS "-march=native -mtune=native")
-set(CMAKE_CXX_FLAGS "-march=native -mtune=native")
-
 
 get_filename_component(USER $ENV{HOME} NAME)
 
