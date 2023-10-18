@@ -435,6 +435,10 @@ vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
+#ifdef isMPI
+std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse, 
+                          std::mt19937_64 &mt, double epsilon = 0.001);
+#endif
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 

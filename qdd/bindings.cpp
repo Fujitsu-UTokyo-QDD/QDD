@@ -71,8 +71,38 @@ mEdge makeControlGate(QubitCount q, std::string name, Qubit target, const std::v
     return makeGate(q, name, target, c);
 }
 
+#ifdef isMPI
+
+boost::mpi::communicator _world;
+
+vEdge _makeZeroStateMPI(QubitCount q){
+    return makeZeroStateMPI(q, _world);
+}
+vEdge _makeOneStateMPI(QubitCount q){
+    return makeOneStateMPI(q, _world);
+}
+void _printVectorMPI(vEdge &v){
+    _world.barrier();
+    v.printVectorMPI(_world);
+}
+vEdge _mv_multiply_MPI(mEdge lhs, vEdge rhs){
+    return mv_multiply_MPI(lhs, rhs, _world);
+}
+std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge, const bool collapse){
+    std::string result = measureAllMPI(_world, rootEdge, collapse, mt);
+    return std::pair<vEdge, std::string>(rootEdge, result);
+}
+void dump_mpi(){
+    std::cout << _world.rank() << "/" << _world.size() << std::endl;
+}
+#endif
+
 PYBIND11_MODULE(pyQDD, m){
-    py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse);
+    py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse)
+    #ifdef isMPI
+    .def("printVectorMPI", _printVectorMPI)
+    #endif
+    ;
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
@@ -91,4 +121,15 @@ PYBIND11_MODULE(pyQDD, m){
     m.def("measureAll", _measureAll)
      .def("measureOneCollapsing", _measureOneCollapsing);
     m.def("getVector", _getVector);
+
+#ifdef isMPI
+    // MPI
+    m.def("dump_mpi", dump_mpi)
+        .def("makeZeroStateMPI", _makeZeroStateMPI)
+        .def("makeOneStateMPI", _makeOneStateMPI)
+        .def("mv_multiply_MPI", _mv_multiply_MPI)
+        .def("measureAllMPI", _measureAllMPI)
+        //measureOneCollapsingMPI
+        ;
+#endif
 }

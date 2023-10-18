@@ -17,6 +17,7 @@ include = [
 python = ">=3.8, <3.10"
 qiskit = ">=0.32.1"
 qiskit-aer = "<=0.12.0"
+mpi4py = "^3.1.5"
 
 
 [tool.poetry.group.dev.dependencies]
