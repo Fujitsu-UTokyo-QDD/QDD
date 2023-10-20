@@ -295,6 +295,15 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
+        use_mpi = options['use_mpi']
+        if use_mpi:
+            circ = MPI.COMM_WORLD.bcast(circ, root=0)
+            circ_prop = MPI.COMM_WORLD.bcast(circ_prop, root=0)
+            if pow(2, circ.num_qubits) <= MPI.COMM_WORLD.Get_size():
+                print("ERROR: Too many nodes for MPI")
+                assert(pow(2, circ.num_qubits) > MPI.COMM_WORLD.Get_size())
+            print("MPI enabled")
+
         start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
@@ -302,10 +311,6 @@ class QddBackend(BackendV1):
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
         print(len(circ.data), " gates")
-        use_mpi = options['use_mpi']
-        if use_mpi:
-            print("use_mpi = True !")
-            print(MPI.COMM_WORLD.Get_rank(), "/", MPI.COMM_WORLD.Get_size())
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
             for i, qargs, cargs in circ.data:
@@ -363,7 +368,8 @@ class QddBackend(BackendV1):
 
         else:
             if use_mpi==True:
-                assert(1)
+                print("ERROR: Intermediate measurement is not supported in MPI mode.")
+                assert(0)
             for shot in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)  if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
                 val_cbit = ['0'] * n_cbit
@@ -428,6 +434,9 @@ class QddBackend(BackendV1):
         if options['memory']:
             result_data['memory'] = sampled_values
         if self._save_SV:
+            if use_mpi:
+                print("ERROR: Statevector output is not supported in MPI mode.")
+                assert(0) # Not supported
             result_data["statevector"] = pyQDD.getVector(current)
         header = QddBackend._create_experiment_header(circ)
         result = {

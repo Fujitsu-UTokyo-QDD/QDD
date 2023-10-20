@@ -1182,10 +1182,9 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool
         int target_rank = 0;
         for (int i = 0; i < world.size(); i++){
             current += probs[i];
+            target_rank = i;
             if(threshold <= current){
                 break;
-            }else{
-                target_rank = i;
             }
         }
         const int pre_length = log2(world.size());
