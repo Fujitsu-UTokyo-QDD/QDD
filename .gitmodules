@@ -1,0 +1,3 @@
+[submodule "CacheLib"]
+	path = CacheLib
+	url = https://github.com/facebook/CacheLib

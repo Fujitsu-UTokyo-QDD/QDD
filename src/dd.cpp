@@ -1,6 +1,7 @@
 #include "dd.h"
 #include "cache.hpp"
 #include "common.h"
+#include "opcache.hpp"
 #include "table.hpp"
 #include <algorithm>
 #include <array>
@@ -31,8 +32,13 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
+#ifdef CACHELIB_OPCACHE
+AddOpCache _aCache(40);
+MulOpCache _mCache(40);
+#else
 AddCache _aCache(40);
 MulCache _mCache(40);
+#endif
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -1465,7 +1471,7 @@ mEdge randomDD(QubitCount qc, float ratio) {
   mNode *node = _randomDD(qc - 1, required_nodes, wdist);
 
   mEdge e = {Complex(1.0, 0.0), node};
-  // e.printMatrix();
+  e.printMatrix();
   std::cout << "node: " << countNode(e) << std::endl;
   return e;
 }

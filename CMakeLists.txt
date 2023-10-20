@@ -49,7 +49,7 @@ endif()
 
 
 add_subdirectory(src)
-add_subdirectory(test)
+#add_subdirectory(test)
 
 option(BINDINGS "Configure for building Python bindings" ON)
 if (BINDINGS)

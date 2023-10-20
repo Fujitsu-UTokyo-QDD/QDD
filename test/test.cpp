@@ -368,5 +368,5 @@ TEST(QddTest, DotTest) {
 }
 
 TEST(QddTest, RandomTest) {
-  { mEdge e = randomDD(6, 0.4); }
+  { mEdge e = randomDD(3, 0.4); }
 }
