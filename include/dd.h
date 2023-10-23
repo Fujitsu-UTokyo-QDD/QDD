@@ -34,9 +34,9 @@ struct Complex {
   static inline const double TOLERANCE =
       std::numeric_limits<double>::epsilon() * 1024;
 
-  Complex() = default;
-  Complex(const std::complex<float> &c) : r(c.real()), i(c.imag()) {}
-  Complex(double rr, double ii) : r(rr), i(ii) {}
+    Complex() = default;
+    Complex(const std::complex<double> &c) : r(c.real()), i(c.imag()) {}
+    Complex(double rr, double ii) : r(rr), i(ii) {}
 
   Complex &operator+=(const Complex &rhs) noexcept {
     r += rhs.r;
@@ -100,6 +100,12 @@ struct Complex {
   double real() const noexcept { return r; }
   double imag() const noexcept { return i; }
 };
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(Complex, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(Complex)
+BOOST_CLASS_TRACKING(Complex, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(Complex)
+#endif
 
 inline Complex operator+(Complex lhs, const Complex &rhs) noexcept {
 
@@ -382,6 +388,12 @@ struct vContent {
       : v(qpos), w({w1, w2}), index({i1, i2}){};
   vContent() : v(-1), w({cf_zero, cf_zero}), index({-1, -1}){};
 };
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(vContent, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(vContent)
+BOOST_CLASS_TRACKING(vContent, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(vContent)
+#endif
 
 using Controls = std::set<Control, ControlComparator>;
 
@@ -421,33 +433,36 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 
-mEdge RX(QubitCount qnum, int target, float angle);
+mEdge RX(QubitCount qnum, int target, double angle);
 
-mEdge RY(QubitCount qnum, int target, float angle);
+mEdge RY(QubitCount qnum, int target, double angle);
 
-mEdge RZ(QubitCount qnum, int target, float angle);
+mEdge RZ(QubitCount qnum, int target, double angle);
 
 mEdge CX(QubitCount qnum, int target, int control);
 
-GateMatrix rx(float angle);
-GateMatrix ry(float angle);
-GateMatrix rz(float angle);
-GateMatrix u3(float theta, float phi, float lambda);
-GateMatrix u1(float lambda);
-GateMatrix u2(float phi, float lambda);
-GateMatrix u(float theta, float phi, float lambda);
-GateMatrix p(float angle);
-GateMatrix r(float theta, float phi);
+GateMatrix rx(double angle);
+GateMatrix ry(double angle);
+GateMatrix rz(double angle);
+GateMatrix u3(double theta, double phi, double lambda);
+GateMatrix u1(double lambda);
+GateMatrix u2(double phi, double lambda);
+GateMatrix u(double theta, double phi, double lambda);
+GateMatrix p(double angle);
+GateMatrix r(double theta, double phi);
 
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
 
 #ifdef isMPI
-vEdge receive_dd(boost::mpi::communicator &world, int source_node_id,
-                 bool isBlocking = true);
-void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id,
-             bool isBlocking = true);
+vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking = true);
+void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
+double adjust_weight(bmpi::communicator &world, vEdge rootEdge);
+void dump(boost::mpi::communicator &world, vEdge e, int cycle);
 #endif
+
+int get_nNodes(vEdge e);
+vEdge gc(vEdge state);
 
 mEdge randomDD(QubitCount qnum, float ratio);
 long countNode(const mEdge &e);

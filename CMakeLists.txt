@@ -14,7 +14,7 @@ if(NOT EXISTS ${EIGEN_PATH})
     file(DOWNLOAD https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip "${EIGEN}.zip")
     file(ARCHIVE_EXTRACT INPUT "${EIGEN}.zip" DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 endif()
-
+add_compile_definitions(EIGEN_DONT_VECTORIZE)
 
 add_compile_definitions(_GUN_SOURCE)
 
@@ -53,6 +53,7 @@ add_subdirectory(src)
 
 option(BINDINGS "Configure for building Python bindings" ON)
 if (BINDINGS)
+  find_package(Python COMPONENTS Interpreter Development)
   FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11

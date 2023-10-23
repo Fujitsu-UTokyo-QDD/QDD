@@ -2,14 +2,14 @@ from qiskit.providers import ProviderV1 as Provider
 from qiskit.providers.providerutils import filter_backends
 
 from .qdd_backend import QddBackend
-from .qdd_statevector_backend import QddStateVectorBackend
+from .qdd_sv_backend import QddSVBackend
 
 class QddProvider(Provider):
 
     def __init__(self, token=None):
         super().__init__()
         self.token = token
-        self._backends = [QddBackend(provider=self), QddStateVectorBackend(provider=self)]
+        self._backends = [QddBackend(provider=self), QddSVBackend(provider=self)]
 
     def backends(self, name=None, **kwargs):
         if name:
@@ -20,5 +20,5 @@ class QddProvider(Provider):
     
     def get_backend(self, name=None, **kwargs) -> QddBackend:
         if name == None:
-            name = 'qdd_backend'
+            name = 'qasm_simulator'
         return super().get_backend(name, **kwargs)

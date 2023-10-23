@@ -24,7 +24,8 @@
 
 using duration_micro = std::chrono::duration<double, std::micro>;
 
-//const std::size_t NBUCKETS = 32768;
+const std::size_t NQUBITS = 100;
+// const std::size_t NBUCKETS = 32768;
 const std::size_t NBUCKETS = 524288;
 //const std::size_t NBUCKETS = 1024288;
 const std::size_t INITIAL_ALLOCATION_SIZE = 2048;
@@ -71,38 +72,37 @@ const uint64_t UT_INIT_SZ =   8 * REGION_SIZE;
 const uint64_t UT_MAX_SZ  =   16 * REGION_SIZE;
 
 constexpr double SQRT2 = 0.707106781186547524400844362104849039284835937688474036588L;
-constexpr double mSQRT2 = -0.707106781186547524400844362104849039284835937688474036588L;
 constexpr double PI = 3.141592653589793238462643383279502884L;
 
 static_assert(sizeof(double) == sizeof(unsigned long long));
 
 
 struct c{
-    float r;
-    float i;
-    c(const std::complex<float>& cf): r(cf.real()), i(cf.imag()){}
+    double r;
+    double i;
+    c(const std::complex<double>& cf): r(cf.real()), i(cf.imag()){}
 };
 
-constexpr std::complex<float> cf_one       = {1., 0.};
-constexpr std::complex<float> cf_mone      = {-1., 0.};
-constexpr std::complex<float> cf_zero      = {0., 0.};
-constexpr std::complex<float> cf_i         = {0., 1.};
-constexpr std::complex<float> cf_mi        = {0., -1.};
-constexpr std::complex<float> cf_SQRT2_2   = {SQRT2, 0.};
-constexpr std::complex<float> cf_mSQRT2_2  = {-SQRT2, 0.};
-constexpr std::complex<float> cf_iSQRT2_2  = {0., SQRT2};
-constexpr std::complex<float> cf_miSQRT2_2 = {0., -SQRT2};
-constexpr std::complex<float> cf_1plusi    = {SQRT2, SQRT2};
-constexpr std::complex<float> cf_1minusi   = {SQRT2, -SQRT2};
-constexpr std::complex<float> cf_1plusi_2  = {0.5, 0.5};
-constexpr std::complex<float> cf_1minusi_2 = {0.5, -0.5};
+constexpr std::complex<double> cf_one       = {1., 0.};
+constexpr std::complex<double> cf_mone      = {-1., 0.};
+constexpr std::complex<double> cf_zero      = {0., 0.};
+constexpr std::complex<double> cf_i         = {0., 1.};
+constexpr std::complex<double> cf_mi        = {0., -1.};
+constexpr std::complex<double> cf_SQRT2_2   = {SQRT2, 0.};
+constexpr std::complex<double> cf_mSQRT2_2  = {-SQRT2, 0.};
+constexpr std::complex<double> cf_iSQRT2_2  = {0., SQRT2};
+constexpr std::complex<double> cf_miSQRT2_2 = {0., -SQRT2};
+constexpr std::complex<double> cf_1plusi    = {SQRT2, SQRT2};
+constexpr std::complex<double> cf_1minusi   = {SQRT2, -SQRT2};
+constexpr std::complex<double> cf_1plusi_2  = {0.5, 0.5};
+constexpr std::complex<double> cf_1minusi_2 = {0.5, -0.5};
 
 
 
 
 
     // Gate matrices
-using GateMatrix = std::array<std::complex<float>, 4>;
+using GateMatrix = std::array<std::complex<double>, 4>;
 constexpr GateMatrix Imat{cf_one, cf_zero, cf_zero, cf_one};
 constexpr GateMatrix Hmat{cf_SQRT2_2, cf_SQRT2_2, cf_SQRT2_2, cf_mSQRT2_2};
 constexpr GateMatrix Xmat{cf_zero, cf_one, cf_one, cf_zero};
