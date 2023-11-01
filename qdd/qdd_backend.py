@@ -434,10 +434,7 @@ class QddBackend(BackendV1):
         if options['memory']:
             result_data['memory'] = sampled_values
         if self._save_SV:
-            if use_mpi:
-                print("ERROR: Statevector output is not supported in MPI mode.")
-                assert(0) # Not supported
-            result_data["statevector"] = pyQDD.getVector(current)
+            result_data["statevector"] = pyQDD.getVector(current) if use_mpi == False else pyQDD.getVectorMPI(current)
         header = QddBackend._create_experiment_header(circ)
         result = {
             'success': True,

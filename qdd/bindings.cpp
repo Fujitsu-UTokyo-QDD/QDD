@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <map>
+#include <boost/mpi/collectives.hpp>
 #include "dd.h"
 #include "common.h"
 
@@ -95,6 +96,26 @@ std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge, const bool collaps
 void dump_mpi(){
     std::cout << _world.rank() << "/" << _world.size() << std::endl;
 }
+
+std::vector<std::complex<double>> _getVectorMPI(vEdge &edge){
+    size_t dim;
+    std_complex *vec = edge.getVector(&dim);
+    std::vector<std_complex> result;
+    for (int i = 0; i < dim;i++){
+        result.push_back(vec[i]);
+    }
+
+    std::vector<std::vector<std_complex>> all_results;
+    bmpi::all_gather(_world, result, all_results);
+
+    std::vector<std::complex<double>> final_result;
+    for (int i = 0; i < all_results.size();i++){
+        for (int j = 0; j < all_results[i].size();j++){
+            final_result.push_back(std::complex(all_results[i][j].r, all_results[i][j].i));
+        }
+    }
+    return final_result;
+}
 #endif
 
 PYBIND11_MODULE(pyQDD, m){
@@ -129,6 +150,7 @@ PYBIND11_MODULE(pyQDD, m){
         .def("makeOneStateMPI", _makeOneStateMPI)
         .def("mv_multiply_MPI", _mv_multiply_MPI)
         .def("measureAllMPI", _measureAllMPI)
+        .def("getVectorMPI", _getVectorMPI)
         //measureOneCollapsingMPI
         ;
 #endif
