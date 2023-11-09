@@ -25,7 +25,8 @@ std::map<std::string, GateMatrix> gateMap{
     {"Vdag", Vdagmat}
 };
 
-std::mt19937_64 mt;
+std::random_device rd;
+std::mt19937_64 mt(rd());
 
 mEdge makeGate(QubitCount q, std::string name, Qubit target){
     return makeGate(q, gateMap[name], target);
