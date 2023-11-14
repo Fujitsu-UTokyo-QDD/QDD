@@ -1156,13 +1156,68 @@ double assignProbabilities(const vEdge &edge,
     return edge.w.mag2() * sum;
 }
 
+#ifdef isMPI
+std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse, std::mt19937_64 &mt, double epsilon){
+    assert(collapse == false);
+    std::unordered_map<vNode *, double> each_probs;
+    double each_prob = assignProbabilities(rootEdge, each_probs);
+    std::string each_result = measureAll(rootEdge, collapse, mt, epsilon);
+    std::string result = "";
+    std::vector<double> probs;
+    std::vector<std::string> strings;
+
+    if(world.rank()==0){
+        bmpi::gather(world, each_prob, probs, 0);
+        bmpi::gather(world, each_result, strings, 0);
+        double sum=0;
+        for (int i = 0; i < world.size(); i++)
+        {
+            //std::cout << probs[i] << " ";
+            sum += probs[i];
+        }
+        //std::cout << "sum=" << sum << std::endl;
+        std::uniform_real_distribution<double> dist(0.0, sum);
+        const double threshold = dist(mt);
+        double current = 0;
+        int target_rank = 0;
+        for (int i = 0; i < world.size(); i++){
+            current += probs[i];
+            target_rank = i;
+            if(threshold <= current){
+                break;
+            }
+        }
+        const int pre_length = log2(world.size());
+        //std::cout << "thre="<< threshold << " target_rank=" << target_rank << " " << std::endl;
+        int tmp = target_rank;
+        for (int i = pre_length-1; i >= 0; i--){
+            if(tmp/(int)pow(2,i)>=1){
+                tmp -= (int)pow(2, i);
+                result += '1';
+            }else{
+                result += '0';
+            }
+        }
+        //std::cout << result << "+"<< strings[target_rank] << std::endl;
+        result += strings[target_rank];
+    }
+    else
+    {
+        bmpi::gather(world, each_prob, probs, 0);
+        bmpi::gather(world, each_result, strings, 0);
+    }
+    bmpi::broadcast(world, result, 0);
+    return result;
+}
+#endif
+
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon) {
-    if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
-        if (rootEdge.w.isApproximatelyZero()) {
-            throw std::runtime_error("led to a 0-vector");
-        }
-    }
+    // if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
+    //     if (rootEdge.w.isApproximatelyZero()) {
+    //         throw std::runtime_error("led to a 0-vector");
+    //     }
+    // }
 
     std::unordered_map<vNode *, double> probs;
     assignProbabilities(rootEdge, probs);
