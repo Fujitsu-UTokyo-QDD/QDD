@@ -400,6 +400,34 @@ BOOST_CLASS_TRACKING(vContent, boost::serialization::track_never)
 BOOST_IS_BITWISE_SERIALIZABLE(vContent)
 #endif
 
+struct mContent {
+#ifdef isMPI
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &v;
+        ar &w;
+        ar &index;
+    }
+#endif
+
+    Qubit v;
+    std::array<std_complex, 4> w;
+    std::array<int, 4> index;
+
+    mContent(Qubit qpos, std_complex w1, std_complex w2, std_complex w3, std_complex w4, int i1, int i2, int i3, int i4)
+        : v(qpos), w({w1, w2, w3, w4}), index({i1, i2, i3, i4}){};
+    mContent()
+        : v(-1), w({cf_zero, cf_zero, cf_zero, cf_zero}), index({-1,-1,-1,-1}){};
+};
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(mContent, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(mContent)
+BOOST_CLASS_TRACKING(mContent, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(mContent)
+#endif
+
 using Controls = std::set<Control, ControlComparator>;
 
 extern std::vector<mEdge> identityTable;
@@ -471,4 +499,7 @@ void dump(boost::mpi::communicator &world, vEdge e, int cycle);
 #endif
 
 int get_nNodes(vEdge e);
-vEdge gc(vEdge state);
+vEdge gc(vEdge state, bool force=false);
+mEdge gc_mat(mEdge mat, bool force=false);
+void clear_cache(bool force=false);
+void set_params(int gc_v, int gc_m, int clear_cache);

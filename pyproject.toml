@@ -40,6 +40,7 @@ testpaths = [
     "test/python",
 ]
 markers = [
-    "slow: marks tests as taking a long time to run"
+    "slow: marks tests as taking a long time to run",
+    "mpi: mpi tests"
 ]
-addopts = "-m \"not slow\" --strict-markers"
+addopts = "-m \"not slow and not mpi\" --strict-markers"

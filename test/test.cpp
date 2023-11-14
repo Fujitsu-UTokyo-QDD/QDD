@@ -360,3 +360,20 @@ TEST(QddTest, DotTest){
         std::string dot = genDot(state);
     }
 }
+
+TEST(QddTest, GCTest){
+    {
+        vEdge state = makeZeroState(2);
+        state = mv_multiply(makeGate(2,Hmat,0),state);
+        state = mv_multiply(CX(2, 1, 0), state);
+        state = gc(state, true);
+        std::cout << genDot(state) << std::endl;
+    }
+    {
+        mEdge h = makeGate(3,Hmat,0);
+        mEdge cx = CX(3, 1, 0);
+        mEdge mul = mm_multiply(h,cx);
+        //mul = gc_mat(mul, true);
+        std::cout << genDot(mul) << std::endl;
+    }
+}

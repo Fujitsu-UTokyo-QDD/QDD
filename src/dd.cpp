@@ -402,6 +402,9 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map);
 vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
+int mNode_to_vec(mNode *node, std::vector<mContent> &table,
+                 std::unordered_map<mNode *, int> &map);
+mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable);
 
 #ifdef isMPI
 vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
@@ -1569,6 +1572,29 @@ int vNode_to_vec(vNode *node, std::vector<vContent> &table,
     return table.size() - 1;
 }
 
+int mNode_to_vec(mNode *node, std::vector<mContent> &table,
+                 std::unordered_map<mNode *, int> &map) {
+    if (table.size() == 0) {
+        mContent terminal(-1, {0.0, 0.0},{0.0, 0.0},{0.0, 0.0},{0.0, 0.0}, 0, 0, 0, 0);
+        table.push_back(terminal);
+        map[node->terminal] = 0;
+    }
+    if (map.find(node) != map.end()) {
+        return map[node];
+    }
+
+    // If the given vNode* is not included in 'table', new data is pushed.
+    int i0 = mNode_to_vec(node->children[0].getNode(), table, map);
+    int i1 = mNode_to_vec(node->children[1].getNode(), table, map);
+    int i2 = mNode_to_vec(node->children[2].getNode(), table, map);
+    int i3 = mNode_to_vec(node->children[3].getNode(), table, map);
+    mContent nodeData(node->v, node->children[0].w, node->children[1].w, node->children[2].w, node->children[3].w, 
+                        i0, i1, i2, i3);
+    table.push_back(nodeData);
+    map[node] = table.size() - 1;
+    return table.size() - 1;
+}
+
 vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
     /*
     This function is to de-serialize table into vNode*.
@@ -1587,6 +1613,29 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
         vEdge e0 = {table[i].w[0], i0};
         vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
+        node = uniqTable.lookup(node);
+        map[i] = node;
+    }
+    return map[table.size() - 1];
+}
+
+mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable) {
+    // The node(0) must be terminal node.
+    std::unordered_map<int, mNode *> map;
+    map[0] = &mNode::terminalNode;
+
+    for (int i = 1; i < table.size(); i++) {
+        mNode *node = uniqTable.getNode();
+        node->v = table[i].v;
+        mNode *i0 = map[table[i].index[0]];
+        mNode *i1 = map[table[i].index[1]];
+        mNode *i2 = map[table[i].index[2]];
+        mNode *i3 = map[table[i].index[3]];
+        mEdge e0 = {table[i].w[0], i0};
+        mEdge e1 = {table[i].w[1], i1};
+        mEdge e2 = {table[i].w[2], i2};
+        mEdge e3 = {table[i].w[3], i3};
+        node->children = {e0, e1, e2, e3};
         node = uniqTable.lookup(node);
         map[i] = node;
     }
@@ -1659,11 +1708,11 @@ int get_nNodes(vEdge e){
 }
 
 int GC_SIZE = 131072*16;
-vEdge gc(vEdge state){
-    if(vUnique.get_allocations()<GC_SIZE){
+vEdge gc(vEdge state, bool force){
+    if(vUnique.get_allocations()<GC_SIZE && force==false){
         return state;
     }
-    std::cout << "vSize="<<vUnique.get_allocations() << " mSize=" << mUnique.get_allocations() << " vLimit="<<GC_SIZE;
+
 
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
@@ -1671,18 +1720,59 @@ vEdge gc(vEdge state){
     if(nNodes>GC_SIZE){
         GC_SIZE += nNodes;
     }
-    std::cout << " Current nNodes = " << nNodes << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
-    //mNodeTable new_table_m(NQUBITS);
-    //mUnique = std::move(new_table_m);
     state.n = vec_to_vNode(v, vUnique);
 
-    AddCache newA(NQUBITS);
-    MulCache newM(NQUBITS);
-    _aCache = std::move(newA);
-    _mCache = std::move(newM);
-    std::cout << " gc_done " << std::endl;
+    clear_cache(true);
+    std::cout << "gc_done " << std::endl;
     return state;
+}
+
+int CLEAR_SIZE = 131072 * 16;
+void clear_cache(bool force){
+    if(_aCache.getSize()>CLEAR_SIZE || force == true){
+        AddCache newA(NQUBITS);
+        _aCache = std::move(newA);
+        std::cout << "Add cache cleared" << std::endl;
+    }
+    if(_mCache.getSize()>CLEAR_SIZE || force == true){
+        MulCache newM(NQUBITS);
+        _mCache = std::move(newM);
+        std::cout << "Mul cache cleared" << std::endl;
+    }
+    return;
+}
+
+int GC_SIZE_M = 131072*16;
+mEdge gc_mat(mEdge mat, bool force){
+    if(mUnique.get_allocations()<GC_SIZE_M && force==false){
+        return mat;
+    }
+    
+    std::vector<mContent> m;
+    std::unordered_map<mNode *, int> map;
+    int nNodes = mNode_to_vec(mat.n, m, map);
+    std::cout << "mNode_to_vec fin" << std::endl;
+    if (nNodes > GC_SIZE_M)
+    {
+        GC_SIZE_M += nNodes;
+    }
+    std::cout << " Current nNodes = " << nNodes << std::endl;
+
+    mNodeTable new_table(NQUBITS);
+    mUnique = std::move(new_table);
+    mat.n = vec_to_mNode(m, mUnique);
+    
+    clear_cache(true);
+    std::cout << "gc_done " << std::endl;
+    return mat;
+}
+
+void set_params(int gc_v, int gc_m, int clear_cache){
+    GC_SIZE = gc_v;
+    GC_SIZE_M = gc_m;
+    CLEAR_SIZE = clear_cache;
+    return;
 }

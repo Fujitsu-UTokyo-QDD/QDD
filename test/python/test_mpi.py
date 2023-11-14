@@ -1,6 +1,8 @@
 from qiskit import QuantumCircuit
 from qdd import QddProvider
+import pytest
 
+@pytest.mark.mpi
 def test_mpi():
 
     backend = QddProvider().get_backend()

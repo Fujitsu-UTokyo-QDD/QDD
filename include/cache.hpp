@@ -105,8 +105,8 @@ class AddCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE_CACHE;
         for(Bucket& b : c.chunks[0]){
             b.e.valid = false;
         }
@@ -114,10 +114,14 @@ class AddCache{
         lookups = 0;
     }
 
-        double hitRatio() const noexcept {
-            std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
-            return static_cast<double>(hits)/static_cast<double>(lookups); 
-        }
+    double hitRatio() const noexcept {
+        std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
+        return static_cast<double>(hits)/static_cast<double>(lookups); 
+    }
+
+    std::size_t getSize(){
+        return c.allocations;
+    }
 
     private:
 
@@ -149,7 +153,7 @@ class AddCache{
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
             Cache(){
-                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE_CACHE));
                 chunkIt = chunks[0].begin();
                 chunkEndIt = chunks[0].end();
             }
@@ -157,8 +161,8 @@ class AddCache{
             std::size_t                          chunkID{0};
             typename std::vector<Bucket>::iterator chunkIt;
             typename std::vector<Bucket>::iterator chunkEndIt;
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
             #ifdef CACHE_GLOBAL
             mutable std::mutex _mtx;
             #endif
@@ -365,8 +369,8 @@ class MulCache{
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
-        c.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
-        c.allocations = INITIAL_ALLOCATION_SIZE;
+        c.allocationSize = INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR;
+        c.allocations = INITIAL_ALLOCATION_SIZE_CACHE;
         for(Bucket& b : c.chunks[0]){
             for(Entry& e : b.es){
                 e.valid = false;
@@ -377,10 +381,14 @@ class MulCache{
     }
 
 
-        double hitRatio() const noexcept {
-            std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
-            return static_cast<double>(hits)/static_cast<double>(lookups); 
-        }
+    double hitRatio() const noexcept {
+        std::cout<<"hits "<< hits<<", lookups: "<< lookups<<std::endl; 
+        return static_cast<double>(hits)/static_cast<double>(lookups); 
+    }
+
+    std::size_t getSize(){
+        return c.allocations;
+    }
 
     private:
 
@@ -415,7 +423,7 @@ class MulCache{
         static_assert(std::is_default_constructible_v<Bucket>);
         struct Cache {
             Cache(){
-                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE*4096));
+                chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE_CACHE));
                 chunkIt = chunks[0].begin();
                 chunkEndIt = chunks[0].end();
             }
@@ -423,8 +431,8 @@ class MulCache{
             std::size_t                          chunkID{0};
             typename std::vector<Bucket>::iterator chunkIt;
             typename std::vector<Bucket>::iterator chunkEndIt;
-            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE*4096 * GROWTH_FACTOR};
-            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE*4096;
+            std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
+            std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
             #ifdef CACHE_GLOBAL
             mutable std::mutex _mtx;
             #endif

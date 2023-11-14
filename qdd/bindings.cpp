@@ -3,7 +3,9 @@
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <map>
+#ifdef isMPI
 #include <boost/mpi/collectives.hpp>
+#endif
 #include "dd.h"
 #include "common.h"
 
@@ -128,7 +130,7 @@ PYBIND11_MODULE(pyQDD, m){
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
-    m.def("get_nNodes", get_nNodes).def("gc", gc);
+    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("clear_cache",clear_cache).def("set_params",set_params);
 
     // Gates
     m.def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))

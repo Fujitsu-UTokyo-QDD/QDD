@@ -294,6 +294,56 @@ class QddBackend(BackendV1):
     def get_cID(self, cbit):
         return self.cbitmap[cbit]
     
+    def merge_circuit(self, circ:QiskitCircuit, gc_freq=20):
+        n_qubit = circ.num_qubits
+        n_cbit = circ.num_clbits
+        self._create_qubitmap(circ)
+        self._create_cbitmap(circ)
+
+        current = pyQDD.makeGate(n_qubit, "I", 0)
+        count=0
+        for i, qargs, cargs in circ.data:
+            qiskit_gate_type = type(i)
+            # filter out special cases first
+            if qiskit_gate_type == Barrier:
+                continue
+            if (qiskit_gate_type == Measure):
+                continue
+            assert(len(cargs) == 0)
+
+            if qiskit_gate_type in _supported_qiskit_gates:
+                if qiskit_gate_type in _qiskit_gates_1q:
+                    gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_rotations_1q:
+                    if qiskit_gate_type == qiskit_gates.U3Gate or qiskit_gate_type == qiskit_gates.UGate:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
+                    elif qiskit_gate_type == qiskit_gates.U2Gate or qiskit_gate_type == qiskit_gates.RGate:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
+                    else:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
+                    gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_gates_2q:
+                    gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_1q_control:
+                    controls = []
+                    for idx in range(len(qargs)-1):
+                        controls.append(self.get_qID(qargs[idx]))
+                    gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], self.get_qID(qargs[-1]), controls)
+                    current = pyQDD.mm_multiply(gate, current)
+                else:
+                    raise RuntimeError(f'Unsupported gate or instruction:'
+                                       f' type={qiskit_gate_type.__name__}, name={i.name}.'
+                                       f' It needs to transpile the circuit before evaluating it.')
+
+            count += 1
+            print(count)
+            #current = pyQDD.gc_mat(current, False);
+            pyQDD.clear_cache(False)
+        return current
+    
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
         use_mpi = options['use_mpi']
         if use_mpi:
@@ -356,7 +406,8 @@ class QddBackend(BackendV1):
                     raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                current = pyQDD.gc(current);
+                current = pyQDD.gc(current, False);
+                pyQDD.clear_cache(False)
             
             for i in range(options['shots']):
                 _, result_tmp = pyQDD.measureAll(current, False) if use_mpi==False else pyQDD.measureAllMPI(current, False)
@@ -426,7 +477,8 @@ class QddBackend(BackendV1):
                             raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                    current = pyQDD.gc(current);
+                    current = pyQDD.gc(current, False);
+                    pyQDD.clear_cache(False)
                 sampled_values[shot] = ''.join(reversed(val_cbit))
 
         hex_sampled_counts = Counter(sampled_values)
