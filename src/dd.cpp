@@ -1720,6 +1720,7 @@ vEdge gc(vEdge state, bool force){
     if(nNodes>GC_SIZE){
         GC_SIZE += nNodes;
     }
+    std::cout << " Current nNodes = " << nNodes << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
@@ -1754,7 +1755,6 @@ mEdge gc_mat(mEdge mat, bool force){
     std::vector<mContent> m;
     std::unordered_map<mNode *, int> map;
     int nNodes = mNode_to_vec(mat.n, m, map);
-    std::cout << "mNode_to_vec fin" << std::endl;
     if (nNodes > GC_SIZE_M)
     {
         GC_SIZE_M += nNodes;
@@ -1764,9 +1764,14 @@ mEdge gc_mat(mEdge mat, bool force){
     mNodeTable new_table(NQUBITS);
     mUnique = std::move(new_table);
     mat.n = vec_to_mNode(m, mUnique);
+
+    // Clear identityTable
+    std::vector<mEdge> new_identityTable(NQUBITS);
+    identityTable = std::move(new_identityTable);
     
+    // Clear cache
     clear_cache(true);
-    std::cout << "gc_done " << std::endl;
+    std::cout << "gc_mat_done " << std::endl;
     return mat;
 }
 

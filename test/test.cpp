@@ -367,13 +367,16 @@ TEST(QddTest, GCTest){
         state = mv_multiply(makeGate(2,Hmat,0),state);
         state = mv_multiply(CX(2, 1, 0), state);
         state = gc(state, true);
-        std::cout << genDot(state) << std::endl;
+        state = mv_multiply(CX(2, 0, 1), state);
     }
     {
         mEdge h = makeGate(3,Hmat,0);
         mEdge cx = CX(3, 1, 0);
         mEdge mul = mm_multiply(h,cx);
-        //mul = gc_mat(mul, true);
-        std::cout << genDot(mul) << std::endl;
+        mul = gc_mat(mul, true);
+        mEdge h2 = makeGate(3,Hmat,2);
+        mEdge cx2 = CX(3, 2, 0);
+        mEdge mul2 = mm_multiply(h2,cx2);
+        mEdge mul3 = mm_multiply(mul2,mul);
     }
 }

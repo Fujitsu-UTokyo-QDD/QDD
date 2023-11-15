@@ -340,7 +340,7 @@ class QddBackend(BackendV1):
 
             count += 1
             print(count)
-            #current = pyQDD.gc_mat(current, False);
+            current = pyQDD.gc_mat(current, False);
             pyQDD.clear_cache(False)
         return current
     
