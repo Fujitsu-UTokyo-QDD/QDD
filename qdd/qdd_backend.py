@@ -341,7 +341,7 @@ class QddBackend(BackendV1):
             count += 1
             print(count)
             current = pyQDD.gc_mat(current, False);
-            pyQDD.clear_cache(False)
+            #pyQDD.clear_cache(False)
         return current
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
@@ -407,7 +407,7 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                 current = pyQDD.gc(current, False);
-                pyQDD.clear_cache(False)
+                #pyQDD.clear_cache(False)
             
             for i in range(options['shots']):
                 _, result_tmp = pyQDD.measureAll(current, False) if use_mpi==False else pyQDD.measureAllMPI(current, False)
@@ -478,7 +478,7 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                     current = pyQDD.gc(current, False);
-                    pyQDD.clear_cache(False)
+                    #pyQDD.clear_cache(False)
                 sampled_values[shot] = ''.join(reversed(val_cbit))
 
         hex_sampled_counts = Counter(sampled_values)
