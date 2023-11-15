@@ -60,6 +60,7 @@ class CHashTable {
         p->v = -2;
 
         p->next = _cache.available;
+        p->previous = nullptr;
         _cache.available = p;
     }
 
@@ -68,7 +69,7 @@ class CHashTable {
         const Qubit v = node->v;
 
         T *current = _tables[v]._table[key];
-        T *previous = current;
+        //T *previous = current;
 
         if (current == nullptr) {
             _tables[v]._table[key] = node;
@@ -83,12 +84,12 @@ class CHashTable {
 
                 return current;
             }
-
-            previous = current;
-            current = current->next;
+            current = current->previous;
         }
 
-        previous->next = node;
+        node->previous = _tables[v]._table[key];
+        _tables[v]._table[key]->next = node;
+        _tables[v]._table[key] = node;
         return node;
     }
 

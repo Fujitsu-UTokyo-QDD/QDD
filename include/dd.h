@@ -188,13 +188,14 @@ struct vNode {
         ar &v;
         ar &children;
         ar &next;
+        ar & previous;
     }
 #endif
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
-    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n)
-        : v(q), children(c), next(n) {}
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, vNode *p)
+        : v(q), children(c), next(n), previous(p) {}
 
     vEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -210,6 +211,7 @@ struct vNode {
     Qubit v;
     std::array<vEdge, 2> children;
     vNode *next{nullptr};
+    vNode *previous{nullptr};
 
 };
 
@@ -297,12 +299,13 @@ struct mNode {
         ar &v;
         ar &children;
         ar &next;
+        ar & previous;
     }
 #endif
 
     mNode() = default;
-    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
-        : v(q), children(c), next(n){}
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, mNode *p)
+        : v(q), children(c), next(n), previous(p){}
     mNode(const mNode &vv) : v(vv.v), children(vv.children) {}
     mEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -318,6 +321,7 @@ struct mNode {
     Qubit v;
     std::array<mEdge, 4> children;
     mNode *next{nullptr};
+    mNode *previous{nullptr};
 
 };
 

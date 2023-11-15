@@ -22,8 +22,8 @@ vNodeTable vUnique(NQUBITS);
 
 std::vector<mEdge> identityTable(NQUBITS);
 
-mNode mNode::terminalNode = mNode(-1, {}, nullptr);
-vNode vNode::terminalNode = vNode(-1, {}, nullptr);
+mNode mNode::terminalNode = mNode(-1, {}, nullptr, nullptr);
+vNode vNode::terminalNode = vNode(-1, {}, nullptr, nullptr);
 
 mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal};
 mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
