@@ -99,27 +99,17 @@ class Scheduler{
     friend struct WorkerThread;
     
 public:
-    Scheduler(int n, int gcfreq);
+    Scheduler(int n);
     ~Scheduler();
-
-    void addGate(const mEdge& e);
-    vEdge buildCircuit(vEdge v);
-    mEdge buildUnitary(const std::vector<mEdge>& g);
 private:
     void spawn();
     void clearCache();
 
     const int _nworkers;
-    const int _gcfreq;
 
     std::vector<WorkerThread> _workers;
-    std::vector<mEdge> _gates;
 
     boost::fibers::condition_variable_any cond_stop;
     boost::fibers::mutex mtx_stop;
 };
-
-
-
-void makeUniqueForV(vEdge& root, CHashTable<vNode>& v);
 

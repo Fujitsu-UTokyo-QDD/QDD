@@ -2,6 +2,9 @@
 #include "cache.hpp"
 #include<iostream>
 #include <random>
+#ifdef isMT
+#include "task.h"
+#endif
 
 std::random_device seed_gen;
 std::mt19937_64 mt(seed_gen());
@@ -177,6 +180,10 @@ vEdge exec(int nQubits){
 
 int main(int argc, char** argv){
     auto start = std::chrono::high_resolution_clock::now();
+
+#ifdef isMT
+    Scheduler s(8);
+#endif
     
     auto v = exec(std::atoi(argv[1]));
 
