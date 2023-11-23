@@ -1,5 +1,8 @@
 #include "table.hpp"
 #include "cache.hpp"
+#ifdef isMT
+    #include "task.h"
+#endif
 #include<iostream>
 #include<fstream>
 
@@ -226,6 +229,9 @@ int main(int argc, char** argv){
     bmpi::environment env(argc, argv);
     bmpi::communicator world;
     assert(argc == 2);
+#ifdef isMT
+    Scheduler s(8);
+#endif
     auto result = grover_MPI(std::atoi(argv[1]), world);
     std::cout << std::endl << genDot(result);
 }

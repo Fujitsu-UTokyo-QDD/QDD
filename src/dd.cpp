@@ -15,6 +15,12 @@
   #include <boost/serialization/utility.hpp>
 #endif
 
+#ifdef isMT
+  #include <oneapi/tbb/enumerable_thread_specific.h>
+  #include <boost/fiber/future/future.hpp>
+  #include <boost/fiber/future/packaged_task.hpp>
+#endif
+
 #define SUBTASK_THRESHOLD 5
 
 mNodeTable mUnique(NQUBITS);
@@ -30,8 +36,13 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
+#ifdef isMT
+oneapi::tbb::enumerable_thread_specific<AddCache> _aCaches(NQUBITS);
+oneapi::tbb::enumerable_thread_specific<MulCache> _mCaches(NQUBITS);
+#else
 AddCache _aCache(NQUBITS);
 MulCache _mCache(NQUBITS);
+#endif
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -638,6 +649,9 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     mEdge result;
 
+#ifdef isMT
+    AddCache& _aCache = _aCaches.local();
+#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -700,6 +714,9 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
+#ifdef isMT
+    MulCache& _mCache = _mCaches.local();
+#endif
     mEdge result;
     result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
@@ -844,6 +861,9 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     vEdge result;
 
+#ifdef isMT
+    AddCache& _aCache = _aCaches.local();
+#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -859,6 +879,9 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     vNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     std::array<vEdge, 2> edges;
+#ifdef isMT
+    std::vector<boost::fibers::future<vEdge>> sums;
+#endif
 
     for (auto i = 0; i < 2; i++) {
         if (lv == current_var && !lhs.isTerminal()) {
@@ -873,10 +896,27 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
         } else {
             y = rhs;
         }
-
-        edges[i] = vv_add2(x, y, current_var - 1);
+#ifdef isMT
+        if(current_var>LIMIT){
+            boost::fibers::packaged_task<vEdge()> pt(std::bind(vv_add2, x, y, current_var-1));
+            sums.emplace_back(pt.get_future());
+            boost::fibers::fiber f(std::move(pt));
+            f.detach();
+        }else{
+#endif
+            edges[i] = vv_add2(x, y, current_var - 1);
+#ifdef isMT
+        }
+#endif
     }
 
+#ifdef isMT
+    if(current_var>LIMIT){
+        assert(sums.size() == 2);
+        edges[0] = sums[0].get();
+        edges[1] = sums[1].get();
+    }
+#endif
     result = makeVEdge(current_var, edges);
     _aCache.set(lhs, rhs, result);
 
@@ -1066,6 +1106,9 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
+#ifdef isMT
+    MulCache& _mCache = _mCaches.local();
+#endif
     vEdge result;
 
     result = _mCache.find(lhs.n, rhs.n);
@@ -1092,10 +1135,14 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     lcopy.w = {1.0, 0.0};
     rcopy.w = {1.0, 0.0};
 
+
+#ifdef isMT
+    std::vector<boost::fibers::future<vEdge>> products;
+#endif
+    std::array<vEdge, 4> product;
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
-        std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((i << 1) | k);
@@ -1108,12 +1155,29 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
             } else {
                 y = rcopy;
             }
-
-            product[k] = mv_multiply2(x, y, current_var - 1);
+#ifdef isMT
+            if(current_var > LIMIT){
+                boost::fibers::packaged_task<vEdge()> pt(std::bind(mv_multiply2, x, y, current_var-1));
+                products.emplace_back(pt.get_future());
+                boost::fibers::fiber f(std::move(pt));
+                f.detach();
+            }else{
+#endif
+                product[2*i+k] = mv_multiply2(x, y, current_var - 1);
+#ifdef isMT
+            }
+#endif
         }
-
-        edges[i] = vv_add2(product[0], product[1], current_var - 1);
     }
+
+#ifdef isMT
+    if(current_var > LIMIT){
+        for(int i=0; i<4; i++)
+            product[i] = products[i].get();
+    }
+#endif
+    edges[0] = vv_add2(product[0], product[1], current_var - 1);
+    edges[1] = vv_add2(product[2], product[3], current_var - 1);
 
     result = makeVEdge(current_var, edges);
     _mCache.set(lhs.n, rhs.n, result);
@@ -1132,7 +1196,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
-
+    LIMIT = rhs.getVar() - MINUS;
     vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
     //_mCache.hitRatio();
     //_aCache.hitRatio();
@@ -1726,6 +1790,10 @@ vEdge gc(vEdge state, bool force){
     vUnique = std::move(new_table);
     state.n = vec_to_vNode(v, vUnique);
 
+#ifdef isMT
+    _aCaches.clear();
+    _mCaches.clear();
+#else
     AddCache newA(NQUBITS);
     MulCache newM(NQUBITS);
     _aCache = std::move(newA);
