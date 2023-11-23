@@ -135,6 +135,10 @@ inline double norm(const Complex &c) {
     return std::sqrt(c.r * c.r + c.i * c.i);
 }
 
+inline double norm2(const Complex &c) {
+    return c.r * c.r + c.i * c.i;
+}
+
 // using std_complex = std::complex<double>;
 using std_complex = Complex;
 

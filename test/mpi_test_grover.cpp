@@ -185,6 +185,7 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
     for (auto i = 0; i < n_qubits; i++) {
         state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world);
     }
+    full_iteration = gc_mat(full_iteration, true);
     std::cout << "Setup fin" << std::endl;
 
 
@@ -208,6 +209,8 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         state = mv_multiply_MPI(full_iteration, state, world);
         if(j%10000<8 && j>10000){
             std::cout << j << std::endl;
+        }
+        if(j%100000<8 && j>100000){
             state = gc(state);
         }
     }

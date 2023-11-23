@@ -47,7 +47,7 @@ static mEdge normalizeM(const mEdge &e) {
 
     auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
                                    [](const mEdge &lhs, const mEdge &rhs) {
-                                       return norm(lhs.w) < norm(rhs.w);
+                                       return norm2(lhs.w) < norm2(rhs.w);
                                    });
 
     std_complex max_weight = result->w;
@@ -91,7 +91,7 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
-            return norm(lhs.w) < norm(rhs.w);
+            return norm2(lhs.w) < norm2(rhs.w);
     });
     std_complex max_weight = result->w;
 
@@ -105,7 +105,7 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     // child weight (larger one)
-    size_t max_idx = std::distance(e.n->children.begin(), result);
+    size_t max_idx = (result== &(e.n->children[1])) ? 1:0;
     e.n->children[max_idx].w = {1.0, 0.0};
 
     // child weight (smaller one)
@@ -1613,7 +1613,7 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
         vEdge e0 = {table[i].w[0], i0};
         vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
-        node = uniqTable.lookup(node);
+        node = uniqTable.register_wo_lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
@@ -1726,7 +1726,10 @@ vEdge gc(vEdge state, bool force){
     vUnique = std::move(new_table);
     state.n = vec_to_vNode(v, vUnique);
 
-    clear_cache(true);
+    AddCache newA(NQUBITS);
+    MulCache newM(NQUBITS);
+    _aCache = std::move(newA);
+    _mCache = std::move(newM);
     std::cout << "gc_done " << std::endl;
     return state;
 }
@@ -1770,7 +1773,10 @@ mEdge gc_mat(mEdge mat, bool force){
     identityTable = std::move(new_identityTable);
     
     // Clear cache
-    clear_cache(true);
+    AddCache newA(NQUBITS);
+    MulCache newM(NQUBITS);
+    _aCache = std::move(newA);
+    _mCache = std::move(newM);
     std::cout << "gc_mat_done " << std::endl;
     return mat;
 }

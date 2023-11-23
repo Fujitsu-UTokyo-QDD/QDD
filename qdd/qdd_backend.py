@@ -361,9 +361,11 @@ class QddBackend(BackendV1):
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
         print(len(circ.data), " gates")
+        count=0
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
             for i, qargs, cargs in circ.data:
+                count += 1
                 qiskit_gate_type = type(i)
 
                 # filter out special cases first
@@ -406,6 +408,8 @@ class QddBackend(BackendV1):
                     raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
+                if count%100==0:
+                    print(count,"/",len(circ.data))
                 current = pyQDD.gc(current, False);
                 #pyQDD.clear_cache(False)
             

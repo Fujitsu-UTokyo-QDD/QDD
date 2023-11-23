@@ -64,6 +64,24 @@ class CHashTable {
         _cache.available = p;
     }
 
+    T *register_wo_lookup(T *node){
+        const auto key = Hash()(*node) % NBUCKETS;
+        const Qubit v = node->v;
+
+         T *current = _tables[v]._table[key];
+        //T *previous = current;
+
+        if (current == nullptr) {
+            _tables[v]._table[key] = node;
+            return node;
+        }
+
+        node->previous = _tables[v]._table[key];
+        _tables[v]._table[key]->next = node;
+        _tables[v]._table[key] = node;
+        return node;
+    }
+
     T *lookup(T *node) {
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
