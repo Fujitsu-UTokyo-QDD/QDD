@@ -1798,23 +1798,9 @@ vEdge gc(vEdge state, bool force){
     MulCache newM(NQUBITS);
     _aCache = std::move(newA);
     _mCache = std::move(newM);
+#endif
     std::cout << "gc_done " << std::endl;
     return state;
-}
-
-int CLEAR_SIZE = 131072 * 16;
-void clear_cache(bool force){
-    if(_aCache.getSize()>CLEAR_SIZE || force == true){
-        AddCache newA(NQUBITS);
-        _aCache = std::move(newA);
-        std::cout << "Add cache cleared" << std::endl;
-    }
-    if(_mCache.getSize()>CLEAR_SIZE || force == true){
-        MulCache newM(NQUBITS);
-        _mCache = std::move(newM);
-        std::cout << "Mul cache cleared" << std::endl;
-    }
-    return;
 }
 
 int GC_SIZE_M = 131072*16;
@@ -1841,10 +1827,15 @@ mEdge gc_mat(mEdge mat, bool force){
     identityTable = std::move(new_identityTable);
     
     // Clear cache
+#ifdef isMT
+    _aCaches.clear();
+    _mCaches.clear();
+#else
     AddCache newA(NQUBITS);
     MulCache newM(NQUBITS);
     _aCache = std::move(newA);
     _mCache = std::move(newM);
+#endif
     std::cout << "gc_mat_done " << std::endl;
     return mat;
 }
@@ -1852,6 +1843,5 @@ mEdge gc_mat(mEdge mat, bool force){
 void set_params(int gc_v, int gc_m, int clear_cache){
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
-    CLEAR_SIZE = clear_cache;
     return;
 }

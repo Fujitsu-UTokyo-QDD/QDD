@@ -8,7 +8,9 @@
 #endif
 #include "dd.h"
 #include "common.h"
-
+#ifdef isMT
+#include "task.h"
+#endif
 namespace py = pybind11;
 
 std::map<std::string, GateMatrix> gateMap{
@@ -121,6 +123,13 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge){
 }
 #endif
 
+#ifdef isMT
+void enable_multi_threading(int nWorkers){
+    Scheduler *s = new Scheduler(nWorkers);
+    return;
+}
+#endif
+
 PYBIND11_MODULE(pyQDD, m){
     py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse)
     #ifdef isMPI
@@ -130,7 +139,7 @@ PYBIND11_MODULE(pyQDD, m){
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
-    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("clear_cache",clear_cache).def("set_params",set_params);
+    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("set_params",set_params);
 
     // Gates
     m.def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
@@ -156,5 +165,9 @@ PYBIND11_MODULE(pyQDD, m){
         .def("getVectorMPI", _getVectorMPI)
         //measureOneCollapsingMPI
         ;
+#endif
+
+#ifdef isMT
+    m.def("enable_multi_threading", enable_multi_threading);
 #endif
 }

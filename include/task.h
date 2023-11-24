@@ -103,7 +103,6 @@ public:
     ~Scheduler();
 private:
     void spawn();
-    void clearCache();
 
     const int _nworkers;
 
