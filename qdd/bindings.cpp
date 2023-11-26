@@ -77,6 +77,11 @@ mEdge makeControlGate(QubitCount q, std::string name, Qubit target, const std::v
     return makeGate(q, name, target, c);
 }
 
+mEdge makeControlGateMatrix(QubitCount q, GateMatrix m, Qubit target, const std::vector<Qubit> controls){
+    Controls c = get_controls(controls);
+    return makeGate(q, m, target, c);
+}
+
 #ifdef isMPI
 
 boost::mpi::communicator _world;
@@ -146,7 +151,7 @@ PYBIND11_MODULE(pyQDD, m){
      .def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit, const Controls &>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const Controls &>(&makeGate))
-     .def("makeControlGate", makeControlGate);
+     .def("makeControlGate", makeControlGate).def("makeControlGateMatrix", makeControlGateMatrix);
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX).def("SWAP", makeSwap);
     m.def("rxmat", rx).def("rymat", ry).def("rzmat", rz).def("u1", u1).def("u2", u2).def("u3", u3).def("u", u).def("p", p).def("r", r);
 

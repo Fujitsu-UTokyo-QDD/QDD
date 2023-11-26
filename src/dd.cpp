@@ -1782,9 +1782,9 @@ vEdge gc(vEdge state, bool force){
     std::unordered_map<vNode *, int> map;
     int nNodes = vNode_to_vec(state.n, v, map);
     if(nNodes>GC_SIZE){
-        GC_SIZE += nNodes;
+        GC_SIZE *= 2;
     }
-    std::cout << " Current nNodes = " << nNodes << std::endl;
+    std::cout << "GC_SIZE = " << GC_SIZE << " Current nNodes = " << nNodes << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
