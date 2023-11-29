@@ -168,6 +168,8 @@ PYBIND11_MODULE(pyQDD, m){
         .def("mv_multiply_MPI", _mv_multiply_MPI)
         .def("measureAllMPI", _measureAllMPI)
         .def("getVectorMPI", _getVectorMPI)
+        .def("save_binary", save_binary)
+        .def("load_binary", load_binary)
         //measureOneCollapsingMPI
         ;
 #endif

@@ -7,12 +7,16 @@
 #include <map>
 #include <queue>
 #include <unordered_set>
+#include <iostream>
+#include <fstream>
 
 #ifdef isMPI
   #include <boost/mpi/communicator.hpp>
   #include <boost/mpi/environment.hpp>
   #include <boost/mpi/collectives.hpp>
   #include <boost/serialization/utility.hpp>
+  #include <boost/archive/binary_iarchive.hpp>
+  #include <boost/archive/binary_oarchive.hpp>
 #endif
 
 #ifdef isMT
@@ -20,6 +24,7 @@
   #include <boost/fiber/future/future.hpp>
   #include <boost/fiber/future/packaged_task.hpp>
 #endif
+
 
 #define SUBTASK_THRESHOLD 5
 
@@ -412,10 +417,10 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
 
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map);
-vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
+vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup = false);
 int mNode_to_vec(mNode *node, std::vector<mContent> &table,
                  std::unordered_map<mNode *, int> &map);
-mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable);
+mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup = false);
 
 #ifdef isMPI
 vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
@@ -1607,6 +1612,29 @@ std::string genDot(mEdge &rootEdge) {
     return finalresult.str();
 }
 
+#ifdef isMPI
+void save_binary(vNode *node, std::string file_name){
+    std::vector<vContent> v;
+    std::unordered_map<vNode *, int> map;
+    int nNodes = vNode_to_vec(node, v, map);
+    std::ofstream binary_ofs(file_name);
+    boost::archive::binary_oarchive binary_oa(binary_ofs);
+    binary_oa << v;
+    binary_ofs.close();
+    std::cout << "nNodes=" << nNodes << std::endl;
+}
+
+vNode* load_binary(std::string file_name){
+    std::vector<vContent> v;
+    std::ifstream binary_ifs(file_name);
+    boost::archive::binary_iarchive binary_ia(binary_ifs);
+    binary_ia >> v;
+    binary_ifs.close();
+
+    return vec_to_vNode(v, vUnique);
+}
+#endif
+
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map) {
     /*
@@ -1659,7 +1687,7 @@ int mNode_to_vec(mNode *node, std::vector<mContent> &table,
     return table.size() - 1;
 }
 
-vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
+vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup){
     /*
     This function is to de-serialize table into vNode*.
     You can specify which uniqueTable to be used. (usually vUnique ?)
@@ -1677,13 +1705,13 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
         vEdge e0 = {table[i].w[0], i0};
         vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
-        node = uniqTable.register_wo_lookup(node);
+        node = no_lookup? uniqTable.register_wo_lookup(node): uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
 }
 
-mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable) {
+mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup){
     // The node(0) must be terminal node.
     std::unordered_map<int, mNode *> map;
     map[0] = &mNode::terminalNode;
@@ -1700,7 +1728,7 @@ mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable) {
         mEdge e2 = {table[i].w[2], i2};
         mEdge e3 = {table[i].w[3], i3};
         node->children = {e0, e1, e2, e3};
-        node = uniqTable.lookup(node);
+        node = no_lookup? uniqTable.register_wo_lookup(node) : uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
@@ -1788,7 +1816,7 @@ vEdge gc(vEdge state, bool force){
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
-    state.n = vec_to_vNode(v, vUnique);
+    state.n = vec_to_vNode(v, vUnique, true);
 
 #ifdef isMT
     _aCaches.clear();
@@ -1820,7 +1848,7 @@ mEdge gc_mat(mEdge mat, bool force){
 
     mNodeTable new_table(NQUBITS);
     mUnique = std::move(new_table);
-    mat.n = vec_to_mNode(m, mUnique);
+    mat.n = vec_to_mNode(m, mUnique, true);
 
     // Clear identityTable
     std::vector<mEdge> new_identityTable(NQUBITS);

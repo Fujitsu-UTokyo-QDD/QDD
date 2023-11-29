@@ -504,6 +504,8 @@ vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlo
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
 double adjust_weight(bmpi::communicator &world, vEdge rootEdge);
 void dump(boost::mpi::communicator &world, vEdge e, int cycle);
+void save_binary(vNode *node, std::string file_name);
+vNode *load_binary(std::string file_name);
 #endif
 
 int get_nNodes(vEdge e);
