@@ -8,7 +8,9 @@
 #endif
 #include "dd.h"
 #include "common.h"
-
+#ifdef isMT
+#include "task.h"
+#endif
 namespace py = pybind11;
 
 std::map<std::string, GateMatrix> gateMap{
@@ -75,6 +77,11 @@ mEdge makeControlGate(QubitCount q, std::string name, Qubit target, const std::v
     return makeGate(q, name, target, c);
 }
 
+mEdge makeControlGateMatrix(QubitCount q, GateMatrix m, Qubit target, const std::vector<Qubit> controls){
+    Controls c = get_controls(controls);
+    return makeGate(q, m, target, c);
+}
+
 #ifdef isMPI
 
 boost::mpi::communicator _world;
@@ -121,6 +128,13 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge){
 }
 #endif
 
+#ifdef isMT
+void enable_multi_threading(int nWorkers){
+    Scheduler *s = new Scheduler(nWorkers);
+    return;
+}
+#endif
+
 PYBIND11_MODULE(pyQDD, m){
     py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse)
     #ifdef isMPI
@@ -130,14 +144,14 @@ PYBIND11_MODULE(pyQDD, m){
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
-    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("clear_cache",clear_cache).def("set_params",set_params);
+    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("set_params",set_params);
 
     // Gates
     m.def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit, const Controls &>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const Controls &>(&makeGate))
-     .def("makeControlGate", makeControlGate);
+     .def("makeControlGate", makeControlGate).def("makeControlGateMatrix", makeControlGateMatrix);
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX).def("SWAP", makeSwap);
     m.def("rxmat", rx).def("rymat", ry).def("rzmat", rz).def("u1", u1).def("u2", u2).def("u3", u3).def("u", u).def("p", p).def("r", r);
 
@@ -154,7 +168,13 @@ PYBIND11_MODULE(pyQDD, m){
         .def("mv_multiply_MPI", _mv_multiply_MPI)
         .def("measureAllMPI", _measureAllMPI)
         .def("getVectorMPI", _getVectorMPI)
+        .def("save_binary", save_binary)
+        .def("load_binary", load_binary)
         //measureOneCollapsingMPI
         ;
+#endif
+
+#ifdef isMT
+    m.def("enable_multi_threading", enable_multi_threading);
 #endif
 }

@@ -11,6 +11,11 @@
 #include <random>
 #include <stdio.h>
 
+#ifdef isMT
+#include <oneapi/tbb/enumerable_thread_specific.h>
+using namespace oneapi::tbb;
+#endif
+
 /*
  * CL_MASK and CL_MASK_R are for the probe sequence calculation.
  * With 64 bytes per cacheline, there are 8 64-bit values per cacheline.
@@ -29,6 +34,9 @@ class CHashTable {
     QubitCount getQubitCount() const { return _qn; }
 
     T *getNode() {
+#ifdef isMT
+        Cache& _cache = _caches.local();
+#endif
         if (_cache.available != nullptr) {
             T *p = _cache.available;
             _cache.available = p->next;
@@ -58,9 +66,31 @@ class CHashTable {
         }
 
         p->v = -2;
+#ifdef isMT
+        Cache& _cache = _caches.local();
+#endif
 
         p->next = _cache.available;
+        p->previous = nullptr;
         _cache.available = p;
+    }
+
+    T *register_wo_lookup(T *node){
+        const auto key = Hash()(*node) % NBUCKETS;
+        const Qubit v = node->v;
+
+         T *current = _tables[v]._table[key];
+        //T *previous = current;
+
+        if (current == nullptr) {
+            _tables[v]._table[key] = node;
+            return node;
+        }
+
+        node->previous = _tables[v]._table[key];
+        _tables[v]._table[key]->next = node;
+        _tables[v]._table[key] = node;
+        return node;
     }
 
     T *lookup(T *node) {
@@ -68,7 +98,7 @@ class CHashTable {
         const Qubit v = node->v;
 
         T *current = _tables[v]._table[key];
-        T *previous = current;
+        //T *previous = current;
 
         if (current == nullptr) {
             _tables[v]._table[key] = node;
@@ -83,20 +113,26 @@ class CHashTable {
 
                 return current;
             }
-
-            previous = current;
-            current = current->next;
+            current = current->previous;
         }
 
-        previous->next = node;
+        node->previous = _tables[v]._table[key];
+        _tables[v]._table[key]->next = node;
+        _tables[v]._table[key] = node;
         return node;
     }
 
     void dump(){
+#ifdef isMT
+        Cache& _cache = _caches.local();
+#endif
         std::cout << "#chunk = " << _cache.chunkID << std::endl;
     }
 
     std::size_t get_allocations(){
+#ifdef isMT
+        Cache& _cache = _caches.local();
+#endif
         return _cache.allocations;
     }
 
@@ -120,7 +156,11 @@ class CHashTable {
 
     std::size_t collected;
 
+#ifdef isMT
+    enumerable_thread_specific<Cache> _caches;
+#else 
     Cache _cache;
+#endif
 
     QubitCount _qn;
 

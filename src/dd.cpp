@@ -7,13 +7,24 @@
 #include <map>
 #include <queue>
 #include <unordered_set>
+#include <iostream>
+#include <fstream>
 
 #ifdef isMPI
   #include <boost/mpi/communicator.hpp>
   #include <boost/mpi/environment.hpp>
   #include <boost/mpi/collectives.hpp>
   #include <boost/serialization/utility.hpp>
+  #include <boost/archive/binary_iarchive.hpp>
+  #include <boost/archive/binary_oarchive.hpp>
 #endif
+
+#ifdef isMT
+  #include <oneapi/tbb/enumerable_thread_specific.h>
+  #include <boost/fiber/future/future.hpp>
+  #include <boost/fiber/future/packaged_task.hpp>
+#endif
+
 
 #define SUBTASK_THRESHOLD 5
 
@@ -22,16 +33,21 @@ vNodeTable vUnique(NQUBITS);
 
 std::vector<mEdge> identityTable(NQUBITS);
 
-mNode mNode::terminalNode = mNode(-1, {}, nullptr);
-vNode vNode::terminalNode = vNode(-1, {}, nullptr);
+mNode mNode::terminalNode = mNode(-1, {}, nullptr, nullptr);
+vNode vNode::terminalNode = vNode(-1, {}, nullptr, nullptr);
 
 mEdge mEdge::one{.w = {1.0, 0.0}, .n = mNode::terminal};
 mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
+#ifdef isMT
+oneapi::tbb::enumerable_thread_specific<AddCache> _aCaches(NQUBITS);
+oneapi::tbb::enumerable_thread_specific<MulCache> _mCaches(NQUBITS);
+#else
 AddCache _aCache(NQUBITS);
 MulCache _mCache(NQUBITS);
+#endif
 
 static int LIMIT = 10000;
 const int MINUS = 3;
@@ -47,7 +63,7 @@ static mEdge normalizeM(const mEdge &e) {
 
     auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
                                    [](const mEdge &lhs, const mEdge &rhs) {
-                                       return norm(lhs.w) < norm(rhs.w);
+                                       return norm2(lhs.w) < norm2(rhs.w);
                                    });
 
     std_complex max_weight = result->w;
@@ -91,7 +107,7 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
-            return norm(lhs.w) < norm(rhs.w);
+            return norm2(lhs.w) < norm2(rhs.w);
     });
     std_complex max_weight = result->w;
 
@@ -105,7 +121,7 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     // child weight (larger one)
-    size_t max_idx = std::distance(e.n->children.begin(), result);
+    size_t max_idx = (result== &(e.n->children[1])) ? 1:0;
     e.n->children[max_idx].w = {1.0, 0.0};
 
     // child weight (smaller one)
@@ -401,10 +417,10 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
 
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map);
-vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable);
+vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup = false);
 int mNode_to_vec(mNode *node, std::vector<mContent> &table,
                  std::unordered_map<mNode *, int> &map);
-mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable);
+mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup = false);
 
 #ifdef isMPI
 vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
@@ -638,6 +654,9 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     mEdge result;
 
+#ifdef isMT
+    AddCache& _aCache = _aCaches.local();
+#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -700,6 +719,9 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
+#ifdef isMT
+    MulCache& _mCache = _mCaches.local();
+#endif
     mEdge result;
     result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
@@ -844,6 +866,9 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     vEdge result;
 
+#ifdef isMT
+    AddCache& _aCache = _aCaches.local();
+#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -859,6 +884,9 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     vNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     std::array<vEdge, 2> edges;
+#ifdef isMT
+    std::vector<boost::fibers::future<vEdge>> sums;
+#endif
 
     for (auto i = 0; i < 2; i++) {
         if (lv == current_var && !lhs.isTerminal()) {
@@ -873,10 +901,27 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
         } else {
             y = rhs;
         }
-
-        edges[i] = vv_add2(x, y, current_var - 1);
+#ifdef isMT
+        if(current_var>LIMIT){
+            boost::fibers::packaged_task<vEdge()> pt(std::bind(vv_add2, x, y, current_var-1));
+            sums.emplace_back(pt.get_future());
+            boost::fibers::fiber f(std::move(pt));
+            f.detach();
+        }else{
+#endif
+            edges[i] = vv_add2(x, y, current_var - 1);
+#ifdef isMT
+        }
+#endif
     }
 
+#ifdef isMT
+    if(current_var>LIMIT){
+        assert(sums.size() == 2);
+        edges[0] = sums[0].get();
+        edges[1] = sums[1].get();
+    }
+#endif
     result = makeVEdge(current_var, edges);
     _aCache.set(lhs, rhs, result);
 
@@ -1066,6 +1111,9 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
+#ifdef isMT
+    MulCache& _mCache = _mCaches.local();
+#endif
     vEdge result;
 
     result = _mCache.find(lhs.n, rhs.n);
@@ -1092,10 +1140,14 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     lcopy.w = {1.0, 0.0};
     rcopy.w = {1.0, 0.0};
 
+
+#ifdef isMT
+    std::vector<boost::fibers::future<vEdge>> products;
+#endif
+    std::array<vEdge, 4> product;
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
-        std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((i << 1) | k);
@@ -1108,12 +1160,29 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
             } else {
                 y = rcopy;
             }
-
-            product[k] = mv_multiply2(x, y, current_var - 1);
+#ifdef isMT
+            if(current_var > LIMIT){
+                boost::fibers::packaged_task<vEdge()> pt(std::bind(mv_multiply2, x, y, current_var-1));
+                products.emplace_back(pt.get_future());
+                boost::fibers::fiber f(std::move(pt));
+                f.detach();
+            }else{
+#endif
+                product[2*i+k] = mv_multiply2(x, y, current_var - 1);
+#ifdef isMT
+            }
+#endif
         }
-
-        edges[i] = vv_add2(product[0], product[1], current_var - 1);
     }
+
+#ifdef isMT
+    if(current_var > LIMIT){
+        for(int i=0; i<4; i++)
+            product[i] = products[i].get();
+    }
+#endif
+    edges[0] = vv_add2(product[0], product[1], current_var - 1);
+    edges[1] = vv_add2(product[2], product[3], current_var - 1);
 
     result = makeVEdge(current_var, edges);
     _mCache.set(lhs.n, rhs.n, result);
@@ -1132,7 +1201,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
-
+    LIMIT = rhs.getVar() - MINUS;
     vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
     //_mCache.hitRatio();
     //_aCache.hitRatio();
@@ -1543,6 +1612,29 @@ std::string genDot(mEdge &rootEdge) {
     return finalresult.str();
 }
 
+#ifdef isMPI
+void save_binary(vNode *node, std::string file_name){
+    std::vector<vContent> v;
+    std::unordered_map<vNode *, int> map;
+    int nNodes = vNode_to_vec(node, v, map);
+    std::ofstream binary_ofs(file_name);
+    boost::archive::binary_oarchive binary_oa(binary_ofs);
+    binary_oa << v;
+    binary_ofs.close();
+    std::cout << "nNodes=" << nNodes << std::endl;
+}
+
+vNode* load_binary(std::string file_name){
+    std::vector<vContent> v;
+    std::ifstream binary_ifs(file_name);
+    boost::archive::binary_iarchive binary_ia(binary_ifs);
+    binary_ia >> v;
+    binary_ifs.close();
+
+    return vec_to_vNode(v, vUnique);
+}
+#endif
+
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map) {
     /*
@@ -1595,7 +1687,7 @@ int mNode_to_vec(mNode *node, std::vector<mContent> &table,
     return table.size() - 1;
 }
 
-vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
+vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup){
     /*
     This function is to de-serialize table into vNode*.
     You can specify which uniqueTable to be used. (usually vUnique ?)
@@ -1613,13 +1705,13 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable) {
         vEdge e0 = {table[i].w[0], i0};
         vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
-        node = uniqTable.lookup(node);
+        node = no_lookup? uniqTable.register_wo_lookup(node): uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
 }
 
-mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable) {
+mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup){
     // The node(0) must be terminal node.
     std::unordered_map<int, mNode *> map;
     map[0] = &mNode::terminalNode;
@@ -1636,7 +1728,7 @@ mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable) {
         mEdge e2 = {table[i].w[2], i2};
         mEdge e3 = {table[i].w[3], i3};
         node->children = {e0, e1, e2, e3};
-        node = uniqTable.lookup(node);
+        node = no_lookup? uniqTable.register_wo_lookup(node) : uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
@@ -1718,32 +1810,25 @@ vEdge gc(vEdge state, bool force){
     std::unordered_map<vNode *, int> map;
     int nNodes = vNode_to_vec(state.n, v, map);
     if(nNodes>GC_SIZE){
-        GC_SIZE += nNodes;
+        GC_SIZE *= 2;
     }
-    std::cout << " Current nNodes = " << nNodes << std::endl;
+    std::cout << "GC_SIZE = " << GC_SIZE << " Current nNodes = " << nNodes << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
-    state.n = vec_to_vNode(v, vUnique);
+    state.n = vec_to_vNode(v, vUnique, true);
 
-    clear_cache(true);
+#ifdef isMT
+    _aCaches.clear();
+    _mCaches.clear();
+#else
+    AddCache newA(NQUBITS);
+    MulCache newM(NQUBITS);
+    _aCache = std::move(newA);
+    _mCache = std::move(newM);
+#endif
     std::cout << "gc_done " << std::endl;
     return state;
-}
-
-int CLEAR_SIZE = 131072 * 16;
-void clear_cache(bool force){
-    if(_aCache.getSize()>CLEAR_SIZE || force == true){
-        AddCache newA(NQUBITS);
-        _aCache = std::move(newA);
-        std::cout << "Add cache cleared" << std::endl;
-    }
-    if(_mCache.getSize()>CLEAR_SIZE || force == true){
-        MulCache newM(NQUBITS);
-        _mCache = std::move(newM);
-        std::cout << "Mul cache cleared" << std::endl;
-    }
-    return;
 }
 
 int GC_SIZE_M = 131072*16;
@@ -1763,14 +1848,22 @@ mEdge gc_mat(mEdge mat, bool force){
 
     mNodeTable new_table(NQUBITS);
     mUnique = std::move(new_table);
-    mat.n = vec_to_mNode(m, mUnique);
+    mat.n = vec_to_mNode(m, mUnique, true);
 
     // Clear identityTable
     std::vector<mEdge> new_identityTable(NQUBITS);
     identityTable = std::move(new_identityTable);
     
     // Clear cache
-    clear_cache(true);
+#ifdef isMT
+    _aCaches.clear();
+    _mCaches.clear();
+#else
+    AddCache newA(NQUBITS);
+    MulCache newM(NQUBITS);
+    _aCache = std::move(newA);
+    _mCache = std::move(newM);
+#endif
     std::cout << "gc_mat_done " << std::endl;
     return mat;
 }
@@ -1778,6 +1871,5 @@ mEdge gc_mat(mEdge mat, bool force){
 void set_params(int gc_v, int gc_m, int clear_cache){
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
-    CLEAR_SIZE = clear_cache;
     return;
 }
