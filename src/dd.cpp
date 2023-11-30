@@ -1613,10 +1613,10 @@ std::string genDot(mEdge &rootEdge) {
 }
 
 #ifdef isMPI
-void save_binary(vNode *node, std::string file_name){
+void save_binary(vEdge edge, std::string file_name){
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
-    int nNodes = vNode_to_vec(node, v, map);
+    int nNodes = vNode_to_vec(edge.n, v, map);
     std::ofstream binary_ofs(file_name);
     boost::archive::binary_oarchive binary_oa(binary_ofs);
     binary_oa << v;
@@ -1624,14 +1624,14 @@ void save_binary(vNode *node, std::string file_name){
     std::cout << "nNodes=" << nNodes << std::endl;
 }
 
-vNode* load_binary(std::string file_name){
+vEdge load_binary(std::string file_name){
     std::vector<vContent> v;
     std::ifstream binary_ifs(file_name);
     boost::archive::binary_iarchive binary_ia(binary_ifs);
     binary_ia >> v;
     binary_ifs.close();
-
-    return vec_to_vNode(v, vUnique);
+    vEdge result = {{1.0, 0.0}, vec_to_vNode(v, vUnique)};
+    return result;
 }
 #endif
 
@@ -1871,5 +1871,33 @@ mEdge gc_mat(mEdge mat, bool force){
 void set_params(int gc_v, int gc_m, int clear_cache){
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
+    return;
+}
+
+void pruneV(vEdge &v, double thr = 1e-8, std_complex num = {1.0,0.0}){
+    std_complex current = num * v.w;
+    double mag = std::sqrt(current.mag2());
+    if(mag<thr){
+        v.w = {0.0, 0.0};
+        v.n = vNode::terminal;
+    }else{
+        pruneV(v.n->children[0], thr, current);
+        pruneV(v.n->children[1], thr, current);
+    }
+    return;
+}
+
+void pruneM(mEdge &m, double thr = 1e-8, std_complex num = {1.0,0.0}){
+    std_complex current = num * m.w;
+    double mag = std::sqrt(current.mag2());
+    if(mag<thr){
+        m.w = {0.0, 0.0};
+        m.n = mNode::terminal;
+    }else{
+        pruneM(m.n->children[0], thr, current);
+        pruneM(m.n->children[1], thr, current);
+        pruneM(m.n->children[2], thr, current);
+        pruneM(m.n->children[3], thr, current);
+    }
     return;
 }

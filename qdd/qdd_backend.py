@@ -6,7 +6,7 @@ import uuid
 import dataclasses
 from collections import Counter
 from warnings import warn
-import time
+import time, datetime
 
 from qiskit.providers import BackendV1, JobV1, Options, Provider
 from qiskit.providers.models import BackendConfiguration
@@ -346,7 +346,7 @@ class QddBackend(BackendV1):
                                        f' It needs to transpile the circuit before evaluating it.')
 
             count += 1
-            print(count)
+            print(count,"/",len(circ.data))
             current = pyQDD.gc_mat(current, False);
             #pyQDD.clear_cache(False)
         return current
@@ -373,6 +373,12 @@ class QddBackend(BackendV1):
             current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
             for i, qargs, cargs in circ.data:
                 count += 1
+                # if count<200000:
+                #     continue
+                # elif count==200000:
+                #     current = pyQDD.load_binary('200000.qasm')
+                #     continue
+
                 qiskit_gate_type = type(i)
 
                 # filter out special cases first
@@ -421,7 +427,9 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                 if count%100==0:
-                    print(count,"/",len(circ.data))
+                    print(count,"/",len(circ.data), datetime.datetime.now().strftime('%m-%d %H:%M'))
+                if count%100000==0:
+                    pyQDD.save_binary(current,str(count)+".qasm")
                 current = pyQDD.gc(current, False);
                 #pyQDD.clear_cache(False)
             
