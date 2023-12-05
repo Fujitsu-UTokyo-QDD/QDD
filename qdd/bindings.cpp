@@ -160,6 +160,9 @@ PYBIND11_MODULE(pyQDD, m){
      .def("measureOneCollapsing", _measureOneCollapsing);
     m.def("getVector", _getVector);
 
+    // Others
+    m.def("genDot", py::overload_cast<vEdge &>(&genDot)).def("genDot", py::overload_cast<mEdge &>(&genDot));
+
 #ifdef isMPI
     // MPI
     m.def("dump_mpi", dump_mpi)
