@@ -1878,30 +1878,34 @@ void set_params(int gc_v, int gc_m, int clear_cache){
     return;
 }
 
-void pruneV(vEdge &v, double thr = 1e-8, std_complex num = {1.0,0.0}){
+int prune(vEdge &v, double thr, std_complex num){
     std_complex current = num * v.w;
     double mag = std::sqrt(current.mag2());
-    if(mag<thr){
+    int result = 0;
+    if (mag < thr){
         v.w = {0.0, 0.0};
         v.n = vNode::terminal;
+        result = 1;
     }else{
-        pruneV(v.n->children[0], thr, current);
-        pruneV(v.n->children[1], thr, current);
+        result += prune(v.n->children[0], thr, current);
+        result += prune(v.n->children[1], thr, current);
     }
-    return;
+    return result;
 }
 
-void pruneM(mEdge &m, double thr = 1e-8, std_complex num = {1.0,0.0}){
+int prune(mEdge &m, double thr, std_complex num){
     std_complex current = num * m.w;
     double mag = std::sqrt(current.mag2());
+    int result = 0;
     if(mag<thr){
         m.w = {0.0, 0.0};
         m.n = mNode::terminal;
+        result = 1;
     }else{
-        pruneM(m.n->children[0], thr, current);
-        pruneM(m.n->children[1], thr, current);
-        pruneM(m.n->children[2], thr, current);
-        pruneM(m.n->children[3], thr, current);
+        result += prune(m.n->children[0], thr, current);
+        result += prune(m.n->children[1], thr, current);
+        result += prune(m.n->children[2], thr, current);
+        result += prune(m.n->children[3], thr, current);
     }
-    return;
+    return result;
 }

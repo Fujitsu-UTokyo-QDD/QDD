@@ -513,3 +513,6 @@ vEdge gc(vEdge state, bool force=false);
 mEdge gc_mat(mEdge mat, bool force=false);
 void clear_cache(bool force=false);
 void set_params(int gc_v, int gc_m, int clear_cache);
+
+int prune(vEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
+int prune(mEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});

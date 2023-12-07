@@ -49,6 +49,7 @@ _qiskit_rotations_1q: Dict = {
     qiskit_gates.UGate: pyQDD.u,
     qiskit_gates.PhaseGate: pyQDD.p,
     library.CPhaseGate: pyQDD.p,
+    library.MCPhaseGate: pyQDD.p,
 }
 
 _qiskit_gates_2q: Dict = {
@@ -324,9 +325,10 @@ class QddBackend(BackendV1):
                         matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
                     else:
                         matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
-                    if qiskit_gate_type == library.CPhaseGate:
+                    if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
                         controls = []
-                        controls.append(self.get_qID(qargs[0]))
+                        for i in range(len(qargs)-1):
+                            controls.append(self.get_qID(qargs[i]))
                         gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
                     else:
                         gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
@@ -399,9 +401,10 @@ class QddBackend(BackendV1):
                             matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
                         else:
                             matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
-                        if qiskit_gate_type == library.CPhaseGate:
+                        if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
                             controls = []
-                            controls.append(self.get_qID(qargs[0]))
+                            for i in range(len(qargs)-1):
+                                controls.append(self.get_qID(qargs[i]))
                             gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
                         else:
                             gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
@@ -475,9 +478,10 @@ class QddBackend(BackendV1):
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
                             else:
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
-                            if qiskit_gate_type == library.CPhaseGate:
+                            if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
                                 controls = []
-                                controls.append(self.get_qID(qargs[0]))
+                                for i in range(len(qargs)-1):
+                                    controls.append(self.get_qID(qargs[i]))
                                 gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
                             else:
                                 gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
