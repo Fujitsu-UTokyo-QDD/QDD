@@ -41,7 +41,7 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
 oneapi::tbb::enumerable_thread_specific<AddCache> _aCaches(NQUBITS);
 oneapi::tbb::enumerable_thread_specific<MulCache> _mCaches(NQUBITS);
 #else
@@ -654,7 +654,7 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     mEdge result;
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     AddCache& _aCache = _aCaches.local();
 #endif
     result = _aCache.find(lhs, rhs);
@@ -719,7 +719,7 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     MulCache& _mCache = _mCaches.local();
 #endif
     mEdge result;
@@ -866,7 +866,7 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     vEdge result;
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     AddCache& _aCache = _aCaches.local();
 #endif
     result = _aCache.find(lhs, rhs);
@@ -1111,7 +1111,7 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     MulCache& _mCache = _mCaches.local();
 #endif
     vEdge result;
@@ -1799,7 +1799,7 @@ int get_nNodes(vEdge e){
     return num;
 }
 
-int GC_SIZE = 131072*16;
+int GC_SIZE = 1024;
 vEdge gc(vEdge state, bool force){
     if(vUnique.get_allocations()<GC_SIZE && force==false){
         return state;
@@ -1818,14 +1818,16 @@ vEdge gc(vEdge state, bool force){
     vUnique = std::move(new_table);
     state.n = vec_to_vNode(v, vUnique, true);
 
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     _aCaches.clear();
     _mCaches.clear();
 #else
-    AddCache newA(NQUBITS);
-    MulCache newM(NQUBITS);
-    _aCache = std::move(newA);
-    _mCache = std::move(newM);
+    // AddCache newA(NQUBITS);
+    // MulCache newM(NQUBITS);
+    // _aCache = std::move(newA);
+    // _mCache = std::move(newM);
+    _mCache.clearAll();
+    _aCache.clearAll();
 #endif
     std::cout << "gc_done " << std::endl;
     return state;
@@ -1855,14 +1857,16 @@ mEdge gc_mat(mEdge mat, bool force){
     identityTable = std::move(new_identityTable);
     
     // Clear cache
-#ifdef isMT
+#if defined(isMT) && !defined(CACHE_GLOBAL)
     _aCaches.clear();
     _mCaches.clear();
 #else
-    AddCache newA(NQUBITS);
-    MulCache newM(NQUBITS);
-    _aCache = std::move(newA);
-    _mCache = std::move(newM);
+    // AddCache newA(NQUBITS);
+    // MulCache newM(NQUBITS);
+    // _mCache = std::move(newM);
+    // _aCache = std::move(newA);
+    _mCache.clearAll();
+    _aCache.clearAll();
 #endif
     std::cout << "gc_mat_done " << std::endl;
     return mat;

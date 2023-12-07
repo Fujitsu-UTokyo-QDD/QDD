@@ -4,11 +4,6 @@ version = "0.1.0"
 description = "Qiskit Provider for QDD"
 authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
 readme = "README.md"
-#packages = [
-#    { include = "qdd" },
-#    { include = "pyQDD.*.so" },
-#]
-#include = ["pyQDD.*.so"]
 include = [
     { path = "qdd/pyQDD.*.so" },
 ]
@@ -30,6 +25,7 @@ tweedledum = "^1.1.1"
 pybind11 = "^2.10.4"
 auditwheel = "^5.4.0"
 cmake = "^3.26.4"
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]

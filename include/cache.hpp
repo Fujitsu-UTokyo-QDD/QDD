@@ -8,8 +8,8 @@
 #include "dd.h"
 #include <cassert>
 #include <random>
-#include <mutex>
 #include <shared_mutex>
+#include <thread>
 
 
 #ifdef __cpp_lib_hardware_interference_size
@@ -21,11 +21,8 @@
     constexpr std::size_t hardware_destructive_interference_size = 64;
 #endif
 
-struct Scheduler;
-
 
 class AddCache{
-    friend struct Scheduler;
     public:
         AddCache(QubitCount q):_tables{2}, rng(std::random_device()()), dist(0,1){
 
@@ -92,24 +89,24 @@ class AddCache{
             }
 
     void clearAll() {
+        #ifdef CACHE_GLOBAL
+        std::lock_guard<std::shared_mutex> lock(c._mtx);
+        #endif
+        
         for(std::vector<Table>& vt: _tables){
             for(Table& t: vt){
                 std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
             }
         }
 
-        while(c.chunkID > 0){
-            c.chunks.pop_back();
-            c.chunkID--;
-        }
+        std::vector<std::vector<AddCache::Bucket>>().swap(c.chunks);
+        c.chunkID = 0;
+        c.chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE_CACHE));
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
         c.allocationSize = INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR;
         c.allocations = INITIAL_ALLOCATION_SIZE_CACHE;
-        for(Bucket& b : c.chunks[0]){
-            b.e.valid = false;
-        }
         hits = 0;
         lookups = 0;
     }
@@ -164,7 +161,7 @@ class AddCache{
             std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
             std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
             #ifdef CACHE_GLOBAL
-            mutable std::mutex _mtx;
+            mutable std::shared_mutex _mtx;
             #endif
         };
 
@@ -187,7 +184,7 @@ class AddCache{
 
         Bucket* getBucket() {
             #ifdef CACHE_GLOBAL
-            std::unique_lock(c._mtx);
+            std::lock_guard<std::shared_mutex> lock(c._mtx);
             #endif
             if (c.chunkIt == c.chunkEndIt) {
                 c.chunks.emplace_back(std::vector<Bucket>(c.allocationSize));
@@ -261,7 +258,7 @@ class AddCache{
         template<typename T>
             void set(Entry& e, const T& l , const T& r, const T& res){
                 #ifdef CACHE_GLOBAL
-                    std::unique_lock<std::shared_mutex> lock(e._mtx);
+                    std::lock_guard<std::shared_mutex> lock(e._mtx);
                 #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         e.lhs.m = l;
@@ -288,7 +285,6 @@ class AddCache{
 };
 
 class MulCache{
-    friend struct Scheduler;
 
     public:
         MulCache(QubitCount q):_tables{3}, rng(std::random_device()()), dist(0,1){
@@ -356,26 +352,24 @@ class MulCache{
             }
 
     void clearAll() {
+        #ifdef CACHE_GLOBAL
+        std::lock_guard<std::shared_mutex> lock(c._mtx);
+        #endif
+
         for(std::vector<Table>& vt: _tables){
             for(Table& t: vt){
                 std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
             }
         }
 
-        while(c.chunkID > 0){
-            c.chunks.pop_back();
-            c.chunkID--;
-        }
+        std::vector<std::vector<MulCache::Bucket>>().swap(c.chunks);
+        c.chunkID = 0;
+        c.chunks.emplace_back(std::vector<Bucket>(INITIAL_ALLOCATION_SIZE_CACHE));
 
         c.chunkIt = c.chunks[0].begin();
         c.chunkEndIt = c.chunks[0].end();
         c.allocationSize = INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR;
         c.allocations = INITIAL_ALLOCATION_SIZE_CACHE;
-        for(Bucket& b : c.chunks[0]){
-            for(Entry& e : b.es){
-                e.valid = false;
-            }
-        }
         hits = 0;
         lookups = 0;
     }
@@ -434,7 +428,7 @@ class MulCache{
             std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
             std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
             #ifdef CACHE_GLOBAL
-            mutable std::mutex _mtx;
+            mutable std::shared_mutex _mtx;
             #endif
         };
 
@@ -457,7 +451,7 @@ class MulCache{
 
         Bucket* getBucket() {
             #ifdef CACHE_GLOBAL
-            std::unique_lock(c._mtx);
+            std::lock_guard<std::shared_mutex> lock(c._mtx);
             #endif
             if (c.chunkIt == c.chunkEndIt) {
                 c.chunks.emplace_back(c.allocationSize);
@@ -541,7 +535,7 @@ class MulCache{
         template<typename T>
             void set(Entry& e, uintptr_t& l , uintptr_t& r, const T& res){
                 #ifdef CACHE_GLOBAL
-                    std::unique_lock<std::shared_mutex> lock(e._mtx);
+                    std::lock_guard<std::shared_mutex> lock(e._mtx);
                 #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         mNode* lp = reinterpret_cast<mNode*>(l); 

@@ -47,6 +47,10 @@ if (isMT)
   message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
 endif()
 
+option(isCacheGlobal "Configure for using global cache" OFF)
+if(isCacheGlobal)
+  add_compile_definitions(CACHE_GLOBAL)
+endif()
 
 add_subdirectory(src)
 add_subdirectory(test)

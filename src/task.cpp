@@ -162,28 +162,4 @@ Scheduler::~Scheduler() {
     for (WorkerThread &w : _workers) {
         w._thread->join();
     }
-
-    std::size_t add_lk = 0;
-    std::size_t add_h = 0;
-    std::size_t mul_lk = 0;
-    std::size_t mul_h = 0;
-#ifdef CACHE
-
-    for (AddCache &c : _aCache) {
-        add_lk += c.lookups;
-        add_h += c.hits;
-    }
-    for (MulCache &c : _mCache) {
-        mul_lk += c.lookups;
-        mul_h += c.hits;
-    }
-#endif
-#ifdef CACHE_GLOBAL
-    add_lk = _aCache_global.lookups;
-    add_h = _aCache_global.hits;
-    mul_lk = _mCache_global.lookups;
-    mul_h = _mCache_global.hits;
-#endif
-    std::cout << "add cache hit ratio: " << (1.0 * add_h) / add_lk << std::endl;
-    std::cout << "mul cache hit ratio: " << (1.0 * mul_h) / mul_lk << std::endl;
 }
