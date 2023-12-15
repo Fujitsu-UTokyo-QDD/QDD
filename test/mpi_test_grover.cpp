@@ -184,9 +184,9 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
 
     // set it up
     vEdge state = makeZeroStateMPI(total_qubits, world);
-    state = mv_multiply_MPI(makeGate(total_qubits, Xmat, n_qubits), state, world);
+    state = mv_multiply_MPI(makeGate(total_qubits, Xmat, n_qubits), state, world, total_qubits, n_qubits);
     for (auto i = 0; i < n_qubits; i++) {
-        state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world);
+        state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world, total_qubits, i);
     }
     full_iteration = gc_mat(full_iteration, true);
     std::cout << "Setup fin" << std::endl;
@@ -197,19 +197,19 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
         std::cout << "iterations: " << iterations << std::endl;
 
     while ((iterations - j_pre) % 8 != 0){
-        state = mv_multiply_MPI(full_iteration, state, world);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
         j_pre++;
     }
     int i = 0;
     for (unsigned long long j = j_pre; j < iterations; j += 8) {
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
-        state = mv_multiply_MPI(full_iteration, state, world);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
         if(j%10000<8 && j>10000){
             std::cout << j << std::endl;
         }

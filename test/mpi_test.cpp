@@ -59,7 +59,7 @@ TEST(MPITest, MPIAllTest){
             std::cout << "mv_multiply_MPI" << std::endl;
         vEdge v = makeZeroStateMPI(3, world);
         mEdge h = makeGate(3, Hmat,2);
-        v = mv_multiply_MPI(h, v, world);
+        v = mv_multiply_MPI(h, v, world, 3, 2);
         v.printVectorMPI(world);
         world.barrier();
         if (world.rank() == 0){

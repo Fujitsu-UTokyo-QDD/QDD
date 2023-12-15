@@ -458,7 +458,7 @@ vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit){
     int row = world.rank();
     int world_size = world.size();
     int left_neighbor  = (world.rank() - 1) % world_size;
@@ -470,10 +470,12 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     std::unordered_map<vNode *, int> rhs_map;
 
     send_data.first = rhs.w;
-    if(world.size()>1)
-        vNode_to_vec(rhs.n, send_data.second, rhs_map);
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
+    if(largest_qubit < total_qubits-int(log2(world_size))){
+        return result;
+    }
+    vNode_to_vec(rhs.n, send_data.second, rhs_map);
 
     for (int i = 1; i < world_size; i++) {
         //std::vector<bmpi::request> recv_reqs;

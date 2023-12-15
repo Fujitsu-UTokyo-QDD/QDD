@@ -96,8 +96,8 @@ void _printVectorMPI(vEdge &v){
     _world.barrier();
     v.printVectorMPI(_world);
 }
-vEdge _mv_multiply_MPI(mEdge lhs, vEdge rhs){
-    return mv_multiply_MPI(lhs, rhs, _world);
+vEdge _mv_multiply_MPI(mEdge lhs, vEdge rhs, std::size_t total_qubits, std::size_t largest_qubit){
+    return mv_multiply_MPI(lhs, rhs, _world, total_qubits, largest_qubit);
 }
 std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge, const bool collapse){
     std::string result = measureAllMPI(_world, rootEdge, collapse, mt);
