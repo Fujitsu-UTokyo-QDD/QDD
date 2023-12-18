@@ -461,8 +461,6 @@ vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
 vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit){
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
-    int right_neighbor = (world.rank() + 1) % world_size;
 
     std_complex send_w, recv_w;
     //std::vector<vContent> send_buffer, recv_buffer;
@@ -476,13 +474,17 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size
         return result;
     }
     vNode_to_vec(rhs.n, send_data.second, rhs_map);
+    int small_world_size = std::pow(2, 1 + largest_qubit - total_qubits + int(log2(world_size)));
+    int offset = row - (row + world_size) % small_world_size;
+    int left_neighbor = (row - 1 + world_size) % small_world_size + offset;
+    int right_neighbor= (row + 1 + world_size) % small_world_size + offset;    
 
-    for (int i = 1; i < world_size; i++) {
+    for (int i = 1; i < small_world_size; i++) {
         //std::vector<bmpi::request> recv_reqs;
         std::vector<bmpi::request> send_reqs;
         send_reqs.push_back(world.isend(right_neighbor, i, send_data));
         world.recv(left_neighbor, i, recv_data);        
-        int col = (row - i + world.size()) % world_size;
+        int col = (row - i + world.size()) % small_world_size + offset;
         gate = getMPIGate(lhs, row, col, world_size);
         //bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
         vEdge received = {recv_data.first, vec_to_vNode(recv_data.second, vUnique)};
@@ -1801,7 +1803,7 @@ int get_nNodes(vEdge e){
     return num;
 }
 
-int GC_SIZE = 1024;
+int GC_SIZE = 131072*16;
 vEdge gc(vEdge state, bool force){
     if(vUnique.get_allocations()<GC_SIZE && force==false){
         return state;
