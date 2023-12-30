@@ -21,3 +21,8 @@ target_link_libraries(gc_test PUBLIC engine alg)
 add_executable(fiber_test  fiber.cpp)
 target_link_libraries(fiber_test PRIVATE task alg)
 
+add_executable(fiber_shor  fiber_shor.cpp)
+target_link_libraries(fiber_shor PRIVATE task alg)
+
+add_executable(fiber_clifford  clifford.cpp)
+target_link_libraries(fiber_clifford PRIVATE task alg)

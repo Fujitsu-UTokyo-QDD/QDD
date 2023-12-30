@@ -4,7 +4,7 @@ THREADS=16
 BITS=33
 GCFREQ=1000000
 
-for BITS in $(seq 36 3 40)
+for BITS in $(seq 10 3 16)
 do
 
 # NO CACHE
