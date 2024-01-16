@@ -395,8 +395,6 @@ class QddBackend(BackendV1):
                 qiskit_gate_type = type(i)
 
                 # filter out special cases first
-                if qiskit_gate_type == Barrier:
-                    continue
                 if (qiskit_gate_type == Measure):
                     continue
                 assert(len(cargs) == 0)
@@ -420,6 +418,7 @@ class QddBackend(BackendV1):
                     move_from_global = list(global_set - next_global)
                     assert(len(move_from_global) == len(move_from_local))
                     fused_swap = pyQDD.makeGate(n_qubit,"I",0)
+                    max=0
                     for ii in range(len(move_from_global)):
                         gate = pyQDD.SWAP(n_qubit, map_after_swap[move_from_local[ii]], map_after_swap[move_from_global[ii]])
                         fused_swap = pyQDD.mm_multiply(fused_swap, gate)
@@ -427,11 +426,13 @@ class QddBackend(BackendV1):
                         idx_global = map_after_swap[move_from_global[ii]]
                         map_after_swap[move_from_local[ii]] = idx_global
                         map_after_swap[move_from_global[ii]] = idx_local
+                        if max < map_after_swap[move_from_global[ii]]:
+                            max = map_after_swap[move_from_global[ii]]
 
                     local_set = next_local
                     global_set = next_global
                     
-                    gate = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit-1)
+                    current = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, max)
                     if MPI.COMM_WORLD.Get_rank()==0:
                         print(count, tmp_idx, move_from_local, move_from_global, map_after_swap)
 
@@ -468,16 +469,33 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                 else:
-                    if qiskit_gate_type == Measure:
+                    if qiskit_gate_type == Barrier:
+                        if use_mpi and use_auto_swap:
+                            for ii in reversed(range(len(map_after_swap))):
+                                if ii != map_after_swap[ii]:
+                                    pos2 = ii
+                                    q2 = map_after_swap[pos2]
+                                    pos1 = {v: k for k, v in map_after_swap.items()}[ii]
+                                    q1 = map_after_swap[pos1]
+                                    gate = pyQDD.SWAP(n_qubit, pos1, pos2)
+                                    current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, pos1 if pos1>pos2 else pos2)
+                                    map_after_swap[pos1] = q2
+                                    map_after_swap[pos2] = q1
+                            if MPI.COMM_WORLD.Get_rank()==0:
+                                print("Barrier", count, map_after_swap)
+                            if count>380000:
+                                use_auto_swap = not use_auto_swap
+                    elif qiskit_gate_type == Measure:
                         continue
-                    # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
-                    raise RuntimeError(f'Unsupported gate or instruction:'
+                    else:
+                        # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
+                        raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                if count%100==0:
+                if count%10000==0:
                     print(count,"/",len(circ.data), datetime.datetime.now().strftime('%m-%d %H:%M'))
-                if count%100000==0:
-                    pyQDD.save_binary(current,str(count)+".qasm")
+                # if count%100000==0:
+                #     pyQDD.save_binary(current,str(count)+".qasm")
                 current = pyQDD.gc(current, False);
                 #pyQDD.clear_cache(False)
                 count = count+1
