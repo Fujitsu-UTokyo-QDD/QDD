@@ -16,7 +16,6 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
 qiskit = ">=0.32.1, <=0.42.1"
-qiskit-aer = "<=0.12.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,6 +24,7 @@ qiskit-machine-learning = {extras = ["sparse"], version = "^0.6.0"}
 qiskit-finance = "^0.3.4"
 qiskit-optimization = "^0.5.0"
 qiskit-nature = {extras = ["pyscf"], version = "^0.5.2"}
+qiskit-aer = "<=0.12.0"
 tweedledum = "^1.1.1"
 pybind11 = "^2.10.4"
 auditwheel = "^5.4.0"
