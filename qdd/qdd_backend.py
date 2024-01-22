@@ -399,6 +399,20 @@ class QddBackend(BackendV1):
                     continue
                 if (qiskit_gate_type == Measure):
                     continue
+                if qiskit_gate_type in _qiskit_rotations_1q:
+                    if use_mpi and use_auto_swap:
+                        use_auto_swap = False
+                        for ii in reversed(range(len(map_after_swap))):
+                            if ii != map_after_swap[ii]:
+                                pos2 = ii
+                                q2 = map_after_swap[pos2]
+                                pos1 = {v: k for k, v in map_after_swap.items()}[ii]
+                                q1 = map_after_swap[pos1]
+                                gate = pyQDD.SWAP(n_qubit, q1, q2)
+                                current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1>q2 else q2)
+                                map_after_swap[pos1] = q2
+                                map_after_swap[pos2] = q1
+                                assert(ii==map_after_swap[ii])
                 assert(len(cargs) == 0)
 
                 if use_mpi and use_auto_swap and not all([(self.get_qID(i) in local_set) for i in qargs]):
@@ -416,13 +430,13 @@ class QddBackend(BackendV1):
                     while len(next_local)<len(local_set):
                         next_local.add(next_global.pop())
 
-                    move_from_local = list(local_set - next_local)
-                    move_from_global = list(global_set - next_global)
+                    move_from_local = sorted(list(local_set - next_local))
+                    move_from_global = sorted(list(global_set - next_global))
                     assert(len(move_from_global) == len(move_from_local))
                     fused_swap = pyQDD.makeGate(n_qubit,"I",0)
                     for ii in range(len(move_from_global)):
                         gate = pyQDD.SWAP(n_qubit, map_after_swap[move_from_local[ii]], map_after_swap[move_from_global[ii]])
-                        fused_swap = pyQDD.mm_multiply(fused_swap, gate)
+                        fused_swap = pyQDD.mm_multiply(gate, fused_swap)
                         idx_local = map_after_swap[move_from_local[ii]]
                         idx_global = map_after_swap[move_from_global[ii]]
                         map_after_swap[move_from_local[ii]] = idx_global
@@ -431,7 +445,7 @@ class QddBackend(BackendV1):
                     local_set = next_local
                     global_set = next_global
                     
-                    gate = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit-1)
+                    current = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit-1)
                     if MPI.COMM_WORLD.Get_rank()==0:
                         print(count, tmp_idx, move_from_local, move_from_global, map_after_swap)
 
