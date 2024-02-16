@@ -99,6 +99,9 @@ void _printVectorMPI(vEdge &v){
 vEdge _mv_multiply_MPI(mEdge lhs, vEdge rhs, std::size_t total_qubits, std::size_t largest_qubit){
     return mv_multiply_MPI(lhs, rhs, _world, total_qubits, largest_qubit);
 }
+vEdge _mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, std::size_t total_qubits, std::size_t largest_qubit){
+    return mv_multiply_MPI_bcast3(lhs, rhs, _world, total_qubits, largest_qubit);
+}
 std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge, const bool collapse){
     std::string result = measureAllMPI(_world, rootEdge, collapse, mt);
     return std::pair<vEdge, std::string>(rootEdge, result);
@@ -169,6 +172,7 @@ PYBIND11_MODULE(pyQDD, m){
         .def("makeZeroStateMPI", _makeZeroStateMPI)
         .def("makeOneStateMPI", _makeOneStateMPI)
         .def("mv_multiply_MPI", _mv_multiply_MPI)
+        .def("mv_multiply_MPI_bcast", _mv_multiply_MPI_bcast)
         .def("measureAllMPI", _measureAllMPI)
         .def("getVectorMPI", _getVectorMPI)
         .def("save_binary", save_binary)

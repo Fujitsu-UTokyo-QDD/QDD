@@ -459,6 +459,7 @@ vEdge vv_kronecker(const vEdge &lhs, const vEdge &rhs);
 vEdge mv_multiply(mEdge lhs, vEdge rhs);
 #ifdef isMPI
 vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit);
+vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit);
 #endif
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);

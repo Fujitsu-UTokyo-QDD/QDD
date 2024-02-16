@@ -597,24 +597,25 @@ vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit){
     int row = world.rank();
     int world_size = world.size();
     int left_neighbor  = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
+
+    // calculate initial result
+    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    vEdge result = mv_multiply(gate, rhs);
+    if(largest_qubit < total_qubits-int(log2(world_size))){
+        return result;
+    }
 
     // prepare data to be sent
     std::pair<std_complex, std::vector<vContent>> send_data;
     send_data.first = rhs.w;
     std::unordered_map<vNode *, int> rhs_map;
     vNode_to_vec(rhs.n, send_data.second, rhs_map);
-
-    // calculate initial result
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
-    std::cout << world.rank() << " gate created" << std::endl;
-    vEdge result = mv_multiply(gate, rhs);
-    std::cout << world.rank() << " Before MPI" << std::endl;
-
+    
     for (int i = 0; i < world_size; i++) {
         if(row == i){
             bmpi::broadcast(world, send_data, i);
