@@ -14,7 +14,8 @@ from qiskit import QuantumCircuit as QiskitCircuit
 from qiskit.result import Result
 from qiskit.circuit import Barrier, Clbit, Instruction, Measure, ParameterExpression, Qubit, Reset
 import qiskit.circuit.library.standard_gates as qiskit_gates
-from qiskit.extensions import Initialize
+#from qiskit.extensions import Initialize
+from qiskit.circuit.library import Initialize
 
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
@@ -474,14 +475,15 @@ class QddBackend(BackendV1):
         measured_qubits = set()
         clbit_final_values: Dict[Clbit, Qubit] = {}  # for each clbit, this holds the qubit last assigned to the clbit.
         for i, (inst, qargs, cargs) in enumerate(circ.data):
-            if type(inst) == Measure:
+#            if type(inst) == Measure:
+            if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)
                 clbit_final_values[cargs[0]] = qargs[0]
                 measured_qubits |= set(qargs)
             elif inst.condition is not None \
                     or any(qubit in measured_qubits for qubit in qargs) \
-                    or type(inst) == Reset \
+                    or inst.base_class == Reset \
                     or inst.name == 'kraus' \
                     or inst.name == 'superop':
                 # Note: the condition value of 'superop' might have no meaning because SuperOp instances have
@@ -490,7 +492,8 @@ class QddBackend(BackendV1):
                 # https://github.com/Qiskit/qiskit-aer/blob/0.9.1/src/controllers/aer_controller.hpp#L1621
                 # So, we do the same check here just in case.
                 stable_final_state = False
-            elif type(inst) == Initialize:
+#            elif type(inst) == Initialize:
+            elif inst.base_class == Initialize:
                 if i != 0 and len(qargs) < circ.num_qubits:
                     stable_final_state = False
 

@@ -2,7 +2,7 @@ from itertools import chain
 from typing import Dict
 
 import pytest
-from qiskit import QuantumCircuit, execute
+from qiskit import QuantumCircuit, transpile
 from qiskit.providers import Backend, JobStatus, JobV1
 
 from qdd import QddProvider
@@ -26,7 +26,8 @@ def run_simple_circuit(num_qubits: int, shots: int) -> JobV1:
 
     circ = get_simple_circuit(num_qubits)
     backend = QddProvider().get_backend()
-    return execute(circ, shots=shots, backend=backend, seed_transpiler=50, seed_simulator=80)
+    job = backend.run(transpile(circuits=circ,backend=backend,seed_transpiler=50),shots=shots,seed_simulator=80)
+    return job
 
 
 def get_oracle_counts_of_simple_circuit_run(num_qubit: int, shots: int) -> dict:
@@ -53,8 +54,8 @@ def get_counts(circuit: QuantumCircuit, backend: Backend, n_shots: int, optimiza
                       the second one is formatted data (i.e., result.get_counts()).
     """
 
-    job = execute(circuit, backend=backend, shots=n_shots, optimization_level=optimization_level, seed_transpiler=50,
-                  seed_simulator=80)
+    job = backend.run(transpile(circuits=circuit,backend=backend,optimization_level=optimization_level,seed_transpiler=50),
+            shots=n_shots,seed_simulator=80)
     result = job.result()
     counts = result.data()['counts']
     formatted_counts = result.get_counts()

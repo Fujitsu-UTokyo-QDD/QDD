@@ -9,10 +9,9 @@ Especially, the following test viewpoints are tested.
 
 import cmath, math
 import pytest
-from qiskit import QiskitError, QuantumCircuit, execute
+from qiskit import QiskitError, QuantumCircuit, transpile
 from qiskit_aer import Aer
 from qiskit.circuit import Parameter
-from qiskit.circuit.exceptions import CircuitError
 
 from qdd import QddBackend, QddProvider
 from test.python.helpers.circuit_helper import assert_job_failed, get_oracle_counts_of_simple_circuit_run, run_simple_circuit
@@ -74,11 +73,11 @@ def test_memory_true():
     circ_x.measure_all()
 
     aer_backend = Aer.get_backend('aer_simulator')
-    aer_job = execute(circ_x, backend=aer_backend, shots=20, memory=True, seed_transpiler=50, seed_simulator=80)
+    aer_job = aer_backend.run(transpile(circuits=circ_x,backend=aer_backend,seed_transpiler=50),shots=20,memory=True,seed_simulator=80)
     aer_memory = aer_job.result().get_memory()
 
     qdd_backend = QddProvider().get_backend()
-    qdd_job = execute(circ_x, backend=qdd_backend, shots=20, memory=True, seed_transpiler=50, seed_simulator=80)
+    qdd_job = qdd_backend.run(transpile(circuits=circ_x,backend=qdd_backend,seed_transpiler=50),shots=20,memory=True,seed_simulator=80)
     qdd_memory = qdd_job.result().get_memory()
 
     assert qdd_memory == aer_memory
@@ -87,8 +86,8 @@ def test_memory_true():
     circ_h = QuantumCircuit(3)
     circ_h.h(0)
     circ_h.measure_all()
-    qdd_job_h = execute(circ_h, backend=qdd_backend, shots=10000, memory=True, seed_transpiler=50,
-                           seed_simulator=80)
+    qdd_job_h = qdd_backend.run(transpile(circuits=circ_h,backend=qdd_backend,seed_transpiler=50),
+            shots=10000,memory=True,seed_simulator=80)
     qdd_memory_h = qdd_job_h.result().get_memory()
 
     assert '000' in qdd_memory_h
@@ -103,7 +102,7 @@ def test_sv():
     # Test the case where the elements in the memory list are not unique (i.e., at least one qubit is in superposition)
     circ_h = QuantumCircuit(3)
     circ_h.h(0)
-    qdd_job_h = execute(circ_h, backend=qdd_backend, seed_transpiler=50, seed_simulator=80)
+    qdd_job_h = qdd_backend.run(transpile(circuits=circ_h,backend=qdd_backend,seed_transpiler=50),seed_simulator=80)
     sv = qdd_job_h.result().get_statevector()
     assert(cmath.isclose(sv[0], 1/math.sqrt(2)))
     assert(cmath.isclose(sv[1], 1/math.sqrt(2)))
@@ -117,7 +116,7 @@ def test_get_counts():
     qc1.measure_all()
 
     backend = QddProvider().get_backend()
-    single_exp_job = execute(qc1, shots=20, backend=backend, seed_transpiler=50, seed_simulator=80)
+    single_exp_job = backend.run(transpile(circuits=qc1,backend=backend,seed_transpiler=50),shots=20,seed_simulator=80)
     single_exp_counts_with_circ = single_exp_job.result().get_counts(qc1)
     single_exp_counts_without_circ = single_exp_job.result().get_counts()
     print(f'Result: {single_exp_counts_with_circ=} and {single_exp_counts_without_circ}')
@@ -130,7 +129,7 @@ def test_get_counts():
     qc2.measure_all()
 
     qc_list = [qc1, qc2]
-    multi_exp_job = execute(qc_list, shots=20, backend=backend, seed_transpiler=50, seed_simulator=80)
+    multi_exp_job = backend.run(transpile(circuits=qc_list,backend=backend,seed_transpiler=50),shots=20,seed_simulator=80)
     multi_exp_job_counts_all = multi_exp_job.result().get_counts()
     multi_exp_job_counts_qc1 = multi_exp_job.result().get_counts(qc1)
     multi_exp_job_counts_qc2 = multi_exp_job.result().get_counts(qc2)
@@ -148,7 +147,8 @@ def test_warn_unsupported_options():
     backend = QddProvider().get_backend()
 
     with pytest.warns(UserWarning, match='unsupported_opt=foo'):
-        job = execute(circ, backend=backend, shots=20, unsupported_opt='foo', seed_transpiler=50, seed_simulator=80)
+        job = backend.run(transpile(circuits=circ,backend=backend,seed_transpiler=50),
+                shots=20, unsupported_opt='foo', seed_simulator=80)
         print(job.result().get_counts())
 
 
@@ -163,7 +163,7 @@ def test_default_options():
     circ.measure_all()
 
     backend = QddProvider().get_backend()
-    job = execute(circ, backend=backend, seed_transpiler=50, seed_simulator=80)
+    job = backend.run(transpile(circuits=circ, backend=backend, seed_transpiler=50), seed_simulator=80)
     result = job.result()
 
     # default shots is 1024
@@ -194,5 +194,5 @@ def test_parametric_circuit_with_unbound_parameter():
     qc.measure(0, 0)
 
     backend = QddProvider().get_backend()
-    job = execute(qc, backend, seed_transpiler=50, seed_simulator=80)
+    job = backend.run(transpile(circuits=qc, backend=backend, seed_transpiler=50), seed_simulator=80)
     assert_job_failed(job)
