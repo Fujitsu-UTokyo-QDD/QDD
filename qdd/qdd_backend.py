@@ -302,7 +302,7 @@ class QddBackend(BackendV1):
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
-                qiskit_gate_type = type(i)
+                qiskit_gate_type = i.base_class
 
                 # filter out special cases first
                 if qiskit_gate_type == Barrier:
@@ -359,7 +359,7 @@ class QddBackend(BackendV1):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
                 for i, qargs, cargs in circ.data:
-                    qiskit_gate_type = type(i)
+                    qiskit_gate_type = i.base_class
 
                     # filter out special cases first
                     if qiskit_gate_type == Barrier:
