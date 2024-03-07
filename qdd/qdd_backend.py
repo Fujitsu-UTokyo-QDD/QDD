@@ -14,7 +14,6 @@ from qiskit import QuantumCircuit as QiskitCircuit
 from qiskit.result import Result
 from qiskit.circuit import Barrier, Clbit, Instruction, Measure, ParameterExpression, Qubit, Reset
 import qiskit.circuit.library.standard_gates as qiskit_gates
-#from qiskit.extensions import Initialize
 from qiskit.circuit.library import Initialize
 
 from qdd import __version__
@@ -234,9 +233,8 @@ class QddBackend(BackendV1):
 
         if ('parameter_binds' in run_options) and (run_options['parameter_binds'] is not None):
             param_bound_qiskit_circs = []
-            for qiskit_circ in qiskit_circs:
-                for bind in run_options['parameter_binds']:  # the type of run_options['parameter_binds'] is List[Dict]
-                    param_bound_qiskit_circs.append(qiskit_circ.bind_parameters(bind))
+            for qiskit_circ,binds in zip(qiskit_circs,run_options["parameter_binds"]):
+                param_bound_qiskit_circs.append(qiskit_circ.assign_parameters(binds))
         else:
             # no parameter bindings are specified
             param_bound_qiskit_circs = qiskit_circs
@@ -299,7 +297,7 @@ class QddBackend(BackendV1):
         self._create_qubitmap(circ)
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
-        print(len(circ.data), " gates")
+#        print(len(circ.data), " gates")
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
@@ -415,7 +413,17 @@ class QddBackend(BackendV1):
                     current = pyQDD.gc(current);
                 sampled_values[shot] = ''.join(reversed(val_cbit))
 
-        hex_sampled_counts = Counter(sampled_values)
+        sampled_counts = Counter(sampled_values)
+#        hex_sampled_counts = sampled_counts
+        hex_sampled_counts = {}
+#        for key,value in sampled_counts.items():
+#            key_bin = f"{int(key,2):#b}"
+#            hex_sampled_counts[key_bin[2:]] = value
+
+        for key in range(2**n_cbit):
+            key_bin = f"{key:0{n_cbit}b}"
+            hex_sampled_counts[key_bin] = sampled_counts[key_bin]
+
         result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
         if options['memory']:
             result_data['memory'] = sampled_values
@@ -431,7 +439,7 @@ class QddBackend(BackendV1):
             'header': header,
         }
 
-        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
+#        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
         return result
 
     
