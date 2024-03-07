@@ -46,4 +46,4 @@ def test_warmup():
     print("\nTotal count for 00 and 11 are:", counts)
     assert '00' in counts
     assert '11' in counts
-    assert len(counts) == 2
+    assert counts["00"] + counts["11"] == 1000

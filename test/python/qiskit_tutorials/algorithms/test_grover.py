@@ -16,12 +16,11 @@
 import numpy as np
 import pytest
 from qiskit import MissingOptionalLibraryError, QuantumCircuit
-from qiskit.algorithms import AmplificationProblem, Grover
+from qiskit_algorithms import AmplificationProblem, Grover
 from qiskit.circuit.library import GroverOperator, PhaseOracle, ZGate
 from qiskit.quantum_info import Statevector
-from qiskit.utils import QuantumInstance
 
-from qdd import QddProvider
+from qdd.qdd_sampler_like_aer import Sampler
 
 
 def test_grover():
@@ -32,10 +31,10 @@ def test_grover():
     oracle = QuantumCircuit(2)
     oracle.cz(0, 1)
 
+    sampler = Sampler(run_options={"shots":1024,"seed_simulator":80},transpile_options={"seed_transpiler":50})
+
     problem = AmplificationProblem(oracle, is_good_state=good_state)
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
-    grover = Grover(quantum_instance=qi)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     print('Result type:', type(result))
     print('Success!' if result.oracle_evaluation else 'Failure!')
@@ -47,7 +46,7 @@ def test_grover():
     # define an oracle with Statevector
     oracle = Statevector.from_label('11')
     problem = AmplificationProblem(oracle, is_good_state=good_state)
-    grover = Grover(quantum_instance=qi)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     print('Result type:', type(result))
     print('Success!' if result.oracle_evaluation else 'Failure!')
@@ -61,7 +60,7 @@ def test_grover():
     try:
         oracle = PhaseOracle(expression)
         problem = AmplificationProblem(oracle)
-        grover = Grover(quantum_instance=qi)
+        grover = Grover(sampler=sampler)
         result = grover.amplify(problem)
         print('Result type:', type(result))
         print('Success!' if result.oracle_evaluation else 'Failure!')
@@ -89,12 +88,12 @@ def test_amplitude_amplification():
     state_preparation.x(1)
     state_preparation.h(2)
 
+    sampler = Sampler(run_options={"shots":1024,"seed_simulator":80},transpile_options={"seed_transpiler":50})
+
     # we only care about the first two bits being in state 1, thus add both possibilities for the last qubit
     problem = AmplificationProblem(oracle, state_preparation=state_preparation, is_good_state=['110', '111'])
 
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
-    grover = Grover(quantum_instance=qi)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     print('Success!' if result.oracle_evaluation else 'Failure!')
     print('Top measurement:', result.top_measurement)
@@ -108,17 +107,17 @@ def test_grover_operator():
     oracle.append(ZGate().control(2), [0, 1, 2])
     grover_op = GroverOperator(oracle, reflection_qubits=[0, 1, 2], insert_barriers=True)
 
+    sampler = Sampler(run_options={"shots":1024,"seed_simulator":80},transpile_options={"seed_transpiler":50})
+
     problem = AmplificationProblem(oracle=oracle, grover_operator=grover_op,
                                    is_good_state=['00111', '01111', '10111', '11111'])
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
-    grover = Grover(quantum_instance=qi)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     print('Success!' if result.oracle_evaluation else 'Failure!')
     print('Top measurement:', result.top_measurement)
 
     amplified_values = list(sorted(map(lambda kv: kv[0],
-                                       filter(lambda kv: kv[1] >= 150, result.circuit_results[0].items()))))
+                                       filter(lambda kv: kv[1] >= 150/1024, result.circuit_results[0].items()))))
 
     assert result.oracle_evaluation is True
     assert amplified_values == ['00111', '01111', '10111', '11111']

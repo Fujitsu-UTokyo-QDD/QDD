@@ -16,14 +16,15 @@
 import time
 
 import pytest
-from qiskit.algorithms import VQE, NumPyMinimumEigensolver
-from qiskit.algorithms.optimizers import SPSA
+from qiskit_algorithms import VQE, NumPyMinimumEigensolver
+from qiskit_algorithms.optimizers import SPSA
 from qiskit.circuit.library import TwoLocal
-from qiskit.opflow import I, OperatorBase, X, Z
-from qiskit.providers import Backend
-from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.primitives import BaseEstimator
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_algorithms.utils import algorithm_globals
+from qiskit_aer.primitives import Estimator as AerEstimator
 
-from qdd import QddProvider
+from qdd.qdd_estimator_like_aer import Estimator
 
 
 def test_vqe():
@@ -32,12 +33,15 @@ def test_vqe():
     In this test, circuits will be evaluated in VQE#compute_minimum_eigenvalue(...).
     Note: VQE#compute_minimum_eigenvalue uses CircuitSampler to evaluate the specified circuit.
     """
-
-    H2_op = (-1.052373245772859 * I ^ I) + \
-            (0.39793742484318045 * I ^ Z) + \
-            (-0.39793742484318045 * Z ^ I) + \
-            (-0.01128010425623538 * Z ^ Z) + \
-            (0.18093119978423156 * X ^ X)
+    H2_op = SparsePauliOp.from_list(
+        [
+            ("II", -1.052373245772859),
+            ("IZ", 0.39793742484318045),
+            ("ZI", -0.39793742484318045),
+            ("ZZ", -0.01128010425623538),
+            ("XX", 0.18093119978423156),
+        ]
+    )
 
     # Computes the reference value of the minimum eigenvalue via a classical algorithm.
     npme = NumPyMinimumEigensolver()
@@ -49,11 +53,10 @@ def test_vqe():
 
     # Comment out Aer simulation because it is too slow
     # aer_backend = Aer.get_backend('aer_simulator')
-    # aer_result = _run_vqe(H2_op, aer_backend, ref_value)
-    aer_result = -1.853322535656245  # an actual result of Aer simulation
+    aer_result = _run_vqe(H2_op, AerEstimator(), ref_value)
+    #aer_result = -1.853322535656245  # an actual result of Aer simulation
 
-    qdd_backend = QddProvider().get_backend()
-    qdd_result = _run_vqe(H2_op, qdd_backend, ref_value)
+    qdd_result = _run_vqe(H2_op, Estimator(), ref_value)
 
     # Check the equality of the results from the two backends.
     # Almost certainly, the difference will be <0.01.
@@ -62,7 +65,7 @@ def test_vqe():
     print(f'VQE result: Aer={aer_result}, Qdd={qdd_result}')
 
 
-def _run_vqe(hamiltonian: OperatorBase, backend: Backend, ref_value: float) -> float:
+def _run_vqe(hamiltonian: SparsePauliOp, estimator: BaseEstimator, ref_value: float) -> float:
     """Executes VQE to compute the minimum eigenvalue of the given hamiltonian, and returns the computed result.
     This method also prints the difference b/w the computed value and the given reference value.
     """
@@ -70,7 +73,6 @@ def _run_vqe(hamiltonian: OperatorBase, backend: Backend, ref_value: float) -> f
     seed = 170
     iterations = 125
     algorithm_globals.random_seed = seed
-    qi = QuantumInstance(backend=backend, seed_simulator=seed, seed_transpiler=seed)
 
     def print_intermediate_result(eval_count, parameters, mean, std):
         if eval_count % 20 == 0:
@@ -78,7 +80,7 @@ def _run_vqe(hamiltonian: OperatorBase, backend: Backend, ref_value: float) -> f
 
     ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
     spsa = SPSA(maxiter=iterations)
-    vqe = VQE(ansatz, optimizer=spsa, callback=print_intermediate_result, quantum_instance=qi)
+    vqe = VQE(estimator,ansatz, optimizer=spsa, callback=print_intermediate_result)
     start = time.time()
     result = vqe.compute_minimum_eigenvalue(operator=hamiltonian)
     print(f'Elapsed time: {time.time() - start}')

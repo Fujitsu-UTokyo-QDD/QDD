@@ -14,12 +14,13 @@
 # that they have been altered from the originals.
 
 import numpy as np
-from qiskit.algorithms import QAOA, NumPyMinimumEigensolver
-from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit_algorithms import QAOA, NumPyMinimumEigensolver
+from qiskit_algorithms.optimizers import COBYLA
+from qiskit_algorithms.utils import algorithm_globals
 from qiskit_optimization import QuadraticProgram
 from qiskit_optimization.algorithms import MinimumEigenOptimizer, RecursiveMinimumEigenOptimizer
 
-from qdd import QddProvider
+from qdd.qdd_sampler_like_aer import Sampler
 
 
 def test_qubo():
@@ -30,12 +31,11 @@ def test_qubo():
     qubo.binary_var("z")
     qubo.minimize(linear=[1, -2, 3], quadratic={("x", "y"): 1, ("x", "z"): -1, ("y", "z"): 2})
     algorithm_globals.random_seed = 10598
-    quantum_instance = QuantumInstance(
-        QddProvider().get_backend(),
-        seed_transpiler=algorithm_globals.random_seed, seed_simulator=algorithm_globals.random_seed
-    )
+
     # QAOA
-    qaoa_mes = QAOA(quantum_instance=quantum_instance, initial_point=[0.0, 0.0])
+    qaoa_mes = QAOA(sampler=Sampler(run_options={"seed_simulator":algorithm_globals.random_seed},
+        transpile_options={"seed_transpiler":algorithm_globals.random_seed}),optimizer=COBYLA(),
+        initial_point=np.array([0.0, 0.0]))
     exact_mes = NumPyMinimumEigensolver()
     qaoa = MinimumEigenOptimizer(qaoa_mes)
     exact = MinimumEigenOptimizer(exact_mes)

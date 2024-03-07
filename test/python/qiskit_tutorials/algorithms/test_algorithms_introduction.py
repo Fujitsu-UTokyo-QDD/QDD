@@ -14,51 +14,49 @@
 # that they have been altered from the originals.
 
 import pytest
-from qiskit.algorithms import VQE
-from qiskit.algorithms.optimizers import SLSQP
+from qiskit_algorithms import VQE
+from qiskit_algorithms.optimizers import SLSQP
 from qiskit.circuit.library import TwoLocal
-from qiskit.opflow import I, X, Z
-from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_algorithms.utils import algorithm_globals
 
-from qdd import QddProvider
+from qdd.qdd_estimator_like_aer import Estimator
 
-
-@pytest.mark.slow
 def test_vqe():
     seed = 50
     algorithm_globals.random_seed = seed
 
-    h2_op = (-1.052373245772859 * I ^ I) + \
-            (0.39793742484318045 * I ^ Z) + \
-            (-0.39793742484318045 * Z ^ I) + \
-            (-0.01128010425623538 * Z ^ Z) + \
-            (0.18093119978423156 * X ^ X)
+H2_op = SparsePauliOp.from_list(
+    [
+        ("II", -1.052373245772859),
+        ("IZ", 0.39793742484318045),
+        ("ZI", -0.39793742484318045),
+        ("ZZ", -0.01128010425623538),
+        ("XX", 0.18093119978423156),
+    ]
+)
 
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
 
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
-    slsqp = SLSQP(maxiter=1000)
-    vqe = VQE(ansatz, optimizer=slsqp, quantum_instance=qi)
-    result = vqe.compute_minimum_eigenvalue(h2_op)
-    print(result)
+ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+slsqp = SLSQP(maxiter=1000)
+vqe = VQE(Estimator(),ansatz, optimizer=slsqp)
+result = vqe.compute_minimum_eigenvalue(H2_op)
+print(result)
 
-    # SLSQP optimizer with sampling-based simulation produces results of poor precision; so, we do not assert the result
-    # against any concrete values. In this test, we check whether the above code finishes with no errors.
-    # Note: ideal result is -1.85; Qdd result is ranges around from -0.5 to -1.5;
-    #       Aer simulator result is around -1.0 (probably close to the Qdd result);
-    #       Aer statevector simulation results almost in the ideal result.
-    assert True
+# SLSQP optimizer with sampling-based simulation produces results of poor precision; so, we do not assert the result
+# against any concrete values. In this test, we check whether the above code finishes with no errors.
+# Note: ideal result is -1.85; Qdd result is ranges around from -0.5 to -1.5;
+#       Aer simulator result is around -1.0 (probably close to the Qdd result);
+#       Aer statevector simulation results almost in the ideal result.
+assert True
 
-    # Re-execute the above VQE example with lazy quantum instance assignment
-    qi = QuantumInstance(backend, seed_transpiler=seed, seed_simulator=seed)
+# Re-execute the above VQE example with lazy quantum instance assignment
 
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
-    slsqp = SLSQP(maxiter=1000)
-    vqe = VQE(ansatz, optimizer=slsqp)
+ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+slsqp = SLSQP(maxiter=1000)
+vqe = VQE(Estimator(),ansatz, optimizer=slsqp)
 
-    vqe.quantum_instance = qi
-    result = vqe.compute_minimum_eigenvalue(operator=h2_op)
-    print(result)
+result = vqe.compute_minimum_eigenvalue(operator=H2_op)
+print(result)
 
-    assert True
+assert True

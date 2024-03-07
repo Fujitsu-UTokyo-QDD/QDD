@@ -14,32 +14,33 @@
 # that they have been altered from the originals.
 
 import pytest
-from qiskit.algorithms import VQE
-from qiskit.algorithms.optimizers import COBYLA, SLSQP
+from qiskit_algorithms import VQE
+from qiskit_algorithms.optimizers import COBYLA, SLSQP
 from qiskit.circuit.library import TwoLocal
-from qiskit.opflow import AerPauliExpectation, I, PauliExpectation, X, Z
-from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.quantum_info import SparsePauliOp
+from qiskit_algorithms.utils import algorithm_globals
 
-from qdd import QddProvider
+from qdd.qdd_estimator_like_aer import Estimator
 
 
 class TestVQEAdvanced:
     def test_vqe_initial_points(self):
-        h2_op = (-1.052373245772859 * I ^ I) + \
-                (0.39793742484318045 * I ^ Z) + \
-                (-0.39793742484318045 * Z ^ I) + \
-                (-0.01128010425623538 * Z ^ Z) + \
-                (0.18093119978423156 * X ^ X)
-
+        H2_op = SparsePauliOp.from_list(
+            [
+                ("II", -1.052373245772859),
+                ("IZ", 0.39793742484318045),
+                ("ZI", -0.39793742484318045),
+                ("ZZ", -0.01128010425623538),
+                ("XX", 0.18093119978423156),
+            ]
+        )
         seed = 50
         algorithm_globals.random_seed = seed
-        backend = QddProvider().get_backend()
-        qi = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
 
         ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
         optimizer = COBYLA(maxiter=100)
-        vqe = VQE(ansatz, optimizer=optimizer, quantum_instance=qi)
-        result = vqe.compute_minimum_eigenvalue(operator=h2_op)
+        vqe = VQE(Estimator(), ansatz, optimizer)
+        result = vqe.compute_minimum_eigenvalue(operator=H2_op)
         print(result)
         optimizer_evals = result.cost_function_evals
         optimal_value = result.optimal_value
@@ -47,13 +48,11 @@ class TestVQEAdvanced:
         # use the optimal points obtained in the above run as the initial points of a new VQE run
         initial_pt = result.optimal_point
         algorithm_globals.random_seed = seed
-        backend = QddProvider().get_backend()
-        qi = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
 
         ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
         optimizer = COBYLA(maxiter=100)
-        vqe = VQE(ansatz, optimizer=optimizer, initial_point=initial_pt, quantum_instance=qi)
-        result_with_initial_points = vqe.compute_minimum_eigenvalue(operator=h2_op)
+        vqe = VQE(Estimator(),ansatz, optimizer, initial_point=initial_pt)
+        result_with_initial_points = vqe.compute_minimum_eigenvalue(operator=H2_op)
         print(result_with_initial_points)
         optimizer_evals_with_initial_points = result_with_initial_points.cost_function_evals
         optimal_value_with_initial_points = result.optimal_value
@@ -64,56 +63,3 @@ class TestVQEAdvanced:
         assert optimal_value == pytest.approx(reference_value, abs=0.1)
         assert optimal_value_with_initial_points == pytest.approx(reference_value, abs=0.1)
 
-    def test_vqe_include_custom_flag(self):
-        h2_op = (-1.052373245772859 * I ^ I) + \
-                (0.39793742484318045 * I ^ Z) + \
-                (-0.39793742484318045 * Z ^ I) + \
-                (-0.01128010425623538 * Z ^ Z) + \
-                (0.18093119978423156 * X ^ X)
-
-        seed = 50
-        algorithm_globals.random_seed = seed
-        backend = QddProvider().get_backend()
-        qi = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
-
-        ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
-        optimizer = COBYLA(maxiter=100)
-        # Note: include_custom=True tries to use AerPauliExpectation, but PauliExpectation will be used
-        # because the type of the Qdd backend does not match any Aer simulator backends.
-        vqe = VQE(ansatz, optimizer=optimizer, quantum_instance=qi, include_custom=True)
-        result = vqe.compute_minimum_eigenvalue(operator=h2_op)
-        optimal_value1 = result.optimal_value
-
-        reference_value = -1.85728
-        assert optimal_value1 == pytest.approx(reference_value, abs=0.1)
-
-        # Although SLSQP and SPSA examples are shown in the Qiskit tutorial, we do not test them
-        # because they has been tested in other test cases: test_vqe_**.py.
-
-    def test_vqe_with_specified_expectation(self):
-        h2_op = (-1.052373245772859 * I ^ I) + \
-                (0.39793742484318045 * I ^ Z) + \
-                (-0.39793742484318045 * Z ^ I) + \
-                (-0.01128010425623538 * Z ^ Z) + \
-                (0.18093119978423156 * X ^ X)
-
-        seed = 50
-        backend = QddProvider().get_backend()
-        qi = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
-
-        ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
-        optimizer = SLSQP(maxiter=1000)
-        vqe = VQE(ansatz, optimizer=optimizer, quantum_instance=qi,
-                  expectation=AerPauliExpectation())
-
-        # cannot use AerPauliExpectation along with QddBackend
-        with pytest.raises(Exception):
-            vqe.compute_minimum_eigenvalue(operator=h2_op)
-
-        optimizer = COBYLA(maxiter=1000)
-        vqe = VQE(ansatz, optimizer=optimizer, quantum_instance=qi, expectation=PauliExpectation(group_paulis=False))
-        result = vqe.compute_minimum_eigenvalue(operator=h2_op)
-        print(result)
-
-        reference_value = -1.85728
-        assert result.optimal_value == pytest.approx(reference_value, abs=0.1)

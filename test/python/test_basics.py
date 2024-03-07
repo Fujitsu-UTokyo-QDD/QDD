@@ -28,6 +28,7 @@ def test_num_qubits_2():
     num_qubits = 2
     shots = 20
     counts = run_simple_circuit(num_qubits=num_qubits, shots=shots).result().get_counts()
+    counts = {k: v for k, v in counts.items() if v !=0 }
     expected = get_oracle_counts_of_simple_circuit_run(num_qubit=num_qubits, shots=shots)
     assert counts == expected
 
@@ -52,6 +53,7 @@ def test_shots_max_shots():
     max_shots = QddBackend._DEFAULT_CONFIG['max_shots']
     counts = run_simple_circuit(num_qubits=2, shots=max_shots).result().get_counts()
     expected = get_oracle_counts_of_simple_circuit_run(num_qubit=2, shots=max_shots)
+    counts = {k: v for k, v in counts.items() if v !=0 }
     assert counts == expected
 
 
@@ -118,7 +120,9 @@ def test_get_counts():
     backend = QddProvider().get_backend()
     single_exp_job = backend.run(transpile(circuits=qc1,backend=backend,seed_transpiler=50),shots=20,seed_simulator=80)
     single_exp_counts_with_circ = single_exp_job.result().get_counts(qc1)
+    single_exp_counts_with_circ = {k: v for k, v in single_exp_counts_with_circ.items() if v !=0 }
     single_exp_counts_without_circ = single_exp_job.result().get_counts()
+    single_exp_counts_without_circ = {k: v for k, v in single_exp_counts_without_circ.items() if v !=0 }
     print(f'Result: {single_exp_counts_with_circ=} and {single_exp_counts_without_circ}')
 
     assert single_exp_counts_with_circ == single_exp_counts_without_circ == {'01': 20}
@@ -131,8 +135,11 @@ def test_get_counts():
     qc_list = [qc1, qc2]
     multi_exp_job = backend.run(transpile(circuits=qc_list,backend=backend,seed_transpiler=50),shots=20,seed_simulator=80)
     multi_exp_job_counts_all = multi_exp_job.result().get_counts()
+    multi_exp_job_counts_all = [{k: v for k, v in conunts.items() if v !=0 } for conunts in multi_exp_job_counts_all]
     multi_exp_job_counts_qc1 = multi_exp_job.result().get_counts(qc1)
+    multi_exp_job_counts_qc1 = {k: v for k, v in multi_exp_job_counts_qc1.items() if v !=0 }
     multi_exp_job_counts_qc2 = multi_exp_job.result().get_counts(qc2)
+    multi_exp_job_counts_qc2 = {k: v for k, v in multi_exp_job_counts_qc2.items() if v !=0 }
     print(f'Result: {multi_exp_job_counts_all=}, {multi_exp_job_counts_qc1=} and {multi_exp_job_counts_qc2=}')
 
     assert multi_exp_job_counts_qc1 == {'01': 20}

@@ -5,7 +5,8 @@ The following gates are tested in tests/test_conversion.py.
 - Conditional gates
 """
 import pytest
-from qiskit import Aer, QuantumCircuit
+from qiskit import QuantumCircuit
+from qiskit_aer import Aer
 
 from qdd import QddProvider
 from test.python.helpers.circuit_helper import assert_probabilities_are_close, get_counts

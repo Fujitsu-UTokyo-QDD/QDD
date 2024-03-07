@@ -17,8 +17,9 @@ import time
 from itertools import combinations
 
 import numpy as np
-from qiskit import Aer, QuantumCircuit, QuantumRegister, transpile
+from qiskit import QuantumCircuit, QuantumRegister, transpile
 from qiskit.circuit import Gate, Parameter
+from qiskit_aer import Aer
 
 from qdd import QddProvider
 from test.python.helpers.circuit_helper import assert_probabilities_are_close, get_counts
@@ -92,7 +93,7 @@ def test_parameterized_circuits():
 
     theta_range = np.linspace(0, 2 * np.pi, 128)
 
-    circuits = [qc.bind_parameters({theta: theta_val})
+    circuits = [qc.assign_parameters({theta: theta_val})
                 for theta_val in theta_range]
 
     aer_backend = Aer.get_backend('aer_simulator')
@@ -148,7 +149,7 @@ def test_reducing_compilation_cost():
             qc.cx(i, j)
 
     transpiled_qc = transpile(qc, backend=backend, seed_transpiler=50)
-    _ = [transpiled_qc.bind_parameters({theta: n}) for n in theta_range]
+    _ = [transpiled_qc.assign_parameters({theta: n}) for n in theta_range]
     # QddBackend does not require assembling unlike Aer simulator
     # qobj = assemble([transpiled_qc.bind_parameters({theta: n}) for n in theta_range], backend=backend)
 
@@ -178,7 +179,7 @@ def test_composition():
     qc.append(sub_circ2.to_instruction(), [qr[0], qr[1]])
     qc.append(sub_circ2.to_instruction(), [qr[2], qr[3]])
 
-    qc = qc.bind_parameters({phi: 1})
+    qc = qc.assign_parameters({phi: 1})
     qc.measure_all()
 
     aer_backend = Aer.get_backend('aer_simulator')
@@ -208,7 +209,7 @@ def test_composition_with_parameter_map():
     larger_qc.append(qc.to_instruction({p: phi}), qr[3:6])
     larger_qc.append(qc.to_instruction({p: gamma}), qr[6:9])
 
-    larger_qc = larger_qc.bind_parameters({theta: 2, phi: 4, gamma: 6})
+    larger_qc = larger_qc.assign_parameters({theta: 2, phi: 4, gamma: 6})
     larger_qc.measure_all()
 
     aer_backend = Aer.get_backend('aer_simulator')

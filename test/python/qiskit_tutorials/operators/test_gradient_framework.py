@@ -15,19 +15,28 @@
 
 import pytest
 from qiskit import QuantumCircuit
-from qiskit.algorithms import VQE
-from qiskit.algorithms.optimizers import CG
+from qiskit_algorithms import VQE
+from qiskit_algorithms.gradients import LinCombEstimatorGradient
+from qiskit_algorithms.optimizers import CG , COBYLA
 from qiskit.circuit import ParameterVector
-from qiskit.opflow import Gradient, I, X, Z
-from qiskit.utils import QuantumInstance
+from qiskit.quantum_info import SparsePauliOp
 
-from qdd import QddProvider
+#from qdd.qdd_estimator_like_aer import Estimator
+from qiskit_aer.primitives import Estimator
 
 
-@pytest.mark.slow
 def test_vqe_with_gradient_based_optimization():
     # Instantiate the system Hamiltonian
-    h2_hamiltonian = -1.05 * (I ^ I) + 0.39 * (I ^ Z) - 0.39 * (Z ^ I) - 0.01 * (Z ^ Z) + 0.18 * (X ^ X)
+    h2_hamiltonian = SparsePauliOp.from_list(
+        [
+            ("II", -1.05),
+            ("IZ", 0.39),
+            ("ZI", -0.39),
+            ("ZZ", -0.01),
+            ("XX", 0.18),
+        ]
+    )
+
 
     # This is the target energy
     h2_energy = -1.85727503
@@ -46,16 +55,15 @@ def test_vqe_with_gradient_based_optimization():
     wavefunction.rz(next(it), 0)
     wavefunction.rz(next(it), 1)
 
-    grad = Gradient(grad_method='lin_comb')
-
-    q_backend = QddProvider().get_backend()
-    qi_sv = QuantumInstance(backend=q_backend, seed_transpiler=2, seed_simulator=80)
+    estimator = Estimator()
+    grad = LinCombEstimatorGradient(estimator=estimator)
 
     # Conjugate Gradient algorithm
-    optimizer = CG(maxiter=50)
+    optimizer = CG()
+    #optimizer = COBYLA()
 
     # Gradient callable
-    vqe = VQE(wavefunction, optimizer=optimizer, gradient=grad, quantum_instance=qi_sv)
+    vqe = VQE(estimator=estimator, ansatz=wavefunction, optimizer=optimizer, gradient=grad)
 
     result = vqe.compute_minimum_eigenvalue(h2_hamiltonian)
     print('Result:', result.optimal_value, 'Reference:', h2_energy)

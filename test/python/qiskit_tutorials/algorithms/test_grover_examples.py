@@ -18,11 +18,10 @@ import tempfile
 
 import pytest
 from qiskit import MissingOptionalLibraryError
-from qiskit.algorithms import AmplificationProblem, Grover
+from qiskit_algorithms import AmplificationProblem, Grover
 from qiskit.circuit.library import PhaseOracle
-from qiskit.utils import QuantumInstance
 
-from qdd import QddProvider
+from qdd.qdd_sampler_like_aer import Sampler
 
 
 def test_sat():
@@ -54,15 +53,13 @@ def test_sat():
         pytest.fail('Error')
 
     problem = AmplificationProblem(oracle, is_good_state=oracle.evaluate_bitstring)
-    backend = QddProvider().get_backend()
-    quantum_instance = QuantumInstance(backend, shots=1024, seed_transpiler=50, seed_simulator=80)
-    grover = Grover(quantum_instance=quantum_instance)
+    grover = Grover(sampler=Sampler(run_options={"shots":1024,"seed_simulator":80},transpile_options={"seed_transpiler":50}))
     result = grover.amplify(problem)
     print(result.assignment)
     assert result.assignment == '000' or result.assignment == '011' or result.assignment == '101'
 
     amplified_values = list(sorted(map(lambda kv: kv[0],
-                                       filter(lambda kv: kv[1] >= 150, result.circuit_results[0].items()))))
+                                       filter(lambda kv: kv[1] >= 150/1024, result.circuit_results[0].items()))))
     assert amplified_values == ['000', '011', '101']
 
 
@@ -71,8 +68,7 @@ def test_grover_oracle_boolean_exp():
     try:
         oracle = PhaseOracle(expression)
         problem = AmplificationProblem(oracle, is_good_state=oracle.evaluate_bitstring)
-        backend = QddProvider().get_backend()
-        grover = Grover(quantum_instance=QuantumInstance(backend, shots=1024, seed_transpiler=50, seed_simulator=80))
+        grover = Grover(sampler=Sampler(run_options={"shots":1024,"seed_simulator":80},transpile_options={"seed_transpiler":50}))
         result = grover.amplify(problem)
         assert result.top_measurement == '1110'
     except MissingOptionalLibraryError as ex:

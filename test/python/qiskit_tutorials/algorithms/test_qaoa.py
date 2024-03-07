@@ -13,18 +13,17 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from collections import OrderedDict
 
 import numpy as np
-from qiskit.algorithms import QAOA, VQE, NumPyMinimumEigensolver
-from qiskit.algorithms.optimizers import COBYLA
+from qiskit_algorithms import QAOA, SamplingVQE, NumPyMinimumEigensolver
+from qiskit_algorithms.optimizers import COBYLA
 from qiskit.circuit.library import TwoLocal
-from qiskit.opflow import PauliSumOp, StateFn
-from qiskit.quantum_info import Pauli
-from qiskit.utils import QuantumInstance, algorithm_globals
-from qiskit import Aer
+from qiskit.quantum_info import Pauli, SparsePauliOp
+from qiskit.result import QuasiDistribution
+from qiskit_algorithms.utils import algorithm_globals
+from qiskit.primitives import Sampler as QiskitSampler
 
-from qdd import QddProvider
+from qdd.qdd_sampler_like_aer import Sampler
 
 
 def test_qaoa():
@@ -32,21 +31,22 @@ def test_qaoa():
         r"""Generate Hamiltonian for the graph partitioning
         Notes:
             Goals:
-                1 separate the vertices into two set of the same size
-                2 make sure the number of edges between the two set is minimized.
+                1 Separate the vertices into two set of the same size.
+                2 Make sure the number of edges between the two set is minimized.
             Hamiltonian:
                 H = H_A + H_B
                 H_A = sum\_{(i,j)\in E}{(1-ZiZj)/2}
                 H_B = (sum_{i}{Zi})^2 = sum_{i}{Zi^2}+sum_{i!=j}{ZiZj}
                 H_A is for achieving goal 2 and H_B is for achieving goal 1.
         Args:
-            weight_matrix (numpy.ndarray) : adjacency matrix.
+            weight_matrix: Adjacency matrix.
         Returns:
-            PauliSumOp: operator for the Hamiltonian
-            float: a constant shift for the obj function.
+            Operator for the Hamiltonian
+        A constant shift for the obj function.
         """
         num_nodes = len(weight_matrix)
         pauli_list = []
+        coeffs = []
         shift = 0
 
         for i in range(num_nodes):
@@ -56,7 +56,8 @@ def test_qaoa():
                     z_p = np.zeros(num_nodes, dtype=bool)
                     z_p[i] = True
                     z_p[j] = True
-                    pauli_list.append([-0.5, Pauli((z_p, x_p))])
+                    pauli_list.append(Pauli((z_p, x_p)))
+                    coeffs.append(-0.5)
                     shift += 0.5
 
         for i in range(num_nodes):
@@ -66,12 +67,12 @@ def test_qaoa():
                     z_p = np.zeros(num_nodes, dtype=bool)
                     z_p[i] = True
                     z_p[j] = True
-                    pauli_list.append([1, Pauli((z_p, x_p))])
+                    pauli_list.append(Pauli((z_p, x_p)))
+                    coeffs.append(1.0)
                 else:
                     shift += 1
 
-        pauli_list = [(pauli[1].to_label(), pauli[0]) for pauli in pauli_list]
-        return PauliSumOp.from_list(pauli_list), shift
+        return SparsePauliOp(pauli_list, coeffs=coeffs), shift
 
     def sample_most_likely(state_vector):
         """Compute the most likely binary string from state vector.
@@ -80,23 +81,15 @@ def test_qaoa():
         Returns:
             numpy.ndarray: binary string as numpy.ndarray of ints.
         """
-        if isinstance(state_vector, (OrderedDict, dict)):
-            # get the binary string with the largest count
-            binary_string = sorted(state_vector.items(), key=lambda kv: kv[1])[-1][0]
-            x = np.asarray([int(y) for y in reversed(list(binary_string))])
-            return x
-        elif isinstance(state_vector, StateFn):
-            binary_string = list(state_vector.sample().keys())[0]
-            x = np.asarray([int(y) for y in reversed(list(binary_string))])
-            return x
+        if isinstance(state_vector, QuasiDistribution):
+            values = list(state_vector.values())
         else:
-            n = int(np.log2(state_vector.shape[0]))
-            k = np.argmax(np.abs(state_vector))
-            x = np.zeros(n)
-            for i in range(n):
-                x[i] = k % 2
-                k >>= 1
-            return x
+            values = state_vector
+        n = 4
+        k = np.argmax(np.abs(values))
+        x = bitfield(k,n)
+        x.reverse()
+        return np.asarray(x)
 
     def objective_value(x, w):
         """Compute the value of a cut.
@@ -110,6 +103,10 @@ def test_qaoa():
         w_01 = np.where(w != 0, 1, 0)
         return np.sum(w_01 * outer_prod)
 
+    def bitfield(n, L):
+        result = np.binary_repr(n,L)
+        return [int(digit) for digit in result] # [2:] to chop off the "0b" part
+
     algorithm_globals.random_seed = 10598
     adjacency_matrix = np.array([[0., 1., 1., 0.],
                                  [1., 0., 1., 1.],
@@ -118,27 +115,23 @@ def test_qaoa():
 
     # compute via QAOA
     optimizer = COBYLA()
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
-    qaoa = QAOA(optimizer, quantum_instance=qi)
+    qaoa = QAOA(sampler=Sampler(run_options={"seed_simulator":80},transpile_options={"seed_transpiler":50}),optimizer=optimizer,reps=8)
     qubit_op, offset = get_operator(adjacency_matrix)
     result = qaoa.compute_minimum_eigenvalue(qubit_op)
     x_most_likely = sample_most_likely(result.eigenstate)
     qaoa_result = objective_value(x_most_likely, adjacency_matrix)
     print(f'Objective value computed by QAOA is {qaoa_result}')
 
-    # compute via QAOA (Aer)
+    # compute via QAOA (Qiskit)
     optimizer = COBYLA()
-    backend_aer = Aer.get_backend('aer_simulator')
-    qi_aer = QuantumInstance(backend_aer, seed_transpiler=50, seed_simulator=80)
-    qaoa_aer = QAOA(optimizer, quantum_instance=qi_aer)
-    qubit_op_aer, offset = get_operator(adjacency_matrix)
-    result_aer = qaoa_aer.compute_minimum_eigenvalue(qubit_op_aer)
-    x_most_likely_aer = sample_most_likely(result_aer.eigenstate)
-    qaoa_result_aer = objective_value(x_most_likely_aer, adjacency_matrix)
-    print(f'Objective value computed by QAOA_aer is {qaoa_result_aer}')
+    qaoa_qiskit = QAOA(sampler=QiskitSampler(),optimizer=optimizer,reps=2)
+    qubit_op_qiskit, offset = get_operator(adjacency_matrix)
+    result_qiskit = qaoa_qiskit.compute_minimum_eigenvalue(qubit_op_qiskit)
+    x_most_likely_aer = sample_most_likely(result_qiskit.eigenstate)
+    qaoa_result_qiskit = objective_value(x_most_likely_aer, adjacency_matrix)
+    print(f'Objective value computed by QAOA_qiskit is {qaoa_result_qiskit}')
 
-    assert qaoa_result == qaoa_result_aer
+    assert qaoa_result == qaoa_result_qiskit
 
     # compute via a classical algorithm
     npme = NumPyMinimumEigensolver()
@@ -149,10 +142,8 @@ def test_qaoa():
 
     # compute via VQE
     optimizer = COBYLA()
-    ansatz = TwoLocal(qubit_op.num_qubits, 'ry', 'cz', reps=5, entanglement='linear')
-    backend = QddProvider().get_backend()
-    qi = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
-    vqe = VQE(ansatz, optimizer, quantum_instance=qi)
+    ansatz = TwoLocal(qubit_op.num_qubits, 'ry', 'cz', reps=2, entanglement='linear')
+    vqe = SamplingVQE(sampler=Sampler(run_options={"seed_simulator":80},transpile_options={"seed_transpiler":50}),ansatz=ansatz,optimizer=optimizer)
     result = vqe.compute_minimum_eigenvalue(qubit_op)
     x_most_likely = sample_most_likely(result.eigenstate)
     vqe_result = objective_value(x_most_likely, adjacency_matrix)

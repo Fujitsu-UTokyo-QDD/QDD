@@ -16,15 +16,16 @@
 import datetime
 
 import numpy as np
-from qiskit.algorithms import QAOA, VQE, NumPyMinimumEigensolver
-from qiskit.algorithms.optimizers import COBYLA
+from qiskit_algorithms import QAOA, VQE, NumPyMinimumEigensolver, SamplingVQE
+from qiskit_algorithms.optimizers import COBYLA
 from qiskit.circuit.library import TwoLocal
-from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit_algorithms.utils import algorithm_globals
 from qiskit_finance.applications.optimization import PortfolioOptimization
 from qiskit_finance.data_providers import RandomDataProvider
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 from qdd import QddProvider
+from qdd.qdd_sampler_like_aer import Sampler
 
 
 class TestPortofolioOptimization:
@@ -61,12 +62,10 @@ class TestPortofolioOptimization:
 
         # VQE
         algorithm_globals.random_seed = 1234
-        backend = QddProvider().get_backend()
         cobyla = COBYLA()
         cobyla.set_options(maxiter=500)
         ry = TwoLocal(num_assets, "ry", "cz", reps=3, entanglement="full")
-        quantum_instance = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
-        vqe_mes = VQE(ry, optimizer=cobyla, quantum_instance=quantum_instance)
+        vqe_mes = SamplingVQE(sampler=Sampler(),ansatz=ry,optimizer=cobyla)
         vqe = MinimumEigenOptimizer(vqe_mes)
         result_vqe = vqe.solve(qp)
         assert np.all(result_vqe.x == result_numpy.x)
@@ -74,8 +73,7 @@ class TestPortofolioOptimization:
         # QAOA
         cobyla = COBYLA()
         cobyla.set_options(maxiter=250)
-        quantum_instance = QuantumInstance(backend=backend, seed_transpiler=seed, seed_simulator=seed)
-        qaoa_mes = QAOA(optimizer=cobyla, reps=3, quantum_instance=quantum_instance)
+        qaoa_mes = QAOA(sampler=Sampler(),optimizer=cobyla, reps=3)
         qaoa = MinimumEigenOptimizer(qaoa_mes)
         result_qaoa = qaoa.solve(qp)
         assert np.all(result_qaoa.x == result_numpy.x)
