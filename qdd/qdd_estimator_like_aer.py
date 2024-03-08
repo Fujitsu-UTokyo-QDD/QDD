@@ -359,12 +359,12 @@ class Estimator(BaseEstimator):
 
         layout = self._layouts[circuit_index]
         passmanager = PassManager([SetLayout(layout)])
-#        opt1q = Optimize1qGatesDecomposition(target=self._backend.target)
-#        passmanager.append(opt1q)
-#        if isinstance(self._backend.coupling_map, CouplingMap):
-#            coupling_map = self._backend.coupling_map
-#            passmanager.append(FullAncillaAllocation(coupling_map))
-#            passmanager.append(EnlargeWithAncilla())
+        opt1q = Optimize1qGatesDecomposition(target=self._backend.target)
+        passmanager.append(opt1q)
+        if isinstance(self._backend.coupling_map, CouplingMap):
+            coupling_map = self._backend.coupling_map
+            passmanager.append(FullAncillaAllocation(coupling_map))
+            passmanager.append(EnlargeWithAncilla())
         passmanager.append(ApplyLayout())
         return passmanager.run(meas_circuit)
 

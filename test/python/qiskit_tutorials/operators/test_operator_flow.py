@@ -14,37 +14,43 @@
 # that they have been altered from the originals.
 
 import pytest
-from qiskit.circuit import Parameter
-from qiskit.opflow import CX, CircuitSampler, H, I, PauliExpectation, PauliTrotterEvolution, StateFn, Suzuki, X, Z, Zero
+from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.quantum_info import SparsePauliOp
+from qiskit.primitives import Estimator as QiskitEstimator
+from qiskit.synthesis import SuzukiTrotter
 
 from qdd import QddProvider
+from qdd.qdd_estimator_like_aer import Estimator
 
 
 def test_circuit_sampler():
     # Computes an expectation value through trotterlization
 
-    two_qubit_h2 = (-1.0523732 * I ^ I) + \
-                   (0.39793742 * I ^ Z) + \
-                   (-0.3979374 * Z ^ I) + \
-                   (-0.0112801 * Z ^ Z) + \
-                   (0.18093119 * X ^ X)
+    two_qubit_h2 = SparsePauliOp.from_list(
+        [
+            ("II", -1.0523732),
+            ("IZ", 0.39793742),
+            ("ZI", -0.3979374),
+            ("ZZ", -0.0112801),
+            ("XX", 0.18093119),
+        ]
+    )
 
     evo_time = Parameter('θ')
-    evolution_op = (evo_time * two_qubit_h2).exp_i()
-    h2_measurement = StateFn(two_qubit_h2).adjoint()
-    bell = CX @ (I ^ H) @ Zero
-    evo_and_meas = h2_measurement @ evolution_op @ bell
-    trotterized_op = PauliTrotterEvolution(trotter_mode=Suzuki(order=2, reps=1)).convert(evo_and_meas)
-    diagonalized_meas_op = PauliExpectation().convert(trotterized_op)
-    evo_time_points = list(range(8))
-    h2_trotter_expectations = diagonalized_meas_op.bind_parameters({evo_time: evo_time_points})
-    exact_eval = h2_trotter_expectations.eval()
+    evo_gate = PauliEvolutionGate(operator=two_qubit_h2,time=evo_time,synthesis=SuzukiTrotter())
+    h2_measurement = two_qubit_h2.adjoint()
+    bell = QuantumCircuit(2)
+    bell.h(0)
+    bell.cx(0,1)
+    evo_circ = bell.compose(evo_gate)
 
-    backend = QddProvider().get_backend()
-    sampler = CircuitSampler(backend=backend)
-    sampled_trotter_exp_op = sampler.convert(h2_trotter_expectations)
-    sampled_eval = sampled_trotter_exp_op.eval()
+    estimator = Estimator()
+    estimator_qiskit = QiskitEstimator()
 
-    print(f'{exact_eval=}')
-    print(f'{sampled_eval=}')
-    assert exact_eval == pytest.approx(sampled_eval, abs=0.02)
+    for time in range(8):
+        qdd_value = estimator.run(circuits=evo_circ,observables=h2_measurement,parameter_values=time).result().values
+        print(f"with QDD Estimator : {qdd_value}")
+        qiskit_value = estimator_qiskit.run(circuits=evo_circ,observables=h2_measurement,parameter_values=time).result().values
+        print(f"with Qiskit Estimator : {qiskit_value}")
+        assert qiskit_value == pytest.approx(qdd_value, abs=0.02)
