@@ -1,14 +1,13 @@
 # The code in this file has been written using part of the code in the Qiskit tutorial below.
-# https://github.com/Qiskit/qiskit-finance/blob/stable/0.3/docs/tutorials/01_portfolio_optimization.ipynb
+# https://qiskit-community.github.io/qiskit-finance/tutorials/01_portfolio_optimization.html
 
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2017, 2021.
-#
+# This code is a part of a Qiskit project
+# (C) Copyright IBM 2017, 2024.
+# 
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
+# 
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
@@ -16,7 +15,7 @@
 import datetime
 
 import numpy as np
-from qiskit_algorithms import QAOA, VQE, NumPyMinimumEigensolver, SamplingVQE
+from qiskit_algorithms import QAOA, NumPyMinimumEigensolver, SamplingVQE
 from qiskit_algorithms.optimizers import COBYLA
 from qiskit.circuit.library import TwoLocal
 from qiskit_algorithms.utils import algorithm_globals
@@ -24,8 +23,7 @@ from qiskit_finance.applications.optimization import PortfolioOptimization
 from qiskit_finance.data_providers import RandomDataProvider
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from qdd import QddProvider
-from qdd.qdd_sampler_like_aer import Sampler
+from qdd.qdd_sampler import Sampler
 
 
 class TestPortofolioOptimization:

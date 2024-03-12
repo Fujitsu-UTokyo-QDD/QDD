@@ -20,8 +20,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.primitives import Estimator as QiskitEstimator
 from qiskit.synthesis import SuzukiTrotter
 
-from qdd import QddProvider
-from qdd.qdd_estimator_like_aer import Estimator
+from qdd.qdd_estimator import Estimator
 
 
 def test_circuit_sampler():

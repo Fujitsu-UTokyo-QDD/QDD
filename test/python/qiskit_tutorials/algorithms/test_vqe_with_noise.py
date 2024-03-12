@@ -1,14 +1,13 @@
 # The code in this file has been written using part of the code in the Qiskit tutorial below.
-# https://github.com/Qiskit/qiskit-tutorials/blob/stable/0.33.x/tutorials/algorithms/03_vqe_simulation_with_noise.ipynb
+# https://github.com/qiskit-community/qiskit-algorithms/blob/main/docs/tutorials/03_vqe_simulation_with_noise.ipynb
 
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2017, 2021.
-#
+# This code is a part of a Qiskit project
+# (C) Copyright IBM 2017, 2024.
+# 
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
+# 
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
@@ -24,7 +23,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.utils import algorithm_globals
 from qiskit_aer.primitives import Estimator as AerEstimator
 
-from qdd.qdd_estimator_like_aer import Estimator
+from qdd.qdd_estimator import Estimator
 
 
 def test_vqe():

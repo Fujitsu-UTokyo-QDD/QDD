@@ -4,7 +4,6 @@ The following gates are tested in tests/test_conversion.py.
 - Instructions (reset, measure, and initialize)
 - Conditional gates
 """
-import pytest
 from qiskit import QuantumCircuit
 from qiskit_aer import Aer
 

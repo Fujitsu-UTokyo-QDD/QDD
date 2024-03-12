@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Union
 import traceback
 import os
 import sys
@@ -12,9 +12,10 @@ from qiskit.providers import BackendV1, JobV1, Options, Provider
 from qiskit.providers.models import BackendConfiguration
 from qiskit import QuantumCircuit as QiskitCircuit
 from qiskit.result import Result
-from qiskit.circuit import Barrier, Clbit, Instruction, Measure, ParameterExpression, Qubit, Reset
+from qiskit.circuit import Barrier, Clbit, Measure, Qubit, Reset
 import qiskit.circuit.library.standard_gates as qiskit_gates
 from qiskit.circuit.library import Initialize
+from qiskit.transpiler import CouplingMap
 
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
@@ -131,6 +132,10 @@ class QddBackend(BackendV1):
         super().__init__(
             configuration=configuration,
             provider=provider)
+        if self.configuration().coupling_map is not None:
+            self.coupling_map = CouplingMap(self.configuration().coupling_map)
+        else:
+            self.coupling_map = None
 
     @classmethod
     def _default_options(cls) -> Options:
@@ -291,7 +296,7 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
-        start = time.time()
+#        start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
@@ -414,17 +419,13 @@ class QddBackend(BackendV1):
                 sampled_values[shot] = ''.join(reversed(val_cbit))
 
         sampled_counts = Counter(sampled_values)
-#        hex_sampled_counts = sampled_counts
-        hex_sampled_counts = {}
-#        for key,value in sampled_counts.items():
-#            key_bin = f"{int(key,2):#b}"
-#            hex_sampled_counts[key_bin[2:]] = value
+        bin_sampled_counts = {}
 
         for key in range(2**n_cbit):
             key_bin = f"{key:0{n_cbit}b}"
-            hex_sampled_counts[key_bin] = sampled_counts[key_bin]
+            bin_sampled_counts[key_bin] = sampled_counts[key_bin]
 
-        result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
+        result_data: Dict[str, Any] = {'counts': bin_sampled_counts}
         if options['memory']:
             result_data['memory'] = sampled_values
         if self._save_SV:
@@ -483,7 +484,6 @@ class QddBackend(BackendV1):
         measured_qubits = set()
         clbit_final_values: Dict[Clbit, Qubit] = {}  # for each clbit, this holds the qubit last assigned to the clbit.
         for i, (inst, qargs, cargs) in enumerate(circ.data):
-#            if type(inst) == Measure:
             if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)
@@ -500,7 +500,6 @@ class QddBackend(BackendV1):
                 # https://github.com/Qiskit/qiskit-aer/blob/0.9.1/src/controllers/aer_controller.hpp#L1621
                 # So, we do the same check here just in case.
                 stable_final_state = False
-#            elif type(inst) == Initialize:
             elif inst.base_class == Initialize:
                 if i != 0 and len(qargs) < circ.num_qubits:
                     stable_final_state = False

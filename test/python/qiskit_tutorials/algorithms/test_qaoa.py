@@ -1,18 +1,16 @@
 # The code in this file has been written using part of the code in the Qiskit tutorial below.
-# https://github.com/Qiskit/qiskit-tutorials/blob/d0d8e42afa0e42f6742b06bfb58e267cb9137599/tutorials/algorithms/05_qaoa.ipynb  # noqa: E501
+# https://github.com/qiskit-community/qiskit-algorithms/blob/main/docs/tutorials/05_qaoa.ipynb
 
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2017, 2021.
-#
+# This code is a part of a Qiskit project
+# (C) Copyright IBM 2017, 2024.
+# 
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
+# 
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-
 
 import numpy as np
 from qiskit_algorithms import QAOA, SamplingVQE, NumPyMinimumEigensolver
@@ -21,9 +19,8 @@ from qiskit.circuit.library import TwoLocal
 from qiskit.quantum_info import Pauli, SparsePauliOp
 from qiskit.result import QuasiDistribution
 from qiskit_algorithms.utils import algorithm_globals
-from qiskit.primitives import Sampler as QiskitSampler
 
-from qdd.qdd_sampler_like_aer import Sampler
+from qdd.qdd_sampler import Sampler
 
 
 def test_qaoa():
@@ -113,25 +110,7 @@ def test_qaoa():
                                  [1., 1., 0., 1.],
                                  [0., 1., 1., 0.]])
 
-    # compute via QAOA
-    optimizer = COBYLA()
-    qaoa = QAOA(sampler=Sampler(run_options={"seed_simulator":80},transpile_options={"seed_transpiler":50}),optimizer=optimizer,reps=8)
-    qubit_op, offset = get_operator(adjacency_matrix)
-    result = qaoa.compute_minimum_eigenvalue(qubit_op)
-    x_most_likely = sample_most_likely(result.eigenstate)
-    qaoa_result = objective_value(x_most_likely, adjacency_matrix)
-    print(f'Objective value computed by QAOA is {qaoa_result}')
-
-    # compute via QAOA (Qiskit)
-    optimizer = COBYLA()
-    qaoa_qiskit = QAOA(sampler=QiskitSampler(),optimizer=optimizer,reps=2)
-    qubit_op_qiskit, offset = get_operator(adjacency_matrix)
-    result_qiskit = qaoa_qiskit.compute_minimum_eigenvalue(qubit_op_qiskit)
-    x_most_likely_aer = sample_most_likely(result_qiskit.eigenstate)
-    qaoa_result_qiskit = objective_value(x_most_likely_aer, adjacency_matrix)
-    print(f'Objective value computed by QAOA_qiskit is {qaoa_result_qiskit}')
-
-    assert qaoa_result == qaoa_result_qiskit
+    qubit_op, _ = get_operator(adjacency_matrix)
 
     # compute via a classical algorithm
     npme = NumPyMinimumEigensolver()
@@ -139,6 +118,16 @@ def test_qaoa():
     x_most_likely = sample_most_likely(result.eigenstate)
     reference_value = objective_value(x_most_likely, adjacency_matrix)
     print(f'Objective value computed by the NumPyMinimumEigensolver is {reference_value}')
+
+    # compute via QAOA
+    optimizer = COBYLA()
+    qaoa = QAOA(sampler=Sampler(run_options={"seed_simulator":80},transpile_options={"seed_transpiler":50}),optimizer=optimizer,reps=8)
+    result = qaoa.compute_minimum_eigenvalue(qubit_op)
+    x_most_likely = sample_most_likely(result.eigenstate)
+    qaoa_result = objective_value(x_most_likely, adjacency_matrix)
+    print(f'Objective value computed by QAOA is {qaoa_result}')
+
+    assert qaoa_result == reference_value
 
     # compute via VQE
     optimizer = COBYLA()

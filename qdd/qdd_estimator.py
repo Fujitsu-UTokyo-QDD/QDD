@@ -10,6 +10,9 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# Code adapted from:
+# https://github.com/Qiskit/qiskit-aer/blob/main/qiskit_aer/primitives/estimator.py
+
 """
 Estimator class.
 """
@@ -26,7 +29,7 @@ from qiskit.compiler import transpile
 from qiskit.primitives import BaseEstimator, EstimatorResult
 from qiskit.primitives.primitive_job import PrimitiveJob
 from qiskit.primitives.utils import _circuit_key, _observable_key, init_observable
-from qiskit.providers import Options
+from qiskit.providers import Options,convert_to_target
 from qiskit.quantum_info import Pauli, PauliList
 from qiskit.quantum_info.operators.base_operator import BaseOperator
 from qiskit.result.models import ExperimentResult
@@ -38,14 +41,13 @@ from qiskit.transpiler.passes import (
     Optimize1qGatesDecomposition,
     SetLayout,
 )
-from qiskit.utils import deprecate_func
 
 from qdd import QddProvider
 
 
 class Estimator(BaseEstimator):
     """
-    Aer implmentation of Estimator.
+    QDD implmentation of Estimator.
 
     :Run Options:
         - **shots** (None or int) --
@@ -104,9 +106,6 @@ class Estimator(BaseEstimator):
         self._observables = []
 
         backend_options = {} if backend_options is None else backend_options
-        method = (
-            "density_matrix" if approximation and "noise_model" in backend_options else "automatic"
-        )
         self._backend = QddProvider().get_backend()
         self._backend.set_options(**backend_options)
         self._transpile_options = Options()
@@ -128,34 +127,6 @@ class Estimator(BaseEstimator):
         self._circuit_ids: dict[tuple, int] = {}
         self._observable_ids: dict[tuple, int] = {}
         self._abelian_grouping = abelian_grouping
-
-    @property
-    @deprecate_func(
-        since="0.13",
-        package_name="qiskit-aer",
-        is_property=True,
-    )
-    def approximation(self):
-        """The approximation property"""
-        return self._approximation
-
-    @approximation.setter
-    @deprecate_func(
-        since="0.13",
-        package_name="qiskit-aer",
-        is_property=True,
-    )
-    def approximation(self, approximation):
-        """Setter for approximation"""
-        if not approximation:
-            warn(
-                "Option approximation=False is deprecated as of qiskit-aer 0.13. "
-                "It will be removed no earlier than 3 months after the release date. "
-                "Instead, use BackendEstimator from qiskit.primitives.",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-        self._approximation = approximation
 
     def _call(
         self,
@@ -209,8 +180,7 @@ class Estimator(BaseEstimator):
             parameter_values,
             **run_options,
         )
-        # The public submit method was removed in Qiskit 0.46
-        (job.submit if hasattr(job, "submit") else job._submit)()  # pylint: disable=no-member
+        job._submit()
         return job
 
     def _compute(self, circuits, observables, parameter_values, run_options):
@@ -359,12 +329,12 @@ class Estimator(BaseEstimator):
 
         layout = self._layouts[circuit_index]
         passmanager = PassManager([SetLayout(layout)])
-#        opt1q = Optimize1qGatesDecomposition(target=self._backend.target)
-#        passmanager.append(opt1q)
-#        if isinstance(self._backend.coupling_map, CouplingMap):
-#            coupling_map = self._backend.coupling_map
-#            passmanager.append(FullAncillaAllocation(coupling_map))
-#            passmanager.append(EnlargeWithAncilla())
+        opt1q = Optimize1qGatesDecomposition(target=convert_to_target(self._backend.configuration()))
+        passmanager.append(opt1q)
+        if isinstance(self._backend.coupling_map, CouplingMap):
+            coupling_map = self._backend.coupling_map
+            passmanager.append(FullAncillaAllocation(coupling_map))
+            passmanager.append(EnlargeWithAncilla())
         passmanager.append(ApplyLayout())
         return passmanager.run(meas_circuit)
 
@@ -546,21 +516,6 @@ class Estimator(BaseEstimator):
                 circuit.remove_final_measurements()
                 self._transpiled_circuits[i] = circuit
                 self._layouts[i] = layout
-
-
-def _expval_with_variance(counts) -> tuple[float, float]:
-    denom = 0
-    expval = 0.0
-    for bin_outcome, freq in counts.items():
-        outcome = int(bin_outcome, 2)
-        denom += freq
-        expval += freq * (-1) ** bin(outcome).count("1")
-    # Divide by total shots
-    expval /= denom
-    # Compute variance
-    variance = 1 - expval**2
-    return expval, variance
-
 
 class _PostProcessing:
     def __init__(
