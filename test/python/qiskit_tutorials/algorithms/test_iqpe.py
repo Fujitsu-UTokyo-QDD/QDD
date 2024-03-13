@@ -55,7 +55,7 @@ def test_iqpe_1qubit():
     key_new = [str(int(key, 2) / 2 ** m) for key in list(count0.keys())]
     count1 = dict(zip(key_new, count0.values()))
     print(count1)
-    assert count1 == {'0.25': n_shots}
+    assert count1["0.25"] == n_shots
 
 
 def test_iqpe_2qubits():
@@ -106,4 +106,4 @@ def test_iqpe_2qubits():
     count1 = dict(zip(key_new, count0.values()))
     print(count1)
 
-    assert count1 == {'0.125': n_shots}
+    assert count1["0.125"] == n_shots

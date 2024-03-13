@@ -15,8 +15,9 @@
 
 import numpy as np
 import pytest
-from qiskit import Aer, QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import random_clifford, random_density_matrix, random_statevector, random_unitary
+from qiskit_aer import Aer
 
 from qdd import QddProvider
 
@@ -131,7 +132,8 @@ def test_custom_simulator_instructions():
     counts = simulator.run(circ, seed_simulator=80).result().get_counts()
     assert '01' in counts
     assert '11' in counts
-    assert len(counts) == 2
+    assert counts['00'] == 0
+    assert counts['10'] == 0
 
     # set_density_matrix
     rho = random_density_matrix(2 ** num_qubits, seed=100)

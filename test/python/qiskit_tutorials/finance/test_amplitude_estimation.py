@@ -1,26 +1,24 @@
 # The code in this file has been written using part of the code in the Qiskit tutorial below.
-# https://github.com/Qiskit/qiskit-finance/blob/stable/0.3/docs/tutorials/00_amplitude_estimation.ipynb
+# https://qiskit-community.github.io/qiskit-finance/tutorials/00_amplitude_estimation.html
 
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2017, 2021.
-#
+# This code is a part of a Qiskit project
+# (C) Copyright IBM 2017, 2024.
+# 
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
+# 
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
 import numpy as np
 import pytest
-from qiskit.algorithms import (AmplitudeEstimation, EstimationProblem, FasterAmplitudeEstimation,
+from qiskit_algorithms import (AmplitudeEstimation, EstimationProblem, FasterAmplitudeEstimation,
                                IterativeAmplitudeEstimation, MaximumLikelihoodAmplitudeEstimation)
 from qiskit.circuit import QuantumCircuit
-from qiskit.utils import QuantumInstance
 
-from qdd import QddProvider
+from qdd.qdd_sampler import Sampler
 
 
 class BernoulliA(QuantumCircuit):
@@ -50,6 +48,7 @@ class BernoulliQ(QuantumCircuit):
 
 
 def test_qae():
+    sampler = Sampler()
     # Canonical AE
     p = 0.2
     circ_a = BernoulliA(p)
@@ -60,11 +59,9 @@ def test_qae():
         objective_qubits=[0],  # the "good" state Psi1 is identified as measuring |1> in qubit 0
     )
 
-    backend = QddProvider().get_backend()
-    quantum_instance = QuantumInstance(backend, seed_transpiler=50, seed_simulator=80)
     ae = AmplitudeEstimation(
         num_eval_qubits=3,  # the number of evaluation qubits specifies circuit width and accuracy
-        quantum_instance=quantum_instance,
+        sampler=sampler,
     )
     ae_result = ae.estimate(problem)
     print("Raw estimate:", ae_result.estimation)
@@ -75,7 +72,7 @@ def test_qae():
     iae = IterativeAmplitudeEstimation(
         epsilon_target=0.01,  # target accuracy
         alpha=0.05,  # width of the confidence interval
-        quantum_instance=quantum_instance,
+        sampler=sampler,
     )
     iae_result = iae.estimate(problem)
     print("Estimate:", iae_result.estimation)
@@ -83,7 +80,8 @@ def test_qae():
 
     # Maximum Likelihood Amplitude Estimation
     mlae = MaximumLikelihoodAmplitudeEstimation(
-        evaluation_schedule=3, quantum_instance=quantum_instance  # log2 of the maximal Grover power
+        evaluation_schedule=3, # log2 of the maximal Grover power
+        sampler=sampler,
     )
     mlae_result = mlae.estimate(problem)
     print("Estimate:", mlae_result.estimation)
@@ -98,7 +96,7 @@ def test_qae():
     fae = FasterAmplitudeEstimation(
         delta=0.01,  # target accuracy
         maxiter=3,  # determines the maximal power of the Grover operator
-        quantum_instance=quantum_instance,
+        sampler=sampler,
     )
     fae_result = fae.estimate(problem)
     print("Estimate:", fae_result.estimation)

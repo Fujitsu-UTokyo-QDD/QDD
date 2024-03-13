@@ -48,4 +48,4 @@ def test_circuit_basics():
     counts = result.get_counts(qc)
     assert '000' in counts
     assert '111' in counts
-    assert len(counts) == 2
+    assert counts["000"] + counts["111"] == 1024
