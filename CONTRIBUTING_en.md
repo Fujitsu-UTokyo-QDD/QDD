@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Thank you for considering contributing to our project! :tada:
+This file explains about how to contribute to our project!
 
 ## Branch Management Rules
 
@@ -31,18 +31,14 @@ Thank you for considering contributing to our project! :tada:
 
 ### QDD Versioning
 
-- Option 1) Manually Update SemVer Tags Based on Main Commits
-  - [About semVer](https://qiita.com/usamik26/items/c8911219b610101e69a9)
+- Option 1) Manually Update SemVer Tags Based on Commits to `main`
+  - [About SemVer](https://qiita.com/usamik26/items/c8911219b610101e69a9)
   - After a PR to `main` is merged, create a new tag from the release notes creation page.
-    - [Reference: By the way](https://qiita.com/tommy_aka_jps/items/5b39e4b27364c759aa53#%E3%81%A1%E3%81%AA%E3%81%BF%E3%81%AB)
+    - [git tag と GitHub の Release 機能でプロっぽさを出してみよう](https://qiita.com/tommy_aka_jps/items/5b39e4b27364c759aa53#%E3%81%A1%E3%81%AA%E3%81%BF%E3%81%AB)
 
-- Option 2) Automatically Update Git Tags with GitHub Actions
+- Option 2) Automatically Update Git Tags with GitHub Actions When Making Commits to `main`
   - [Reference Article](https://dev.classmethod.jp/articles/howto-use-github-tag/)
   - The prefix rule for commit messages must be followed.
-  - Verified by @Naoya Tezuka with the creation of the repository.
+  - Verified by the following repository.
     - [Validation Repository](https://github.com/NT-marlowe/branch-management-test/tree/main)
   - GitHub's release creation Action is unnecessary as QDD is published to PyPI.
-
-## License
-
-By contributing to this project, you agree that your contributions will be licensed under the [LICENSE](LICENSE.txt) file.
