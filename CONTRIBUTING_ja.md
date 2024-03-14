@@ -31,7 +31,7 @@
 
 ### QDDのバージョニング方法
 
-- オプション1) `main` へのコミットの内容に応じてSemVerタグを手動で更新します
+- オプション1) `main` へのコミットの内容に応じてGit TagのSemVerを手動で更新します
   - [SemVerについて](https://qiita.com/usamik26/items/c8911219b610101e69a9)
   - `main` へのPRがマージされた後、release noteの作成画面から新しいタグを作成してください。
     - [git tag と GitHub の Release 機能でプロっぽさを出してみよう](https://qiita.com/tommy_aka_jps/items/5b39e4b27364c759aa53#%E3%81%A1%E3%81%AA%E3%81%BF%E3%81%AB)

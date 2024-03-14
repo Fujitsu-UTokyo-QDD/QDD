@@ -31,7 +31,7 @@ This file explains about how to contribute to our project.
 
 ### QDD Versioning
 
-- Option 1) Manually Update SemVer Tags Based on Commits to `main`
+- Option 1) Manually Update Git Tag SemVer Based on Commits to `main`
   - [About SemVer](https://qiita.com/usamik26/items/c8911219b610101e69a9)
   - After a PR to `main` is merged, create a new tag from the release notes creation page.
     - [git tag と GitHub の Release 機能でプロっぽさを出してみよう](https://qiita.com/tommy_aka_jps/items/5b39e4b27364c759aa53#%E3%81%A1%E3%81%AA%E3%81%BF%E3%81%AB)
