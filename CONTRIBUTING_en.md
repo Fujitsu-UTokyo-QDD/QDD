@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-This file explains about how to contribute to our project!
+This file explains about how to contribute to our project.
 
 ## Branch Management Rules
 
