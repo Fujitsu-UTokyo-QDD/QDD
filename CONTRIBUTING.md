@@ -6,7 +6,7 @@ This file explains how to contribute to our project.
 
 - We use three types of branches: `main`, `develop`, and `topic`.
   - `topic` branches are for specific features or bug fixes.
-- Naming examples for `topic` branches:
+- Naming convention for `topic` branches:
   - Branch for adding a feature: `feature/xxx` (e.g. `feature/add-circuit`)
   - Branch for fixing a bug: `bugfix/xxx` (e.g. `bugfix/py-version`)
 - Work is done on `topic` branches branched off from `develop`.
