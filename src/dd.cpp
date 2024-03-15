@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <iostream>
 #include <fstream>
+#include <thread>
+#include <future>
 
 #ifdef isMPI
   #include <boost/mpi/communicator.hpp>
@@ -25,6 +27,7 @@
   #include <boost/fiber/future/packaged_task.hpp>
 #endif
 
+#define MT_THRESHOLD 5
 
 #define SUBTASK_THRESHOLD 5
 
@@ -680,6 +683,9 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
 
     std::array<mEdge, 4> edges;
 
+    std::array<std::future<mEdge>, 4> handles;
+
+
     for (auto i = 0; i < 4; i++) {
         if (lv == current_var && !lhs.isTerminal()) {
             x = lnode->getEdge(i);
@@ -694,8 +700,32 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             y = rhs;
         }
 
-        edges[i] = mm_add2(x, y, current_var - 1);
+        if (current_var >= MT_THRESHOLD 
+        #ifdef MT_ENABLE
+            && true
+        #else
+            && false
+        #endif
+        ){
+            handles[i] = std::async(mm_add2,x,y,current_var-1);
+        }else{
+            edges[i] = mm_add2(x, y, current_var - 1);
+        }
+
+
     }
+    if (current_var >= MT_THRESHOLD 
+    #ifdef MT_ENABLE
+        && true
+    #else
+        && false
+    #endif
+    ){
+        for (auto i = 0; i < 4; i++) {
+            edges[i] = handles[i].get();
+        }
+    }
+    
 
     result = makeMEdge(current_var, edges);
     _aCache.set(lhs, rhs, result);
@@ -760,6 +790,8 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
         std::size_t col = i & 0x1;
 
         std::array<mEdge, 2> product;
+        std::array<std::future<mEdge>,2> handles;
+        
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((row << 1) | k);
@@ -773,8 +805,31 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
                 y = rcopy;
             }
 
-            product[k] = mm_multiply2(x, y, current_var - 1);
+            if (current_var >= MT_THRESHOLD 
+            #ifdef MT_ENABLE
+                && true
+            #else
+                && false
+            #endif
+            ){
+                handles[k] = std::async(mm_multiply2,x,y,current_var-1);
+            }else{
+                product[k] = mm_multiply2(x, y, current_var - 1);
+            }
         }
+        if (current_var >= MT_THRESHOLD 
+        #ifdef MT_ENABLE
+                && true
+        #else
+            && false
+        #endif
+        ){
+            for (auto k = 0; k < 2; k++) {
+                product[k] = handles[k].get();
+            }
+
+        }
+
         edges[i] = mm_add2(product[0], product[1], current_var - 1);
     }
 

@@ -10,6 +10,7 @@
 #include <random>
 #include <shared_mutex>
 #include <thread>
+#include <mutex>
 
 
 #ifdef __cpp_lib_hardware_interference_size
@@ -36,6 +37,9 @@ class AddCache{
 
         template<typename T>
             T find(T lhs, T rhs){
+            #ifdef MT_ENABLE
+                const std::lock_guard<std::mutex> lock(cache_mtx);
+            #endif
                 lookups++;
 
                 if(lhs.getVar() > rhs.getVar()){
@@ -63,6 +67,9 @@ class AddCache{
             }
         template<typename T>
             void set(T lhs, T rhs, const T& result){
+            #ifdef MT_ENABLE
+                const std::lock_guard<std::mutex> lock(cache_mtx);
+            #endif
 
                 if(lhs.getVar() > rhs.getVar()){
                     swap(lhs, rhs);
@@ -89,6 +96,9 @@ class AddCache{
             }
 
     void clearAll() {
+        #ifdef MT_ENABLE
+            const std::lock_guard<std::mutex> lock(cache_mtx);
+        #endif
         #ifdef CACHE_GLOBAL
         std::lock_guard<std::shared_mutex> lock(c._mtx);
         #endif
@@ -123,6 +133,9 @@ class AddCache{
     private:
 
 
+        #ifdef MT_ENABLE
+            std::mutex cache_mtx;
+        #endif
         union Edge{
             mEdge m;
             vEdge v;
@@ -300,6 +313,9 @@ class MulCache{
 
         template<typename LT, typename RT, typename RetT = std::conditional_t<std::is_same_v<RT, vNode>, vEdge, mEdge>>
             RetT find(const LT* lhs, const RT* rhs){
+            #ifdef MT_ENABLE
+                const std::lock_guard<std::mutex> lock(cache_mtx);
+            #endif
                 lookups++;
                 //pick the right table
                 int idx = 0;
@@ -327,6 +343,9 @@ class MulCache{
 
         template<typename LT, typename RT, typename ResT = std::conditional_t<std::is_same_v<RT, vNode>, vEdge, mEdge>>
             void set(const LT* lhs, const RT* rhs, const ResT& result){
+            #ifdef MT_ENABLE
+                const std::lock_guard<std::mutex> lock(cache_mtx);
+            #endif
                 //pick the right table
                 int idx = 0;
                 if constexpr(std::is_same_v<RT, mNode>){ //mm
@@ -352,6 +371,9 @@ class MulCache{
             }
 
     void clearAll() {
+        #ifdef MT_ENABLE
+            const std::lock_guard<std::mutex> lock(cache_mtx);
+        #endif
         #ifdef CACHE_GLOBAL
         std::lock_guard<std::shared_mutex> lock(c._mtx);
         #endif
@@ -385,6 +407,9 @@ class MulCache{
     }
 
     private:
+    #ifdef MT_ENABLE
+        std::mutex cache_mtx;
+    #endif
 
 
         union Edge{

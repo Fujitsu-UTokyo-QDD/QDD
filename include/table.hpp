@@ -10,6 +10,7 @@
 #include <mutex>
 #include <random>
 #include <stdio.h>
+#include <mutex>
 
 #ifdef isMT
 #include <oneapi/tbb/enumerable_thread_specific.h>
@@ -34,6 +35,9 @@ class CHashTable {
     QubitCount getQubitCount() const { return _qn; }
 
     T *getNode() {
+    #ifdef MT_ENABLE
+        const std::lock_guard<std::mutex> lock(table_mtx);
+    #endif
 #ifdef isMT
         Cache& _cache = _caches.local();
 #endif
@@ -60,6 +64,9 @@ class CHashTable {
     }
 
     void returnNode(T *p) {
+    #ifdef MT_ENABLE
+        const std::lock_guard<std::mutex> lock(table_mtx);
+    #endif
         if constexpr (std::is_same_v<T, mNode>) {
             if (p == mNode::terminal)
                 return;
@@ -76,6 +83,9 @@ class CHashTable {
     }
 
     T *register_wo_lookup(T *node){
+    #ifdef MT_ENABLE
+        const std::lock_guard<std::mutex> lock(table_mtx);
+    #endif
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
 
@@ -94,6 +104,9 @@ class CHashTable {
     }
 
     T *lookup(T *node) {
+    #ifdef MT_ENABLE
+        const std::lock_guard<std::mutex> lock(table_mtx);
+    #endif
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
 
@@ -163,6 +176,10 @@ class CHashTable {
 #endif
 
     QubitCount _qn;
+
+#ifdef MT_ENABLE
+    std::mutex table_mtx;
+#endif
 
 };
 
