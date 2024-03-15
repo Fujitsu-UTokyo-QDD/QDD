@@ -6,15 +6,12 @@ This file explains how to contribute to our project.
 
 - We use three types of branches: `main`, `develop`, and `topic`.
   - `topic` branches are for specific features or bug fixes.
-- Naming examples for `topic` branches (tentative):
-  - `feature/add-circuit`
-  - `bugfix/py-version`
+- Naming examples for `topic` branches:
+  - Branch for adding a feature: `feature/xxx` (e.g. `feature/add-circuit`)
+  - Branch for fixing a bug: `bugfix/xxx` (e.g. `bugfix/py-version`)
 - Work is done on `topic` branches branched off from `develop`.
 - Pull requests from `topic` to `develop` is made.
 - When ready to release (e.g., bumping QDD version), pull requests from `develop` to `main` is made.
-  - Upon merging to `main`, the following actions will be triggered by GitHub Actions:
-    - Building the wheel
-    - Publishing to PyPI
 
 ## QDD Versioning
 
