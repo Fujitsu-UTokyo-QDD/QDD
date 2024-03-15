@@ -15,5 +15,5 @@ This file explains how to contribute to our project.
 
 ## QDD Versioning
 
-- Manually Update Git Tag SemVer Based on Commits to `main`
+- Manually Update Git Tag SemVer Based on Commits to `main`.
   - After a PR to `main` is merged, create a new tag from the release notes creation page.
