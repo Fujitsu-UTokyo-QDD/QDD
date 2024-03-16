@@ -31,6 +31,8 @@ jobs:
       run: cmake --build . -j
     
     # Build by poetry
+    - name: create venv
+      run: python3 -m venv venv && source venv/bin/activate
     - name: Install pip and setuptools wheel
       run: python3 -m pip install wheel
     - name: Install poetry
