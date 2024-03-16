@@ -1,0 +1,36 @@
+name: Publish Python distribution to TestPyPI
+
+on:
+    push:
+        branches:
+        - 'feature/wheel_with_setup.py_2'
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Build command 1
+      run: cmake . -DCMAKE_BUILD_TYPE=Release
+    - name: Build command 2
+      run: cmake --build . -j
+    
+    # Build by poetry
+    - name: Install pip and setuptools
+      run: python3 -m pip install -U pip setuptools
+    - name: Install poetry
+      run: python3 -m pip install poetry
+    - name: Build a binary wheel and a source tarball with poetry
+      run: poetry build python3 setup.py bdist_wheel
+
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-distributions
+        path: dist/
