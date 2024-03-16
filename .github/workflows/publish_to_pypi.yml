@@ -3,18 +3,24 @@ name: Publish Python distribution to TestPyPI
 on:
     push:
         branches:
+        - 'main'
         - 'feature/wheel_with_setup.py_2'
+
+
 jobs:
   build:
     name: Build distribution
     runs-on: ubuntu-latest
-
+        
+    strategy:
+        matrix:
+            pyver: ["3.10"]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
+        python-version: ${{ matrix.pyver }}
 
     - name: Build command 1
       run: cmake . -DCMAKE_BUILD_TYPE=Release
@@ -27,7 +33,7 @@ jobs:
     - name: Install poetry
       run: python3 -m pip install poetry
     - name: Build a binary wheel and a source tarball with poetry
-      run: poetry run python3 setup.py bdist_wheel
+      run: poetry run python setup.py bdist_wheel
 
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
