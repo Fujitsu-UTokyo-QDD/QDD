@@ -27,7 +27,7 @@ jobs:
     - name: Install poetry
       run: python3 -m pip install poetry
     - name: Build a binary wheel and a source tarball with poetry
-      run: poetry build python3 setup.py bdist_wheel
+      run: poetry build python setup.py bdist_wheel
 
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
