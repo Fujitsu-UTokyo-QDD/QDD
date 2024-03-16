@@ -25,14 +25,15 @@ jobs:
       with:
         python-version: ${{ matrix.pyver }}
 
+    - name: create venv
+      run: python3 -m venv venv && source venv/bin/activate
     - name: Build command 1
       run: cmake . -DCMAKE_BUILD_TYPE=Release
     - name: Build command 2
       run: cmake --build . -j
     
     # Build by poetry
-    - name: create venv
-      run: python3 -m venv venv && source venv/bin/activate
+
     - name: Install pip and setuptools wheel
       run: python3 -m pip install wheel
     - name: Install poetry
