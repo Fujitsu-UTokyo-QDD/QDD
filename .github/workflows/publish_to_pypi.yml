@@ -35,9 +35,9 @@ jobs:
     # Build by poetry
 
     - name: Install pip and setuptools wheel
-      run: python3 -m pip3 install wheel
+      run: python3 -m pip install setuptools wheel
     - name: Install poetry
-      run: python3 -m pip3 install poetry
+      run: python3 -m pip install poetry
     - name: Build a binary wheel and a source tarball with poetry
       run: poetry config virtualenvs.create false && poetry run python3 setup.py bdist_wheel
 
