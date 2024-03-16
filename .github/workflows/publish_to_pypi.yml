@@ -32,11 +32,11 @@ jobs:
     
     # Build by poetry
     - name: Install pip and setuptools wheel
-      run: pip install wheel
+      run: python3 -m pip install wheel
     - name: Install poetry
-      run: pip install poetry
+      run: python3 -m pip install poetry
     - name: Build a binary wheel and a source tarball with poetry
-      run: poetry run python setup.py bdist_wheel
+      run: python3 -m pip install wheel && python3 -m pip install wheel && python3 -m poetry run python setup.py bdist_wheel
 
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
