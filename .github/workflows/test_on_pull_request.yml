@@ -4,8 +4,8 @@ on:
   pull_request
 
 jobs:
-  build:
-    name: Build distribution
+  test:
+    name: Test library
     runs-on: ubuntu-latest
     timeout-minutes: 10
         
@@ -38,7 +38,7 @@ jobs:
       run: poetry install
     
     # Test
-    - name: test
-      run: |
-        poetry run pytest
-        test/qdd_test
+    - name: pytest
+      run: poetry run pytest
+    - name: qdd_test
+      run: test/qdd_test
