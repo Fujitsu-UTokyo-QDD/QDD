@@ -10,8 +10,9 @@ jobs:
     timeout-minutes: 10
         
     strategy:
-        matrix:
-            pyver: ["3.8", "3.9", "3.10"]
+      fail-fast: false
+      matrix:
+        pyver: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v4
     
