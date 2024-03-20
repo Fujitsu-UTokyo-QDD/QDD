@@ -28,11 +28,14 @@ jobs:
       run: cmake --build . -j
     
     # Build by poetry
-
     - name: Install pip and setuptools wheel
       run: python3 -m pip install -U pip setuptools wheel
     - name: Install poetry
       run: python3 -m pip install poetry
+
+    # Install packages
+    - name: Install poetry packages
+      run: poetry install
     
     # Test
     - name: test
