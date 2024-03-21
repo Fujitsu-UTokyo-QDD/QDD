@@ -19,7 +19,7 @@ You must prepare the following software.
   * See [the installation manual](https://python-poetry.org/docs/#installing-with-the-official-installer).
 
 You can build QDD as follows.
-```sh
+```
 $ cmake . -DCMAKE_BUILD_TYPE=Release
 $ cmake --build . -j
 $ poetry build
@@ -29,15 +29,15 @@ You can find an installable wheel file in 'dist' directory.
 
 ## Instllation
 Please move to your working directory and install the wheel file created in the build phase.
-```sh
+```
 $ pip install {QDD_DIR}/dist/qdd-XXX.whl
 ```
 
 ## Usage
 QDD works as a Qiskit backend.
 
-```py
-from qiskit import QuantumCircuit, execute
+```
+from qiskit import QuantumCircuit
 from qdd import QddBackend, QddProvider
 
 backend = QddProvider().get_backend()
@@ -45,12 +45,12 @@ circ = QuantumCircuit(3)
 circ.h(0)
 circ.cx(0,1)
 circ.measure_all()
-qdd_job = execute(circ, backend=backend, shots=1000)
+qdd_job = backend.run(circ, shots=1000)
 print(qdd_job.result())
 ```
 
 If you need statevector, create the backend as follows.
-```py
+```
 backend = QddProvider().get_backend('statevector_simulator')
 ```
 

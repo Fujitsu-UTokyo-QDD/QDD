@@ -1,45 +1,67 @@
-[tool.poetry]
+[build-system]
+requires = [
+    "setuptools>=65.0",
+    "ninja",
+    "wheel",
+    "scikit-build", # If you're using scikit-build for the CMake integration
+    "qiskit-aer>=0.13.3",
+    "pytest>=7.2.2",
+    "qiskit-machine-learning[sparse]>=0.6.0",
+    "qiskit-algorithms==0.3.0",
+    "qiskit-finance>=0.4.0",
+    "qiskit-optimization>=0.6.0",
+    "qiskit-nature[pyscf]>=0.7.2",
+    "tweedledum>=1.1.1",
+    "pybind11>=2.10.4",
+    "auditwheel>=5.4.0",
+    "cmake>=3.26.4"
+]
+build-backend = "setuptools.build_meta"
+
+
+
+[project]
 name = "qdd"
 version = "0.1.0"
 description = "Qiskit Provider for QDD"
-authors = ["Yusuke Kimura <yusuke-kimura@fujitsu.com>"]
+authors = [{name = "Yusuke Kimura", email = "yusuke-kimura@fujitsu.com"}]
 readme = "README.md"
-#packages = [
-#    { include = "qdd" },
-#    { include = "pyQDD.*.so" },
-#]
-#include = ["pyQDD.*.so"]
-include = [
-    { path = "qdd/pyQDD.*.so" },
+requires-python = ">= 3.8, < 3.11"
+license = {file = "LICENSE.txt"}
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.8, <3.11"
-qiskit-aer = ">=0.13.3"
-
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.2.2"
-#qiskit-machine-learning = {extras = ["sparse"], version = "^0.6.0"}
-qiskit-algorithms = "0.3.0"
-qiskit-finance = "^0.4.0"
-qiskit-ibm-runtime = "^0.21.1"
-qiskit-optimization = "^0.6.0"
-qiskit-nature = {extras = ["pyscf"], version = "^0.7.2"}
-tweedledum = "^1.1.1"
-pybind11 = "^2.10.4"
-auditwheel = "^5.4.0"
-cmake = "^3.26.4"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.pytest.ini_options]
-testpaths = [
-    "test/python",
+dependencies = [
+    "qiskit-aer>=0.13.3",
+    "qiskit-machine-learning[sparse]>=0.6.0",
+    "qiskit-algorithms==0.3.0",
+    "qiskit-finance>=0.4.0",
+    "qiskit-optimization>=0.6.0",
+    "qiskit-nature[pyscf]>=0.7.2",
+    "tweedledum>=1.1.1",
 ]
-markers = [
-    "slow: marks tests as taking a long time to run"
-]
-addopts = "-m \"not slow\" --strict-markers"
+
+[tool.setuptools]
+include-package-data = true
+[tool.setuptools.packages.find]
+where = [""]
+[tool.setuptools.package-data]
+"qdd" = ["*.so"]
+
+[tool.cibuildwheel]
+
+build = "cp310-manylinux_x86_64"
+before-build = "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python3.10 -DCMAKE_BUILD_TYPE=Release && cmake --build . -j "
+#build = "cp3{8,9,10}-manylinux_x86_64 cp3{8,9,10}-musllinux_x86_64"
+#build = "cp3{8,9,10}-manylinux_x86_64"
+#   "Programming Language :: Python :: 3.8",
+#  "Programming Language :: Python :: 3.9",
+manylinux-x86_64-image = "manylinux_2_28"
+
+# [tool.cibuildwheel.linux]
+repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
