@@ -56,7 +56,6 @@ where = [""]
 [tool.cibuildwheel]
 
 build = "cp310-manylinux_x86_64"
-before-build = "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python3.10 -DCMAKE_BUILD_TYPE=Release && cmake --build . -j "
 #build = "cp3{8,9,10}-manylinux_x86_64 cp3{8,9,10}-musllinux_x86_64"
 #build = "cp3{8,9,10}-manylinux_x86_64"
 #   "Programming Language :: Python :: 3.8",

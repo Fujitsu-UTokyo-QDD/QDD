@@ -5,6 +5,7 @@ on:
         branches:
             - 'main'
             - 'feature/cibw_2'
+            - 'feature/conf-before-build-in-yml3'
 
 jobs:
     build:
@@ -30,6 +31,7 @@ jobs:
               env:
                   #   CIBW_ENVIRONMENT: "CMAKE_ARGS='-DPYTHON_EXECUTABLE=$(which python3.10)'"
                   CIBW_BUILD: 'cp310-manylinux_x86_64'
+                  CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python3.10 -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
 
             - name: Store the distribution packages
               uses: actions/upload-artifact@v3
