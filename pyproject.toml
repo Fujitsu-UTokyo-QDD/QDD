@@ -63,4 +63,5 @@ where = [""]
 manylinux-x86_64-image = "manylinux_2_28"
 
 # [tool.cibuildwheel.linux]
-repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
+# repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
+repair-wheel-command = ["auditwheel", "repair", "-w", "{dest_dir}", "{wheel}"]
