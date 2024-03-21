@@ -1,0 +1,38 @@
+name: Publish Python distribution to TestPyPI
+
+on:
+    push:
+        branches:
+            - 'main'
+            - 'feature/cibw'
+
+jobs:
+    build:
+        name: Build distribution
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # Check python executable paths
+            - name: Echo versions
+              run: |
+                  echo "Python version: $(python --version)"
+                  echo "Python location: $(which python)"
+                  echo "Python3 version: $(python3 --version)"
+                  echo "Python3 location: $(which python3)"
+                  echo "Python3.10 version: $(python3.10 --version)"
+                  echo "Python3.10 location: $(which python3.10)"
+
+            # Build by cibuildwheel
+            - name: Build wheels
+              uses: pypa/cibuildwheel@v2.16.5
+              env:
+                  #   CIBW_ENVIRONMENT: "CMAKE_ARGS='-DPYTHON_EXECUTABLE=$(which python3.10)'"
+                  CIBW_BUILD: 'cp310-manylinux_x86_64'
+
+            - name: Store the distribution packages
+              uses: actions/upload-artifact@v3
+              with:
+                  name: python-package-distributions
+                  path: ./wheelhouse/*.whl

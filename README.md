@@ -37,7 +37,7 @@ $ pip install {QDD_DIR}/dist/qdd-XXX.whl
 QDD works as a Qiskit backend.
 
 ```
-from qiskit import QuantumCircuit, execute
+from qiskit import QuantumCircuit
 from qdd import QddBackend, QddProvider
 
 backend = QddProvider().get_backend()
@@ -45,7 +45,7 @@ circ = QuantumCircuit(3)
 circ.h(0)
 circ.cx(0,1)
 circ.measure_all()
-qdd_job = execute(circ, backend=backend, shots=1000)
+qdd_job = backend.run(circ, shots=1000)
 print(qdd_job.result())
 ```
 
