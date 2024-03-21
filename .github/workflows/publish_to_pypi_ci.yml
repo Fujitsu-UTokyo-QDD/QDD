@@ -14,20 +14,16 @@ jobs:
 
         strategy:
             matrix:
-                python-version: ['3.8', '3.9', '3.10']
+                include:
+                    - python-version: '3.8'
+                      python-version-sub: '38'
+                    - python-version: '3.9'
+                      python-version-sub: '39'
+                    - python-version: '3.10'
+                      python-version-sub: '310'
 
         steps:
             - uses: actions/checkout@v4
-
-            # Check python executable paths
-            - name: Echo versions
-              run: |
-                  echo "Python version: $(python --version)"
-                  echo "Python location: $(which python)"
-                  echo "Python3 version: $(python3 --version)"
-                  echo "Python3 location: $(which python3)"
-                  echo "Python${{ matrix.python-version }} version: $(python${{ matrix.python-version }} --version)"
-                  echo "Python${{ matrix.python-version }} location: $(which python${{ matrix.python-version }})"
 
             # Build by cibuildwheel
             - name: Build wheels
@@ -35,7 +31,7 @@ jobs:
               with:
                   python-version: ${{ matrix.python-version }}
                   # Modify as needed, you may need to adjust this line according to your requirements
-                  CIBW_BUILD: 'cp${{ matrix.python-version | replace(".", "") }}-manylinux_x86_64'
+                  CIBW_BUILD: 'cp${{ matrix.python-version-sub }}-manylinux_x86_64'
                   CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
 
             - name: Store the distribution packages

@@ -55,7 +55,7 @@ where = [""]
 
 [tool.cibuildwheel]
 
-build = "cp310-manylinux_x86_64"
+#build = "cp310-manylinux_x86_64"
 #build = "cp3{8,9,10}-manylinux_x86_64 cp3{8,9,10}-musllinux_x86_64"
 #build = "cp3{8,9,10}-manylinux_x86_64"
 #   "Programming Language :: Python :: 3.8",
