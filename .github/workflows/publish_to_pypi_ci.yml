@@ -28,7 +28,7 @@ jobs:
             # Build by cibuildwheel
             - name: Build wheels
               uses: pypa/cibuildwheel@v2.16.5
-              with:
+              env:
                   python-version: ${{ matrix.python-version }}
                   # Modify as needed, you may need to adjust this line according to your requirements
                   CIBW_BUILD: 'cp${{ matrix.python-version-sub }}-manylinux_x86_64'
