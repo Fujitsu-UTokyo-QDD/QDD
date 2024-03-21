@@ -62,6 +62,7 @@ where = [""]
 #  "Programming Language :: Python :: 3.9",
 manylinux-x86_64-image = "manylinux_2_28"
 
-[tool.cibuildwheel.linux]
+#[tool.cibuildwheel.linux]
 # repair-wheel-command = "auditwheel -v repair -w {dest_dir} {wheel}"
-repair-wheel-command = ["auditwheel", "repair", "-w", "{dest_dir}", "{wheel}"]
+#repair-wheel-command = ["auditwheel", "repair", "-w", "{dest_dir}", "{wheel}"]
+repair_command = ["auditwheel", "repair", "{wheel}", "--wheel-dir", "{dest_dir}"]
