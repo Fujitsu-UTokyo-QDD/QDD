@@ -46,7 +46,7 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
 
 if __name__ == '__main__':
     # USAGE
-    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1
+    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1 # N a $nNodes $nThreads(=1) $use_bcast $use_auto_swap $swap_ver
     args = sys.argv
     compute_gates_for_all_ADD(int(args[1]), int(args[2]), int(args[3]), int(args[4]), bool(int(args[5])), bool(int(args[6])), args[7])
 
