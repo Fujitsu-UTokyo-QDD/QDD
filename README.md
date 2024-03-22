@@ -36,7 +36,7 @@ $ pip install {QDD_DIR}/dist/qdd-XXX.whl
 ## Usage
 QDD works as a Qiskit backend.
 
-```
+```py
 from qiskit import QuantumCircuit
 from qiskit.primitives import BackendSampler
 
@@ -53,7 +53,7 @@ print(qdd_job.result())
 ```
 
 QDD has its own implementation of the Sampler class
-```
+```py
 from qdd.qdd_sampler import Sampler
 sampler = Sampler()
 qdd_job = sampler.run(circuits=circ)
