@@ -31,7 +31,6 @@ from qiskit.result import QuasiDistribution
 
 from qdd import QddProvider
 
-
 class Sampler(BaseSampler):
     """
     QDD implementation of Sampler class.
@@ -93,7 +92,7 @@ class Sampler(BaseSampler):
             run_options.setdefault("seed_simulator", seed)
 
         is_shots_none = "shots" in run_options and run_options["shots"] is None
-        self._transpile(circuits, is_shots_none)
+        self._transpile(circuits)
 
         experiment_manager = _ExperimentManager()
         for i, value in zip(circuits, parameter_values):
@@ -106,7 +105,7 @@ class Sampler(BaseSampler):
             experiment_manager.append(
                 key=i,
                 parameter_bind=dict(zip(self._parameters[i], value)),
-                experiment_circuit=self._transpiled_circuits[(i, is_shots_none)],
+                experiment_circuit=self._transpiled_circuits[i],
             )
 
         result = self._backend.run(
@@ -121,12 +120,10 @@ class Sampler(BaseSampler):
         for i in experiment_manager.experiment_indices:
             if is_shots_none:
                 probabilities = result.data(i)["probabilities"]
-                num_qubits = result.results[i].metadata["num_qubits"]
-                quasi_dist = QuasiDistribution(
-                    {f"{k:0{num_qubits}b}": v for k, v in probabilities.items()}
-                )
+                num_qubits = result.results[i].header.n_qubits
+                quasi_dist = QuasiDistribution(probabilities)
                 quasis.append(quasi_dist)
-                metadata.append({"shots": None, "simulator_metadata": result.results[i].metadata})
+                metadata.append({"shots": None, "simulator_metadata": result.results[i]._metadata})
             else:
                 counts = result.get_counts(i)
                 shots = sum(counts.values())
@@ -165,30 +162,12 @@ class Sampler(BaseSampler):
         job._submit()
         return job
 
-    @staticmethod
-    def _preprocess_circuit(circuit: QuantumCircuit):
-        circuit = init_circuit(circuit)
-        q_c_mapping = final_measurement_mapping(circuit)
-        if set(range(circuit.num_clbits)) != set(q_c_mapping.values()):
-            raise QiskitError(
-                "Some classical bits are not used for measurements. "
-                f"The number of classical bits {circuit.num_clbits}, "
-                f"the used classical bits {set(q_c_mapping.values())}."
-            )
-        c_q_mapping = sorted((c, q) for q, c in q_c_mapping.items())
-        qargs = [q for _, q in c_q_mapping]
-        circuit = circuit.remove_final_measurements(inplace=False)
-        circuit.save_probabilities_dict(qargs)
-        return circuit
-
-    def _transpile(self, circuit_indices: Sequence[int], is_shots_none: bool):
+    def _transpile(self, circuit_indices: Sequence[int]):
         to_handle = [
-            i for i in set(circuit_indices) if (i, is_shots_none) not in self._transpiled_circuits
+            i for i in set(circuit_indices) if i not in self._transpiled_circuits
         ]
         if to_handle:
             circuits = (self._circuits[i] for i in to_handle)
-            if is_shots_none:
-                circuits = (self._preprocess_circuit(circ) for circ in circuits)
             if not self._skip_transpilation:
                 circuits = transpile(
                     list(circuits),
@@ -196,7 +175,7 @@ class Sampler(BaseSampler):
                     **self._transpile_options,
                 )
             for i, circuit in zip(to_handle, circuits):
-                self._transpiled_circuits[(i, is_shots_none)] = circuit
+                self._transpiled_circuits[i] = circuit
 
 
 class _ExperimentManager:

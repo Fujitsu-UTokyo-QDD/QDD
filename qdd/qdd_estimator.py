@@ -32,6 +32,7 @@ from qiskit.primitives.utils import _circuit_key, _observable_key, init_observab
 from qiskit.providers import Options,convert_to_target
 from qiskit.quantum_info import Pauli, PauliList
 from qiskit.quantum_info.operators.base_operator import BaseOperator
+from qiskit.result import QuasiDistribution
 from qiskit.result.models import ExperimentResult
 from qiskit.transpiler import CouplingMap, PassManager
 from qiskit.transpiler.passes import (
@@ -43,7 +44,6 @@ from qiskit.transpiler.passes import (
 )
 
 from qdd import QddProvider
-
 
 class Estimator(BaseEstimator):
     """
@@ -89,7 +89,7 @@ class Estimator(BaseEstimator):
     ):
         """
         Args:
-            backend_options: Options passed to AerSimulator.
+            backend_options: Options passed to QDD backend
             transpile_options: Options passed to transpile.
             run_options: Options passed to run.
             approximation: If True, it calculates expectation values with normal distribution
@@ -111,15 +111,11 @@ class Estimator(BaseEstimator):
         self._transpile_options = Options()
         if transpile_options is not None:
             self._transpile_options.update_options(**transpile_options)
-        if not approximation:
-            warn(
-                "Option approximation=False is deprecated as of qiskit-aer 0.13. "
-                "It will be removed no earlier than 3 months after the release date. "
-                "Instead, use BackendEstimator from qiskit.primitives.",
-                DeprecationWarning,
-                stacklevel=3,
-            )
         self._approximation = approximation
+        if self._approximation and "shots" in run_options:
+            self._approximation_shots = run_options["shots"]
+        else:
+            self._approximation_shots = None
         self._skip_transpilation = skip_transpilation
         self._cache: dict[tuple[tuple[int], tuple[int], bool], tuple[dict, dict]] = {}
         self._transpiled_circuits: dict[int, QuantumCircuit] = {}
@@ -139,12 +135,7 @@ class Estimator(BaseEstimator):
         if seed is not None:
             run_options.setdefault("seed_simulator", seed)
 
-        if self._approximation:
-            return self._compute_with_approximation(
-                circuits, observables, parameter_values, run_options, seed
-            )
-        else:
-            return self._compute(circuits, observables, parameter_values, run_options)
+        return self._compute(circuits, observables, parameter_values, run_options, seed)
 
     def _run(
         self,
@@ -183,14 +174,7 @@ class Estimator(BaseEstimator):
         job._submit()
         return job
 
-    def _compute(self, circuits, observables, parameter_values, run_options):
-        if "shots" in run_options and run_options["shots"] is None:
-            warn(
-                "If `shots` is None and `approximation` is False, "
-                "the number of shots is automatically set to backend options' "
-                f"shots={self._backend.options.shots}.",
-                RuntimeWarning,
-            )
+    def _compute(self, circuits, observables, parameter_values, run_options, seed):
 
         # Key for cache
         key = (tuple(circuits), tuple(observables), self._approximation)
@@ -201,7 +185,7 @@ class Estimator(BaseEstimator):
             exp_map = self._pre_process_params(circuits, observables, parameter_values, obs_maps)
             experiments, parameter_binds = self._flatten(experiments_dict, exp_map)
             post_processings = self._create_post_processing(
-                circuits, observables, parameter_values, obs_maps, exp_map
+                circuits, observables, parameter_values, obs_maps, exp_map, self._approximation, self._approximation_shots, seed
             )
         else:
             self._transpile_circuits(circuits)
@@ -247,9 +231,17 @@ class Estimator(BaseEstimator):
 
             # Create PostProcessing
             post_processings = self._create_post_processing(
-                circuits, observables, parameter_values, obs_maps, exp_map
+                circuits, observables, parameter_values, obs_maps, exp_map, self._approximation, self._approximation_shots, seed
             )
 
+        if self._approximation:
+            run_options["shots"] = None
+        if (not self._approximation) and ("shots" not in run_options or run_options["shots"] is None):
+            warn(
+                "The number of shots is not specified. "
+                f"It sets the number of shots to default value ({self._backend._DEFAULT_SHOTS})."
+            )
+            run_options["shots"] = self._backend._DEFAULT_SHOTS
         # Run experiments
         if experiments:
             results = (
@@ -361,10 +353,9 @@ class Estimator(BaseEstimator):
                     result_index += param_vals.index(param_val)
                     return result_index
                 result_index += len(param_vals)
-        raise RuntimeError("Bug. Please report from issue: https://github.com/Qiskit/qiskit-aer/issues")
 
     def _create_post_processing(
-        self, circuits, observables, parameter_values, obs_maps, exp_map
+        self, circuits, observables, parameter_values, obs_maps, exp_map, approximation=False, approximation_shots=None, seed=None
     ) -> list[_PostProcessing]:
         post_processings = []
         for circ_ind, obs_ind, param_val in zip(circuits, observables, parameter_values):
@@ -391,101 +382,8 @@ class Estimator(BaseEstimator):
                     result_indices.append(result_index)
                     paulis.append(PauliList(pauli))
                     coeffs.append([coeff])
-            post_processings.append(_PostProcessing(result_indices, paulis, coeffs))
+            post_processings.append(_PostProcessing(result_indices, paulis, coeffs, approximation, approximation_shots, seed))
         return post_processings
-
-    def _compute_with_approximation(
-        self, circuits, observables, parameter_values, run_options, seed
-    ):
-        # Key for cache
-        key = (tuple(circuits), tuple(observables), self._approximation)
-        shots = run_options.pop("shots", None)
-
-        # Create expectation value experiments.
-        if key in self._cache:  # Use a cache
-            parameter_binds = defaultdict(dict)
-            for i, j, value in zip(circuits, observables, parameter_values):
-                self._validate_parameter_length(value, i)
-                for k, v in zip(self._parameters[i], value):
-                    if k in parameter_binds[(i, j)]:
-                        parameter_binds[(i, j)][k].append(v)
-                    else:
-                        parameter_binds[(i, j)][k] = [v]
-            experiment_manager = self._cache[key]
-            experiment_manager.parameter_binds = list(parameter_binds.values())
-        else:
-            self._transpile_circuits(circuits)
-            experiment_manager = _ExperimentManager()
-            for i, j, value in zip(circuits, observables, parameter_values):
-                self._validate_parameter_length(value, i)
-                if (i, j) in experiment_manager.keys:
-                    key_index = experiment_manager.keys.index((i, j))
-                    circuit = experiment_manager.experiment_circuits[key_index]
-                else:
-                    circuit = (
-                        self._circuits[i].copy()
-                        if self._skip_transpilation
-                        else self._transpiled_circuits[i].copy()
-                    )
-                    observable = self._observables[j]
-                    if shots is None:
-                        circuit.save_expectation_value(observable, self._layouts[i])
-                    else:
-                        for term_ind, pauli in enumerate(observable.paulis):
-                            circuit.save_expectation_value(
-                                pauli, self._layouts[i], label=str(term_ind)
-                            )
-                experiment_manager.append(
-                    key=(i, j),
-                    parameter_bind=dict(zip(self._parameters[i], value)),
-                    experiment_circuit=circuit,
-                )
-
-            self._cache[key] = experiment_manager
-
-        result = self._backend.run(
-            experiment_manager.experiment_circuits,
-            parameter_binds=experiment_manager.parameter_binds,
-            **run_options,
-        ).result()
-
-        # Post processing (calculate expectation values)
-        if shots is None:
-            expectation_values = [
-                result.data(i)["expectation_value"] for i in experiment_manager.experiment_indices
-            ]
-            metadata = [
-                {"simulator_metadata": result.results[i].metadata}
-                for i in experiment_manager.experiment_indices
-            ]
-        else:
-            expectation_values = []
-            rng = np.random.default_rng(seed)
-            metadata = []
-            experiment_indices = experiment_manager.experiment_indices
-            for i in range(len(experiment_manager)):
-                combined_expval = 0.0
-                combined_var = 0.0
-                result_index = experiment_indices[i]
-                observable_key = experiment_manager.get_observable_key(i)
-                coeffs = np.real_if_close(self._observables[observable_key].coeffs)
-                for term_ind, expval in result.data(result_index).items():
-                    var = 1 - expval**2
-                    coeff = coeffs[int(term_ind)]
-                    combined_expval += expval * coeff
-                    combined_var += var * coeff**2
-                # Sampling from normal distribution
-                standard_error = np.sqrt(combined_var / shots)
-                expectation_values.append(rng.normal(combined_expval, standard_error))
-                metadata.append(
-                    {
-                        "variance": np.real_if_close(combined_var).item(),
-                        "shots": shots,
-                        "simulator_metadata": result.results[result_index].metadata,
-                    }
-                )
-
-        return EstimatorResult(np.real_if_close(expectation_values), metadata)
 
     def _validate_parameter_length(self, parameter, circuit_index):
         if len(parameter) != len(self._parameters[circuit_index]):
@@ -523,10 +421,16 @@ class _PostProcessing:
         result_indices: list[int],
         paulis: list[PauliList],
         coeffs: list[list[float]],
+        approximation: bool = False,
+        approximation_shots: int | None = None,
+        seed: int = 0,
     ):
         self._result_indices = result_indices
         self._paulis = paulis
         self._coeffs = [np.array(c) for c in coeffs]
+        self._approximation = approximation
+        self._approximation_shots = approximation_shots
+        self._seed = seed
 
     def run(self, results: list[ExperimentResult]) -> tuple[float, dict]:
         """Coumpute expectation value.
@@ -540,29 +444,63 @@ class _PostProcessing:
         combined_expval = 0.0
         combined_var = 0.0
         simulator_metadata = []
-        for c_i, paulis, coeffs in zip(self._result_indices, self._paulis, self._coeffs):
-            if c_i is None:
-                # Observable is identity
-                expvals, variances = np.array([1], dtype=complex), np.array([0], dtype=complex)
-                shots = 0
+        if self._approximation:
+            for c_i, paulis, coeffs in zip(self._result_indices, self._paulis, self._coeffs):
+                if c_i is None:
+                    # Observable is identity
+                    expvals, variances = np.array([1], dtype=complex), np.array([0], dtype=complex)
+                    shots = 0
+                else:
+                    result = results[c_i]
+                    probabilities = result.data.probabilities
+                    quasi_dist = QuasiDistribution(probabilities)
+                    basis = result.header.metadata["basis"]
+                    indices = np.where(basis.z | basis.x)[0]
+                    measured_paulis = PauliList.from_symplectic(
+                        paulis.z[:, indices], paulis.x[:, indices], 0
+                    )
+                    expvals, variances = _pauli_expval_with_variance_from_dist(quasi_dist, measured_paulis)
+                    shots = results[c_i].shots
+                combined_expval += np.dot(expvals, coeffs)
+                combined_var += np.dot(variances, coeffs**2)
+            if self._approximation_shots:
+                rng = np.random.default_rng(self._seed)
+                standard_error = np.sqrt(combined_var / self._approximation_shots)
+                combined_expval = rng.normal(combined_expval, standard_error)
+                metadata = {
+                    "shots": self._approximation_shots,
+                    "variance": combined_var,
+                    "simulator_metadata": simulator_metadata,
+                }
             else:
-                result = results[c_i]
-                count = result.data.counts
-                shots = sum(count.values())
-                basis = result.header.metadata["basis"]
-                indices = np.where(basis.z | basis.x)[0]
-                measured_paulis = PauliList.from_symplectic(
-                    paulis.z[:, indices], paulis.x[:, indices], 0
-                )
-                expvals, variances = _pauli_expval_with_variance(count, measured_paulis)
-                simulator_metadata.append(result._metadata)
-            combined_expval += np.dot(expvals, coeffs)
-            combined_var += np.dot(variances, coeffs**2)
-        metadata = {
-            "shots": shots,
-            "variance": np.real_if_close(combined_var).item(),
-            "simulator_metadata": simulator_metadata,
-        }
+                metadata = {
+                    "shots": shots,
+                    "simulator_metadata": simulator_metadata,
+                }
+        else:
+            for c_i, paulis, coeffs in zip(self._result_indices, self._paulis, self._coeffs):
+                if c_i is None:
+                    # Observable is identity
+                    expvals, variances = np.array([1], dtype=complex), np.array([0], dtype=complex)
+                    shots = None
+                else:
+                    result = results[c_i]
+                    count = result.data.counts
+                    shots = sum(count.values())
+                    basis = result.header.metadata["basis"]
+                    indices = np.where(basis.z | basis.x)[0]
+                    measured_paulis = PauliList.from_symplectic(
+                        paulis.z[:, indices], paulis.x[:, indices], 0
+                    )
+                    expvals, variances = _pauli_expval_with_variance(count, measured_paulis)
+                    simulator_metadata.append(result._metadata)
+                combined_expval += np.dot(expvals, coeffs)
+                combined_var += np.dot(variances, coeffs**2)
+            metadata = {
+                "shots": shots,
+                "variance": np.real_if_close(combined_var).item(),
+                "simulator_metadata": simulator_metadata,
+            }
         return combined_expval, metadata
 
 
@@ -590,6 +528,21 @@ def _pauli_expval_with_variance(counts: dict, paulis: PauliList) -> tuple[np.nda
 
     # Divide by total shots
     expvals /= denom
+
+    variances = 1 - expvals**2
+    return expvals, variances
+
+def _pauli_expval_with_variance_from_dist(quasi_dist: QuasiDistribution, paulis: PauliList) -> tuple[np.ndarray, np.ndarray]:
+    # Diag indices
+    size = len(paulis)
+    diag_inds = _paulis2inds(paulis)
+
+    expvals = np.zeros(size, dtype=float)
+    for outcome, freq in quasi_dist.items():
+        for k in range(size):
+            coeff = (-1) ** _parity(diag_inds[k] & outcome)
+            expvals[k] += freq * coeff
+
 
     variances = 1 - expvals**2
     return expvals, variances
