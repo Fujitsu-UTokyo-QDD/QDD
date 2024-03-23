@@ -437,6 +437,10 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);
+double measureOne(vEdge &rootEdge, const Qubit index,
+                          std::mt19937_64 &mt, double epsilon = 0.001);
+
+std::vector<double> probabilities(const vEdge &rootEdge);
 
 mEdge RX(QubitCount qnum, int target, double angle);
 

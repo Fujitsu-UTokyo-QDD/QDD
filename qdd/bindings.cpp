@@ -45,6 +45,10 @@ std::pair<vEdge, char> _measureOneCollapsing(vEdge &rootEdge, const Qubit index)
     return std::pair<vEdge, char>(rootEdge, result);
 }
 
+std::pair<vEdge, double> _measureOne(vEdge &rootEdge, const Qubit index){
+    double result = measureOne(rootEdge, index, mt);
+    return std::pair<vEdge, double>(rootEdge, result);
+}
 
 
 std::vector<std::complex<double>> _getVector(vEdge &rootEdge){
@@ -71,6 +75,11 @@ mEdge makeControlGate(QubitCount q, std::string name, Qubit target, const std::v
     return makeGate(q, name, target, c);
 }
 
+std::vector<double> _probabilities(const vEdge &rootEdge){
+    std::vector<double> result = probabilities(rootEdge);
+    return result;
+}
+
 PYBIND11_MODULE(pyQDD, m){
     py::class_<vEdge>(m, "vEdge").def("printVector",&vEdge::printVector).def("printVector_sparse",&vEdge::printVector_sparse);
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
@@ -91,4 +100,6 @@ PYBIND11_MODULE(pyQDD, m){
     m.def("measureAll", _measureAll)
      .def("measureOneCollapsing", _measureOneCollapsing);
     m.def("getVector", _getVector);
+    m.def("probabilities", _probabilities);
+    m.def("measureOne", _measureOne);
 }
