@@ -5,7 +5,7 @@ on:
         branches:
             - 'main'
             - 'feature/cibw_2'
-            - 'feature/conf-before-build-in-yml3'
+            - 'feature/*'
 
 jobs:
     build:
