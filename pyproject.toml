@@ -42,17 +42,12 @@ dependencies = [
 # Specifies the path of the root directory
 [tool.setuptools.packages.find]
 where = [""]
+# Excluding redundant directories
 exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
 
 # Include .so to the wheel file. 
 [tool.setuptools.package-data]
 "qdd" = ["*.so"]
-
-# Exclude certain files from the wheel. Overrides package-data settings
-#[tool.setuptools.exclude-package-data]
-#"*" = ["*.egg-info"]
-#"build" = ["*.*", "*"]
-#"_deps" = ["*.*"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
