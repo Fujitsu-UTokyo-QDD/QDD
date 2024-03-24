@@ -40,14 +40,17 @@ dependencies = [
 
 [tool.setuptools]
 include-package-data = true
+
 [tool.setuptools.packages.find]
 where = [""]
-exclude = ["test", "scripts", "_deps"]
-
-
 
 [tool.setuptools.package-data]
 "qdd" = ["*.so"]
+
+[tool.setuptools.exclude-package-data]
+test = ["*"]
+scripts = ["*"]
+_deps = ["*"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
