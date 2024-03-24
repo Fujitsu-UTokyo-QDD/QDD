@@ -45,7 +45,7 @@ where = ["qdd"]
 
 # Include .so to the wheel file. 
 [tool.setuptools.package-data]
-"" = ["*.so"]
+"*" = ["*.so"]
 
 # Exclude certain files from the wheel. Overrides package-data settings
 #[tool.setuptools.exclude-package-data]
