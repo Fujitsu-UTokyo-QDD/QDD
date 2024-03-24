@@ -22,7 +22,8 @@ You can build QDD as follows.
 ```sh
 $ cmake . -DCMAKE_BUILD_TYPE=Release
 $ cmake --build . -j
-$ poetry build
+$ python3 -m pip install build
+$ python3 -m build
 ```
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
 You can find an installable wheel file in 'dist' directory.
