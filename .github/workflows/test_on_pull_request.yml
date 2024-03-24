@@ -30,5 +30,4 @@ jobs:
           # Modify as needed, you may need to adjust this line according to your requirements
           CIBW_BUILD: "cp${{ matrix.python-version-sub }}-manylinux_x86_64"
           CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
-          CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {project}/test && test/qdd_test"
