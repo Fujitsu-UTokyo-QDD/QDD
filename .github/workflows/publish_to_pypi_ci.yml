@@ -48,7 +48,7 @@ jobs:
   
       environment:
         name: testpypi
-        url: https://test.pypi.org/p/qdd-test1
+        url: https://test.pypi.org/p/qdd
       permissions:
         id-token: write  # IMPORTANT: mandatory for trusted publishing
   
