@@ -41,16 +41,17 @@ dependencies = [
 
 # Specifies the path of the root directory
 [tool.setuptools.packages.find]
-where = ["qdd"]
+where = [""]
+exclude = ["test", "scripts", "_deps"]
 
 # Include .so to the wheel file. 
 [tool.setuptools.package-data]
-"*" = ["*.so"]
+"qdd" = ["*.so"]
 
 # Exclude certain files from the wheel. Overrides package-data settings
 #[tool.setuptools.exclude-package-data]
-#"test" = ["*.*"]
-#"scripts" = ["*.*"]
+"*" = ["*.egg-info"]
+"build" = ["*.*", "*"]
 #"_deps" = ["*.*"]
 
 [tool.cibuildwheel]
