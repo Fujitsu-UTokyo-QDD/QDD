@@ -49,9 +49,9 @@ where = [""]
 
 # Exclude certain files from the wheel. Overrides package-data settings
 [tool.setuptools.exclude-package-data]
-test = ["*.*"]
-scripts = ["*.*"]
-_deps = ["*.*"]
+"test" = ["*.*"]
+"scripts" = ["*.*"]
+"_deps" = ["*.*"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
