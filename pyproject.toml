@@ -38,19 +38,20 @@ dependencies = [
     "qiskit-aer>=0.13.3",
 ]
 
-[tool.setuptools]
-include-package-data = true
 
+# Specifies the path of the root directory
 [tool.setuptools.packages.find]
 where = [""]
 
+# Include .so to the wheel file. 
 [tool.setuptools.package-data]
 "qdd" = ["*.so"]
 
+# Exclude certain files from the wheel. Overrides package-data settings
 [tool.setuptools.exclude-package-data]
-test = ["*"]
-scripts = ["*"]
-_deps = ["*"]
+test = ["*.*"]
+scripts = ["*.*"]
+_deps = ["*.*"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
