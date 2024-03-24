@@ -15,8 +15,8 @@ You must prepare the following software.
 * cmake (>=3.25)
   * You can download the executable from [Official GitHub](https://github.com/Kitware/CMake/releases).
   * If you use Ubuntu, [the Kitware repository](https://apt.kitware.com/) is easier to install.
-* poetry
-  * See [the installation manual](https://python-poetry.org/docs/#installing-with-the-official-installer).
+* build
+  * Just install it via pip.
 
 You can build QDD as follows.
 ```sh
