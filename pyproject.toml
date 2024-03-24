@@ -50,8 +50,8 @@ exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
 
 # Exclude certain files from the wheel. Overrides package-data settings
 #[tool.setuptools.exclude-package-data]
-"*" = ["*.egg-info"]
-"build" = ["*.*", "*"]
+#"*" = ["*.egg-info"]
+#"build" = ["*.*", "*"]
 #"_deps" = ["*.*"]
 
 [tool.cibuildwheel]
