@@ -38,10 +38,14 @@ dependencies = [
     "qiskit-aer>=0.13.3",
 ]
 
-[tool.setuptools]
-include-package-data = true
+
+# Specifies the path of the root directory
 [tool.setuptools.packages.find]
 where = [""]
+# Excluding redundant directories
+exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
+
+# Include .so to the wheel file. 
 [tool.setuptools.package-data]
 "qdd" = ["*.so"]
 
