@@ -43,7 +43,7 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = [""]
 # Excluding redundant directories
-exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*", "qdd.libs", "qdd.libs*", "qdd.libs/*"]
+exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
 
 # Include .so to the wheel file. 
 [tool.setuptools.package-data]
