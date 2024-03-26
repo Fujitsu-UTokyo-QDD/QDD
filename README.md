@@ -12,6 +12,7 @@ BSD 3-Clause Clear License
 ## Install
 Supported environment
 * Linux x86_64 with Python3.8 ~ 3.10
+
 Command
 ```sh
 $ pip install qdd
