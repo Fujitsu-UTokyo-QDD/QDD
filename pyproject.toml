@@ -16,8 +16,6 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-
-
 [project]
 name = "qdd"
 version = "0.2.0"
@@ -36,11 +34,15 @@ classifiers = [
 
 dependencies = [
     "qiskit-aer>=0.13.3",
-]
-
-[project.optional-dependencies]
-develop = [
-    "qiskit-ibm-runtime>=0.21.1"
+    "pytest>=7.2.2",
+    "qiskit-machine-learning[sparse]>=0.6.0",
+    "qiskit-algorithms==0.3.0",
+    "qiskit-finance>=0.4.0",
+    "qiskit-ibm-runtime>=0.21.1",
+    "qiskit-optimization>=0.6.0",
+    "qiskit-nature[pyscf]>=0.7.2",
+    "tweedledum>=1.1.1",
+    "pybind11>=2.10.4",
 ]
 
 # Specifies the path of the root directory
