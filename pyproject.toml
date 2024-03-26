@@ -51,3 +51,19 @@ exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
+test-requires = [
+    "setuptools>=65.0",
+    "wheel",
+    "qiskit-aer>=0.13.3",
+    "pytest>=7.2.2",
+    "qiskit-machine-learning[sparse]>=0.6.0",
+    "qiskit-algorithms==0.3.0",
+    "qiskit-finance>=0.4.0",
+    "qiskit-ibm-runtime>=0.21.1",
+    "qiskit-optimization>=0.6.0",
+    "qiskit-nature[pyscf]>=0.7.2",
+    "tweedledum>=1.1.1",
+    "pybind11>=2.10.4",
+    "auditwheel>=5.4.0",
+    "cmake>=3.26.4"
+]
