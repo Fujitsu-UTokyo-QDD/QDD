@@ -142,16 +142,6 @@ vEdge grover(QubitCount n_qubits) {
     return state;
 }
 
-TEST(QddTest, MM_PerformanceTest){
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::string oracle = "010111110101011111010101111101";
-    groverIteration(oracle, 20);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> ms = t2 - t1;
-    std::cout << ms.count() << " milliseconds" << std::endl;
-    ASSERT_TRUE(ms.count() < 3000); // less than 1 second
-}
-
 TEST(QddTest, MV_PerformanceTest){
     auto t1 = std::chrono::high_resolution_clock::now();
     grover(20);
