@@ -1,0 +1,20 @@
+{
+    "editor.formatOnSave": true,
+    "extensions.ignoreRecommendations": false,
+    "editor.defaultFormatter": null,
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown-math]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown_latex_combined]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+}
