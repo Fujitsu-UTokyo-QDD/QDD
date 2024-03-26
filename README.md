@@ -9,7 +9,17 @@ At this point, we do not distribute wheel file, so you need to build it locally.
 ## License
 BSD 3-Clause Clear License
 
-## Build
+## Install
+Supported environment
+* Linux x86_64 with Python3.8 ~ 3.10
+
+Command
+```sh
+$ pip install qdd
+```
+
+## Install from source
+### Build
 You must prepare the following software.
 
 * cmake (>=3.25)
@@ -28,7 +38,7 @@ $ python3 -m build
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
 You can find an installable wheel file in 'dist' directory.
 
-## Instllation
+### Wheel Instllation
 Please move to your working directory and install the wheel file created in the build phase.
 ```sh
 $ pip install {QDD_DIR}/dist/qdd-XXX.whl

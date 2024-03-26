@@ -4,7 +4,6 @@ tags*
 .tags*
 build/
 .cache/
-.vscode/
 tmp/
 lib/
 result/
