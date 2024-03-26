@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <bitset>
 #include <map>
+#include <math.h>
 #include <queue>
+#include <unordered_map>
 #include <unordered_set>
 
 #ifdef isMPI
@@ -1156,6 +1158,37 @@ double assignProbabilities(const vEdge &edge,
     return edge.w.mag2() * sum;
 }
 
+std::vector<double> probabilities(const vEdge &rootEdge){
+    const auto nqubits = static_cast<QubitCount>(rootEdge.getVar() + 1);
+    std::unordered_map<vNode *, double> probs;
+    assignProbabilities(rootEdge, probs);
+    std::vector<double> result;
+    for(auto i = 0; i < pow(2,nqubits); i++){
+        vEdge cur = rootEdge;
+        double prob = 1.0;
+        for(Qubit j = rootEdge.getVar(); j >= 0; j--){
+            double p0 = probs[cur.n->getEdge(0).n] * cur.n->getEdge(0).w.mag2();
+            double p1 = probs[cur.n->getEdge(1).n] * cur.n->getEdge(1).w.mag2();
+            double tmp = p0 + p1;
+            if (tmp > 0){
+                p0 /= tmp;
+            }
+            if ((i>>j)%2 == 0){
+                prob *= p0;
+            }
+            else {
+                prob *= (1-p0);
+            }
+            if (prob == 0){
+                continue;
+            }
+            cur = cur.n->children.at((i>>j)%2);
+        }
+        result.push_back(prob);
+    }
+    return result;
+}
+
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon) {
     if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
@@ -1177,7 +1210,12 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
         double p1 = probs[cur.n->getEdge(1).n] * cur.n->getEdge(1).w.mag2();
         double tmp = p0 + p1;
 
-        p0 /= tmp;
+        if(tmp != 0){
+            p0 /= tmp;
+        }
+        else{
+            p0 = 0.5;
+        }
 
         const double threshold = dist(mt);
 
@@ -1315,6 +1353,21 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     rootEdge = e;
 
     return result;
+}
+
+double measureOne(vEdge &rootEdge, const Qubit index,
+                          std::mt19937_64 &mt, double epsilon) {
+    const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, index);
+    const double sum = pzero + pone;
+    if (std::abs(sum - 1) > epsilon) {
+        throw std::runtime_error(
+            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "|beta|^2 = " +
+            std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
+            std::to_string(pzero + pone) + ", but should be 1!");
+    }
+  
+    return pzero/sum;
 }
 
 mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {

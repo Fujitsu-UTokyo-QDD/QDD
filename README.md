@@ -15,42 +15,54 @@ You must prepare the following software.
 * cmake (>=3.25)
   * You can download the executable from [Official GitHub](https://github.com/Kitware/CMake/releases).
   * If you use Ubuntu, [the Kitware repository](https://apt.kitware.com/) is easier to install.
-* poetry
-  * See [the installation manual](https://python-poetry.org/docs/#installing-with-the-official-installer).
+* build
+  * Just install it via pip.
 
 You can build QDD as follows.
-```
+```sh
 $ cmake . -DCMAKE_BUILD_TYPE=Release
 $ cmake --build . -j
-$ poetry build
+$ python3 -m pip install build
+$ python3 -m build
 ```
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
 You can find an installable wheel file in 'dist' directory.
 
 ## Instllation
 Please move to your working directory and install the wheel file created in the build phase.
-```
+```sh
 $ pip install {QDD_DIR}/dist/qdd-XXX.whl
 ```
 
 ## Usage
 QDD works as a Qiskit backend.
 
-```
-from qiskit import QuantumCircuit, execute
-from qdd import QddBackend, QddProvider
+```py
+from qiskit import QuantumCircuit
+from qiskit.primitives import BackendSampler
+
+from qdd import QddProvider
 
 backend = QddProvider().get_backend()
 circ = QuantumCircuit(3)
 circ.h(0)
 circ.cx(0,1)
 circ.measure_all()
-qdd_job = execute(circ, backend=backend, shots=1000)
+sampler = BackendSampler(backend=backend)
+qdd_job = sampler.run(circuits=circ)
+print(qdd_job.result())
+```
+
+QDD has its own implementation of the Sampler class
+```py
+from qdd.qdd_sampler import Sampler
+sampler = Sampler()
+qdd_job = sampler.run(circuits=circ)
 print(qdd_job.result())
 ```
 
 If you need statevector, create the backend as follows.
-```
+```py
 backend = QddProvider().get_backend('statevector_simulator')
 ```
 

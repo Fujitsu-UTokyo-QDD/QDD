@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Union
 import traceback
 import os
 import sys
@@ -12,9 +12,10 @@ from qiskit.providers import BackendV1, JobV1, Options, Provider
 from qiskit.providers.models import BackendConfiguration
 from qiskit import QuantumCircuit as QiskitCircuit
 from qiskit.result import Result
-from qiskit.circuit import Barrier, Clbit, Instruction, Measure, ParameterExpression, Qubit, Reset
+from qiskit.circuit import Barrier, Clbit, Measure, Qubit, Reset
 import qiskit.circuit.library.standard_gates as qiskit_gates
-from qiskit.extensions import Initialize
+from qiskit.circuit.library import Initialize
+from qiskit.transpiler import CouplingMap
 
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
@@ -131,6 +132,10 @@ class QddBackend(BackendV1):
         super().__init__(
             configuration=configuration,
             provider=provider)
+        if self.configuration().coupling_map is not None:
+            self.coupling_map = CouplingMap(self.configuration().coupling_map)
+        else:
+            self.coupling_map = None
 
     @classmethod
     def _default_options(cls) -> Options:
@@ -233,9 +238,8 @@ class QddBackend(BackendV1):
 
         if ('parameter_binds' in run_options) and (run_options['parameter_binds'] is not None):
             param_bound_qiskit_circs = []
-            for qiskit_circ in qiskit_circs:
-                for bind in run_options['parameter_binds']:  # the type of run_options['parameter_binds'] is List[Dict]
-                    param_bound_qiskit_circs.append(qiskit_circ.bind_parameters(bind))
+            for qiskit_circ,binds in zip(qiskit_circs,run_options["parameter_binds"]):
+                param_bound_qiskit_circs.append(qiskit_circ.assign_parameters(binds))
         else:
             # no parameter bindings are specified
             param_bound_qiskit_circs = qiskit_circs
@@ -292,17 +296,18 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
     
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
-        start = time.time()
+#        start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
         self._create_cbitmap(circ)
-        sampled_values = [None] * options['shots']
-        print(len(circ.data), " gates")
+        if options["shots"]:
+            sampled_values = [None] * options['shots']
+#        print(len(circ.data), " gates")
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit)
             for i, qargs, cargs in circ.data:
-                qiskit_gate_type = type(i)
+                qiskit_gate_type = i.base_class
 
                 # filter out special cases first
                 if qiskit_gate_type == Barrier:
@@ -345,28 +350,34 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                 current = pyQDD.gc(current);
-            
-            for i in range(options['shots']):
-                _, result_tmp = pyQDD.measureAll(current, False)
-                result_final_tmp = ['0'] * n_cbit
-                mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
-                for cbit in mapping:
-                    result_final_tmp[self.get_cID(cbit)] = result_tmp[len(result_tmp)-1-self.get_qID(mapping[cbit])]                
-                sampled_values[i] = ''.join(reversed(result_final_tmp))
+
+            if options["shots"]:
+                for i in range(options['shots']):
+                    _, result_tmp = pyQDD.measureAll(current, False)
+                    result_final_tmp = ['0'] * n_cbit
+                    mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
+                    for cbit in mapping:
+                        result_final_tmp[self.get_cID(cbit)] = result_tmp[len(result_tmp)-1-self.get_qID(mapping[cbit])]
+                    sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
-            for shot in range(options['shots']):
+            if options["shots"]:
+                reps = options['shots']
+            else:
+                reps = 1
+            prob_cbit = [0] * (n_cbit)
+            for shot in range(reps):
                 current = pyQDD.makeZeroState(n_qubit)
                 val_cbit = ['0'] * n_cbit
                 for i, qargs, cargs in circ.data:
-                    qiskit_gate_type = type(i)
+                    qiskit_gate_type = i.base_class
 
                     # filter out special cases first
                     if qiskit_gate_type == Barrier:
                         continue
 
                     if qiskit_gate_type in _supported_qiskit_gates:
-                        
+
                         skipGate = False
                         for c_idx in cargs:
                             if val_cbit[self.get_cID(c_idx)] == '0':
@@ -400,7 +411,10 @@ class QddBackend(BackendV1):
                             raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            if options["shots"]:
+                                current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            else:
+                                current, prob_cbit[self.get_cID(cargs[0])] = pyQDD.measureOne(current, self.get_qID(qargs[0]))
                         elif qiskit_gate_type == Reset:
                             current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
                             if _meas_result == '1':
@@ -412,25 +426,59 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                     current = pyQDD.gc(current);
-                sampled_values[shot] = ''.join(reversed(val_cbit))
+                if options["shots"]:
+                    sampled_values[shot] = ''.join(reversed(val_cbit))
 
-        hex_sampled_counts = Counter(sampled_values)
-        result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
-        if options['memory']:
-            result_data['memory'] = sampled_values
-        if self._save_SV:
-            result_data["statevector"] = pyQDD.getVector(current)
-        header = QddBackend._create_experiment_header(circ)
-        result = {
-            'success': True,
-            'shots': options['shots'],
-            'data': result_data,
-            # Note: header information is used by several Qiskit functions; it must be contained in every result object.
-            # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
-            'header': header,
-        }
+        if options["shots"]:
+            sampled_counts = Counter(sampled_values)
+            bin_sampled_counts = {}
 
-        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
+            for key in range(2**n_cbit):
+                key_bin = f"{key:0{n_cbit}b}"
+                bin_sampled_counts[key_bin] = sampled_counts[key_bin]
+
+            result_data: Dict[str, Any] = {'counts': bin_sampled_counts}
+            if options['memory']:
+                result_data['memory'] = sampled_values
+            if self._save_SV:
+                result_data["statevector"] = pyQDD.getVector(current)
+            header = QddBackend._create_experiment_header(circ)
+            result = {
+                'success': True,
+                'shots': options['shots'],
+                'data': result_data,
+                # Note: header information is used by several Qiskit functions; it must be contained in every result object.
+                # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
+                'header': header,
+            }
+        else:
+            if circ_prop.stable_final_state:
+                prob = pyQDD.probabilities(current)
+            else:
+                prob = [1] * (2 ** n_cbit)
+                for i in range(2 ** n_cbit):
+                    for j in range(n_cbit):
+                        if i & (1 << j):
+                            prob[i] *= (1 - prob_cbit[j])
+                        else:
+                            prob[i] *= prob_cbit[j]
+            probabilities = {}
+            for i,p in enumerate(prob):
+                probabilities[i] = p
+            result_data: Dict[str, Any] = {"probabilities":probabilities}
+            if self._save_SV:
+                result_data["statevector"] = pyQDD.getVector(current)
+            header = QddBackend._create_experiment_header(circ)
+            result = {
+                'success': True,
+                'shots': options['shots'],
+                'data': result_data,
+                # Note: header information is used by several Qiskit functions; it must be contained in every result object.
+                # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
+                'header': header,
+            }
+
+#        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
         return result
 
     
@@ -474,14 +522,14 @@ class QddBackend(BackendV1):
         measured_qubits = set()
         clbit_final_values: Dict[Clbit, Qubit] = {}  # for each clbit, this holds the qubit last assigned to the clbit.
         for i, (inst, qargs, cargs) in enumerate(circ.data):
-            if type(inst) == Measure:
+            if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)
                 clbit_final_values[cargs[0]] = qargs[0]
                 measured_qubits |= set(qargs)
             elif inst.condition is not None \
                     or any(qubit in measured_qubits for qubit in qargs) \
-                    or type(inst) == Reset \
+                    or inst.base_class == Reset \
                     or inst.name == 'kraus' \
                     or inst.name == 'superop':
                 # Note: the condition value of 'superop' might have no meaning because SuperOp instances have
@@ -490,7 +538,7 @@ class QddBackend(BackendV1):
                 # https://github.com/Qiskit/qiskit-aer/blob/0.9.1/src/controllers/aer_controller.hpp#L1621
                 # So, we do the same check here just in case.
                 stable_final_state = False
-            elif type(inst) == Initialize:
+            elif inst.base_class == Initialize:
                 if i != 0 and len(qargs) < circ.num_qubits:
                     stable_final_state = False
 
@@ -515,10 +563,11 @@ class QddBackend(BackendV1):
         # Check if invalid options (i.e., causing errors) are specified
         if 'shots' in run_options:
             shots = run_options['shots']
-            max_shots = QddBackend._DEFAULT_CONFIG['max_shots']
-            if not (0 < shots <= max_shots):
-                raise RuntimeError(f'Shots={shots} is specified, but #shots must be positive and <= {max_shots}'
-                                   f' when using {QddBackend.__name__}.')
+            if shots is not None:
+                max_shots = QddBackend._DEFAULT_CONFIG['max_shots']
+                if not (0 < shots <= max_shots):
+                    raise RuntimeError(f'Shots={shots} is specified, but #shots must be positive and <= {max_shots}'
+                                       f' when using {QddBackend.__name__}.')
 
         # Warn if unsupported options are specified
         # Note: we cannot raise an error here because some Qiskit functions (e.g., execute(...)) adds some options to
