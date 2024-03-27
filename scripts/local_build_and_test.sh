@@ -49,10 +49,11 @@ if [[ "$1" == "test" ]]; then
     ) && \
 
     # Install requirements and execute pytest
-    python3 -m pip install $(python3 scripts/get_test_reqs.py) && \
+    #python3 -m pip install .[test] && \
+    python3 -m pip install $(python3 get_test_reqs) && \
     python3 -m pytest test && \
     ./test/qdd_test
-fi   
+fi
 
 # Deactivate venv if created
 echo $VENV_CREATED
