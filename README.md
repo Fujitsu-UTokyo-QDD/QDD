@@ -48,7 +48,7 @@ $ python3 -m build
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
 You can find an installable wheel file in 'dist' directory.
 
-Or, you can just execute 'scripts/local_build_and_test.sh build' in the project root to build the package automatically.
+Or, you can just execute `scripts/local_build_and_test.sh build` in the project root to build the package automatically.
 
 ### Wheel Instllation
 
