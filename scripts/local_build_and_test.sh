@@ -13,7 +13,6 @@ if [[ "$1" != "build" ]] && [[ "$1" != "test" ]]; then
 fi && \
 
 # create a virtualenv if you are not in it
-
 if [[ "$VIRTUAL_ENV" == "" ]]; then
     echo "You are not in a virtualenv. Creating a new virtualenv"
     python3 -m venv venv_qdd && source venv_qdd/bin/activate
