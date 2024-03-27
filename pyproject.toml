@@ -34,6 +34,12 @@ classifiers = [
 
 dependencies = [
     "qiskit-aer>=0.13.3",
+]
+
+# This command, 'pip install {package-name}[test]',
+# enables you to install the test dependencies along with the main dependencies
+[project.optional-dependencies]
+test = [
     "pytest>=7.2.2",
     "qiskit-machine-learning[sparse]>=0.6.0",
     "qiskit-algorithms==0.3.0",
