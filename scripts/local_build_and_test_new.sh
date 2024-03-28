@@ -27,7 +27,7 @@ if [ -d "qdd" ]; then # if qdd does not exist, it is not likely to be the projec
 else
     echo "Make sure to execute this file from the project root directory"
     exit 1
-fi && \
+fi
 
 
 if [[ "$1" == "build" ]]; then
@@ -48,7 +48,7 @@ if [[ "$1" == "test" ]]; then
 
     # Install requirements and execute pytest
     #python3 -m pip install .[test] && \
-    python3 -m pip install $(python3 get_test_reqs) && \
+    python3 -m pip install $(python3 scripts/get_test_reqs.py) && \
     python3 -m pytest test && \
     ./test/qdd_test
 fi
