@@ -2,8 +2,8 @@
 # "./scripts/local_build_and_test.sh [arg]"
 
 # The argument must be either "build" or "test".
-# Either way, a shared library (.so file) will be built first. If the executed environment does not use virtualenv, it will create one named "venv-qdd".       
-# After this script, it is deactivated, but not deleted entirely.   
+# Either way, a shared library (.so file) will be built first. If the executed environment does not use virtualenv, it will create one named "venv-qdd".
+# After this script, it is deactivated, but not deleted entirely.
 # If "build" is specified, it will install build package and then build sdist and bdist.
 # If "test" is specified, it will install toml package and test-requires packages in pyproject.toml and undergo pytest.
 
