@@ -23,14 +23,12 @@ fi && \
 
 # .so build
 if [ -d "qdd" ]; then # if qdd does not exist, it is not likely to be the project root, aborting
-    if ! compgen -G "qdd/*.so" &> /dev/null; then
-        echo ".so file does not exist. Building cmake"
-        cmake . -DCMAKE_BUILD_TYPE=Release && cmake --build . -j
-    fi
+    cmake . -DCMAKE_BUILD_TYPE=Release && cmake --build . -j
 else
     echo "Make sure to execute this file from the project root directory"
     exit 1
 fi && \
+
 
 if [[ "$1" == "build" ]]; then
     ( # build (sdist and wheel)
