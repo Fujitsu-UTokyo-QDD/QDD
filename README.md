@@ -36,7 +36,7 @@ You must prepare the following software.
 - build
   - Just install it via pip.
 
-You can build QDD as follows.
+You can manually build QDD as follows.
 
 ```sh
 $ cmake . -DCMAKE_BUILD_TYPE=Release
@@ -48,7 +48,15 @@ $ python3 -m build
 BUILD_TYPE can be either `Release`, `Debug` or `RelWithDebInfo`.
 You can find an installable wheel file in 'dist' directory.
 
-Or, you can just execute `scripts/local_build_and_test.sh build` in the project root to build the package automatically.
+Alternatively, you can just execute the shell script in the project root to build it in one line:
+
+```sh
+./scripts/local_build_and_test.sh build`
+```
+
+If virtualenv is not used, it will create a new one named "venv-qdd" under the project root.
+BUILD_TYPE is set to "Release" this way.
+If you want to just build C extension module (.so file), skipping distribution building process, you can specify "cmake" as the first argument of the shell script.
 
 ### Wheel Instllation
 
