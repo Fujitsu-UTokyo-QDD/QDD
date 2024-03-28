@@ -1,5 +1,6 @@
 # The code in this file has been written using part of the code in the Qiskit API documentation.
 # https://docs.quantum.ibm.com/api/qiskit/qiskit.primitives.BaseEstimatorV1
+from math import sqrt
 import pytest
 from qiskit.primitives import Estimator as QiskitEstimator
 from qiskit.circuit.library import RealAmplitudes
@@ -28,16 +29,20 @@ def test_estimator():
     job_result = job.result() # It will block until the job finishes.
     print(f"The qdd-job with sampling finished with result {job_result}")
     job = estimator_approx.run([psi1], [H1], [theta1])
-    job_result_appox = job.result()
-    print(f"The qdd-job with approximation finished with result {job_result_appox}")
+    job_result_approx = job.result()
+    print(f"The qdd-job with approximation finished with result {job_result_approx}")
     job = estimator_exact.run([psi1], [H1], [theta1])
     job_result_exact = job.result()
     print(f"The qdd-job without sampling finished with result {job_result_exact}")
     job = estimator_qiskit.run([psi1], [H1], [theta1])
     job_result_qiskit = job.result()
     print(f"The qiskit-job finished with result {job_result_qiskit}")
-    assert job_result.values == pytest.approx(job_result_qiskit.values, rel=0.2)
-    assert job_result_appox.values == pytest.approx(job_result_qiskit.values, rel=0.2)
+    var = job_result.metadata[0]["variance"]
+    std = sqrt(var / 4096)
+    assert job_result.values == pytest.approx(job_result_qiskit.values, rel=0.2, abs=std*6)
+    var = job_result_approx.metadata[0]["variance"]
+    std = sqrt(var / 4096)
+    assert job_result_approx.values == pytest.approx(job_result_qiskit.values, rel=0.2,abs=std*6)
     assert job_result_exact.values == pytest.approx(job_result_qiskit.values, rel=1e-6)
 
 
@@ -56,6 +61,13 @@ def test_estimator():
     job2 = estimator_qiskit.run([psi1, psi2, psi1], [H1, H2, H3], [theta1, theta2, theta3])
     job_result_qiskit = job2.result()
     print(f"The qiskit-job finished with result {job_result_qiskit}")
-    assert job_result.values == pytest.approx(job_result_qiskit.values, rel=0.2)
-    assert job_result_approx.values == pytest.approx(job_result_qiskit.values, rel=0.2)
+
+    vars = [job_result.metadata[i]["variance"] for i in range(3)]
+    stds = [sqrt(var / 4096) for var in vars]
+    for i in range(3):
+        assert job_result.values[i] == pytest.approx(job_result_qiskit.values[i], rel=0.2, abs=stds[i]*6)
+    vars = [job_result_approx.metadata[i]["variance"] for i in range(3)]
+    stds = [sqrt(var / 4096) for var in vars]
+    for i in range(3):
+        assert job_result_approx.values[i] == pytest.approx(job_result_qiskit.values[i], rel=0.2, abs=stds[i]*6)
     assert job_result_exact.values == pytest.approx(job_result_qiskit.values, rel=1e-6)

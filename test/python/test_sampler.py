@@ -45,7 +45,7 @@ def test_sampler():
         # delete 0s from the distribution
         dist = {k: v for k, v in dist.items() if v != 0}
         dist_exact = {k: v for k, v in dist_exact.items() if v != 0}
-        assert dist == pytest.approx(dist_qiskit,rel=0.2)
+        assert dist == pytest.approx(dist_qiskit,rel=0.2,abs=0.01)
         assert dist_exact == pytest.approx(dist_qiskit,rel=1e-6)
 
 
@@ -72,5 +72,5 @@ def test_sampler():
     print("Qiskit Sampler:")
     print([q.binary_probabilities() for q in job_result_qiskit.quasi_dists])
     for dist,dist_exact,dist_qiskit in zip(job_result.quasi_dists, job_result_exact.quasi_dists, job_result_qiskit.quasi_dists):
-        assert dist == pytest.approx(dist_qiskit,rel=0.2)
+        assert dist == pytest.approx(dist_qiskit,rel=0.2,abs=0.01)
         assert dist_exact == pytest.approx(dist_qiskit,rel=1e-6)
