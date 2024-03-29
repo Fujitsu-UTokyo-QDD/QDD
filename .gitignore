@@ -59,6 +59,6 @@ test/*_tests.cmake
 test/qcbm
 test/qdd_test
 
-venv_qdd/
+
 .venv_qdd/
 *.egg-info/
