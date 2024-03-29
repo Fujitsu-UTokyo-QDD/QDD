@@ -39,17 +39,10 @@ if [[ "$1" == "build" ]]; then
 fi && \
 
 if [[ "$1" == "test" ]]; then
-    # Install toml, if not installed
-    (
-        if ! pip show toml &> /dev/null; then
-            python3 -m pip install toml
-        fi
-    ) && \
 
     # Install test requirements and execute pytest
     python3 -m pip install -e .[test] && \
-    #python3 -m pip install $(python3 scripts/get_test_reqs.py) && \
-    
+
     # Note:
     # In pytest, qdd will be imported. Which will the test python script import qdd from, sandbox or site-packages?
     # The answer is the sandbox, as sys.path, which python refers to sequentially upon importing packages, starts with empty string, which denotes the current directory.
