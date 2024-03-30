@@ -1,9 +1,10 @@
-name: Publish Python distribution to PyPI
+name: Build wheel test
 
 on:
   push:
     branches:
       - "main"
+      - "feature/musl"
 jobs:
   build:
     name: Build distribution
@@ -36,24 +37,3 @@ jobs:
         with:
           name: python-package-distributions
           path: ./wheelhouse/*.whl
-
-  publish-to-pypi:
-    name: Publish Python distribution to PyPI
-    needs:
-      - build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: pypi
-      url: https://pypi.org/p/qdd
-    permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@v3
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
