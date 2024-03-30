@@ -61,7 +61,7 @@ If you want to just build C extension module (.so file), skipping distribution b
 
 ### Test (Optional)
 
-This source distribution provides functionality and performance tests with `pytest`.
+This source distribution provides functionality and performance tests with `pytest` and `./test/qdd_test`.
 
 Command
 
