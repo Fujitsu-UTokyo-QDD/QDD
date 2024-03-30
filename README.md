@@ -73,7 +73,7 @@ $ pytest test
 $ ./test/qdd_test
 ```
 
-If you want just to use this package, not editing itself, it is NOT recommended to execute these commands in your in-use virtualenv because it will install qdd package as editable, and qdd will not be installed under site-packages and python will try to import it from this directory whenever it is imported. In that case, it would be better to install qdd to your working virtualenv from binary distribution or without -e option, or execute these commands in a separated virtualenv. However, if you want to contribute to this package, it would be a nice way to keep using the environment because your edits will be reflected immediately to the package.
+If you want just to use this package, not editing itself, it is NOT recommended to execute these commands in your in-use virtualenv because it will install qdd package as editable, and qdd will not be installed under site-packages and python will try to import it from this directory whenever it is imported. In that case, it would be better to install qdd to your working virtualenv from binary distribution or without `-e` option, or execute these commands in a separated virtualenv. However, if you want to contribute to this package, it would be a nice way to keep using the environment because your edits will be reflected immediately to the package.
 
 Alternatively, you can just execute the shell script in the project root to test this package in one line:
 
