@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "feature/musl"
 jobs:
   build:
     name: Build distribution
