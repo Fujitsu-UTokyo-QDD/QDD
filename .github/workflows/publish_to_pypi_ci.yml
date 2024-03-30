@@ -1,56 +1,55 @@
 name: Publish Python distribution to PyPI
 
 on:
-    push:
-        branches:
-            - 'main'
+  push:
+    branches:
+      - "main"
 jobs:
-    build:
-        name: Build distribution
-        runs-on: ubuntu-22.04
+  build:
+    name: Build distribution
+    runs-on: ubuntu-22.04
 
-        strategy:
-            matrix:
-                include:
-                    - python-version: '3.8'
-                      python-version-sub: '38'
-                    - python-version: '3.9'
-                      python-version-sub: '39'
-                    - python-version: '3.10'
-                      python-version-sub: '310'
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.8"
+            python-version-sub: "38"
+          - python-version: "3.9"
+            python-version-sub: "39"
+          - python-version: "3.10"
+            python-version-sub: "310"
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            # Build by cibuildwheel
-            - name: Build wheels
-              uses: pypa/cibuildwheel@v2.16.5
-              env:
-                  python-version: ${{ matrix.python-version }}
-                  # Modify as needed, you may need to adjust this line according to your requirements
-                  CIBW_BUILD: 'cp${{ matrix.python-version-sub }}-manylinux_x86_64'
-                  CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
+      # Build by cibuildwheel
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.16.5
+        env:
+          python-version: ${{ matrix.python-version }}
+          # Modify as needed, you may need to adjust this line according to your requirements
+          CIBW_BUILD: "cp${{ matrix.python-version-sub }}-manylinux_x86_64"
+          CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
 
-            - name: Store the distribution packages
-              uses: actions/upload-artifact@v3
-              with:
-                  name: python-package-distributions
-                  path: ./wheelhouse/*.whl
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package-distributions
+          path: ./wheelhouse/*.whl
 
-          
-    publish-to-pypi:
-      name: Publish Python distribution to PyPI
-      needs:
+  publish-to-pypi:
+    name: Publish Python distribution to PyPI
+    needs:
       - build
-      runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
-      environment:
-        name: pypi
-        url: https://pypi.org/p/qdd
-      permissions:
-        id-token: write  # IMPORTANT: mandatory for trusted publishing
+    environment:
+      name: pypi
+      url: https://pypi.org/p/qdd
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
 
-      steps:
+    steps:
       - name: Download all the dists
         uses: actions/download-artifact@v3
         with:
