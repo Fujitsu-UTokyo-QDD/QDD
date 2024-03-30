@@ -84,7 +84,7 @@ $ ./scripts/local_build_and_test.sh test
 If virtualenv is not used, it will create a new one named `.venv-qdd` under the project root.
 This command includes the build of C++ extension module. BUILD_TYPE is set to `Release`.
 
-If you pass all tests, please go on to create wheel file to install it as written in the section Build and Wheel Installation.
+If you pass all tests, please go on to create wheel file to install it as written in the section "Build" and "Wheel Installation".
 Note that some performance tests might fail depending on your computer's spec.
 
 ### Wheel Installation
