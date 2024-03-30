@@ -51,12 +51,41 @@ You can find an installable wheel file in 'dist' directory.
 Alternatively, you can just execute the shell script in the project root to build it in one line:
 
 ```sh
-./scripts/local_build_and_test.sh build
+$ ./scripts/local_build_and_test.sh build
 ```
 
 If virtualenv is not used, it will create a new one named `.venv-qdd` under the project root.
 BUILD_TYPE is set to `Release` this way.
 If you want to just build C extension module (.so file), skipping distribution building process, you can specify `cmake` as the first argument of the shell script.
+
+
+### Test (Optional)
+
+This source distribution provides functionality and performance tests with `pytest`.
+
+Command
+
+```sh
+$ cmake . -DCMAKE_BUILD_TYPE=Release
+$ cmake --build . -j
+$ pip install -e .[test]
+$ pytest test
+$ ./test/qdd_test
+```
+
+If you want just to use this package, not editing itself, it is NOT recommended to execute these commands in your in-use virtualenv because it will install qdd package as editable, and qdd will not be installed under site-packages and python will try to import it from this directory whenever it is imported. In that case, it would be better to install qdd to your working virtualenv from binary distribution or without -e option, or execute these commands in a separated virtualenv. However, if you want to contribute to this package, it would be a nice way to keep using the environment because your edits will be reflected immediately to the package.
+
+Alternatively, you can just execute the shell script in the project root to test this package in one line:
+
+```sh
+$ ./scripts/local_build_and_test.sh test
+```
+
+If virtualenv is not used, it will create a new one named `.venv-qdd` under the project root.
+This command includes the build of C++ extension module. BUILD_TYPE is set to `Release`.
+
+If you pass all tests, please go on to create wheel file to install it as written in the section Build and Wheel Installation.
+Note that some performance tests might fail depending on your computer's spec.
 
 ### Wheel Installation
 
@@ -65,33 +94,6 @@ Please move to your working directory and install the wheel file created in the 
 ```sh
 $ pip install {QDD_DIR}/dist/qdd-XXX.whl
 ```
-
-### Test (Optional)
-
-This source distribution provides functionality and performance tests with `pytest`.
-First, make sure to generate .so file first by cmake commands (execute the first two lines in the first code snippet in the section Build)
-Next, install this package with test extension
-Finally, execute pytest and the `qdd_test` executable.
-
-```sh
-pip install -e .[test]
-pytest test
-./test/qdd_test
-```
-
-If you want just to use this package, not editing itself, it is NOT recommended to execute these commands in your in-use virtualenv because it will install qdd package as editable, and qdd will not be installed under site-packages and python will try to import it from this directory whenever it is imported. With that case, it would be better to install qdd to your working virtualenv from binary distribution or without -e option, or execute these commands in a separated virtualenv. However, if you want to contribute to this package, it would be a nice way to keep using the environment because edits will be immediately reflected to the package.
-
-Alternatively, you can just execute the shell script in the project root to test this package in one line:
-
-```sh
-./scripts/local_build_and_test.sh test
-```
-
-If virtualenv is not used, it will create a new one named `.venv-qdd` under the project root.
-This command includes the build of C++ extension module. BUILD_TYPE is set to `Release`.
-
-If you pass all tests, please go on to create wheel file to install it as written in the section Build and Wheel Installation.
-Note that some performance tests might fail depending on your computer's spec.
 
 ## Usage
 
