@@ -1,0 +1,33 @@
+name: Test library on pull request
+
+on: pull_request
+
+jobs:
+  build:
+    name: Build and test distribution
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.8"
+            python-version-sub: "38"
+          - python-version: "3.9"
+            python-version-sub: "39"
+          - python-version: "3.10"
+            python-version-sub: "310"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build by cibuildwheel
+      - name: Build wheels and run tests
+        uses: pypa/cibuildwheel@v2.16.5
+        env:
+          python-version: ${{ matrix.python-version }}
+          # Modify as needed, you may need to adjust this line according to your requirements
+          CIBW_BUILD: "cp${{ matrix.python-version-sub }}-manylinux_x86_64"
+          CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
+          CIBW_TEST_COMMAND: "pytest {project}/test && {project}/test/qdd_test"
