@@ -23,7 +23,6 @@ from qdd.qdd_job import QddJob
 from .circuit_property import CircuitProperty
 
 from qdd import pyQDD
-from mpi4py import MPI
 import math
 
 _qiskit_gates_1q: Dict = {
@@ -372,6 +371,7 @@ class QddBackend(BackendV1):
         global_list = list()
         map_after_swap = {x: x for x in range(circ.num_qubits)}
         if use_mpi:
+            from mpi4py import MPI
             circ = MPI.COMM_WORLD.bcast(circ, root=0)
             circ_prop = MPI.COMM_WORLD.bcast(circ_prop, root=0)
             if pow(2, circ.num_qubits) <= MPI.COMM_WORLD.Get_size():
@@ -391,8 +391,6 @@ class QddBackend(BackendV1):
         self._create_qubitmap(circ)
         self._create_cbitmap(circ)
         sampled_values = [None] * options['shots']
-        if MPI.COMM_WORLD.Get_rank()==0:
-            print(len(circ.data), " gates")
         count=0
         if circ_prop.stable_final_state:
             current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
