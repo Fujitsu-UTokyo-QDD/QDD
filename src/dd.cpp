@@ -30,6 +30,7 @@
 
 mNodeTable mUnique(NQUBITS);
 vNodeTable vUnique(NQUBITS);
+std::unordered_map<vNode *, double> probs;
 
 std::vector<mEdge> identityTable(NQUBITS);
 
@@ -1216,16 +1217,15 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     return v;
 }
 
-double assignProbabilities(const vEdge &edge,
-                           std::unordered_map<vNode *, double> &probs) {
+double assignProbabilities(const vEdge &edge) {
     auto it = probs.find(edge.n);
     if (it != probs.end()) {
         return edge.w.mag2() * it->second;
     }
     double sum{1};
     if (!edge.isTerminal()) {
-        sum = assignProbabilities(edge.n->children.at(0), probs) +
-              assignProbabilities(edge.n->children.at(1), probs);
+        sum = assignProbabilities(edge.n->children.at(0)) +
+              assignProbabilities(edge.n->children.at(1));
     }
 
     probs.insert({edge.n, sum});
@@ -1236,21 +1236,22 @@ double assignProbabilities(const vEdge &edge,
 #ifdef isMPI
 std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse, std::mt19937_64 &mt, double epsilon){
     assert(collapse == false);
-    std::unordered_map<vNode *, double> each_probs;
-    double each_prob = assignProbabilities(rootEdge, each_probs);
+    if(probs.find(rootEdge.n) == probs.end()){
+        assignProbabilities(rootEdge);
+    }
+    double each_prob = probs[rootEdge.n] * rootEdge.w.mag2();
     std::string each_result = measureAll(rootEdge, collapse, mt, epsilon);
     std::string result = "";
-    std::vector<double> probs;
-    std::vector<std::string> strings;
+    std::vector<double> vec_prob;
+    std::vector<std::string> vec_strings;
 
     if(world.rank()==0){
-        bmpi::gather(world, each_prob, probs, 0);
-        bmpi::gather(world, each_result, strings, 0);
+        bmpi::gather(world, each_prob, vec_prob, 0);
+        bmpi::gather(world, each_result, vec_strings, 0);
         double sum=0;
         for (int i = 0; i < world.size(); i++)
         {
-            //std::cout << probs[i] << " ";
-            sum += probs[i];
+            sum += vec_prob[i];
         }
         //std::cout << "sum=" << sum << std::endl;
         std::uniform_real_distribution<double> dist(0.0, sum);
@@ -1258,7 +1259,7 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool
         double current = 0;
         int target_rank = 0;
         for (int i = 0; i < world.size(); i++){
-            current += probs[i];
+            current += vec_prob[i];
             target_rank = i;
             if(threshold <= current){
                 break;
@@ -1275,13 +1276,12 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool
                 result += '0';
             }
         }
-        //std::cout << result << "+"<< strings[target_rank] << std::endl;
-        result += strings[target_rank];
+        result += vec_strings[target_rank];
     }
     else
     {
-        bmpi::gather(world, each_prob, probs, 0);
-        bmpi::gather(world, each_result, strings, 0);
+        bmpi::gather(world, each_prob, vec_prob, 0);
+        bmpi::gather(world, each_result, vec_strings, 0);
     }
     bmpi::broadcast(world, result, 0);
     return result;
@@ -1290,19 +1290,14 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon) {
-    // if (std::abs(rootEdge.w.mag2() - 1.0L) > epsilon) {
-    //     if (rootEdge.w.isApproximatelyZero()) {
-    //         throw std::runtime_error("led to a 0-vector");
-    //     }
-    // }
-
-    std::unordered_map<vNode *, double> probs;
-    assignProbabilities(rootEdge, probs);
-
     vEdge cur = rootEdge;
     const auto nqubits = static_cast<QubitCount>(rootEdge.getVar() + 1);
     std::string result(nqubits, '0');
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
+
+    if(probs.find(rootEdge.n) == probs.end()){
+        assignProbabilities(rootEdge);
+    }
 
     for (Qubit i = rootEdge.getVar(); i >= 0; --i) {
         double p0 = probs[cur.n->getEdge(0).n] * cur.n->getEdge(0).w.mag2();
@@ -1384,9 +1379,9 @@ determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
     double pzero{0};
     double pone{0};
 
-    
-    std::unordered_map<vNode *, double> probs;
-    assignProbabilities(rootEdge, probs);
+    if(probs.find(rootEdge.n) == probs.end()){
+        assignProbabilities(rootEdge);
+    }
 
     while (!q.empty()) {
         vNode *ptr = q.front();
@@ -1810,7 +1805,7 @@ vEdge gc(vEdge state, bool force){
         return state;
     }
 
-
+    probs.clear();
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
     int nNodes = vNode_to_vec(state.n, v, map);
