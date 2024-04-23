@@ -475,6 +475,8 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
 #ifdef isMPI
 std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse, 
                           std::mt19937_64 &mt, double epsilon = 0.001);
+char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits, 
+                          std::mt19937_64 &mt, double epsilon = 0.001);
 #endif
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);

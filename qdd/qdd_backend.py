@@ -538,9 +538,6 @@ class QddBackend(BackendV1):
                 sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
-            if use_mpi==True:
-                print("ERROR: Intermediate measurement is not supported in MPI mode.")
-                assert(0)
             for shot in range(options['shots']):
                 current = pyQDD.makeZeroState(n_qubit)  if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
                 val_cbit = ['0'] * n_cbit
@@ -552,18 +549,9 @@ class QddBackend(BackendV1):
                         continue
 
                     if qiskit_gate_type in _supported_qiskit_gates:
-                        
-                        skipGate = False
-                        for c_idx in cargs:
-                            if val_cbit[self.get_cID(c_idx)] == '0':
-                                skipGate = True
-                                break
-                        if skipGate:
-                            continue
-
                         if qiskit_gate_type in _qiskit_gates_1q:
                             gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_rotations_1q:
                             if qiskit_gate_type == qiskit_gates.U3Gate or qiskit_gate_type == qiskit_gates.UGate:
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
@@ -578,26 +566,26 @@ class QddBackend(BackendV1):
                                 gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
                             else:
                                 gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_gates_2q:
                             gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))# target, control
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_1q_control:
                             controls = []
                             for idx in range(len(qargs)-1):
                                 controls.append(self.get_qID(qargs[idx]))
                             gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], self.get_qID(qargs[-1]), controls)
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         else:
                             raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
-                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0])) if use_mpi==False else pyQDD.measureOneCollapsingMPI(current, self.get_qID(qargs[0]), n_qubit)
                         elif qiskit_gate_type == Reset:
-                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0])) if use_mpi==False else pyQDD.measureOneCollapsingMPI(current, self.get_qID(qargs[0]), n_qubit)
                             if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
-                                current = pyQDD.mv_multiply(gate, current)
+                                current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         else:
                             # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
                             raise RuntimeError(f'Unsupported gate or instruction:'

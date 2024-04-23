@@ -1399,6 +1399,69 @@ determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
     return {pzero, pone};
 }
 
+#ifdef isMPI
+char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits, 
+                          std::mt19937_64 &mt, double epsilon) {
+    const int global_size = log2(world.size()); // e.g. 1
+    const int local_size = n_qubits - global_size; // e.g. 3-1=2
+    const int rank = world.rank();
+    char result = '1';
+    // std::cout << "global=" << global_size << " local=" << local_size << " index=" << index << " n_qubits=" << n_qubits << std::endl;
+    double pzero=0.0, pone=0.0;
+    
+    double p_each = assignProbabilities(rootEdge);
+
+    if(index >= local_size){
+        int id = (rank << index) & (1 << index);
+        if(id==0){
+            pzero = p_each;
+        }else{
+            pone = p_each;
+        }
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl; 
+    }else{
+        if (p_each > 0){
+            auto tmp = determineMeasurementProbabilities(rootEdge, index);
+            pzero = tmp.first;
+            pone = tmp.second;
+        }      
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl;  
+    }
+
+    double pzero_all = bmpi::all_reduce(world, pzero, std::plus<double>());
+    double pone_all = bmpi::all_reduce(world, pone, std::plus<double>());
+    assert(pzero_all != 0.0 || pone_all != 0.0);
+
+    if (rank == 0){
+        std::uniform_real_distribution<double> dist(0.0, pzero_all+pone_all);
+        double threshold = dist(mt);
+        if (threshold < pzero_all) {
+            result = '0';
+        }
+    }
+
+    bmpi::broadcast(world, result, 0);
+    double normalizationFactor;
+    GateMatrix measurementMatrix{cf_zero, cf_zero, cf_zero, cf_zero};
+    if(result=='0'){
+        measurementMatrix[0] = cf_one;
+        normalizationFactor = pzero_all;
+    }else{
+        measurementMatrix[3] = cf_one;
+        normalizationFactor = pone_all;
+    }
+    assert(normalizationFactor > 0);
+    mEdge measurementGate = makeGate(n_qubits, measurementMatrix, index);
+    vEdge e = mv_multiply_MPI(measurementGate, rootEdge, world, n_qubits, index);
+    std_complex c = {std::sqrt((pzero_all+pone_all) / normalizationFactor), 0};
+    c = e.w * c;
+    e.w = c;
+    rootEdge = e;
+
+    return result;
+}
+#endif
+
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon) {
     const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, index);

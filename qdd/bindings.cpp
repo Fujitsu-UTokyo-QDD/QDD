@@ -106,6 +106,12 @@ std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge, const bool collaps
     std::string result = measureAllMPI(_world, rootEdge, collapse, mt);
     return std::pair<vEdge, std::string>(rootEdge, result);
 }
+
+std::pair<vEdge, char> _measureOneCollapsingMPI(vEdge &rootEdge, const Qubit index, const Qubit n_qubits){
+    char result = measureOneCollapsingMPI(_world, rootEdge, index, n_qubits, mt);
+    return std::pair<vEdge, char>(rootEdge, result);
+}
+
 void dump_mpi(){
     std::cout << _world.rank() << "/" << _world.size() << std::endl;
 }
@@ -177,7 +183,7 @@ PYBIND11_MODULE(pyQDD, m){
         .def("getVectorMPI", _getVectorMPI)
         .def("save_binary", save_binary)
         .def("load_binary", load_binary)
-        //measureOneCollapsingMPI
+        .def("measureOneCollapsingMPI", _measureOneCollapsingMPI)
         ;
 #endif
 
