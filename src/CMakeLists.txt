@@ -8,12 +8,12 @@ if(isMPI OR isMT)
   target_link_libraries(engine PUBLIC ${Boost_LIBRARIES})
 endif()
 
-if(isMT)
-add_library(alg STATIC algorithms/grover.cpp algorithms/shor.cpp)
+add_library(alg STATIC algorithms/grover.cpp algorithms/shor.cpp algorithms/shor_update.cpp)
 target_include_directories(alg PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(alg PUBLIC engine task)
 
 
+if(isMT)
 add_library(task STATIC task.cpp)
 target_include_directories(task PUBLIC  ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(task PUBLIC  engine)

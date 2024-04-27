@@ -1,0 +1,13 @@
+{
+  "configurations": [
+    {
+      "name": "Linux",
+      "compileCommands": "../compile_commands.json",
+      "cppStandard": "c++17",
+      "includePath": [
+        "../include",
+        "/usr/include"
+      ]
+    }
+  ]
+}
