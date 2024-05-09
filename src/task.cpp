@@ -149,8 +149,7 @@ void Scheduler::spawn() {
         this->_nworkers + 1);
 }
 
-Scheduler::Scheduler(int n, int gcfreq) : _nworkers(n), _gcfreq(gcfreq) {
-
+Scheduler::Scheduler(int n) : _nworkers(n){
     for (int i = 0; i < _nworkers; i++) {
         _workers.emplace_back(WorkerThread());
     }
@@ -163,99 +162,4 @@ Scheduler::~Scheduler() {
     for (WorkerThread &w : _workers) {
         w._thread->join();
     }
-
-    std::size_t add_lk = 0;
-    std::size_t add_h = 0;
-    std::size_t mul_lk = 0;
-    std::size_t mul_h = 0;
-#ifdef CACHE
-
-    for (AddCache &c : _aCache) {
-        add_lk += c.lookups;
-        add_h += c.hits;
-    }
-    for (MulCache &c : _mCache) {
-        mul_lk += c.lookups;
-        mul_h += c.hits;
-    }
-#endif
-#ifdef CACHE_GLOBAL
-    add_lk = _aCache_global.lookups;
-    add_h = _aCache_global.hits;
-    mul_lk = _mCache_global.lookups;
-    mul_h = _mCache_global.hits;
-#endif
-    std::cout << "add cache hit ratio: " << (1.0 * add_h) / add_lk << std::endl;
-    std::cout << "mul cache hit ratio: " << (1.0 * mul_h) / mul_lk << std::endl;
-}
-
-void Scheduler::addGate(const mEdge &e) { _gates.emplace_back(e); }
-
-void Scheduler::clearCache() {
-#ifdef CACHE
-    for (auto _alocal : _aCache) {
-        // _alocal.hitRatio();
-        _alocal.clearAll();
-    }
-    for (auto _mlocal : _mCache) {
-        //_mlocal.hitRatio();
-        _mlocal.clearAll();
-    }
-#endif
-#ifdef CACHE_GLOBAL
-    _aCache_global.clearAll();
-    _mCache_global.clearAll();
-#endif
-}
-
-vEdge Scheduler::buildCircuit(vEdge input) {
-
-    vEdge v = input;
-
-    for (auto i = 0; i < _gates.size(); i++) {
-        //        if(i%100==0)
-        //          std::cout << "### " << i << " ###\n";
-        v = mv_multiply(_gates[i], v);
-
-        if (i % _gcfreq == 0 && i) {
-            std::cout << "gc" << std::endl;
-            //            v.incRef();
-            //            vUnique.gc();
-            //            v.decRef();
-            vNodeTable new_table(NQUBITS);
-            makeUniqueForV(v, new_table);
-            vUnique = std::move(new_table);
-            clearCache();
-        }
-    }
-
-    return v;
-}
-mEdge Scheduler::buildUnitary(const std::vector<mEdge> &g) {
-
-    if (g.size() == 0) {
-        return mEdge();
-    }
-
-    mEdge rhs = g[0];
-    for (int i = 1; i < g.size(); i++) {
-        // std::cout<<"i: "<<i<<std::endl;
-        rhs = mm_multiply(g[i], rhs);
-    }
-    return rhs;
-}
-
-void makeUniqueForV(vEdge &root, CHashTable<vNode> &v) {
-    if (root.isTerminal())
-        return;
-
-    makeUniqueForV(root.n->children[0], v);
-    makeUniqueForV(root.n->children[1], v);
-
-    vNode *n = v.getNode();
-    n->v = root.n->v;
-    n->children = root.n->children;
-    n = v.lookup(n);
-    root.n = n;
-    return;
 }
