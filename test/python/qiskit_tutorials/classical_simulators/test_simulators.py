@@ -132,8 +132,6 @@ def test_custom_simulator_instructions():
     counts = simulator.run(circ, seed_simulator=80).result().get_counts()
     assert '01' in counts
     assert '11' in counts
-    assert counts['00'] == 0
-    assert counts['10'] == 0
 
     # set_density_matrix
     rho = random_density_matrix(2 ** num_qubits, seed=100)

@@ -609,14 +609,8 @@ class QddBackend(BackendV1):
                     sampled_values[shot] = ''.join(reversed(val_cbit))
 
         if options["shots"]:
-            sampled_counts = Counter(sampled_values)
-            bin_sampled_counts = {}
-
-            for key in range(2**n_cbit):
-                key_bin = f"{key:0{n_cbit}b}"
-                bin_sampled_counts[key_bin] = sampled_counts[key_bin]
-
-            result_data: Dict[str, Any] = {'counts': bin_sampled_counts}
+            hex_sampled_counts = Counter(sampled_values)
+            result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
             if options['memory']:
                 result_data['memory'] = sampled_values
             if self._save_SV:
