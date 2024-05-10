@@ -19,7 +19,7 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
         backend.set_options(use_mpi=True, use_auto_swap=use_auto_swap, swap_ver=swap_ver, use_bcast=use_bcast)
         print("MPI enabled, use_bcast=",use_bcast)
         print("use_auto_swap", use_auto_swap, swap_ver)
-    pyQDD.set_params(1024*64, 1024*1024, 1024*1024) # 1つ目（テーブルクリア）と3つ目（キャッシュクリア）のパラメタを調整してください org 1024*512, 1024*1024, 1024*1024*2
+    pyQDD.set_gc_thr(1024*64, 1024*1024) # You can manipulate these parameters
     #backend = Aer.get_backend('qasm_simulator')
     if nThread>1:
         print("enabling mt...")
