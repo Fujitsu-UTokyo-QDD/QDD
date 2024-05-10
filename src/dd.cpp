@@ -1977,7 +1977,7 @@ int get_nNodes(vEdge e){
     return num;
 }
 
-int GC_SIZE = 131072*16;
+int GC_SIZE = 1024 * 64;
 vEdge gc(vEdge state, bool force){
     if(vUnique.get_allocations()<GC_SIZE && force==false){
         return state;
@@ -2011,7 +2011,7 @@ vEdge gc(vEdge state, bool force){
     return state;
 }
 
-int GC_SIZE_M = 131072*16;
+int GC_SIZE_M = 1024 * 64;
 mEdge gc_mat(mEdge mat, bool force){
     if(mUnique.get_allocations()<GC_SIZE_M && force==false){
         return mat;
@@ -2050,7 +2050,7 @@ mEdge gc_mat(mEdge mat, bool force){
     return mat;
 }
 
-void set_params(int gc_v, int gc_m, int clear_cache){
+void set_gc_thr(int gc_v, int gc_m){
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
     return;

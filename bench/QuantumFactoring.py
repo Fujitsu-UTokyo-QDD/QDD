@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from qiskit import QuantumCircuit as QiskitCircuit
-from qiskit.extensions import UnitaryGate
 import sympy.ntheory.factor_ , numpy
 from cmath import exp
 import math
@@ -433,84 +432,22 @@ class QuantumCircuitForFactoringWithQulacs:
         self.qft_rotations(n, position)
 
 
-    def add_CkR_gate(self, param, controlled_bit_list, target_bit, decompose_to_elementary_gates=False):
-        if decompose_to_elementary_gates:
-            self.add_CkR_gate_with_elementary_gates(param, controlled_bit_list, target_bit)
-        else:
-            # gate = DenseMatrix(target_bit, [[1,0],[0,exp((0 + 1j) * param)]])
-            # for control_bit in controlled_bit_list:
-            #     gate.add_control_qubit(control_bit, 1) # 制御ビットが1のときに適用 
-            #self.circuit.add_gate(gate)
-            self.qisc.mcp(param, controlled_bit_list, target_bit)
+    def add_CkR_gate(self, param, controlled_bit_list, target_bit):
+        # gate = DenseMatrix(target_bit, [[1,0],[0,exp((0 + 1j) * param)]])
+        # for control_bit in controlled_bit_list:
+        #     gate.add_control_qubit(control_bit, 1) # 制御ビットが1のときに適用 
+        #self.circuit.add_gate(gate)
+        self.qisc.mcp(param, controlled_bit_list, target_bit)
 
-            number_of_controlled_bit = len(controlled_bit_list)
-            if number_of_controlled_bit == 0:
-                self.num_R_gate += 1
-            elif number_of_controlled_bit == 1:
-                self.num_CR_gate += 1
-            elif number_of_controlled_bit == 2:
-                self.num_C2R_gate += 1
-            else:
-                print("Error in add_CkR_gate: number_of_controlled_bit over 2")
-    
-    def add_CkR_gate_with_elementary_gates(self, param, controlled_bit_list, target_bit):
         number_of_controlled_bit = len(controlled_bit_list)
-
         if number_of_controlled_bit == 0:
-            self.qisc.p(param, target_bit)
-            self.num_R_gate +=1
+            self.num_R_gate += 1
         elif number_of_controlled_bit == 1:
-            theta = 0
-            delta = param/2 # param = 2*pi/2^k
-            alpha = -param/2
-            beta = -param/2
-            A = numpy.matmul(R_z_matrix(alpha), R_y_matrix(theta/2))
-            B = numpy.matmul(R_y_matrix(-theta/2), R_z_matrix(-alpha/2-beta/2))
-            E = numpy.matmul(R_z_matrix(-delta), Phi_matrix(delta/2))
-
-            self.qisc.append(UnitaryGate(E.tolist()), [controlled_bit_list[0]])
-            self.qisc.append(UnitaryGate(A.tolist()), [target_bit])
-            self.add_ck_not_circuit([controlled_bit_list[0]], target_bit)
-            self.qisc.append(UnitaryGate(B.tolist()), [target_bit])
-            self.add_ck_not_circuit([controlled_bit_list[0]], target_bit)
-
-            self.num_single_gates += 3 # E, B, C
-        elif len(controlled_bit_list) == 2:
-            param /= 2
-            theta = 0
-            delta = param/2 
-            alpha = -param/2
-            beta = -param/2
-            
-            A = numpy.matmul(R_z_matrix(alpha), R_y_matrix(theta/2))
-            B = numpy.matmul(R_y_matrix(-theta/2), R_z_matrix(-alpha/2-beta/2))
-            E = numpy.matmul(R_z_matrix(-delta), Phi_matrix(delta/2))
-            Bdg = numpy.matmul(R_z_matrix(alpha/2+beta/2), R_y_matrix(theta/2))
-            Edg = numpy.matmul(Phi_matrix(-delta/2), R_z_matrix(delta))
-            
-            self.qisc.append(UnitaryGate(E.tolist()), [controlled_bit_list[1]])
-            self.qisc.append(UnitaryGate(A.tolist()), [target_bit])
-            self.add_ck_not_circuit([controlled_bit_list[1]], target_bit)
-            self.qisc.append(UnitaryGate(B.tolist()), [target_bit])
-
-            self.add_ck_not_circuit([controlled_bit_list[0]], controlled_bit_list[1])
-            self.add_ck_not_circuit([controlled_bit_list[0]], target_bit)
-
-            self.qisc.append(UnitaryGate(Bdg.tolist()), [target_bit])
-            self.qisc.append(UnitaryGate(Edg.tolist()), [controlled_bit_list[1]])
-
-            self.add_ck_not_circuit([controlled_bit_list[0]], controlled_bit_list[1])
-            self.add_ck_not_circuit([controlled_bit_list[1]], target_bit)
-
-            self.qisc.append(UnitaryGate(E.tolist()), [controlled_bit_list[0]])
-            self.qisc.append(UnitaryGate(B.tolist()), [target_bit])
-            self.add_ck_not_circuit([controlled_bit_list[0]], target_bit)
-
-            self.num_single_gates += 7 # E, A, B, Bdg, Edg, E, B
+            self.num_CR_gate += 1
+        elif number_of_controlled_bit == 2:
+            self.num_C2R_gate += 1
         else:
-            print("Error in add_CkR_gate_with_elementary_gates: controlled bits over 2")
-
-    
+            print("Error in add_CkR_gate: number_of_controlled_bit over 2")    
 
     def swap_registers(self, n, position):
         for i in range(n//2):

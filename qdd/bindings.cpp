@@ -164,7 +164,7 @@ PYBIND11_MODULE(pyQDD, m){
     py::class_<mEdge>(m, "mEdge").def("printMatrix",&mEdge::printMatrix).def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
-    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("set_params",set_params);
+    m.def("get_nNodes", get_nNodes).def("gc", gc).def("gc_mat",gc_mat).def("set_gc_thr",set_gc_thr);
 
     // Gates
     m.def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
