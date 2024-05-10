@@ -46,7 +46,7 @@ class BernoulliQ(QuantumCircuit):
         q_k.ry(2 * k * self._theta_p, 0)
         return q_k
 
-
+@pytest.mark.no_mpi_support
 def test_qae():
     sampler = Sampler()
     # Canonical AE

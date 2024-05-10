@@ -135,6 +135,10 @@ inline double norm(const Complex &c) {
     return std::sqrt(c.r * c.r + c.i * c.i);
 }
 
+inline double norm2(const Complex &c) {
+    return c.r * c.r + c.i * c.i;
+}
+
 // using std_complex = std::complex<double>;
 using std_complex = Complex;
 
@@ -188,13 +192,14 @@ struct vNode {
         ar &v;
         ar &children;
         ar &next;
+        ar & previous;
     }
 #endif
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
-    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n)
-        : v(q), children(c), next(n) {}
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, vNode *p)
+        : v(q), children(c), next(n), previous(p) {}
 
     vEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -210,6 +215,7 @@ struct vNode {
     Qubit v;
     std::array<vEdge, 2> children;
     vNode *next{nullptr};
+    vNode *previous{nullptr};
 
 };
 
@@ -297,12 +303,13 @@ struct mNode {
         ar &v;
         ar &children;
         ar &next;
+        ar & previous;
     }
 #endif
 
     mNode() = default;
-    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
-        : v(q), children(c), next(n){}
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, mNode *p)
+        : v(q), children(c), next(n), previous(p){}
     mNode(const mNode &vv) : v(vv.v), children(vv.children) {}
     mEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -318,6 +325,7 @@ struct mNode {
     Qubit v;
     std::array<mEdge, 4> children;
     mNode *next{nullptr};
+    mNode *previous{nullptr};
 
 };
 
@@ -400,6 +408,34 @@ BOOST_CLASS_TRACKING(vContent, boost::serialization::track_never)
 BOOST_IS_BITWISE_SERIALIZABLE(vContent)
 #endif
 
+struct mContent {
+#ifdef isMPI
+    friend class boost::serialization::access;
+
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version) {
+        ar &v;
+        ar &w;
+        ar &index;
+    }
+#endif
+
+    Qubit v;
+    std::array<std_complex, 4> w;
+    std::array<int, 4> index;
+
+    mContent(Qubit qpos, std_complex w1, std_complex w2, std_complex w3, std_complex w4, int i1, int i2, int i3, int i4)
+        : v(qpos), w({w1, w2, w3, w4}), index({i1, i2, i3, i4}){};
+    mContent()
+        : v(-1), w({cf_zero, cf_zero, cf_zero, cf_zero}), index({-1,-1,-1,-1}){};
+};
+#ifdef isMPI
+BOOST_CLASS_IMPLEMENTATION(mContent, boost::serialization::object_serializable)
+BOOST_IS_MPI_DATATYPE(mContent)
+BOOST_CLASS_TRACKING(mContent, boost::serialization::track_never)
+BOOST_IS_BITWISE_SERIALIZABLE(mContent)
+#endif
+
 using Controls = std::set<Control, ControlComparator>;
 
 extern std::vector<mEdge> identityTable;
@@ -422,7 +458,8 @@ vEdge vv_kronecker(const vEdge &lhs, const vEdge &rhs);
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs);
 #ifdef isMPI
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world);
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit);
+vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit);
 #endif
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c);
@@ -435,6 +472,15 @@ vEdge makeOneStateMPI(QubitCount q, bmpi::communicator &world);
 
 std::string measureAll(vEdge &rootEdge, const bool collapse,
                        std::mt19937_64 &mt, double epsilon = 0.001);
+#ifdef isMPI
+std::vector<double> probabilitiesMPI(bmpi::communicator &world, const vEdge &rootEdge);
+std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse,
+                          std::mt19937_64 &mt, double epsilon = 0.001);
+char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits, 
+                          std::mt19937_64 &mt, bool collapse = true, double epsilon = 0.001);
+double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits, 
+                          std::mt19937_64 &mt, double epsilon = 0.001);
+#endif
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon = 0.001);
 double measureOne(vEdge &rootEdge, const Qubit index,
@@ -468,7 +514,15 @@ vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlo
 void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking = true);
 double adjust_weight(bmpi::communicator &world, vEdge rootEdge);
 void dump(boost::mpi::communicator &world, vEdge e, int cycle);
+void save_binary(vEdge node, std::string file_name);
+vEdge load_binary(std::string file_name);
 #endif
 
 int get_nNodes(vEdge e);
-vEdge gc(vEdge state);
+vEdge gc(vEdge state, bool force=false);
+mEdge gc_mat(mEdge mat, bool force=false);
+void clear_cache(bool force=false);
+void set_params(int gc_v, int gc_m, int clear_cache);
+
+int prune(vEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
+int prune(mEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
