@@ -156,6 +156,7 @@ class QddBackend(BackendV1):
             use_bcast = False,
             use_auto_swap=False,
             swap_ver='v1',
+            n_threads=1,
         )
     
     @staticmethod
@@ -247,6 +248,7 @@ class QddBackend(BackendV1):
             'use_bcast': run_options.get('use_bcast', self.options.use_bcast),
             'use_auto_swap': run_options.get('use_auto_swap', self.options.use_auto_swap),
             'swap_ver': run_options.get('swap_ver', self.options.swap_ver),
+            'n_threads': run_options.get('n_threads', self.options.n_threads),
         }
 
         if ('parameter_binds' in run_options) and (run_options['parameter_binds'] is not None):
@@ -269,6 +271,9 @@ class QddBackend(BackendV1):
 
     def _run_experiment(self, experiments, job_id) -> Result:
         """Runs the given experiments"""
+        if experiments.options['n_threads']>1:
+            nt = pyQDD.initMT(experiments.options['n_threads'])
+            print(nt,"threads")
 
         results = [self._evaluate_circuit(circ, circ_prop, experiments.options)
                    for circ, circ_prop
@@ -282,6 +287,10 @@ class QddBackend(BackendV1):
             'qobj_id': 'N/A',
             'success': True,
         })
+
+        if experiments.options['n_threads']>1:
+            pyQDD.terminateMT()
+        
         return result
 
     def _create_qubitmap(self, circ: QiskitCircuit):
@@ -523,6 +532,7 @@ class QddBackend(BackendV1):
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
                 current = pyQDD.gc(current, False);
+                count = count + 1
 
             if options["shots"]:
                 for i in range(options['shots']):
