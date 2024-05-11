@@ -19,12 +19,10 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
         backend.set_options(use_mpi=True, use_auto_swap=use_auto_swap, swap_ver=swap_ver, use_bcast=use_bcast)
         print("MPI enabled, use_bcast=",use_bcast)
         print("use_auto_swap", use_auto_swap, swap_ver)
-    pyQDD.set_gc_thr(1024*64, 1024*1024) # You can manipulate these parameters
+    pyQDD.set_gc_thr(1024*1024, 1024*1024) # You can manipulate these parameters
     #backend = Aer.get_backend('qasm_simulator')
     if nThread>1:
-        print("enabling mt...")
-        pyQDD.enable_multi_threading(nThread)
-        print("MT enabled", nThread)
+        backend.set_options(n_threads=nThread)
 
     f_gt_add = QuantumFactoring.QuantumCircuitForFactoringWithQulacs(N, "GT-ADD")
     f_gt_add.qisc.barrier(list(range(f_gt_add.qisc.num_qubits)))

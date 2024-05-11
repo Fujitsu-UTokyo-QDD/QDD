@@ -94,6 +94,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "alignedvector3": "cpp"
+        "alignedvector3": "cpp",
+        "adolcforward": "cpp"
     },
 }

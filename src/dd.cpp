@@ -53,7 +53,7 @@ MulCache _mCache(NQUBITS);
 #endif
 
 static int LIMIT = 10000;
-const int MINUS = 3;
+const int MINUS = 6;
 
 static mEdge normalizeM(const mEdge &e) {
 
