@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <mutex>
+#include <atomic>
 #include <random>
 #include <stdio.h>
 
@@ -76,20 +77,21 @@ class CHashTable {
     }
 
     T *register_wo_lookup(T *node){
+        // Assuming single threaded
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
 
-         T *current = _tables[v]._table[key];
+         T *current = _tables[v]._table[key].node;
         //T *previous = current;
 
         if (current == nullptr) {
-            _tables[v]._table[key] = node;
+            _tables[v]._table[key].node = node;
             return node;
         }
 
-        node->previous = _tables[v]._table[key];
-        _tables[v]._table[key]->next = node;
-        _tables[v]._table[key] = node;
+        node->previous = _tables[v]._table[key].node;
+        _tables[v]._table[key].node->next = node;
+        _tables[v]._table[key].node = node;
         return node;
     }
 
@@ -97,10 +99,16 @@ class CHashTable {
         const auto key = Hash()(*node) % NBUCKETS;
         const Qubit v = node->v;
 
-        T *current = _tables[v]._table[key];
+        T *current = _tables[v]._table[key].node;
 
         if (current == nullptr) {
-            _tables[v]._table[key] = node;
+            #ifdef isMT
+            while (_tables[v]._table[key].locked.test_and_set(std::memory_order_acquire));
+            #endif
+            _tables[v]._table[key].node = node;
+            #ifdef isMT
+            _tables[v]._table[key].locked.clear(std::memory_order_release);
+            #endif
             return node;
         }
 
@@ -115,9 +123,15 @@ class CHashTable {
             current = current->previous;
         }
 
-        node->previous = _tables[v]._table[key];
-        _tables[v]._table[key]->next = node;
-        _tables[v]._table[key] = node;
+        #ifdef isMT
+        while (_tables[v]._table[key].locked.test_and_set(std::memory_order_acquire));
+        #endif
+        node->previous = _tables[v]._table[key].node;
+        _tables[v]._table[key].node->next = node;
+        _tables[v]._table[key].node = node;
+        #ifdef isMT
+        _tables[v]._table[key].locked.clear(std::memory_order_release);
+        #endif
         return node;
     }
 
@@ -136,8 +150,14 @@ class CHashTable {
     }
 
   private:
+
+    struct NodeSlot {
+        T *node;
+        std::atomic_flag locked;
+    };
+    
     struct Table {
-        T *_table[NBUCKETS] = {nullptr};
+        NodeSlot _table[NBUCKETS] = {nullptr};
     };
 
     std::vector<Table> _tables;
