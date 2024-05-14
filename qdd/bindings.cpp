@@ -157,24 +157,25 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge){
 #endif
 
 #ifdef isMT
-int init_mt(int n = 8){
-    if (n<2){
-        return n_threads;
-    }
-    if (mt_initialized){
-        return n_threads;
-    }
-    n_threads = n;
-    mt_initialized = true;
-    s = new Scheduler(n_threads);
-    return n_threads;
-}
-
 void terminate_mt(){
     if(mt_initialized){
+        mt_initialized = false;
+        n_threads = 1;
         delete s;
     }
     return;
+}
+
+int init_mt(int n = 8){
+    if(n!=n_threads){
+        terminate_mt();
+        if(n>1){
+            mt_initialized = true;
+            n_threads = n;
+            s = new Scheduler(n-1);
+        }
+    }    
+    return n_threads;
 }
 #endif
 
