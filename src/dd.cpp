@@ -1148,14 +1148,13 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     lcopy.w = {1.0, 0.0};
     rcopy.w = {1.0, 0.0};
 
-
-#ifdef isMT
-    std::vector<boost::fibers::future<vEdge>> products;
-#endif
-    std::array<vEdge, 4> product;
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
+#ifdef isMT
+        std::vector<boost::fibers::future<vEdge>> products;
+#endif
+        std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((i << 1) | k);
@@ -1176,21 +1175,19 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
                 f.detach();
             }else{
 #endif
-                product[2*i+k] = mv_multiply2(x, y, current_var - 1);
+            product[k] = mv_multiply2(x, y, current_var - 1);
 #ifdef isMT
             }
 #endif
         }
-    }
-
 #ifdef isMT
-    if(current_var > LIMIT){
-        for(int i=0; i<4; i++)
-            product[i] = products[i].get();
-    }
+        if(current_var > LIMIT){
+            product[0] = products[0].get();
+            product[1] = products[1].get();
+        }
 #endif
-    edges[0] = vv_add2(product[0], product[1], current_var - 1);
-    edges[1] = vv_add2(product[2], product[3], current_var - 1);
+        edges[i] = vv_add2(product[0], product[1], current_var - 1);
+    }
 
     result = makeVEdge(current_var, edges);
     _mCache.set(lhs.n, rhs.n, result);

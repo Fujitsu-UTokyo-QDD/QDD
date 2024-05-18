@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "qiskit>=1.0.0",
+    "qiskit~=1.0.0",
 ]
 
 # This command, 'pip install {package-name}[test]',
