@@ -16,6 +16,7 @@ from qiskit.circuit import Barrier, Clbit, Measure, Qubit, Reset
 import qiskit.circuit.library.standard_gates as qiskit_gates
 from qiskit.circuit.library import Initialize
 from qiskit.transpiler import CouplingMap
+from qiskit.circuit import library
 
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
@@ -23,6 +24,7 @@ from qdd.qdd_job import QddJob
 from .circuit_property import CircuitProperty
 
 from qdd import pyQDD
+import math
 
 _qiskit_gates_1q: Dict = {
     qiskit_gates.HGate: "H",
@@ -48,6 +50,8 @@ _qiskit_rotations_1q: Dict = {
     qiskit_gates.UGate: pyQDD.u,
     qiskit_gates.PhaseGate: pyQDD.p,
     qiskit_gates.RGate: pyQDD.r,
+    library.CPhaseGate: pyQDD.p,
+    library.MCPhaseGate: pyQDD.p,
 }
 
 _qiskit_gates_2q: Dict = {
@@ -94,6 +98,7 @@ class QddBackend(BackendV1):
             'rx', 'ry', 'rz',
             'u1','u2','u3','u','p','r',
             'cy','cz','csx','ccx',"mcx",
+            'cp',
             #"cswap", "mcswap", 
             #'cu','cp','cu1','cu2','cu3', # rotation + 1 control
             #"mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
@@ -147,6 +152,11 @@ class QddBackend(BackendV1):
             shots=QddBackend._DEFAULT_SHOTS,
             memory=False,
             seed_simulator=None,
+            use_mpi=False,
+            use_bcast = False,
+            use_auto_swap=False,
+            swap_ver='v1',
+            n_threads=1,
         )
     
     @staticmethod
@@ -234,6 +244,11 @@ class QddBackend(BackendV1):
             'shots': run_options.get('shots', self.options.shots),
             'memory': run_options.get('memory', self.options.memory),
             'seed_simulator': run_options.get('seed_simulator', self.options.seed_simulator),
+            'use_mpi': run_options.get('use_mpi', self.options.use_mpi),
+            'use_bcast': run_options.get('use_bcast', self.options.use_bcast),
+            'use_auto_swap': run_options.get('use_auto_swap', self.options.use_auto_swap),
+            'swap_ver': run_options.get('swap_ver', self.options.swap_ver),
+            'n_threads': run_options.get('n_threads', self.options.n_threads),
         }
 
         if ('parameter_binds' in run_options) and (run_options['parameter_binds'] is not None):
@@ -256,6 +271,9 @@ class QddBackend(BackendV1):
 
     def _run_experiment(self, experiments, job_id) -> Result:
         """Runs the given experiments"""
+        if experiments.options['n_threads']>1:
+            nt = pyQDD.initMT(experiments.options['n_threads'])
+            print(nt,"threads")
 
         results = [self._evaluate_circuit(circ, circ_prop, experiments.options)
                    for circ, circ_prop
@@ -269,6 +287,10 @@ class QddBackend(BackendV1):
             'qobj_id': 'N/A',
             'success': True,
         })
+
+        if experiments.options['n_threads']>1:
+            pyQDD.terminateMT()
+        
         return result
 
     def _create_qubitmap(self, circ: QiskitCircuit):
@@ -295,8 +317,87 @@ class QddBackend(BackendV1):
     def get_cID(self, cbit):
         return self.cbitmap[cbit]
     
+    def merge_circuit(self, circ:QiskitCircuit, gc_freq=20):
+        n_qubit = circ.num_qubits
+        n_cbit = circ.num_clbits
+        self._create_qubitmap(circ)
+        self._create_cbitmap(circ)
+
+        current = pyQDD.makeGate(n_qubit, "I", 0)
+        count=0
+        for i, qargs, cargs in circ.data:
+            qiskit_gate_type = type(i)
+            # filter out special cases first
+            if qiskit_gate_type == Barrier:
+                continue
+            if (qiskit_gate_type == Measure):
+                continue
+            assert(len(cargs) == 0)
+
+            if qiskit_gate_type in _supported_qiskit_gates:
+                if qiskit_gate_type in _qiskit_gates_1q:
+                    gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_rotations_1q:
+                    if qiskit_gate_type == qiskit_gates.U3Gate or qiskit_gate_type == qiskit_gates.UGate:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
+                    elif qiskit_gate_type == qiskit_gates.U2Gate or qiskit_gate_type == qiskit_gates.RGate:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
+                    else:
+                        matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
+                    if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
+                        controls = []
+                        for i in range(len(qargs)-1):
+                            controls.append(self.get_qID(qargs[i]))
+                        gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
+                    else:
+                        gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_gates_2q:
+                    gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
+                    current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_1q_control:
+                    controls = []
+                    for idx in range(len(qargs)-1):
+                        controls.append(self.get_qID(qargs[idx]))
+                    gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], self.get_qID(qargs[-1]), controls)
+                    current = pyQDD.mm_multiply(gate, current)
+                else:
+                    raise RuntimeError(f'Unsupported gate or instruction:'
+                                       f' type={qiskit_gate_type.__name__}, name={i.name}.'
+                                       f' It needs to transpile the circuit before evaluating it.')
+
+            count += 1
+            print(count,"/",len(circ.data))
+            current = pyQDD.gc_mat(current, False);
+            #pyQDD.clear_cache(False)
+        return current
+    
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
-#        start = time.time()
+        use_mpi = options['use_mpi']
+        use_auto_swap = options['use_auto_swap']
+        swap_ver = options['swap_ver']
+        use_bcast = options['use_bcast']
+        assert((not use_bcast) or use_mpi)
+        local_set = set(range(circ.num_qubits))
+        global_set = set()
+        local_list = sorted(list(range(circ.num_qubits)))
+        global_list = list()
+        map_after_swap = {x: x for x in range(circ.num_qubits)}
+        if use_mpi:
+            from mpi4py import MPI
+            circ = MPI.COMM_WORLD.bcast(circ, root=0)
+            circ_prop = MPI.COMM_WORLD.bcast(circ_prop, root=0)
+            if pow(2, circ.num_qubits) <= MPI.COMM_WORLD.Get_size():
+                print("ERROR: Too many nodes for MPI")
+                assert(pow(2, circ.num_qubits) > MPI.COMM_WORLD.Get_size())
+            size_global = int(math.log2(MPI.COMM_WORLD.Get_size()))
+            global_set = set(range(circ.num_qubits-size_global, circ.num_qubits))
+            local_set = local_set-global_set
+            global_list = sorted(list(global_set))
+            local_list = sorted(list(local_set))
+
+        start = time.time()
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
@@ -304,10 +405,12 @@ class QddBackend(BackendV1):
         if options["shots"]:
             sampled_values = [None] * options['shots']
 #        print(len(circ.data), " gates")
+        count = 0
         if circ_prop.stable_final_state:
-            current = pyQDD.makeZeroState(n_qubit)
+            current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
             for i, qargs, cargs in circ.data:
                 qiskit_gate_type = i.base_class
+                # print("#", MPI.COMM_WORLD.Get_rank(), "#", qiskit_gate_type, qargs)
 
                 # filter out special cases first
                 if qiskit_gate_type == Barrier:
@@ -316,10 +419,83 @@ class QddBackend(BackendV1):
                     continue
                 assert(len(cargs) == 0)
 
+                if use_mpi and use_auto_swap and not all([(self.get_qID(i) in local_set) for i in qargs]) and swap_ver=="v2":
+                    next_local=set()
+                    tmp_idx = count
+                    while tmp_idx<len(circ.data):
+                        tmp = set(next_local)
+                        tmp.update([self.get_qID(qi) for qi in circ.data[tmp_idx].qubits])
+                        if len(tmp)<=len(local_set):
+                            next_local = tmp
+                            tmp_idx += 1
+                        else:
+                            break
+                    next_global = set(range(n_qubit)) - next_local
+                    while len(next_local)<len(local_set):
+                        next_local.add(next_global.pop())
+
+                    move_from_local = sorted(list(local_set - next_local))
+                    move_from_global = sorted(list(global_set - next_global))
+                    assert(len(move_from_global) == len(move_from_local))
+                    fused_swap = pyQDD.makeGate(n_qubit,"I",0)
+                    for ii in range(len(move_from_global)):
+                        gate = pyQDD.SWAP(n_qubit, map_after_swap[move_from_local[ii]], map_after_swap[move_from_global[ii]])
+                        fused_swap = pyQDD.mm_multiply(gate, fused_swap)
+                        idx_local = map_after_swap[move_from_local[ii]]
+                        idx_global = map_after_swap[move_from_global[ii]]
+                        map_after_swap[move_from_local[ii]] = idx_global
+                        map_after_swap[move_from_global[ii]] = idx_local
+
+                    local_set = next_local
+                    global_set = next_global
+                    
+                    current = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit-1) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(fused_swap, current, n_qubit, n_qubit-1)
+                    if MPI.COMM_WORLD.Get_rank()==0:
+                        print(count, tmp_idx, move_from_local, move_from_global, map_after_swap)
+                elif use_mpi and use_auto_swap and not all([(self.get_qID(i) in local_list) for i in qargs]):
+                    next_local_set=set()
+                    tmp_idx = count
+                    while tmp_idx<len(circ.data):
+                        tmp = set(next_local_set)
+                        tmp.update([self.get_qID(qi) for qi in circ.data[tmp_idx].qubits])
+                        if len(tmp)<=len(local_list):
+                            next_local_set = tmp
+                            tmp_idx += 1
+                        else:
+                            break
+                    next_local = sorted(list(next_local_set))
+                    next_global = sorted( list(set(range(n_qubit))-next_local_set) )
+                    while len(next_local)<len(local_list):
+                        next_local.append(next_global.pop(0))
+                    next_local.sort()
+
+                    _next_tmp = next_local + next_global
+                    next_map = {}
+                    _tmp_count=0
+                    for _idx in _next_tmp:
+                        next_map[_idx] = _tmp_count
+                        _tmp_count = _tmp_count + 1
+                    for ii in range(n_qubit):
+                        if next_map[ii] != map_after_swap[ii]: ## key: idx in qiskit circ, value: idx in simulator
+                            pos2 = ii
+                            q2 = map_after_swap[ii]
+                            q1 = next_map[ii]
+                            pos1 = {v: k for k, v in map_after_swap.items()}[q1]
+                            gate = pyQDD.SWAP(n_qubit, q1, q2)
+                            current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1>q2 else q2) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, q1 if q1>q2 else q2)
+                            map_after_swap[pos1] = q2
+                            map_after_swap[pos2] = q1
+                            assert(next_map[ii] == map_after_swap[ii])
+                    local_list = next_local
+                    global_list = next_global
+                    
+                    if MPI.COMM_WORLD.Get_rank()==0:
+                        print(count, tmp_idx, "/", len(circ.data), map_after_swap, "global=",global_list)
+
                 if qiskit_gate_type in _supported_qiskit_gates:
                     if qiskit_gate_type in _qiskit_gates_1q:
-                        gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
-                        current = pyQDD.mv_multiply(gate, current)
+                        gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], map_after_swap[self.get_qID(qargs[0])])
+                        current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_rotations_1q:
                         if qiskit_gate_type == qiskit_gates.U3Gate or qiskit_gate_type == qiskit_gates.UGate:
                             matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
@@ -327,17 +503,23 @@ class QddBackend(BackendV1):
                             matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
                         else:
                             matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
-                        gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
-                        current = pyQDD.mv_multiply(gate, current)
+                        if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
+                            controls = []
+                            for i in range(len(qargs)-1):
+                                controls.append(map_after_swap[self.get_qID(qargs[i])])
+                            gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, map_after_swap[self.get_qID(qargs[-1])], controls)
+                        else:
+                            gate = pyQDD.makeGate(n_qubit, matrix, map_after_swap[self.get_qID(qargs[0])])
+                        current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_gates_2q:
-                        gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))
-                        current = pyQDD.mv_multiply(gate, current)
+                        gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, map_after_swap[self.get_qID(qargs[1])], map_after_swap[self.get_qID(qargs[0])])
+                        current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_1q_control:
                         controls = []
                         for idx in range(len(qargs)-1):
-                            controls.append(self.get_qID(qargs[idx]))
-                        gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], self.get_qID(qargs[-1]), controls)
-                        current = pyQDD.mv_multiply(gate, current)
+                            controls.append(map_after_swap[self.get_qID(qargs[idx])])
+                        gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], map_after_swap[self.get_qID(qargs[-1])], controls)
+                        current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     else:
                         raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
@@ -349,15 +531,16 @@ class QddBackend(BackendV1):
                     raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                current = pyQDD.gc(current);
+                current = pyQDD.gc(current, False);
+                count = count + 1
 
             if options["shots"]:
                 for i in range(options['shots']):
-                    _, result_tmp = pyQDD.measureAll(current, False)
+                    _, result_tmp = pyQDD.measureAll(current, False) if use_mpi==False else pyQDD.measureAllMPI(current, False)
                     result_final_tmp = ['0'] * n_cbit
                     mapping: Dict[Clbit, Qubit] = circ_prop.clbit_final_values
                     for cbit in mapping:
-                        result_final_tmp[self.get_cID(cbit)] = result_tmp[len(result_tmp)-1-self.get_qID(mapping[cbit])]
+                        result_final_tmp[map_after_swap[self.get_cID(cbit)]] = result_tmp[len(result_tmp)-1-map_after_swap[self.get_qID(mapping[cbit])]]                
                     sampled_values[i] = ''.join(reversed(result_final_tmp))
 
         else:
@@ -367,7 +550,7 @@ class QddBackend(BackendV1):
                 reps = 1
             prob_cbit = [0] * (n_cbit)
             for shot in range(reps):
-                current = pyQDD.makeZeroState(n_qubit)
+                current = pyQDD.makeZeroState(n_qubit) if use_mpi ==False else pyQDD.makeZeroStateMPI(n_qubit)
                 val_cbit = ['0'] * n_cbit
                 for i, qargs, cargs in circ.data:
                     qiskit_gate_type = i.base_class
@@ -388,7 +571,7 @@ class QddBackend(BackendV1):
 
                         if qiskit_gate_type in _qiskit_gates_1q:
                             gate = pyQDD.makeGate(n_qubit, _qiskit_gates_1q[qiskit_gate_type], self.get_qID(qargs[0]))
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_rotations_1q:
                             if qiskit_gate_type == qiskit_gates.U3Gate or qiskit_gate_type == qiskit_gates.UGate:
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
@@ -396,52 +579,52 @@ class QddBackend(BackendV1):
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0],i.params[1])
                             else:
                                 matrix = _qiskit_rotations_1q[qiskit_gate_type](i.params[0])
-                            gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
-                            current = pyQDD.mv_multiply(gate, current)
+                            if qiskit_gate_type == library.CPhaseGate or qiskit_gate_type == library.MCPhaseGate:
+                                controls = []
+                                for i in range(len(qargs)-1):
+                                    controls.append(self.get_qID(qargs[i]))
+                                gate = pyQDD.makeControlGateMatrix(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
+                            else:
+                                gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[0]))
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_gates_2q:
                             gate = _qiskit_gates_2q[qiskit_gate_type](n_qubit, self.get_qID(qargs[1]), self.get_qID(qargs[0]))# target, control
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         elif qiskit_gate_type in _qiskit_1q_control:
                             controls = []
                             for idx in range(len(qargs)-1):
                                 controls.append(self.get_qID(qargs[idx]))
                             gate = pyQDD.makeControlGate(n_qubit, _qiskit_1q_control[qiskit_gate_type], self.get_qID(qargs[-1]), controls)
-                            current = pyQDD.mv_multiply(gate, current)
+                            current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         else:
                             raise NotImplementedError
                     else:
                         if qiskit_gate_type == Measure:
                             if options["shots"]:
-                                current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                                current, val_cbit[self.get_cID(cargs[0])] = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0])) if use_mpi==False else pyQDD.measureOneCollapsingMPI(current, self.get_qID(qargs[0]), n_qubit)
                             else:
-                                current, prob_cbit[self.get_cID(cargs[0])] = pyQDD.measureOne(current, self.get_qID(qargs[0]))
+                                current, prob_cbit[self.get_cID(cargs[0])] = pyQDD.measureOne(current, self.get_qID(qargs[0])) if use_mpi==False else pyQDD.measureOneMPI(current, self.get_qID(qargs[0]), n_qubit)
                         elif qiskit_gate_type == Reset:
-                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0]))
+                            current,_meas_result = pyQDD.measureOneCollapsing(current, self.get_qID(qargs[0])) if use_mpi==False else pyQDD.measureOneCollapsingMPI(current, self.get_qID(qargs[0]), n_qubit)
                             if _meas_result == '1':
                                 gate = pyQDD.makeGate(n_qubit, "X", self.get_qID(qargs[0]))
-                                current = pyQDD.mv_multiply(gate, current)
+                                current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([self.get_qID(i) for i in qargs]))
                         else:
                             # We assume the given Qiskit circuit has already been transpiled into a circuit of basis gates only.
                             raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
                                        f' It needs to transpile the circuit before evaluating it.')
-                    current = pyQDD.gc(current);
+                    current = pyQDD.gc(current, False);
                 if options["shots"]:
                     sampled_values[shot] = ''.join(reversed(val_cbit))
 
         if options["shots"]:
-            sampled_counts = Counter(sampled_values)
-            bin_sampled_counts = {}
-
-            for key in range(2**n_cbit):
-                key_bin = f"{key:0{n_cbit}b}"
-                bin_sampled_counts[key_bin] = sampled_counts[key_bin]
-
-            result_data: Dict[str, Any] = {'counts': bin_sampled_counts}
+            hex_sampled_counts = Counter(sampled_values)
+            result_data: Dict[str, Any] = {'counts': hex_sampled_counts}
             if options['memory']:
                 result_data['memory'] = sampled_values
             if self._save_SV:
-                result_data["statevector"] = pyQDD.getVector(current)
+                result_data["statevector"] = pyQDD.getVector(current) if use_mpi == False else pyQDD.getVectorMPI(current)
             header = QddBackend._create_experiment_header(circ)
             result = {
                 'success': True,
@@ -453,7 +636,7 @@ class QddBackend(BackendV1):
             }
         else:
             if circ_prop.stable_final_state:
-                prob = pyQDD.probabilities(current)
+                prob = pyQDD.probabilities(current) if use_mpi == False else pyQDD.probabilitiesMPI(current)
             else:
                 prob = [1] * (2 ** n_cbit)
                 for i in range(2 ** n_cbit):
@@ -467,7 +650,7 @@ class QddBackend(BackendV1):
                 probabilities[i] = p
             result_data: Dict[str, Any] = {"probabilities":probabilities}
             if self._save_SV:
-                result_data["statevector"] = pyQDD.getVector(current)
+                result_data["statevector"] = pyQDD.getVector(current) if use_mpi == False else pyQDD.getVectorMPI(current)
             header = QddBackend._create_experiment_header(circ)
             result = {
                 'success': True,

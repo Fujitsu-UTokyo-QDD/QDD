@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qdd"
-version = "0.2.1"
+version = "0.2.2"
 description = "Qiskit Provider for QDD"
 authors = [{name = "Yusuke Kimura", email = "yusuke-kimura@fujitsu.com"}]
 readme = "README.md"
@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "qiskit>=1.0.0",
+    "qiskit~=1.0.0",
 ]
 
 # This command, 'pip install {package-name}[test]',
@@ -52,3 +52,14 @@ exclude = ["test", "scripts", "_deps", "test*", "test/*", "_deps*", "_deps/*"]
 [tool.cibuildwheel]
 manylinux-x86_64-image = "manylinux_2_28"
 test-extras = "test"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test/python",
+]
+markers = [
+    "slow: marks tests as taking a long time to run",
+    "mpi: tests for MPI",
+    "no_mpi_support: tests that do not support MPI execution",
+]
+addopts = "-m \"not slow and not mpi\" --strict-markers"

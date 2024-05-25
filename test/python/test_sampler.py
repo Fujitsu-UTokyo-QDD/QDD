@@ -14,15 +14,6 @@ def test_sampler():
     bell.cx(0, 1)
     bell.measure_all()
 
-    # two parameterized circuits
-    pqc = RealAmplitudes(num_qubits=2, reps=2)
-    pqc.measure_all()
-    pqc2 = RealAmplitudes(num_qubits=2, reps=3)
-    pqc2.measure_all()
-
-    theta1 = [0, 1, 1, 2, 3, 5]
-    theta2 = [0, 1, 2, 3, 4, 5, 6, 7]
-
     # initialization of the sampler
     sampler_qiskit = QiskitSampler()
     sampler = Sampler(run_options={"shots": 4096}) # if shots is default value, tests sometimes fail because precision is not enough
@@ -48,6 +39,21 @@ def test_sampler():
         assert dist == pytest.approx(dist_qiskit,rel=0.2,abs=0.01)
         assert dist_exact == pytest.approx(dist_qiskit,rel=1e-6)
 
+def test_sampler_param():
+    
+    # two parameterized circuits
+    pqc = RealAmplitudes(num_qubits=2, reps=2)
+    pqc.measure_all()
+    pqc2 = RealAmplitudes(num_qubits=2, reps=3)
+    pqc2.measure_all()
+
+    theta1 = [0, 1, 1, 2, 3, 5]
+    theta2 = [0, 1, 2, 3, 4, 5, 6, 7]
+    
+    # initialization of the sampler
+    sampler_qiskit = QiskitSampler()
+    sampler = Sampler(run_options={"shots": 4096}) # if shots is default value, tests sometimes fail because precision is not enough
+    sampler_exact = Sampler(run_options={"shots": None})
 
     # Sampler runs a job on the parameterized circuits
     job2 = sampler.run(

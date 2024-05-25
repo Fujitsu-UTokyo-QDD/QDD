@@ -25,13 +25,13 @@ vEdge exec(int nQubits, bmpi::communicator &world){
     double angle = get_random();
     for (int target = 0; target < nQubits; target++){
         auto g = RX(nQubits, target, angle);
-        v = mv_multiply_MPI(g, v, world);
+        v = mv_multiply_MPI(g, v, world, nQubits, target);
         v = gc(v);
     }
     angle = get_random();
     for (int target = 0; target < nQubits; target++){
         auto g = RZ(nQubits, target, angle);
-        v = mv_multiply_MPI(g, v, world);
+        v = mv_multiply_MPI(g, v, world, nQubits, target);
         v = gc(v);
     }
 
@@ -40,7 +40,7 @@ vEdge exec(int nQubits, bmpi::communicator &world){
         int control = i;
         int target = (i + 1) % nQubits;
         auto g = CX(nQubits, target, control);
-        v = mv_multiply_MPI(g, v, world);
+        v = mv_multiply_MPI(g, v, world, nQubits, target>control?target:control);
         v = gc(v);
     }
 
@@ -49,20 +49,20 @@ vEdge exec(int nQubits, bmpi::communicator &world){
         angle = get_random();
         for (int target = 0; target < nQubits; target++){
             auto g = RZ(nQubits, target, angle);
-            v = mv_multiply_MPI(g, v, world);
+            v = mv_multiply_MPI(g, v, world, nQubits, target);
             v = gc(v);
         }
         angle = get_random();
         for (int target = 0; target < nQubits; target++)
         {
             auto g = RX(nQubits, target, angle);
-            v = mv_multiply_MPI(g, v, world);
+            v = mv_multiply_MPI(g, v, world, nQubits, target);
             v = gc(v);
         }
         angle = get_random();
         for (int target = 0; target < nQubits; target++){
             auto g = RZ(nQubits, target, angle);
-            v = mv_multiply_MPI(g, v, world);
+            v = mv_multiply_MPI(g, v, world, nQubits, target);
             v = gc(v);
         }
         //entangler
@@ -70,7 +70,7 @@ vEdge exec(int nQubits, bmpi::communicator &world){
             int control = i;
             int target = (i + 1) % nQubits;
             auto g = CX(nQubits, target, control);
-            v = mv_multiply_MPI(g, v, world);
+            v = mv_multiply_MPI(g, v, world, nQubits, target>control?target:control);
             v = gc(v);
         }
         if(world.rank()==0)
@@ -80,13 +80,13 @@ vEdge exec(int nQubits, bmpi::communicator &world){
     angle = get_random();
     for (int target = 0; target < nQubits; target++){
         auto g = RZ(nQubits, target, angle);
-        v = mv_multiply_MPI(g, v, world);
+        v = mv_multiply_MPI(g, v, world, nQubits, target);
         v = gc(v);
     }
     angle = get_random();
     for (int target = 0; target < nQubits; target++){
         auto g = RX(nQubits, target, angle);
-        v = mv_multiply_MPI(g, v, world);
+        v = mv_multiply_MPI(g, v, world, nQubits, target);
         v = gc(v);
     }
     return v;
