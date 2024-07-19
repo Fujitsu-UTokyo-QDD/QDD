@@ -152,7 +152,7 @@ class QddBackend(BackendV1):
             shots=QddBackend._DEFAULT_SHOTS,
             memory=False,
             seed_simulator=None,
-            use_mpi=True,
+            use_mpi=False,
             use_bcast = False,
             use_auto_swap=True,
             swap_ver='v1',
@@ -458,6 +458,22 @@ class QddBackend(BackendV1):
         #    print(count, tmp_idx, "/", len(circ.data), map_after_swap, "global=",global_list)
         return current, next_global, next_local, map_after_swap
 
+    def restore_swap(self, MPI, current, circ: QiskitCircuit, map_after_swap, use_bcast):
+        next_map = {x: x for x in range(circ.num_qubits)}
+        n_qubit = circ.num_qubits
+        for ii in range(n_qubit):
+            if next_map[ii] != map_after_swap[ii]: ## key: idx in qiskit circ, value: idx in simulator
+                pos2 = ii
+                q2 = map_after_swap[ii]
+                q1 = next_map[ii]
+                pos1 = {v: k for k, v in map_after_swap.items()}[q1]
+                gate = pyQDD.SWAP(n_qubit, q1, q2)
+                current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1>q2 else q2) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, q1 if q1>q2 else q2)
+                map_after_swap[pos1] = q2
+                map_after_swap[pos2] = q1
+                assert(next_map[ii] == map_after_swap[ii])
+        return current, next_map
+
     def _evaluate_circuit(self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict):
         use_mpi = options['use_mpi']
         use_auto_swap = options['use_auto_swap']
@@ -572,7 +588,8 @@ class QddBackend(BackendV1):
             if options["shots"] and circ_prop.stable_final_state==False:
                 sampled_values[shot] = ''.join(reversed(val_cbit))
 
-        #TODO: needs to restore the original order if qubit reordering enabled
+        if use_mpi and use_auto_swap:
+            current, map_after_swap = self.restore_swap(MPI, current, circ, map_after_swap, use_bcast)
 
         if options["shots"] and circ_prop.stable_final_state==True:
             for i in range(options['shots']):
