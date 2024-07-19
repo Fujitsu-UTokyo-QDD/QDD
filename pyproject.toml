@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qdd"
-version = "0.2.2"
+version = "0.2.3"
 description = "Qiskit Provider for QDD"
 authors = [{name = "Yusuke Kimura", email = "yusuke-kimura@fujitsu.com"}]
 readme = "README.md"
@@ -37,7 +37,9 @@ test = [
     "tweedledum>=1.1.1",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
+    "scipy<1.11.0",
 ]
+# scipy<1.11.0: workaround for the deprecation bugs in qiskit with py3.10
 
 # Specifies the path of the root directory
 [tool.setuptools.packages.find]
