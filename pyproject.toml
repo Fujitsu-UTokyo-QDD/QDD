@@ -36,7 +36,6 @@ test = [
     "qiskit-ibm-runtime>=0.21.1",
     "qiskit-optimization>=0.6.0",
     "qiskit-nature[pyscf]>=0.7.2",
-    "tweedledum>=1.1.1",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
     "scipy<1.11.0",
