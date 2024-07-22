@@ -60,5 +60,5 @@ test/qcbm
 test/qdd_test
 
 
-.venv_qdd/
+.venv_qdd*/
 *.egg-info/

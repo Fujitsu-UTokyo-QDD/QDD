@@ -18,6 +18,8 @@ jobs:
             python-version-sub: "39"
           - python-version: "3.10"
             python-version-sub: "310"
+          - python-version: "3.11"
+            python-version-sub: "311"
 
     steps:
       - uses: actions/checkout@v4
