@@ -56,6 +56,10 @@ _qiskit_gates_1q_1param: Dict = {
     qiskit_gates.PhaseGate: pyQDD.p,
     library.CPhaseGate: pyQDD.p,
     library.MCPhaseGate: pyQDD.p,
+    qiskit_gates.CU1Gate: pyQDD.u1,
+    qiskit_gates.CRXGate: pyQDD.rxmat,
+    qiskit_gates.CRYGate: pyQDD.rymat,
+    qiskit_gates.CRZGate: pyQDD.rzmat,
 }
 
 _qiskit_gates_1q_2param: Dict = {
@@ -66,6 +70,7 @@ _qiskit_gates_1q_2param: Dict = {
 _qiskit_gates_1q_3param: Dict = {
     qiskit_gates.U3Gate: pyQDD.u3,
     qiskit_gates.UGate: pyQDD.u,
+    qiskit_gates.CU3Gate: pyQDD.u3,
 }
 
 _qiskit_gates_1q: Dict = {
@@ -111,6 +116,12 @@ _control_gate: set = {
     qiskit_gates.CPhaseGate,
     qiskit_gates.MCPhaseGate,
     qiskit_gates.CSwapGate,
+    qiskit_gates.CU1Gate,
+    qiskit_gates.CU3Gate,
+    qiskit_gates.CUGate,
+    qiskit_gates.CRXGate,
+    qiskit_gates.CRYGate,
+    qiskit_gates.CRZGate,
 }
 
 
@@ -136,9 +147,9 @@ class QddBackend(BackendV1):
             'rx', 'ry', 'rz',
             'u1','u2','u3','u','p','r',
             'cx','cy','cz','csx','ccx',"mcx",
-            'cp',
             "cswap",
-            #'cu','cp','cu1','cu2','cu3', # rotation + 1 control
+            'cp','cu1','cu3','crx','cry','crz' # rotation + 1 control
+            #'cu',
             #"mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
             "rxx","ryy", "rzz", "rzx",
             #"unitary", # HOW TO ???
