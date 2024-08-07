@@ -69,8 +69,12 @@ _qiskit_gates_1q_2param: Dict = {
 
 _qiskit_gates_1q_3param: Dict = {
     qiskit_gates.U3Gate: pyQDD.u3,
-    qiskit_gates.UGate: pyQDD.u,
+    qiskit_gates.UGate: pyQDD.u3,
     qiskit_gates.CU3Gate: pyQDD.u3,
+}
+
+_qiskit_gates_1q_4param: Dict = {
+    qiskit_gates.CUGate: pyQDD.u,
 }
 
 _qiskit_gates_1q: Dict = {
@@ -78,6 +82,7 @@ _qiskit_gates_1q: Dict = {
     **_qiskit_gates_1q_1param,
     **_qiskit_gates_1q_2param,
     **_qiskit_gates_1q_3param,
+    **_qiskit_gates_1q_4param,
 }
 
 _qiskit_gates_2q_0param: Dict = {
@@ -122,6 +127,7 @@ _control_gate: set = {
     qiskit_gates.CRXGate,
     qiskit_gates.CRYGate,
     qiskit_gates.CRZGate,
+    qiskit_gates.CUGate,
 }
 
 
@@ -148,8 +154,7 @@ class QddBackend(BackendV1):
             'u1','u2','u3','u','p','r',
             'cx','cy','cz','csx','ccx',"mcx",
             "cswap",
-            'cp','cu1','cu3','crx','cry','crz' # rotation + 1 control
-            #'cu',
+            'cu','cp','cu1','cu3','crx','cry','crz' # rotation + 1 control
             #"mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
             "rxx","ryy", "rzz", "rzx",
             #"unitary", # HOW TO ???
@@ -397,6 +402,8 @@ class QddBackend(BackendV1):
                         matrix = _qiskit_gates_1q_2param[qiskit_gate_type](i.params[0],i.params[1])
                     elif qiskit_gate_type in _qiskit_gates_1q_3param:
                         matrix = _qiskit_gates_1q_3param[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
+                    elif qiskit_gate_type in _qiskit_gates_1q_4param:
+                        matrix = _qiskit_gates_1q_4param[qiskit_gate_type](i.params[0],i.params[1],i.params[2],i.params[3])
                     gate = pyQDD.makeGate(n_qubit, matrix, self.get_qID(qargs[-1]), controls)
                     current = pyQDD.mm_multiply(gate, current)
                 elif qiskit_gate_type in _qiskit_gates_2q:
@@ -595,6 +602,8 @@ class QddBackend(BackendV1):
                             matrix = _qiskit_gates_1q_2param[qiskit_gate_type](i.params[0],i.params[1])
                         elif qiskit_gate_type in _qiskit_gates_1q_3param:
                             matrix = _qiskit_gates_1q_3param[qiskit_gate_type](i.params[0],i.params[1],i.params[2])
+                        elif qiskit_gate_type in _qiskit_gates_1q_4param:
+                            matrix = _qiskit_gates_1q_4param[qiskit_gate_type](i.params[0],i.params[1],i.params[2],i.params[3])
                         gate = pyQDD.makeGate(n_qubit, matrix, map_after_swap[self.get_qID(qargs[-1])], controls)
                         current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_gates_2q:

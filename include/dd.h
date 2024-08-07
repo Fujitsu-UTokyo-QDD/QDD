@@ -505,7 +505,7 @@ GateMatrix rz(double angle);
 GateMatrix u3(double theta, double phi, double lambda);
 GateMatrix u1(double lambda);
 GateMatrix u2(double phi, double lambda);
-GateMatrix u(double theta, double phi, double lambda);
+GateMatrix u(double theta, double phi, double lambda, double gamma);
 GateMatrix p(double angle);
 GateMatrix r(double theta, double phi);
 
