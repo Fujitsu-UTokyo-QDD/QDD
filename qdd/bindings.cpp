@@ -201,8 +201,13 @@ PYBIND11_MODULE(pyQDD, m){
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const Controls &>(&makeGate))
      .def("makeControlGate", makeControlGate).def("makeControlGateMatrix", makeControlGateMatrix);
-    m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX).def("SWAP", makeSwap);
+    m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX);
     m.def("rxmat", rx).def("rymat", ry).def("rzmat", rz).def("u1", u1).def("u2", u2).def("u3", u3).def("u", u).def("p", p).def("r", r);
+
+    m.def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit>(&makeTwoQubitGate))
+     .def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit, const Controls &>(&makeTwoQubitGate));
+    m.def("RXX", RXX).def("RYY", RYY).def("RZZ", RZZ).def("RZX", RZX).def("SWAP", SWAP);
+    m.def("rxxmat", rxx_matrix).def("ryymat", ryy_matrix).def("rzzmat", rzz_matrix).def("rzxmat", rzx_matrix).def("swapmat", swap_matrix);
 
     // Measure
     m.def("measureAll", _measureAll)

@@ -388,6 +388,113 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
     return e;
 }
 
+mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
+                       Qubit target1) {
+    return makeTwoQubitGate(q, g, target0, target1, {});
+};
+
+mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
+                       Qubit target1, const Controls &controls) {
+  std::array<std::array<mEdge, 4>, 4> edges_4x4;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      edges_4x4[i][j] =
+          mEdge{{g[i][j].real(), g[i][j].imag()}, mNode::terminal};
+    }
+  }
+
+  auto it = controls.begin();
+  const auto smaller_target = std::min(target0, target1);
+  Qubit z = 0;
+
+  for (; z < smaller_target; z++) {
+    for (int b1 = 0; b1 < 4; b1++) {
+      for (int b0 = 0; b0 < 4; b0++) {
+        std::size_t i = (b1 << 2) | b0;
+        if (it != controls.end() && it->qubit == z) {
+          if (it->type == Control::Type::neg) {
+            edges_4x4[b1][b0] =
+                makeMEdge(z, {edges_4x4[b1][b0], mEdge::zero, mEdge::zero,
+                              (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
+          } else {
+            edges_4x4[b1][b0] =
+                makeMEdge(z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
+                              mEdge::zero, mEdge::zero, edges_4x4[b1][b0]});
+          }
+        } else {
+          edges_4x4[b1][b0] = makeMEdge(z, {edges_4x4[b1][b0], mEdge::zero,
+                                            mEdge::zero, edges_4x4[b1][b0]});
+        }
+      }
+    }
+    if (it != controls.end() && it->qubit == z) {
+      ++it;
+    }
+  }
+
+  std::array<mEdge, 4> edges;
+  for (int b1 = 0; b1 < 2; b1++) {
+    for (int b0 = 0; b0 < 2; b0++) {
+      std::array<mEdge, 4> edges_4x4_sub;
+      if (target0 > target1) {
+        for (int i = 0; i < 2; i++) {
+          for (int j = 0; j < 2; j++) {
+            edges_4x4_sub[i * 2 + j] = edges_4x4[b1 * 2 + i][b0 * 2 + j];
+          }
+        }
+      } else {
+        for (int i = 0; i < 2; i++) {
+          for (int j = 0; j < 2; j++) {
+            edges_4x4_sub[i * 2 + j] = edges_4x4[i * 2 + b1][j * 2 + b0];
+          }
+        }
+      }
+      edges[b1 * 2 + b0] = makeMEdge(smaller_target, edges_4x4_sub);
+    }
+  }
+
+  const auto larger_target = std::max(target0, target1);
+  for (z = z + 1; z < larger_target; z++) {
+    if (it != controls.end() && it->qubit == z) {
+      if (it->type == Control::Type::neg) {
+        for (int i = 0; i < 4; i++) {
+          edges[i] = makeMEdge(
+              z, {edges[i], mEdge::zero, mEdge::zero, makeIdent(z - 1)});
+        }
+      } else {
+        for (int i = 0; i < 4; i++) {
+          edges[i] = makeMEdge(
+              z, {makeIdent(z - 1), mEdge::zero, mEdge::zero, edges[i]});
+        }
+      }
+    } else {
+      for (int i = 0; i < 4; i++) {
+        edges[i] = makeMEdge(z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
+      }
+    }
+  }
+  if (it != controls.end() && it->qubit == z) {
+    ++it;
+  }
+
+  auto e = makeMEdge(z, edges);
+
+  for (z = z + 1; z < q; z++) {
+    if (it != controls.end() && it->qubit == z) {
+      if (it->type == Control::Type::neg) {
+        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, makeIdent(z - 1)});
+      } else {
+        e = makeMEdge(z, {makeIdent(z - 1), mEdge::zero, mEdge::zero, e});
+      }
+      ++it;
+    } else {
+      e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
+    }
+  }
+
+  return e;
+}
+
 #ifdef isMPI
 mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     if (root.isTerminal() || world_size <= 1) {
@@ -1619,19 +1726,6 @@ double measureOne(vEdge &rootEdge, const Qubit index,
     return pzero/sum;
 }
 
-mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1) {
-    Controls c1{Control{target0, Control::Type::pos}};
-    mEdge e1 = makeGate(q, Xmat, target1, c1);
-
-    Controls c2{Control{target1, Control::Type::pos}};
-    mEdge e2 = makeGate(q, Xmat, target0, c2);
-
-    mEdge e3 = mm_multiply(e2, e1);
-    e3 = mm_multiply(e1, e3);
-
-    return e3;
-}
-
 mEdge RX(QubitCount qnum, int target, double angle) {
     std::complex<double> i1 = {std::cos(angle / 2), 0};
     std::complex<double> i2 = {0, -std::sin(angle / 2)};
@@ -1655,6 +1749,31 @@ mEdge CX(QubitCount qnum, int target, int control) {
     Controls controls;
     controls.emplace(Control{control, Control::Type::pos});
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
+}
+
+mEdge RXX(QubitCount qnum, int target0, int target1, double angle) {
+    TwoQubitGateMatrix matrix = rxx_matrix(angle);
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
+}
+
+mEdge RYY(QubitCount qnum, int target0, int target1, double angle) {
+    TwoQubitGateMatrix matrix = ryy_matrix(angle);
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
+}
+
+mEdge RZZ(QubitCount qnum, int target0, int target1, double angle) {
+    TwoQubitGateMatrix matrix = rzz_matrix(angle);
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
+}
+
+mEdge RZX(QubitCount qnum, int target0, int target1, double angle) {
+    TwoQubitGateMatrix matrix = rzx_matrix(angle);
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
+}
+
+mEdge SWAP(QubitCount qnum, int target0, int target1) {
+    TwoQubitGateMatrix matrix = swap_matrix();
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
 }
 
 GateMatrix rx(double angle){
@@ -1702,6 +1821,49 @@ GateMatrix r(double theta, double phi){
     std::complex<double> i2 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, -phi)) * std::sin(theta / 2);
     std::complex<double> i3 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, phi)) * std::sin(theta / 2);
     return GateMatrix{i1, i2, i3, i1};
+}
+
+TwoQubitGateMatrix rxx_matrix(double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {0, -std::sin(angle / 2)};
+    return TwoQubitGateMatrix{{{i1, cf_zero, cf_zero, i2},
+                               {cf_zero, i1, i2, cf_zero},
+                               {cf_zero, i2, i1, cf_zero},
+                               {i2, cf_zero, cf_zero, i1}}};
+}
+
+TwoQubitGateMatrix ryy_matrix(double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {0, std::sin(angle / 2)};
+    return TwoQubitGateMatrix{{{i1, cf_zero, cf_zero, i2},
+                               {cf_zero, i1, -i2, cf_zero},
+                               {cf_zero, -i2, i1, cf_zero},
+                               {i2, cf_zero, cf_zero, i1}}};
+}
+
+TwoQubitGateMatrix rzz_matrix(double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
+    std::complex<double> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
+    return TwoQubitGateMatrix{{{i1, cf_zero, cf_zero, cf_zero},
+                               {cf_zero, i2, cf_zero, cf_zero},
+                               {cf_zero, cf_zero, i2, cf_zero},
+                               {cf_zero, cf_zero, cf_zero, i1}}};
+}
+
+TwoQubitGateMatrix rzx_matrix(double angle) {
+    std::complex<double> i1 = {std::cos(angle / 2), 0};
+    std::complex<double> i2 = {0, std::sin(angle / 2)};
+    return TwoQubitGateMatrix{{{i1, cf_zero, -i2, cf_zero},
+                               {cf_zero, i1, cf_zero, i2},
+                               {-i2, cf_zero, i1, cf_zero},
+                               {cf_zero, i2, cf_zero, i1}}};
+}
+
+TwoQubitGateMatrix swap_matrix() {
+    return TwoQubitGateMatrix{{{cf_one, cf_zero, cf_zero, cf_zero},
+                               {cf_zero, cf_zero, cf_one, cf_zero},
+                               {cf_zero, cf_one, cf_zero, cf_zero},
+                               {cf_zero, cf_zero, cf_zero, cf_one}}};
 }
 
 void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unordered_set<vNode *> &done) {
