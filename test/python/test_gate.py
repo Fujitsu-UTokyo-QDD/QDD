@@ -1,5 +1,6 @@
 import pytest
 from qdd import pyQDD
+from qdd.qdd_backend import _qiskit_gates_2q, _qiskit_2q_control
 import qiskit.circuit.library.standard_gates as qiskit_gates
 from qiskit import QuantumCircuit as QiskitCircuit, QuantumRegister
 from qiskit.quantum_info import Operator
@@ -29,16 +30,19 @@ def test_1q_gates():
         assert(norm < 0.000001)
 
 def test_2q_gates():
-    _qiskit_gates_2q = {
-        qiskit_gates.CXGate: pyQDD.CX,
-        qiskit_gates.SwapGate: pyQDD.SWAP
-    }
-
     for qis,qdd in _qiskit_gates_2q.items():
-        qdd_mat = qdd(2,1,0).getEigenMatrix()
-        qis_mat = qis().to_matrix()
-        norm = np.linalg.norm(qdd_mat-qis_mat)
-        assert(norm < 0.000001)
+        if qis in [qiskit_gates.SwapGate, qiskit_gates.iSwapGate]:
+            qdd_mat = pyQDD.makeTwoQubitGate(2, qdd(), 1, 0).getEigenMatrix()
+            qis_mat = qis().to_matrix()
+            norm = np.linalg.norm(qdd_mat-qis_mat)
+            assert(norm < 0.000001)
+        else:
+            for _ in range(10):
+                para = random.uniform(-math.pi, math.pi)
+                qdd_mat = pyQDD.makeTwoQubitGate(2, qdd(para), 1, 0).getEigenMatrix()
+                qis_mat = qis(para).to_matrix()
+                norm = np.linalg.norm(qdd_mat-qis_mat)
+                assert(norm < 0.000001)
 
 def test_1q_rotation_1():
     _qiskit_rotations_1q = {
@@ -105,3 +109,15 @@ def test_1q_control():
         norm = np.linalg.norm(qdd_mat-qis_mat)
         assert(norm < 0.000001)
 
+def test_2q_control():
+    # now only for cswap
+    for qis,qdd in _qiskit_2q_control.items():
+        reg = QuantumRegister(3)
+        circ = QiskitCircuit(reg)
+        circ.append(qis(),reg)
+        qis_mat = Operator(circ).data
+
+        controls = [0]
+        qdd_mat = pyQDD.makeTwoQubitGate(3, qdd(), 2, 1, controls).getEigenMatrix()
+        norm = np.linalg.norm(qdd_mat-qis_mat)
+        assert(norm < 0.000001)
