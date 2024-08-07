@@ -38,13 +38,6 @@ std::map<std::string, GateMatrix> gateMap{
 std::random_device rd;
 std::mt19937_64 mt(rd());
 
-mEdge makeGate(QubitCount q, std::string name, Qubit target){
-    return makeGate(q, gateMap[name], target);
-}
-mEdge makeGate(QubitCount q, std::string name, Qubit target, const Controls &c){
-    return makeGate(q, gateMap[name], target, c);
-}
-
 std::pair<vEdge, std::string> _measureAll(vEdge &rootEdge, bool collapse){
     std::string result = measureAll(rootEdge, collapse, mt);
     return std::pair<vEdge, std::string>(rootEdge, result);
@@ -82,14 +75,17 @@ Controls get_controls(std::vector<Qubit> qs){
     return controls;
 }
 
-mEdge makeControlGate(QubitCount q, std::string name, Qubit target, const std::vector<Qubit> controls){
-    Controls c = get_controls(controls);
-    return makeGate(q, name, target, c);
+mEdge makeGate(QubitCount q, std::string name, Qubit target){
+    return makeGate(q, gateMap[name], target);
 }
 
-mEdge makeControlGateMatrix(QubitCount q, GateMatrix m, Qubit target, const std::vector<Qubit> controls){
+mEdge makeGate(QubitCount q, GateMatrix m, Qubit target, const std::vector<Qubit> controls){
     Controls c = get_controls(controls);
     return makeGate(q, m, target, c);
+}
+
+mEdge makeGate(QubitCount q, std::string name, Qubit target, const std::vector<Qubit> controls){
+    return makeGate(q, gateMap[name], target, controls);
 }
 
 mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix m, Qubit target0, Qubit target1, const std::vector<Qubit> controls){
@@ -202,10 +198,9 @@ PYBIND11_MODULE(pyQDD, m){
 
     // Gates
     m.def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
-     .def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit, const Controls &>(&makeGate))
+     .def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit, const std::vector<Qubit>>(&makeGate))
      .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
-     .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const Controls &>(&makeGate))
-     .def("makeControlGate", makeControlGate).def("makeControlGateMatrix", makeControlGateMatrix);
+     .def("makeGate", py::overload_cast<QubitCount, std::string, Qubit, const std::vector<Qubit>>(&makeGate));
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX);
     m.def("rxmat", rx).def("rymat", ry).def("rzmat", rz).def("u1", u1).def("u2", u2).def("u3", u3).def("u", u).def("p", p).def("r", r);
 
