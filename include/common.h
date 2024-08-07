@@ -116,7 +116,7 @@ constexpr GateMatrix SXdagmat{cf_1minusi_2, cf_1plusi_2, cf_1plusi_2, cf_1minusi
 constexpr GateMatrix Vmat{cf_SQRT2_2, cf_miSQRT2_2, cf_miSQRT2_2, cf_SQRT2_2};
 constexpr GateMatrix Vdagmat{cf_SQRT2_2, cf_iSQRT2_2, cf_iSQRT2_2, cf_SQRT2_2};
 
-
+using TwoQubitGateMatrix = std::array<std::array<std::complex<double>, 4>, 4>;
 
 // ----------------------------------------------------------------------------
 // std::variant
