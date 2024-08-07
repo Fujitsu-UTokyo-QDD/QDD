@@ -1776,6 +1776,18 @@ mEdge SWAP(QubitCount qnum, int target0, int target1) {
     return makeTwoQubitGate(qnum,matrix,target0,target1);
 }
 
+mEdge ISWAP(QubitCount qnum, int target0, int target1) {
+    TwoQubitGateMatrix matrix = iswap_matrix();
+    return makeTwoQubitGate(qnum,matrix,target0,target1);
+}
+
+mEdge CSWAP(QubitCount qnum, int target0, int target1, int control){
+    Controls controls;
+    controls.emplace(Control{control, Control::Type::pos});
+    TwoQubitGateMatrix matrix = swap_matrix();
+    return makeTwoQubitGate(qnum,matrix,target0,target1,controls);
+}
+
 GateMatrix rx(double angle){
     std::complex<double> i1 = {std::cos(angle / 2), 0};
     std::complex<double> i2 = {0, -std::sin(angle / 2)};
@@ -1863,6 +1875,13 @@ TwoQubitGateMatrix swap_matrix() {
     return TwoQubitGateMatrix{{{cf_one, cf_zero, cf_zero, cf_zero},
                                {cf_zero, cf_zero, cf_one, cf_zero},
                                {cf_zero, cf_one, cf_zero, cf_zero},
+                               {cf_zero, cf_zero, cf_zero, cf_one}}};
+}
+
+TwoQubitGateMatrix iswap_matrix() {
+    return TwoQubitGateMatrix{{{cf_one, cf_zero, cf_zero, cf_zero},
+                               {cf_zero, cf_zero, cf_i, cf_zero},
+                               {cf_zero, cf_i, cf_zero, cf_zero},
                                {cf_zero, cf_zero, cf_zero, cf_one}}};
 }
 

@@ -300,6 +300,27 @@ TEST(QddTest, GateTest){
         ASSERT_TRUE(mat[3][2] == (std::complex<double>(0.0, 0.0)));
         ASSERT_TRUE(mat[3][3] == (std::complex<double>(1.0, 0.0)));
     }
+    {
+        mEdge m = ISWAP(2, 1, 0);
+        size_t dim;
+        std_complex** mat = m.getMatrix(&dim);
+        ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+        ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][2] == (std::complex<double>(0.0, 1.0)));
+        ASSERT_TRUE(mat[1][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][1] == (std::complex<double>(0.0, 1.0)));
+        ASSERT_TRUE(mat[2][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][3] == (std::complex<double>(1.0, 0.0)));
+    }
 }
 
 TEST(QddTest, InitialStateTest){

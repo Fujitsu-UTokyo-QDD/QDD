@@ -206,8 +206,8 @@ PYBIND11_MODULE(pyQDD, m){
 
     m.def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit>(&makeTwoQubitGate))
      .def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit, const Controls &>(&makeTwoQubitGate));
-    m.def("RXX", RXX).def("RYY", RYY).def("RZZ", RZZ).def("RZX", RZX).def("SWAP", SWAP);
-    m.def("rxxmat", rxx_matrix).def("ryymat", ryy_matrix).def("rzzmat", rzz_matrix).def("rzxmat", rzx_matrix).def("swapmat", swap_matrix);
+    m.def("RXX", RXX).def("RYY", RYY).def("RZZ", RZZ).def("RZX", RZX).def("SWAP", SWAP).def("ISWAP",ISWAP).def("CSWAP", CSWAP);
+    m.def("rxxmat", rxx_matrix).def("ryymat", ryy_matrix).def("rzzmat", rzz_matrix).def("rzxmat", rzx_matrix).def("swapmat", swap_matrix).def("iswapmat", iswap_matrix);
 
     // Measure
     m.def("measureAll", _measureAll)

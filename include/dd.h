@@ -514,12 +514,15 @@ mEdge RYY(QubitCount qnum, int target0, int target1, double angle);
 mEdge RZZ(QubitCount qnum, int target0, int target1, double angle);
 mEdge RZX(QubitCount qnum, int target0, int target1, double angle);
 mEdge SWAP(QubitCount qnum, int target0, int target1);
+mEdge ISWAP(QubitCount qnum, int target0, int target1);
+mEdge CSWAP(QubitCount qnum, int target0, int target1, int control);
 
 TwoQubitGateMatrix rxx_matrix(double angle);
 TwoQubitGateMatrix ryy_matrix(double angle);
 TwoQubitGateMatrix rzz_matrix(double angle);
 TwoQubitGateMatrix rzx_matrix(double angle);
 TwoQubitGateMatrix swap_matrix();
+TwoQubitGateMatrix iswap_matrix();
 
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
