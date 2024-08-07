@@ -92,6 +92,11 @@ mEdge makeControlGateMatrix(QubitCount q, GateMatrix m, Qubit target, const std:
     return makeGate(q, m, target, c);
 }
 
+mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix m, Qubit target0, Qubit target1, const std::vector<Qubit> controls){
+    Controls c = get_controls(controls);
+    return makeTwoQubitGate(q, m, target0, target1, c);
+}
+
 #ifdef isMPI
 
 boost::mpi::communicator _world;
@@ -205,7 +210,7 @@ PYBIND11_MODULE(pyQDD, m){
     m.def("rxmat", rx).def("rymat", ry).def("rzmat", rz).def("u1", u1).def("u2", u2).def("u3", u3).def("u", u).def("p", p).def("r", r);
 
     m.def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit>(&makeTwoQubitGate))
-     .def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit, const Controls &>(&makeTwoQubitGate));
+     .def("makeTwoQubitGate", py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit, const std::vector<Qubit>>(&makeTwoQubitGate));
     m.def("RXX", RXX).def("RYY", RYY).def("RZZ", RZZ).def("RZX", RZX).def("SWAP", SWAP).def("ISWAP",ISWAP).def("CSWAP", CSWAP);
     m.def("rxxmat", rxx_matrix).def("ryymat", ryy_matrix).def("rzzmat", rzz_matrix).def("rzxmat", rzx_matrix).def("swapmat", swap_matrix).def("iswapmat", iswap_matrix);
 
