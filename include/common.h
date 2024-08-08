@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <set>
 #include <variant>
+#include <vector>
 #include <complex>
 #include <chrono>
 #ifndef LINE_SIZE
@@ -117,6 +118,8 @@ constexpr GateMatrix Vmat{cf_SQRT2_2, cf_miSQRT2_2, cf_miSQRT2_2, cf_SQRT2_2};
 constexpr GateMatrix Vdagmat{cf_SQRT2_2, cf_iSQRT2_2, cf_iSQRT2_2, cf_SQRT2_2};
 
 using TwoQubitGateMatrix = std::array<std::array<std::complex<double>, 4>, 4>;
+
+using ComplexMatrix = std::vector<std::vector<std::complex<double>>>;
 
 // ----------------------------------------------------------------------------
 // std::variant

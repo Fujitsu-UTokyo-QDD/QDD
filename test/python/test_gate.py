@@ -1,12 +1,11 @@
 import pytest
 from qdd import pyQDD
-from qdd.qdd_backend import _qiskit_gates_1q, _qiskit_gates_1q_0param, _qiskit_gates_1q_1param, _qiskit_gates_1q_2param, _qiskit_gates_1q_3param, _qiskit_gates_1q_4param, _qiskit_gates_2q_0param, _qiskit_gates_2q_1param
-import qiskit.circuit.library.standard_gates as qiskit_gates
-from qiskit import QuantumCircuit as QiskitCircuit, QuantumRegister
-from qiskit.quantum_info import Operator
+from qdd.qdd_backend import _qiskit_gates_1q_0param, _qiskit_gates_1q_1param, _qiskit_gates_1q_2param, _qiskit_gates_1q_3param, _qiskit_gates_1q_4param, _qiskit_gates_2q_0param, _qiskit_gates_2q_1param
+import qiskit.circuit.library as qiskit_gates
 import numpy as np
 import math
 import random
+import scipy.stats
 
 
 def test_1q_0param_gates():
@@ -98,3 +97,10 @@ def test_2q_1param_gates():
             qdd_mat = pyQDD.makeTwoQubitGate(num_qubits, qdd(para), num_qubits-1, num_qubits-2, controls).getEigenMatrix()
             norm = np.linalg.norm(qdd_mat-qis_mat)
             assert(norm < 0.000001)
+
+def test_unitary():
+    random_matrix = scipy.stats.unitary_group.rvs(8)
+    qis_mat = qiskit_gates.UnitaryGate(random_matrix).to_matrix()
+    qdd_mat = pyQDD.unitary(random_matrix).getEigenMatrix()
+    norm = np.linalg.norm(qdd_mat-qis_mat)
+    assert(norm < 0.000001)

@@ -448,6 +448,8 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
                        Qubit target1, const Controls &c);
 mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
                        Qubit target1);
+mEdge makeLargeGate(const ComplexMatrix &g);
+mEdge makeLargeGate(const ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd, const std::size_t colStart, const std::size_t colEnd);
 
 mEdge getMPIGate(mEdge root, int row, int col, int world_size);
 

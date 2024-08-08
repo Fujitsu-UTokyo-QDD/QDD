@@ -13,7 +13,7 @@ from qiskit.providers.models import BackendConfiguration
 from qiskit import QuantumCircuit as QiskitCircuit
 from qiskit.result import Result
 from qiskit.circuit import Barrier, Clbit, Measure, Qubit, Reset
-import qiskit.circuit.library.standard_gates as qiskit_gates
+import qiskit.circuit.library as qiskit_gates
 from qiskit.circuit.library import Initialize
 from qiskit.transpiler import CouplingMap
 from qiskit.circuit import library
@@ -54,8 +54,8 @@ _qiskit_gates_1q_1param: Dict = {
     qiskit_gates.RZGate: pyQDD.rzmat,
     qiskit_gates.U1Gate: pyQDD.u1,
     qiskit_gates.PhaseGate: pyQDD.p,
-    library.CPhaseGate: pyQDD.p,
-    library.MCPhaseGate: pyQDD.p,
+    qiskit_gates.CPhaseGate: pyQDD.p,
+    qiskit_gates.MCPhaseGate: pyQDD.p,
     qiskit_gates.CU1Gate: pyQDD.u1,
     qiskit_gates.CRXGate: pyQDD.rxmat,
     qiskit_gates.CRYGate: pyQDD.rymat,
@@ -104,9 +104,14 @@ _qiskit_gates_2q: Dict = {
     **_qiskit_gates_2q_1param,
 }
 
+_qiskit_gates_unitary: Dict = {
+    qiskit_gates.UnitaryGate: pyQDD.unitary,
+}
+
 _supported_qiskit_gates: Dict = {
     **_qiskit_gates_1q,
     **_qiskit_gates_2q,
+    **_qiskit_gates_unitary,
 }
 
 _control_gate: set = {
@@ -157,7 +162,7 @@ class QddBackend(BackendV1):
             'cu','cp','cu1','cu3','crx','cry','crz' # rotation + 1 control
             #"mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
             "rxx","ryy", "rzz", "rzx",
-            #"unitary", # HOW TO ???
+            "unitary", # HOW TO ???
         ]),
         'gates': [],
 
@@ -417,6 +422,10 @@ class QddBackend(BackendV1):
                         matrix = _qiskit_gates_2q_1param[qiskit_gate_type](i.params[0])
                     gate = pyQDD.makeTwoQubitGate(n_qubit, matrix, self.get_qID(qargs[-2]), self.get_qID(qargs[-1]), controls)
                     current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qiskit_gates_large:
+                    matrix = i.to_matrix()
+                    gate = pyQDD.unitary(matrix)
+                    current = pyQDD.mm_multiply(gate, current)
                 else:
                     raise RuntimeError(f'Unsupported gate or instruction:'
                                        f' type={qiskit_gate_type.__name__}, name={i.name}.'
@@ -616,6 +625,10 @@ class QddBackend(BackendV1):
                         elif qiskit_gate_type in _qiskit_gates_2q_1param:
                             matrix = _qiskit_gates_2q_1param[qiskit_gate_type](i.params[0])
                         gate = pyQDD.makeTwoQubitGate(n_qubit, matrix, map_after_swap[self.get_qID(qargs[-2])], map_after_swap[self.get_qID(qargs[-1])], controls)
+                        current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
+                    elif qiskit_gate_type in _qiskit_gates_unitary:
+                        matrix = i.to_matrix()
+                        gate = pyQDD.unitary(matrix)
                         current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     else:
                         raise RuntimeError(f'Unsupported gate or instruction:'

@@ -495,6 +495,48 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
   return e;
 }
 
+mEdge makeLargeGate(const ComplexMatrix &g){
+    if (g.empty()){
+        return mEdge::one;
+    }
+
+    const auto& rows = g.size();
+    if((rows & rows - 1) != 0){
+        throw std::invalid_argument("The number of rows must be a power of 2.");
+    }
+
+    const auto& cols = g[0].size();
+    if(rows != cols){
+        throw std::invalid_argument("The matrix must be square.");
+    }
+
+    if (rows == 1){
+        return mEdge{{g[0][0].real(), g[0][0].imag()}, mNode::terminal};
+    }
+
+      const auto level = int(log2(rows)) - 1;
+      return makeLargeGate(g, level, 0, rows, 0, cols);
+
+}
+mEdge makeLargeGate(const ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd, const std::size_t colStart, const std::size_t colEnd){
+    if (level == 0){
+        assert (rowEnd - rowStart == 2 && colEnd - colStart == 2);
+        return makeMEdge(2, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
+                             mEdge{{g[rowStart][colStart+1].real(), g[rowStart][colStart+1].imag()}, mNode::terminal},
+                             mEdge{{g[rowStart+1][colStart].real(), g[rowStart+1][colStart].imag()}, mNode::terminal},
+                             mEdge{{g[rowStart+1][colStart+1].real(), g[rowStart+1][colStart+1].imag()}, mNode::terminal}});
+    }
+
+    const auto rowMid = (rowStart + rowEnd) / 2;
+    const auto colMid = (colStart + colEnd) / 2;
+    const auto l = level - 1;
+
+    return makeMEdge(level, {makeLargeGate(g, l, rowStart, rowMid, colStart, colMid),
+                             makeLargeGate(g, l, rowStart, rowMid, colMid, colEnd),
+                             makeLargeGate(g, l, rowMid, rowEnd, colStart, colMid),
+                             makeLargeGate(g, l, rowMid, rowEnd, colMid, colEnd)});
+}
+
 #ifdef isMPI
 mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     if (root.isTerminal() || world_size <= 1) {
