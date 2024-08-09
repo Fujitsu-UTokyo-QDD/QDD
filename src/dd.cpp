@@ -521,7 +521,7 @@ mEdge makeLargeGate(const ComplexMatrix &g){
 mEdge makeLargeGate(const ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd, const std::size_t colStart, const std::size_t colEnd){
     if (level == 0){
         assert (rowEnd - rowStart == 2 && colEnd - colStart == 2);
-        return makeMEdge(2, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
+        return makeMEdge(0, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
                              mEdge{{g[rowStart][colStart+1].real(), g[rowStart][colStart+1].imag()}, mNode::terminal},
                              mEdge{{g[rowStart+1][colStart].real(), g[rowStart+1][colStart].imag()}, mNode::terminal},
                              mEdge{{g[rowStart+1][colStart+1].real(), g[rowStart+1][colStart+1].imag()}, mNode::terminal}});
