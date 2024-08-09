@@ -99,8 +99,10 @@ def test_2q_1param_gates():
             assert(norm < 0.000001)
 
 def test_unitary():
-    random_matrix = scipy.stats.unitary_group.rvs(8)
-    qis_mat = qiskit_gates.UnitaryGate(random_matrix).to_matrix()
-    qdd_mat = pyQDD.unitary(random_matrix).getEigenMatrix()
-    norm = np.linalg.norm(qdd_mat-qis_mat)
-    assert(norm < 0.000001)
+    for bit in range(3, 5):
+        for _ in range(10):
+            random_matrix = scipy.stats.unitary_group.rvs(2**bit)
+            qis_mat = qiskit_gates.UnitaryGate(random_matrix).to_matrix()
+            qdd_mat = pyQDD.unitary(random_matrix).getEigenMatrix()
+            norm = np.linalg.norm(qdd_mat-qis_mat)
+            assert(norm < 0.000001)
