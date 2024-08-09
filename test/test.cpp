@@ -183,6 +183,144 @@ TEST(QddTest, GateTest){
             ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,angle/2))));
         }
     }
+    {
+        for (int i = 0; i<16; i++){
+            float angle = PI * 2 * i / 16;
+            mEdge m = RXX(2, 1, 0, angle);
+            size_t dim;
+            std_complex** mat = m.getMatrix(&dim);
+            ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][3], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][2], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][1], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][2], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][0], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][3], {std::cos(angle/2), 0}));
+        }
+    }
+    {
+        for (int i = 0; i<16; i++){
+            float angle = PI * 2 * i / 16;
+            mEdge m = RYY(2, 1, 0, angle);
+            size_t dim;
+            std_complex** mat = m.getMatrix(&dim);
+            ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][3], {0,std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][2], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][1], {0,-std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][2], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][0], {0,std::sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][3], {std::cos(angle/2), 0}));
+        }
+    }
+    {
+        for (int i = 0; i<16; i++){
+            float angle = PI * 2 * i / 16;
+            mEdge m = RZZ(2, 1, 0, angle);
+            size_t dim;
+            std_complex** mat = m.getMatrix(&dim);
+            ASSERT_TRUE(isNearlyEqual(mat[0][0], std::exp(std::complex<double>(0,-angle/2))));
+            ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][1], std::exp(std::complex<double>(0,angle/2))));
+            ASSERT_TRUE(isNearlyEqual(mat[1][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][2], std::exp(std::complex<double>(0,angle/2))));
+            ASSERT_TRUE(isNearlyEqual(mat[2][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][3], std::exp(std::complex<double>(0,-angle/2))));
+        }
+    }
+    {
+        for (int i = 0; i<16; i++){
+            float angle = PI * 2 * i / 16;
+            mEdge m = RZX(2, 1, 0, angle);
+            size_t dim;
+            std_complex** mat = m.getMatrix(&dim);
+            ASSERT_TRUE(isNearlyEqual(mat[0][0], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][2], {0,-sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[0][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][1], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[1][3], {0,sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][0], {0,-sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][1], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][2], {std::cos(angle/2), 0}));
+            ASSERT_TRUE(isNearlyEqual(mat[2][3], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][0], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][1], {0,sin(angle/2)}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][2], {0,0}));
+            ASSERT_TRUE(isNearlyEqual(mat[3][3], {std::cos(angle/2), 0}));
+        }
+    }
+    {
+        mEdge m = SWAP(2, 1, 0);
+        size_t dim;
+        std_complex** mat = m.getMatrix(&dim);
+        ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+        ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][2] == (std::complex<double>(1.0, 0.0)));
+        ASSERT_TRUE(mat[1][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][1] == (std::complex<double>(1.0, 0.0)));
+        ASSERT_TRUE(mat[2][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][3] == (std::complex<double>(1.0, 0.0)));
+    }
+    {
+        mEdge m = ISWAP(2, 1, 0);
+        size_t dim;
+        std_complex** mat = m.getMatrix(&dim);
+        ASSERT_TRUE(mat[0][0] == (std::complex<double>(1.0, 0.0)));
+        ASSERT_TRUE(mat[0][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[0][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[1][2] == (std::complex<double>(0.0, 1.0)));
+        ASSERT_TRUE(mat[1][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][1] == (std::complex<double>(0.0, 1.0)));
+        ASSERT_TRUE(mat[2][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[2][3] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][0] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][1] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][2] == (std::complex<double>(0.0, 0.0)));
+        ASSERT_TRUE(mat[3][3] == (std::complex<double>(1.0, 0.0)));
+    }
 }
 
 TEST(QddTest, InitialStateTest){

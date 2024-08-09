@@ -1,107 +1,108 @@
 import pytest
 from qdd import pyQDD
-import qiskit.circuit.library.standard_gates as qiskit_gates
-from qiskit import QuantumCircuit as QiskitCircuit, QuantumRegister
-from qiskit.quantum_info import Operator
+from qdd.qdd_backend import _qiskit_gates_1q_0param, _qiskit_gates_1q_1param, _qiskit_gates_1q_2param, _qiskit_gates_1q_3param, _qiskit_gates_1q_4param, _qiskit_gates_2q_0param, _qiskit_gates_2q_1param
+import qiskit.circuit.library as qiskit_gates
 import numpy as np
 import math
 import random
+import scipy.stats
 
-def test_1q_gates():
-    _qiskit_gates_1q = {
-        qiskit_gates.HGate: "H",
-        qiskit_gates.IGate: "I",
-        qiskit_gates.SdgGate: "Sdag",
-        qiskit_gates.SGate: "S",
-        qiskit_gates.SXdgGate: "SXdag",
-        qiskit_gates.SXGate: "SX",
-        qiskit_gates.TdgGate: "Tdag",
-        qiskit_gates.TGate: "T",
-        qiskit_gates.XGate: "X",
-        qiskit_gates.YGate: "Y",
-        qiskit_gates.ZGate: "Z"
-    }
 
-    for qis,str in _qiskit_gates_1q.items():
-        qdd_mat = pyQDD.makeGate(1, str, 0).getEigenMatrix()
-        qis_mat = qis().to_matrix()
+def test_1q_0param_gates():
+    for qis,qdd in _qiskit_gates_1q_0param.items():
+        if qis == qiskit_gates.MCXGate:
+            continue
+        qis_gate = qis()
+        num_qubits = qis_gate.num_qubits
+        qis_mat = qis_gate.to_matrix()
+        controls = range(0,num_qubits-1)
+        qdd_mat = pyQDD.makeGate(num_qubits, qdd, num_qubits-1, controls).getEigenMatrix()
         norm = np.linalg.norm(qdd_mat-qis_mat)
         assert(norm < 0.000001)
 
-def test_2q_gates():
-    _qiskit_gates_2q = {
-        qiskit_gates.CXGate: pyQDD.CX,
-        qiskit_gates.SwapGate: pyQDD.SWAP
-    }
-
-    for qis,qdd in _qiskit_gates_2q.items():
-        qdd_mat = qdd(2,1,0).getEigenMatrix()
-        qis_mat = qis().to_matrix()
-        norm = np.linalg.norm(qdd_mat-qis_mat)
-        assert(norm < 0.000001)
-
-def test_1q_rotation_1():
-    _qiskit_rotations_1q = {
-        qiskit_gates.RXGate: pyQDD.rxmat,
-        qiskit_gates.RYGate: pyQDD.rymat,
-        qiskit_gates.RZGate: pyQDD.rzmat,
-        qiskit_gates.U1Gate: pyQDD.u1,
-        qiskit_gates.PhaseGate: pyQDD.p,
-    }
-
-    for qis,qdd in _qiskit_rotations_1q.items():
+def test_1q_1param_gates():
+    for qis,qdd in _qiskit_gates_1q_1param.items():
+        if qis == qiskit_gates.MCPhaseGate:
+            continue
         for _ in range(10):
             para = random.uniform(-math.pi, math.pi)
-            qdd_mat = pyQDD.makeGate(1, qdd(para), 0).getEigenMatrix()
-            qis_mat = qis(para).to_matrix()
+            qis_gate = qis(para)
+            num_qubits = qis_gate.num_qubits
+            qis_mat = qis_gate.to_matrix()
+            controls = range(0,num_qubits-1)
+            qdd_mat = pyQDD.makeGate(num_qubits, qdd(para), num_qubits-1, controls).getEigenMatrix()
             norm = np.linalg.norm(qdd_mat-qis_mat)
             assert(norm < 0.000001)
 
-    _qiskit_rotations_1q_2 = {
-        qiskit_gates.U2Gate: pyQDD.u2,
-        qiskit_gates.RGate: pyQDD.r,
-    }
-
-    for qis,qdd in _qiskit_rotations_1q_2.items():
+def test_1q_2param_gates():
+    for qis,qdd in _qiskit_gates_1q_2param.items():
         for _ in range(20):
             para1 = random.uniform(-math.pi, math.pi)
             para2 = random.uniform(-math.pi, math.pi)
-            qdd_mat = pyQDD.makeGate(1, qdd(para1, para2), 0).getEigenMatrix()
-            qis_mat = qis(para1, para2).to_matrix()
+            qis_gate = qis(para1, para2)
+            num_qubits = qis_gate.num_qubits
+            qis_mat = qis_gate.to_matrix()
+            controls = range(0,num_qubits-1)
+            qdd_mat = pyQDD.makeGate(num_qubits, qdd(para1, para2), num_qubits-1, controls).getEigenMatrix()
             norm = np.linalg.norm(qdd_mat-qis_mat)
             assert(norm < 0.000001)
 
-
-    _qiskit_rotations_1q_3 = {
-        qiskit_gates.U3Gate: pyQDD.u3,
-        qiskit_gates.UGate: pyQDD.u,
-    }
-
-    for qis,qdd in _qiskit_rotations_1q_3.items():
+def test_1q_3param_gates():
+    for qis,qdd in _qiskit_gates_1q_3param.items():
         for _ in range(30):
             para1 = random.uniform(-math.pi, math.pi)
             para2 = random.uniform(-math.pi, math.pi)
             para3 = random.uniform(-math.pi, math.pi)
-            qdd_mat = pyQDD.makeGate(1, qdd(para1, para2, para3), 0).getEigenMatrix()
-            qis_mat = qis(para1, para2, para3).to_matrix()
+            qis_gate = qis(para1, para2, para3)
+            num_qubits = qis_gate.num_qubits
+            qis_mat = qis_gate.to_matrix()
+            controls = range(0,num_qubits-1)
+            qdd_mat = pyQDD.makeGate(num_qubits, qdd(para1, para2, para3), num_qubits-1, controls).getEigenMatrix()
             norm = np.linalg.norm(qdd_mat-qis_mat)
             assert(norm < 0.000001)
 
-def test_1q_control():
-    _qiskit_1q_control = {
-        qiskit_gates.CYGate: "Y",
-        qiskit_gates.CZGate: "Z",
-        qiskit_gates.CSXGate: "SX",
-    }
+def test_1q_4param_gates():
+    for qis,qdd in _qiskit_gates_1q_4param.items():
+        for _ in range(40):
+            para1 = random.uniform(-math.pi, math.pi)
+            para2 = random.uniform(-math.pi, math.pi)
+            para3 = random.uniform(-math.pi, math.pi)
+            para4 = random.uniform(-math.pi, math.pi)
+            qis_gate = qis(para1, para2, para3, para4)
+            num_qubits = qis_gate.num_qubits
+            qis_mat = qis_gate.to_matrix()
+            controls = range(0,num_qubits-1)
+            qdd_mat = pyQDD.makeGate(num_qubits, qdd(para1, para2, para3, para4), num_qubits-1, controls).getEigenMatrix()
+            norm = np.linalg.norm(qdd_mat-qis_mat)
+            assert(norm < 0.000001)
 
-    for qis,qdd in _qiskit_1q_control.items():
-        reg = QuantumRegister(2)
-        circ = QiskitCircuit(reg)
-        circ.append(qis(),reg)
-        qis_mat = Operator(circ).data
-
-        gate = pyQDD.makeControlGate(2, qdd, 1, [0])
-        qdd_mat = gate.getEigenMatrix()
+def test_2q_0param_gates():
+    for qis,qdd in _qiskit_gates_2q_0param.items():
+        qis_gate = qis()
+        num_qubits = qis_gate.num_qubits
+        qis_mat = qis_gate.to_matrix()
+        controls = range(0,num_qubits-2)
+        qdd_mat = pyQDD.makeTwoQubitGate(num_qubits, qdd(), num_qubits-1, num_qubits-2, controls).getEigenMatrix()
         norm = np.linalg.norm(qdd_mat-qis_mat)
         assert(norm < 0.000001)
 
+def test_2q_1param_gates():
+    for qis,qdd in _qiskit_gates_2q_1param.items():
+        for _ in range(10):
+            para = random.uniform(-math.pi, math.pi)
+            qis_gate = qis(para)
+            num_qubits = qis_gate.num_qubits
+            qis_mat = qis_gate.to_matrix()
+            controls = range(0,num_qubits-2)
+            qdd_mat = pyQDD.makeTwoQubitGate(num_qubits, qdd(para), num_qubits-1, num_qubits-2, controls).getEigenMatrix()
+            norm = np.linalg.norm(qdd_mat-qis_mat)
+            assert(norm < 0.000001)
+
+def test_unitary():
+    for bit in range(3, 5):
+        for _ in range(10):
+            random_matrix = scipy.stats.unitary_group.rvs(2**bit)
+            qis_mat = qiskit_gates.UnitaryGate(random_matrix).to_matrix()
+            qdd_mat = pyQDD.unitary(random_matrix).getEigenMatrix()
+            norm = np.linalg.norm(qdd_mat-qis_mat)
+            assert(norm < 0.000001)
