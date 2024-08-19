@@ -511,6 +511,8 @@ GateMatrix u(double theta, double phi, double lambda, double gamma);
 GateMatrix p(double angle);
 GateMatrix r(double theta, double phi);
 
+mEdge makeSwap(QubitCount qnum, int target0, int target1);
+
 mEdge RXX(QubitCount qnum, int target0, int target1, double angle);
 mEdge RYY(QubitCount qnum, int target0, int target1, double angle);
 mEdge RZZ(QubitCount qnum, int target0, int target1, double angle);

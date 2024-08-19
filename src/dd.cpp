@@ -1793,6 +1793,16 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
+mEdge makeSwap(QubitCount qnum, int target0, int target1){
+    Controls c1{{Control{target0, Control::Type::pos}}};
+    mEdge e1 = makeGate(qnum, Xmat, target1, c1);
+    Controls c2{{Control{target1, Control::Type::pos}}};
+    mEdge e2 = makeGate(qnum, Xmat, target0, c2);
+    mEdge e3 = mm_multiply(e2, e1);
+    e3 = mm_multiply(e1, e3);
+    return e3;
+}
+
 mEdge RXX(QubitCount qnum, int target0, int target1, double angle) {
     TwoQubitGateMatrix matrix = rxx_matrix(angle);
     return makeTwoQubitGate(qnum,matrix,target0,target1);
@@ -1814,8 +1824,7 @@ mEdge RZX(QubitCount qnum, int target0, int target1, double angle) {
 }
 
 mEdge SWAP(QubitCount qnum, int target0, int target1) {
-    TwoQubitGateMatrix matrix = swap_matrix();
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeSwap(qnum, target0, target1);
 }
 
 mEdge ISWAP(QubitCount qnum, int target0, int target1) {
