@@ -114,28 +114,6 @@ _supported_qiskit_gates: Dict = {
     **_qiskit_gates_unitary,
 }
 
-_control_gate: set = {
-    qiskit_gates.CXGate,
-    qiskit_gates.CYGate,
-    qiskit_gates.CZGate,
-    qiskit_gates.CSXGate,
-    qiskit_gates.CCXGate,
-    qiskit_gates.C3XGate,
-    qiskit_gates.C4XGate,
-    qiskit_gates.MCXGate,
-    qiskit_gates.CPhaseGate,
-    qiskit_gates.MCPhaseGate,
-    qiskit_gates.CSwapGate,
-    qiskit_gates.CU1Gate,
-    qiskit_gates.CU3Gate,
-    qiskit_gates.CUGate,
-    qiskit_gates.CRXGate,
-    qiskit_gates.CRYGate,
-    qiskit_gates.CRZGate,
-    qiskit_gates.CUGate,
-}
-
-
 @dataclasses.dataclass
 class QddExperiments:
     circs: List[QiskitCircuit]
@@ -396,9 +374,8 @@ class QddBackend(BackendV1):
             if qiskit_gate_type in _supported_qiskit_gates:
                 if qiskit_gate_type in _qiskit_gates_1q:
                     controls = []
-                    if qiskit_gate_type in _control_gate:
-                        for j in range(len(qargs)-1):
-                            controls.append(self.get_qID(qargs[j]))
+                    for j in range(len(qargs)-1):
+                        controls.append(self.get_qID(qargs[j]))
                     if qiskit_gate_type in _qiskit_gates_1q_0param:
                         matrix = _qiskit_gates_1q_0param[qiskit_gate_type]
                     elif qiskit_gate_type in _qiskit_gates_1q_1param:
@@ -413,16 +390,15 @@ class QddBackend(BackendV1):
                     current = pyQDD.mm_multiply(gate, current)
                 elif qiskit_gate_type in _qiskit_gates_2q:
                     controls = []
-                    if qiskit_gate_type in _control_gate:
-                        for j in range(len(qargs)-2):
-                            controls.append(self.get_qID(qargs[j]))
+                    for j in range(len(qargs)-2):
+                        controls.append(self.get_qID(qargs[j]))
                     if qiskit_gate_type in _qiskit_gates_2q_0param:
                         matrix = _qiskit_gates_2q_0param[qiskit_gate_type]()
                     elif qiskit_gate_type in _qiskit_gates_2q_1param:
                         matrix = _qiskit_gates_2q_1param[qiskit_gate_type](i.params[0])
                     gate = pyQDD.makeTwoQubitGate(n_qubit, matrix, self.get_qID(qargs[-1]), self.get_qID(qargs[-2]), controls)
                     current = pyQDD.mm_multiply(gate, current)
-                elif qiskit_gate_type in _qiskit_gates_large:
+                elif qiskit_gate_type in _qiskit_gates_unitary:
                     matrix = i.to_matrix()
                     gate = pyQDD.unitary(matrix)
                     current = pyQDD.mm_multiply(gate, current)
@@ -600,9 +576,8 @@ class QddBackend(BackendV1):
                 if qiskit_gate_type in _supported_qiskit_gates:
                     if qiskit_gate_type in _qiskit_gates_1q:
                         controls = []
-                        if qiskit_gate_type in _control_gate:
-                            for j in range(len(qargs)-1):
-                                controls.append(map_after_swap[self.get_qID(qargs[j])])
+                        for j in range(len(qargs)-1):
+                            controls.append(map_after_swap[self.get_qID(qargs[j])])
                         if qiskit_gate_type in _qiskit_gates_1q_0param:
                             matrix = _qiskit_gates_1q_0param[qiskit_gate_type]
                         elif qiskit_gate_type in _qiskit_gates_1q_1param:
@@ -617,9 +592,8 @@ class QddBackend(BackendV1):
                         current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_gates_2q:
                         controls = []
-                        if qiskit_gate_type in _control_gate:
-                            for j in range(len(qargs)-2):
-                                controls.append(map_after_swap[self.get_qID(qargs[j])])
+                        for j in range(len(qargs)-2):
+                            controls.append(map_after_swap[self.get_qID(qargs[j])])
                         if qiskit_gate_type in _qiskit_gates_2q_0param:
                             matrix = _qiskit_gates_2q_0param[qiskit_gate_type]()
                         elif qiskit_gate_type in _qiskit_gates_2q_1param:
