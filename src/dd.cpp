@@ -455,26 +455,27 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
 
   const auto larger_target = std::max(target0, target1);
   for (z = z + 1; z < larger_target; z++) {
-    if (it != controls.end() && it->qubit == z) {
-      if (it->type == Control::Type::neg) {
-        for (int i = 0; i < 4; i++) {
+    for (int b1 = 0; b1 < 2; b1++) {
+      for (int b0 = 0; b0 < 2; b0++) {
+        std::size_t i = (b1 << 1) | b0;
+        if (it != controls.end() && it->qubit == z) {
+          if (it->type == Control::Type::neg)
+              edges[i] = makeMEdge(
+                            z, {edges[i], mEdge::zero, mEdge::zero,
+                                (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
+          else
+              edges[i] = makeMEdge(
+                            z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
+                                mEdge::zero, mEdge::zero, edges[i]});
+
+        } else {
           edges[i] = makeMEdge(
-              z, {edges[i], mEdge::zero, mEdge::zero, makeIdent(z - 1)});
+                        z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
         }
-      } else {
-        for (int i = 0; i < 4; i++) {
-          edges[i] = makeMEdge(
-              z, {makeIdent(z - 1), mEdge::zero, mEdge::zero, edges[i]});
-        }
-      }
-    } else {
-      for (int i = 0; i < 4; i++) {
-        edges[i] = makeMEdge(z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
       }
     }
-  }
-  if (it != controls.end() && it->qubit == z) {
-    ++it;
+    if (it != controls.end() && it->qubit == z)
+      ++it;
   }
 
   auto e = makeMEdge(z, edges);
