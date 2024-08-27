@@ -496,7 +496,15 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
   return e;
 }
 
-mEdge makeLargeGate(const ComplexMatrix &g){
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g){
+    std::vector<Qubit> targets;
+    for (int i = 0; i < int(log2(g.size())); i++){
+        targets.push_back(i);
+    }
+    return makeLargeGate(q, g, targets);
+}
+
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g, const std::vector<Qubit> &targets) {
     if (g.empty()){
         return mEdge::one;
     }
@@ -515,27 +523,72 @@ mEdge makeLargeGate(const ComplexMatrix &g){
         return mEdge{{g[0][0].real(), g[0][0].imag()}, mNode::terminal};
     }
 
-      const auto level = int(log2(rows)) - 1;
-      return makeLargeGate(g, level, 0, rows, 0, cols);
+
+    if (int(log2(rows)) != targets.size()){
+        throw std::invalid_argument("The number of targets is incompatible with the matrix size.");
+    }
+
+    //make conversion map of indices
+    std::vector<size_t> target_compresed;
+    for (int i = 0; i < targets.size(); i++){
+        target_compresed.push_back(i);
+    }
+    std::sort(target_compresed.begin(), target_compresed.end(), [&targets](size_t a, size_t b){
+        return targets[a] < targets[b];
+    });
+    std::vector<std::size_t> conversionMap;
+    conversionMap.push_back(0);
+    for (int i = 0; i < rows; i++){
+        size_t addition = 1 << target_compresed[i];
+        int rep = conversionMap.size();
+        for(int j = 0; j < rep; j++){
+            conversionMap.push_back(conversionMap[j] + addition);
+        }
+    }
+    //swap rows and columns
+    std::vector<std::vector<std::complex<double>>> g_tmp;
+    for (int i = 0; i < rows; i++){
+        g_tmp.push_back(g[conversionMap[i]]);
+    }
+    for (int i = 0; i < rows; i++){
+        for (int j = 0; j < rows; j++){
+            g[i][j] = g_tmp[i][conversionMap[j]];
+        }
+    }
+
+    Qubit target_min = *std::min_element(targets.begin(), targets.end());
+    std::vector<bool> skip(q, true);
+    for (auto target : targets){
+        skip[target] = false;
+    }
+
+    return makeLargeGate(g, q-1, 0, rows, 0, cols, skip, target_min);
 
 }
-mEdge makeLargeGate(const ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd, const std::size_t colStart, const std::size_t colEnd){
-    if (level == 0){
+mEdge makeLargeGate(ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd,
+                    const std::size_t colStart, const std::size_t colEnd , const std::vector<bool> skip, const Qubit target_min){
+    if (level == target_min){
         assert (rowEnd - rowStart == 2 && colEnd - colStart == 2);
-        return makeMEdge(0, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
+        return makeMEdge(target_min, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
                              mEdge{{g[rowStart][colStart+1].real(), g[rowStart][colStart+1].imag()}, mNode::terminal},
                              mEdge{{g[rowStart+1][colStart].real(), g[rowStart+1][colStart].imag()}, mNode::terminal},
                              mEdge{{g[rowStart+1][colStart+1].real(), g[rowStart+1][colStart+1].imag()}, mNode::terminal}});
     }
 
-    const auto rowMid = (rowStart + rowEnd) / 2;
-    const auto colMid = (colStart + colEnd) / 2;
     const auto l = level - 1;
 
-    return makeMEdge(level, {makeLargeGate(g, l, rowStart, rowMid, colStart, colMid),
-                             makeLargeGate(g, l, rowStart, rowMid, colMid, colEnd),
-                             makeLargeGate(g, l, rowMid, rowEnd, colStart, colMid),
-                             makeLargeGate(g, l, rowMid, rowEnd, colMid, colEnd)});
+    if (skip[level]){
+        auto e = makeLargeGate(g, l, rowStart, rowEnd, colStart, colEnd, skip, target_min);
+        return makeMEdge(level, {e, mEdge::zero, mEdge::zero, e});
+    }
+
+    const auto rowMid = (rowStart + rowEnd) / 2;
+    const auto colMid = (colStart + colEnd) / 2;
+
+    return makeMEdge(level, {makeLargeGate(g, l, rowStart, rowMid, colStart, colMid, skip, target_min),
+                             makeLargeGate(g, l, rowStart, rowMid, colMid, colEnd, skip, target_min),
+                             makeLargeGate(g, l, rowMid, rowEnd, colStart, colMid, skip, target_min),
+                             makeLargeGate(g, l, rowMid, rowEnd, colMid, colEnd, skip, target_min)});
 }
 
 #ifdef isMPI

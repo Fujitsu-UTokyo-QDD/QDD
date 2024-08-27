@@ -400,7 +400,8 @@ class QddBackend(BackendV1):
                     current = pyQDD.mm_multiply(gate, current)
                 elif qiskit_gate_type in _qiskit_gates_unitary:
                     matrix = i.to_matrix()
-                    gate = pyQDD.unitary(matrix)
+                    targets = qargs
+                    gate = pyQDD.unitary(n_qubit, matrix, targets)
                     current = pyQDD.mm_multiply(gate, current)
                 else:
                     raise RuntimeError(f'Unsupported gate or instruction:'
@@ -602,7 +603,8 @@ class QddBackend(BackendV1):
                         current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     elif qiskit_gate_type in _qiskit_gates_unitary:
                         matrix = i.to_matrix()
-                        gate = pyQDD.unitary(matrix)
+                        targets = [map_after_swap[self.get_qID(q)] for q in qargs]
+                        gate = pyQDD.unitary(n_qubit, matrix, targets)
                         current = pyQDD.mv_multiply(gate, current) if use_mpi ==False else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs])) if use_bcast==False else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]))
                     else:
                         raise RuntimeError(f'Unsupported gate or instruction:'

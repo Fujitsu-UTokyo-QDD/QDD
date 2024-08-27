@@ -209,8 +209,8 @@ PYBIND11_MODULE(pyQDD, m){
     m.def("RXX", RXX).def("RYY", RYY).def("RZZ", RZZ).def("RZX", RZX).def("SWAP", SWAP).def("ISWAP",ISWAP).def("CSWAP", CSWAP);
     m.def("rxxmat", rxx_matrix).def("ryymat", ryy_matrix).def("rzzmat", rzz_matrix).def("rzxmat", rzx_matrix).def("swapmat", swap_matrix).def("iswapmat", iswap_matrix);
 
-    m.def("unitary", py::overload_cast<const ComplexMatrix&>(makeLargeGate));
-
+    m.def("unitary", py::overload_cast<QubitCount, ComplexMatrix&>(makeLargeGate))
+     .def("unitary", py::overload_cast<QubitCount, ComplexMatrix&, const std::vector<Qubit>&>(makeLargeGate));
 
     // Measure
     m.def("measureAll", _measureAll)
