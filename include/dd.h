@@ -444,7 +444,14 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c);
 mEdge makeIdent(Qubit q);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c);
 mEdge makeGate(QubitCount q, GateMatrix g, Qubit target);
-mEdge makeSwap(QubitCount q, Qubit target0, Qubit target1);
+mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
+                       Qubit target1, const Controls &c);
+mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
+                       Qubit target1);
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g);
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g, const std::vector<Qubit> &targets);
+mEdge makeLargeGate(ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd,
+                    const std::size_t colStart, const std::size_t colEnd, const std::vector<bool> skip, const Qubit target_min);
 
 mEdge getMPIGate(mEdge root, int row, int col, int world_size);
 
@@ -502,9 +509,26 @@ GateMatrix rz(double angle);
 GateMatrix u3(double theta, double phi, double lambda);
 GateMatrix u1(double lambda);
 GateMatrix u2(double phi, double lambda);
-GateMatrix u(double theta, double phi, double lambda);
+GateMatrix u(double theta, double phi, double lambda, double gamma);
 GateMatrix p(double angle);
 GateMatrix r(double theta, double phi);
+
+mEdge makeSwap(QubitCount qnum, int target0, int target1);
+
+mEdge RXX(QubitCount qnum, int target0, int target1, double angle);
+mEdge RYY(QubitCount qnum, int target0, int target1, double angle);
+mEdge RZZ(QubitCount qnum, int target0, int target1, double angle);
+mEdge RZX(QubitCount qnum, int target0, int target1, double angle);
+mEdge SWAP(QubitCount qnum, int target0, int target1);
+mEdge ISWAP(QubitCount qnum, int target0, int target1);
+mEdge CSWAP(QubitCount qnum, int target0, int target1, int control);
+
+TwoQubitGateMatrix rxx_matrix(double angle);
+TwoQubitGateMatrix ryy_matrix(double angle);
+TwoQubitGateMatrix rzz_matrix(double angle);
+TwoQubitGateMatrix rzx_matrix(double angle);
+TwoQubitGateMatrix swap_matrix();
+TwoQubitGateMatrix iswap_matrix();
 
 std::string genDot(vEdge &rootEdge);
 std::string genDot(mEdge &rootEdge);
