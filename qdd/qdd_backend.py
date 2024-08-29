@@ -140,7 +140,7 @@ class QddBackend(BackendV1):
             'cu','cp','cu1','cu3','crx','cry','crz' # rotation + 1 control
             #"mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
             "rxx","ryy", "rzz", "rzx",
-            "unitary",
+            #"unitary",
         ]),
         'gates': [],
 
