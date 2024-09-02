@@ -42,26 +42,35 @@ def test_preset_pass_manager():
         0,
         0,
         1 / math.sqrt(4) * complex(1, 0),
-        1 / math.sqrt(8) * complex(1, 0)]
+        1 / math.sqrt(8) * complex(1, 0),
+    ]
 
     qc.initialize(random_state, range(4))
 
     backend = QddProvider().get_backend()
-    optimized_0 = transpile(qc, backend=backend, seed_transpiler=11, optimization_level=0)
-    print('gates = ', optimized_0.count_ops())
-    print('depth = ', optimized_0.depth())
+    optimized_0 = transpile(
+        qc, backend=backend, seed_transpiler=11, optimization_level=0
+    )
+    print("gates = ", optimized_0.count_ops())
+    print("depth = ", optimized_0.depth())
 
-    optimized_1 = transpile(qc, backend=backend, seed_transpiler=11, optimization_level=1)
-    print('gates = ', optimized_1.count_ops())
-    print('depth = ', optimized_1.depth())
+    optimized_1 = transpile(
+        qc, backend=backend, seed_transpiler=11, optimization_level=1
+    )
+    print("gates = ", optimized_1.count_ops())
+    print("depth = ", optimized_1.depth())
 
-    optimized_2 = transpile(qc, backend=backend, seed_transpiler=11, optimization_level=2)
-    print('gates = ', optimized_2.count_ops())
-    print('depth = ', optimized_2.depth())
+    optimized_2 = transpile(
+        qc, backend=backend, seed_transpiler=11, optimization_level=2
+    )
+    print("gates = ", optimized_2.count_ops())
+    print("depth = ", optimized_2.depth())
 
-    optimized_3 = transpile(qc, backend=backend, seed_transpiler=11, optimization_level=3)
-    print('gates = ', optimized_3.count_ops())
-    print('depth = ', optimized_3.depth())
+    optimized_3 = transpile(
+        qc, backend=backend, seed_transpiler=11, optimization_level=3
+    )
+    print("gates = ", optimized_3.count_ops())
+    print("depth = ", optimized_3.depth())
 
     # In this test, we would like to check whether the above transpilations finish with no errors raised.
     # So, here, there are no specific properties to assert.
@@ -84,6 +93,6 @@ def test_transpiler_log(caplog):
     backend = QddProvider().get_backend()
     transpile(log_circ, backend, seed_transpiler=50)
 
-    assert any(t[0].startswith('qiskit.transpiler.') for t in caplog.record_tuples)
+    assert any(t[0].startswith("qiskit.transpiler.") for t in caplog.record_tuples)
     assert any(t[1] == DEBUG for t in caplog.record_tuples)
     assert any(t[1] == INFO for t in caplog.record_tuples)

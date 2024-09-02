@@ -1,32 +1,35 @@
 #include "dd.h"
-#include "cache.hpp"
-#include "common.h"
-#include "table.hpp"
+
+#include <math.h>
+
 #include <algorithm>
 #include <bitset>
+#include <fstream>
+#include <iostream>
 #include <map>
-#include <math.h>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
-#include <iostream>
-#include <fstream>
+
+#include "cache.hpp"
+#include "common.h"
+#include "table.hpp"
 
 #ifdef isMPI
-  #include <boost/mpi/communicator.hpp>
-  #include <boost/mpi/environment.hpp>
-  #include <boost/mpi/collectives.hpp>
-  #include <boost/serialization/utility.hpp>
-  #include <boost/archive/binary_iarchive.hpp>
-  #include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/mpi/environment.hpp>
+#include <boost/serialization/utility.hpp>
 #endif
 
 #ifdef isMT
-  #include <oneapi/tbb/enumerable_thread_specific.h>
-  #include <boost/fiber/future/future.hpp>
-  #include <boost/fiber/future/packaged_task.hpp>
-#endif
+#include <oneapi/tbb/enumerable_thread_specific.h>
 
+#include <boost/fiber/future/future.hpp>
+#include <boost/fiber/future/packaged_task.hpp>
+#endif
 
 #define SUBTASK_THRESHOLD 5
 
@@ -56,7 +59,6 @@ static int LIMIT = 10000;
 const int MINUS = 6;
 
 static mEdge normalizeM(const mEdge &e) {
-
     // check for all zero weights
     if (std::all_of(e.n->children.begin(), e.n->children.end(),
                     [](const mEdge &e) { return norm(e.w) == 0.0; })) {
@@ -72,22 +74,21 @@ static mEdge normalizeM(const mEdge &e) {
     std_complex max_weight = result->w;
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
-
     // parents weight
     std_complex new_weight = max_weight * e.w;
-    if(new_weight.isApproximatelyZero()){
+    if (new_weight.isApproximatelyZero()) {
         mUnique.returnNode(e.n);
         return mEdge::zero;
-    }else if (new_weight.isApproximatelyOne()){
+    } else if (new_weight.isApproximatelyOne()) {
         new_weight = {1.0, 0.0};
     }
 
     for (int i = 0; i < 4; i++) {
         std_complex r = e.n->children[i].w / max_weight;
-        if(r.isApproximatelyZero()){
+        if (r.isApproximatelyZero()) {
             e.n->children[i] = mEdge::zero;
-        }else{
-            if(r.isApproximatelyOne()){
+        } else {
+            if (r.isApproximatelyOne()) {
                 r = {1.0, 0.0};
             }
             e.n->children[i].w = r;
@@ -101,7 +102,6 @@ static mEdge normalizeM(const mEdge &e) {
 }
 
 static vEdge normalizeV(const vEdge &e) {
-
     // check for all zero weights
     if (std::all_of(e.n->children.begin(), e.n->children.end(),
                     [](const vEdge &e) { return e.w.isApproximatelyZero(); })) {
@@ -109,30 +109,31 @@ static vEdge normalizeV(const vEdge &e) {
         return vEdge::zero;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(), [](const vEdge& lhs, const vEdge& rhs){
-            return norm2(lhs.w) < norm2(rhs.w);
-    });
+    auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
+                                   [](const vEdge &lhs, const vEdge &rhs) {
+                                       return norm2(lhs.w) < norm2(rhs.w);
+                                   });
     std_complex max_weight = result->w;
 
     // parents weight
     std_complex new_weight = max_weight * e.w;
-    if(new_weight.isApproximatelyZero()){
+    if (new_weight.isApproximatelyZero()) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
-    }else if (new_weight.isApproximatelyOne()){
+    } else if (new_weight.isApproximatelyOne()) {
         new_weight = {1.0, 0.0};
     }
 
     // child weight (larger one)
-    size_t max_idx = (result== &(e.n->children[1])) ? 1:0;
+    size_t max_idx = (result == &(e.n->children[1])) ? 1 : 0;
     e.n->children[max_idx].w = {1.0, 0.0};
 
     // child weight (smaller one)
     size_t min_idx = (max_idx == 1) ? 0 : 1;
     e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
-    if(e.n->children[min_idx].w.isApproximatelyOne()){
+    if (e.n->children[min_idx].w.isApproximatelyOne()) {
         e.n->children[min_idx].w = {1.0, 0.0};
-    }else if(e.n->children[min_idx].w.isApproximatelyZero()){
+    } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
         e.n->children[min_idx] = vEdge::zero;
     }
 
@@ -142,7 +143,6 @@ static vEdge normalizeV(const vEdge &e) {
 }
 
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
-
     mNode *node = mUnique.getNode();
     node->v = q;
     node->children = c;
@@ -153,7 +153,6 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
 }
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
-
     vNode *node = vUnique.getNode();
     node->v = q;
     node->children = c;
@@ -180,7 +179,6 @@ bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
-
     std_complex wp = edge.w * w;
 
     if (edge.isTerminal()) {
@@ -204,12 +202,11 @@ void mEdge::printMatrix() const {
         std::cout << this->w << std::endl;
         return;
     }
-    Qubit q = this->getVar();   
+    Qubit q = this->getVar();
     std::size_t dim = 1 << (q + 1);
 
     std_complex **matrix = new std_complex *[dim];
-    for (std::size_t i = 0; i < dim; i++)
-        matrix[i] = new std_complex[dim];
+    for (std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
 
     fillMatrix(*this, 0, 0, {1.0, 0.0}, dim, matrix);
 
@@ -234,47 +231,42 @@ std_complex **mEdge::getMatrix(std::size_t *dim) const {
     std::size_t d = 1 << (q + 1);
 
     std_complex **matrix = new std_complex *[d];
-    for (std::size_t i = 0; i < d; i++)
-        matrix[i] = new std_complex[d];
+    for (std::size_t i = 0; i < d; i++) matrix[i] = new std_complex[d];
 
     fillMatrix(*this, 0, 0, {1.0, 0.0}, d, matrix);
-    if (dim != nullptr)
-        *dim = d;
+    if (dim != nullptr) *dim = d;
     return matrix;
 }
 
-struct MatrixGuard{
-    MatrixGuard(std_complex** m, std::size_t dim): _m(m), _dim(dim){} 
-    ~MatrixGuard(){
-        for(size_t i = 0; i < _dim; i++){
+struct MatrixGuard {
+    MatrixGuard(std_complex **m, std::size_t dim) : _m(m), _dim(dim) {}
+    ~MatrixGuard() {
+        for (size_t i = 0; i < _dim; i++) {
             delete[] _m[i];
         }
         delete[] _m;
-    
     }
 
-    std_complex** _m;
+    std_complex **_m;
     const std::size_t _dim;
 };
 
-MatrixXcf mEdge::getEigenMatrix(){
+MatrixXcf mEdge::getEigenMatrix() {
     std::size_t dim;
     auto m = getMatrix(&dim);
     MatrixGuard g(m, dim);
-    MatrixXcf M(dim,dim);
+    MatrixXcf M(dim, dim);
 
-    for(auto i = 0; i < dim; i++){
-        for(auto j = 0; j < dim; j++ ){
-           M(i,j) = std::complex<double>{m[i][j].r, m[i][j].i}; 
+    for (auto i = 0; i < dim; i++) {
+        for (auto j = 0; j < dim; j++) {
+            M(i, j) = std::complex<double>{m[i][j].r, m[i][j].i};
         }
     }
     return M;
 }
 
 mEdge makeIdent(Qubit q) {
-
-    if (q < 0)
-        return mEdge::one;
+    if (q < 0) return mEdge::one;
 
     if (identityTable[q].n != nullptr) {
         assert(identityTable[q].n->v > -1);
@@ -344,7 +336,6 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
 
     Qubit z = 0;
     for (; z < target; z++) {
-
         for (int b1 = 0; b1 < 2; b1++) {
             for (int b0 = 0; b0 < 2; b0++) {
                 std::size_t i = (b1 << 1) | b0;
@@ -365,8 +356,7 @@ mEdge makeGate(QubitCount q, GateMatrix g, Qubit target, const Controls &c) {
             }
         }
 
-        if (it != c.end() && it->qubit == z)
-            ++it;
+        if (it != c.end() && it->qubit == z) ++it;
     }
 
     auto e = makeMEdge(z, edges);
@@ -395,200 +385,220 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
 
 mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix g, Qubit target0,
                        Qubit target1, const Controls &controls) {
-  std::array<std::array<mEdge, 4>, 4> edges_4x4;
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
-      edges_4x4[i][j] =
-          mEdge{{g[i][j].real(), g[i][j].imag()}, mNode::terminal};
+    std::array<std::array<mEdge, 4>, 4> edges_4x4;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            edges_4x4[i][j] =
+                mEdge{{g[i][j].real(), g[i][j].imag()}, mNode::terminal};
+        }
     }
-  }
 
-  auto it = controls.begin();
-  const auto smaller_target = std::min(target0, target1);
-  Qubit z = 0;
+    auto it = controls.begin();
+    const auto smaller_target = std::min(target0, target1);
+    Qubit z = 0;
 
-  for (; z < smaller_target; z++) {
-    for (int b1 = 0; b1 < 4; b1++) {
-      for (int b0 = 0; b0 < 4; b0++) {
-        std::size_t i = (b1 << 2) | b0;
+    for (; z < smaller_target; z++) {
+        for (int b1 = 0; b1 < 4; b1++) {
+            for (int b0 = 0; b0 < 4; b0++) {
+                std::size_t i = (b1 << 2) | b0;
+                if (it != controls.end() && it->qubit == z) {
+                    if (it->type == Control::Type::neg) {
+                        edges_4x4[b1][b0] = makeMEdge(
+                            z, {edges_4x4[b1][b0], mEdge::zero, mEdge::zero,
+                                (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
+                    } else {
+                        edges_4x4[b1][b0] = makeMEdge(
+                            z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
+                                mEdge::zero, mEdge::zero, edges_4x4[b1][b0]});
+                    }
+                } else {
+                    edges_4x4[b1][b0] =
+                        makeMEdge(z, {edges_4x4[b1][b0], mEdge::zero,
+                                      mEdge::zero, edges_4x4[b1][b0]});
+                }
+            }
+        }
         if (it != controls.end() && it->qubit == z) {
-          if (it->type == Control::Type::neg) {
-            edges_4x4[b1][b0] =
-                makeMEdge(z, {edges_4x4[b1][b0], mEdge::zero, mEdge::zero,
-                              (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
-          } else {
-            edges_4x4[b1][b0] =
-                makeMEdge(z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
-                              mEdge::zero, mEdge::zero, edges_4x4[b1][b0]});
-          }
-        } else {
-          edges_4x4[b1][b0] = makeMEdge(z, {edges_4x4[b1][b0], mEdge::zero,
-                                            mEdge::zero, edges_4x4[b1][b0]});
+            ++it;
         }
-      }
     }
-    if (it != controls.end() && it->qubit == z) {
-      ++it;
-    }
-  }
 
-  std::array<mEdge, 4> edges;
-  for (int b1 = 0; b1 < 2; b1++) {
-    for (int b0 = 0; b0 < 2; b0++) {
-      std::array<mEdge, 4> edges_4x4_sub;
-      if (target0 > target1) {
-        for (int i = 0; i < 2; i++) {
-          for (int j = 0; j < 2; j++) {
-            edges_4x4_sub[i * 2 + j] = edges_4x4[b1 * 2 + i][b0 * 2 + j];
-          }
-        }
-      } else {
-        for (int i = 0; i < 2; i++) {
-          for (int j = 0; j < 2; j++) {
-            edges_4x4_sub[i * 2 + j] = edges_4x4[i * 2 + b1][j * 2 + b0];
-          }
-        }
-      }
-      edges[b1 * 2 + b0] = makeMEdge(smaller_target, edges_4x4_sub);
-    }
-  }
-
-  const auto larger_target = std::max(target0, target1);
-  for (z = z + 1; z < larger_target; z++) {
+    std::array<mEdge, 4> edges;
     for (int b1 = 0; b1 < 2; b1++) {
-      for (int b0 = 0; b0 < 2; b0++) {
-        std::size_t i = (b1 << 1) | b0;
-        if (it != controls.end() && it->qubit == z) {
-          if (it->type == Control::Type::neg)
-              edges[i] = makeMEdge(
+        for (int b0 = 0; b0 < 2; b0++) {
+            std::array<mEdge, 4> edges_4x4_sub;
+            if (target0 > target1) {
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        edges_4x4_sub[i * 2 + j] =
+                            edges_4x4[b1 * 2 + i][b0 * 2 + j];
+                    }
+                }
+            } else {
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        edges_4x4_sub[i * 2 + j] =
+                            edges_4x4[i * 2 + b1][j * 2 + b0];
+                    }
+                }
+            }
+            edges[b1 * 2 + b0] = makeMEdge(smaller_target, edges_4x4_sub);
+        }
+    }
+
+    const auto larger_target = std::max(target0, target1);
+    for (z = z + 1; z < larger_target; z++) {
+        for (int b1 = 0; b1 < 2; b1++) {
+            for (int b0 = 0; b0 < 2; b0++) {
+                std::size_t i = (b1 << 1) | b0;
+                if (it != controls.end() && it->qubit == z) {
+                    if (it->type == Control::Type::neg)
+                        edges[i] = makeMEdge(
                             z, {edges[i], mEdge::zero, mEdge::zero,
                                 (b1 == b0) ? makeIdent(z - 1) : mEdge::zero});
-          else
-              edges[i] = makeMEdge(
+                    else
+                        edges[i] = makeMEdge(
                             z, {(b1 == b0) ? makeIdent(z - 1) : mEdge::zero,
                                 mEdge::zero, mEdge::zero, edges[i]});
 
-        } else {
-          edges[i] = makeMEdge(
+                } else {
+                    edges[i] = makeMEdge(
                         z, {edges[i], mEdge::zero, mEdge::zero, edges[i]});
+                }
+            }
         }
-      }
+        if (it != controls.end() && it->qubit == z) ++it;
     }
-    if (it != controls.end() && it->qubit == z)
-      ++it;
-  }
 
-  auto e = makeMEdge(z, edges);
+    auto e = makeMEdge(z, edges);
 
-  for (z = z + 1; z < q; z++) {
-    if (it != controls.end() && it->qubit == z) {
-      if (it->type == Control::Type::neg) {
-        e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, makeIdent(z - 1)});
-      } else {
-        e = makeMEdge(z, {makeIdent(z - 1), mEdge::zero, mEdge::zero, e});
-      }
-      ++it;
-    } else {
-      e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
+    for (z = z + 1; z < q; z++) {
+        if (it != controls.end() && it->qubit == z) {
+            if (it->type == Control::Type::neg) {
+                e = makeMEdge(z,
+                              {e, mEdge::zero, mEdge::zero, makeIdent(z - 1)});
+            } else {
+                e = makeMEdge(z,
+                              {makeIdent(z - 1), mEdge::zero, mEdge::zero, e});
+            }
+            ++it;
+        } else {
+            e = makeMEdge(z, {e, mEdge::zero, mEdge::zero, e});
+        }
     }
-  }
 
-  return e;
+    return e;
 }
 
-mEdge makeLargeGate(QubitCount q, ComplexMatrix &g){
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g) {
     std::vector<Qubit> targets;
-    for (int i = 0; i < int(log2(g.size())); i++){
+    for (int i = 0; i < int(log2(g.size())); i++) {
         targets.push_back(i);
     }
     return makeLargeGate(q, g, targets);
 }
 
-mEdge makeLargeGate(QubitCount q, ComplexMatrix &g, const std::vector<Qubit> &targets) {
-    if (g.empty()){
+mEdge makeLargeGate(QubitCount q, ComplexMatrix &g,
+                    const std::vector<Qubit> &targets) {
+    if (g.empty()) {
         return mEdge::one;
     }
 
-    const auto& rows = g.size();
-    if((rows & rows - 1) != 0){
+    const auto &rows = g.size();
+    if ((rows & rows - 1) != 0) {
         throw std::invalid_argument("The number of rows must be a power of 2.");
     }
 
-    const auto& cols = g[0].size();
-    if(rows != cols){
+    const auto &cols = g[0].size();
+    if (rows != cols) {
         throw std::invalid_argument("The matrix must be square.");
     }
 
-    if (rows == 1){
+    if (rows == 1) {
         return mEdge{{g[0][0].real(), g[0][0].imag()}, mNode::terminal};
     }
 
-
-    if (int(log2(rows)) != targets.size()){
-        throw std::invalid_argument("The number of targets is incompatible with the matrix size.");
+    if (int(log2(rows)) != targets.size()) {
+        throw std::invalid_argument(
+            "The number of targets is incompatible with the matrix size.");
     }
 
-    //make conversion map of indices
+    // make conversion map of indices
     std::vector<size_t> target_compresed;
-    for (int i = 0; i < targets.size(); i++){
+    for (int i = 0; i < targets.size(); i++) {
         target_compresed.push_back(i);
     }
-    std::sort(target_compresed.begin(), target_compresed.end(), [&targets](size_t a, size_t b){
-        return targets[a] < targets[b];
-    });
+    std::sort(
+        target_compresed.begin(), target_compresed.end(),
+        [&targets](size_t a, size_t b) { return targets[a] < targets[b]; });
     std::vector<std::size_t> conversionMap;
     conversionMap.push_back(0);
-    for (int i = 0; i < rows; i++){
+    for (int i = 0; i < rows; i++) {
         size_t addition = 1 << target_compresed[i];
         int rep = conversionMap.size();
-        for(int j = 0; j < rep; j++){
+        for (int j = 0; j < rep; j++) {
             conversionMap.push_back(conversionMap[j] + addition);
         }
     }
-    //swap rows and columns
+    // swap rows and columns
     std::vector<std::vector<std::complex<double>>> g_tmp;
-    for (int i = 0; i < rows; i++){
+    for (int i = 0; i < rows; i++) {
         g_tmp.push_back(g[conversionMap[i]]);
     }
-    for (int i = 0; i < rows; i++){
-        for (int j = 0; j < rows; j++){
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < rows; j++) {
             g[i][j] = g_tmp[i][conversionMap[j]];
         }
     }
 
     Qubit target_min = *std::min_element(targets.begin(), targets.end());
     std::vector<bool> skip(q, true);
-    for (auto target : targets){
+    for (auto target : targets) {
         skip[target] = false;
     }
 
-    return makeLargeGate(g, q-1, 0, rows, 0, cols, skip, target_min);
-
+    return makeLargeGate(g, q - 1, 0, rows, 0, cols, skip, target_min);
 }
-mEdge makeLargeGate(ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd,
-                    const std::size_t colStart, const std::size_t colEnd , const std::vector<bool> skip, const Qubit target_min){
-    if (level == target_min){
-        assert (rowEnd - rowStart == 2 && colEnd - colStart == 2);
-        return makeMEdge(target_min, {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()}, mNode::terminal},
-                             mEdge{{g[rowStart][colStart+1].real(), g[rowStart][colStart+1].imag()}, mNode::terminal},
-                             mEdge{{g[rowStart+1][colStart].real(), g[rowStart+1][colStart].imag()}, mNode::terminal},
-                             mEdge{{g[rowStart+1][colStart+1].real(), g[rowStart+1][colStart+1].imag()}, mNode::terminal}});
+mEdge makeLargeGate(ComplexMatrix &g, const Qubit level,
+                    const std::size_t rowStart, const std::size_t rowEnd,
+                    const std::size_t colStart, const std::size_t colEnd,
+                    const std::vector<bool> skip, const Qubit target_min) {
+    if (level == target_min) {
+        assert(rowEnd - rowStart == 2 && colEnd - colStart == 2);
+        return makeMEdge(
+            target_min,
+            {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()},
+                   mNode::terminal},
+             mEdge{{g[rowStart][colStart + 1].real(),
+                    g[rowStart][colStart + 1].imag()},
+                   mNode::terminal},
+             mEdge{{g[rowStart + 1][colStart].real(),
+                    g[rowStart + 1][colStart].imag()},
+                   mNode::terminal},
+             mEdge{{g[rowStart + 1][colStart + 1].real(),
+                    g[rowStart + 1][colStart + 1].imag()},
+                   mNode::terminal}});
     }
 
     const auto l = level - 1;
 
-    if (skip[level]){
-        auto e = makeLargeGate(g, l, rowStart, rowEnd, colStart, colEnd, skip, target_min);
+    if (skip[level]) {
+        auto e = makeLargeGate(g, l, rowStart, rowEnd, colStart, colEnd, skip,
+                               target_min);
         return makeMEdge(level, {e, mEdge::zero, mEdge::zero, e});
     }
 
     const auto rowMid = (rowStart + rowEnd) / 2;
     const auto colMid = (colStart + colEnd) / 2;
 
-    return makeMEdge(level, {makeLargeGate(g, l, rowStart, rowMid, colStart, colMid, skip, target_min),
-                             makeLargeGate(g, l, rowStart, rowMid, colMid, colEnd, skip, target_min),
-                             makeLargeGate(g, l, rowMid, rowEnd, colStart, colMid, skip, target_min),
-                             makeLargeGate(g, l, rowMid, rowEnd, colMid, colEnd, skip, target_min)});
+    return makeMEdge(level, {makeLargeGate(g, l, rowStart, rowMid, colStart,
+                                           colMid, skip, target_min),
+                             makeLargeGate(g, l, rowStart, rowMid, colMid,
+                                           colEnd, skip, target_min),
+                             makeLargeGate(g, l, rowMid, rowEnd, colStart,
+                                           colMid, skip, target_min),
+                             makeLargeGate(g, l, rowMid, rowEnd, colMid, colEnd,
+                                           skip, target_min)});
 }
 
 #ifdef isMPI
@@ -623,16 +633,18 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
 
 int vNode_to_vec(vNode *node, std::vector<vContent> &table,
                  std::unordered_map<vNode *, int> &map);
-vNode* vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup = false);
+vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable,
+                    bool no_lookup = false);
 int mNode_to_vec(mNode *node, std::vector<mContent> &table,
                  std::unordered_map<mNode *, int> &map);
-mNode* vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup = false);
+mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable,
+                    bool no_lookup = false);
 
 #ifdef isMPI
-vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
+    int left_neighbor = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
 
     std_complex send_w, recv_w;
@@ -649,9 +661,10 @@ vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
         std::vector<bmpi::request> send_reqs;
         recv_buffer.clear();
         send_reqs.push_back(world.isend(right_neighbor, 2 * i - 2, send_w));
-        send_reqs.push_back(world.isend(right_neighbor, 2 * i - 1, send_buffer));
+        send_reqs.push_back(
+            world.isend(right_neighbor, 2 * i - 1, send_buffer));
         recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, recv_w));
-        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, recv_buffer));        
+        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, recv_buffer));
         int col = (row - i + world.size()) % world_size;
         gate = getMPIGate(lhs, row, col, world_size);
         bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
@@ -664,36 +677,39 @@ vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit){
+vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world,
+                      std::size_t total_qubits, std::size_t largest_qubit) {
     int row = world.rank();
     int world_size = world.size();
 
     std_complex send_w, recv_w;
-    //std::vector<vContent> send_buffer, recv_buffer;
+    // std::vector<vContent> send_buffer, recv_buffer;
     std::pair<std_complex, std::vector<vContent>> send_data, recv_data;
     std::unordered_map<vNode *, int> rhs_map;
 
     send_data.first = rhs.w;
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    if(largest_qubit < total_qubits-int(log2(world_size))){
+    if (largest_qubit < total_qubits - int(log2(world_size))) {
         return result;
     }
     vNode_to_vec(rhs.n, send_data.second, rhs_map);
-    int small_world_size = std::pow(2, 1 + largest_qubit - total_qubits + int(log2(world_size)));
+    int small_world_size =
+        std::pow(2, 1 + largest_qubit - total_qubits + int(log2(world_size)));
     int offset = row - (row + world_size) % small_world_size;
     int left_neighbor = (row - 1 + world_size) % small_world_size + offset;
-    int right_neighbor= (row + 1 + world_size) % small_world_size + offset;    
+    int right_neighbor = (row + 1 + world_size) % small_world_size + offset;
 
     for (int i = 1; i < small_world_size; i++) {
-        //std::vector<bmpi::request> recv_reqs;
+        // std::vector<bmpi::request> recv_reqs;
         std::vector<bmpi::request> send_reqs;
         send_reqs.push_back(world.isend(right_neighbor, i, send_data));
-        world.recv(left_neighbor, i, recv_data);        
+        world.recv(left_neighbor, i, recv_data);
         int col = (row - i + world.size()) % small_world_size + offset;
         gate = getMPIGate(lhs, row, col, world_size);
-        //bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
-        vEdge received = {recv_data.first, vec_to_vNode(recv_data.second, vUnique)};
+        // bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
+        vEdge received = {recv_data.first,
+                          vec_to_vNode(recv_data.second, vUnique)};
         result = vv_add(result, mv_multiply(gate, received));
         bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
         send_data = recv_data;
@@ -701,10 +717,10 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size
     return result;
 }
 
-vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
+    int left_neighbor = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
 
     std::vector<std_complex> buffer_w(world_size);
@@ -716,17 +732,18 @@ vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world){
 
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    
+
     for (int i = 1; i < world_size; i++) {
         std::vector<bmpi::request> recv_reqs;
-        world.isend(right_neighbor, 2 * i - 2, buffer_w[i-1]);
-        world.isend(right_neighbor, 2 * i - 1, buffer_table[i-1]);
+        world.isend(right_neighbor, 2 * i - 2, buffer_w[i - 1]);
+        world.isend(right_neighbor, 2 * i - 1, buffer_table[i - 1]);
         recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, buffer_w[i]));
-        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, buffer_table[i]));
+        recv_reqs.push_back(
+            world.irecv(left_neighbor, 2 * i - 1, buffer_table[i]));
         bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
     }
 
-    for(int i = 1; i < world_size; i++){
+    for (int i = 1; i < world_size; i++) {
         int col = (row - i + world.size()) % world_size;
         gate = getMPIGate(lhs, row, col, world_size);
         vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
@@ -736,10 +753,10 @@ vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
+    int left_neighbor = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
 
     std::vector<std_complex> buffer_w(world_size);
@@ -751,16 +768,15 @@ vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world){
 
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    
+
     for (int i = 0; i < world_size; i++) {
         bmpi::broadcast(world, buffer_w[i], i);
         bmpi::broadcast(world, buffer_table[i], i);
     }
 
-    for(int i = 0; i < world_size; i++){
+    for (int i = 0; i < world_size; i++) {
         int col = i;
-        if (col == row)
-            continue;
+        if (col == row) continue;
         gate = getMPIGate(lhs, row, col, world_size);
         vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
         result = vv_add(result, mv_multiply(gate, received));
@@ -769,10 +785,10 @@ vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world){
+vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
+    int left_neighbor = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
 
     // prepare data to be sent
@@ -784,12 +800,12 @@ vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     // calculate initial result
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    
+
     for (int i = 0; i < world_size; i++) {
-        if(row == i){
+        if (row == i) {
             bmpi::broadcast(world, send_w, i);
             bmpi::broadcast(world, send_table, i);
-        }else{
+        } else {
             std_complex buffer_w;
             std::vector<vContent> buffer_table;
             bmpi::broadcast(world, buffer_w, i);
@@ -803,16 +819,18 @@ vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world){
     return result;
 }
 
-vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world, std::size_t total_qubits, std::size_t largest_qubit){
+vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world,
+                             std::size_t total_qubits,
+                             std::size_t largest_qubit) {
     int row = world.rank();
     int world_size = world.size();
-    int left_neighbor  = (world.rank() - 1) % world_size;
+    int left_neighbor = (world.rank() - 1) % world_size;
     int right_neighbor = (world.rank() + 1) % world_size;
 
     // calculate initial result
     mEdge gate = getMPIGate(lhs, row, row, world_size);
     vEdge result = mv_multiply(gate, rhs);
-    if(largest_qubit < total_qubits-int(log2(world_size))){
+    if (largest_qubit < total_qubits - int(log2(world_size))) {
         return result;
     }
 
@@ -821,15 +839,16 @@ vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world, st
     send_data.first = rhs.w;
     std::unordered_map<vNode *, int> rhs_map;
     vNode_to_vec(rhs.n, send_data.second, rhs_map);
-    
+
     for (int i = 0; i < world_size; i++) {
-        if(row == i){
+        if (row == i) {
             bmpi::broadcast(world, send_data, i);
-        }else{
+        } else {
             std::pair<std_complex, std::vector<vContent>> recv_data;
             bmpi::broadcast(world, recv_data, i);
             gate = getMPIGate(lhs, row, i, world_size);
-            vEdge received = {recv_data.first, vec_to_vNode(recv_data.second, vUnique)};
+            vEdge received = {recv_data.first,
+                              vec_to_vNode(recv_data.second, vUnique)};
             result = vv_add(result, mv_multiply(gate, received));
         }
     }
@@ -866,7 +885,7 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     mEdge result;
 
 #if defined(isMT) && !defined(CACHE_GLOBAL)
-    AddCache& _aCache = _aCaches.local();
+    AddCache &_aCache = _aCaches.local();
 #endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
@@ -919,19 +938,17 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
 }
 
 mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
-
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return mEdge::zero;
     }
 
     if (current_var == -1) {
-
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
 #if defined(isMT) && !defined(CACHE_GLOBAL)
-    MulCache& _mCache = _mCaches.local();
+    MulCache &_mCache = _mCaches.local();
 #endif
     mEdge result;
     result = _mCache.find(lhs.n, rhs.n);
@@ -961,7 +978,6 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     std::array<mEdge, 4> edges;
 
     for (auto i = 0; i < 4; i++) {
-
         std::size_t row = i >> 1;
         std::size_t col = i & 0x1;
 
@@ -988,15 +1004,12 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     _mCache.set(lhs.n, rhs.n, result);
 
     result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero())
-        return mEdge::zero;
-    if (result.w.isApproximatelyOne())
-        result.w = {1.0, 0.0};
+    if (result.w.isApproximatelyZero()) return mEdge::zero;
+    if (result.w.isApproximatelyOne()) result.w = {1.0, 0.0};
     return result;
 }
 
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
-
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
@@ -1008,7 +1021,6 @@ mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
 
 static void printVector2(const vEdge &edge, std::size_t row,
                          const std_complex &w, uint64_t left, std_complex *m) {
-
     std_complex wp = edge.w * w;
 
     if (edge.isTerminal() && left == 0) {
@@ -1078,7 +1090,7 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     vEdge result;
 
 #if defined(isMT) && !defined(CACHE_GLOBAL)
-    AddCache& _aCache = _aCaches.local();
+    AddCache &_aCache = _aCaches.local();
 #endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
@@ -1113,12 +1125,13 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
             y = rhs;
         }
 #ifdef isMT
-        if(current_var>LIMIT){
-            boost::fibers::packaged_task<vEdge()> pt(std::bind(vv_add2, x, y, current_var-1));
+        if (current_var > LIMIT) {
+            boost::fibers::packaged_task<vEdge()> pt(
+                std::bind(vv_add2, x, y, current_var - 1));
             sums.emplace_back(pt.get_future());
             boost::fibers::fiber f(std::move(pt));
             f.detach();
-        }else{
+        } else {
 #endif
             edges[i] = vv_add2(x, y, current_var - 1);
 #ifdef isMT
@@ -1127,7 +1140,7 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     }
 
 #ifdef isMT
-    if(current_var>LIMIT){
+    if (current_var > LIMIT) {
         assert(sums.size() == 2);
         edges[0] = sums[0].get();
         edges[1] = sums[1].get();
@@ -1233,14 +1246,12 @@ void vEdge::printVectorMPI(bmpi::communicator &world) const {
 static void printVector_sparse2(const vEdge &edge, std::size_t row,
                                 const std_complex &w, uint64_t left,
                                 std::map<int, std_complex> &m) {
-
     std_complex wp = edge.w * w;
 
     const double thr = 0.001;
 
     if (edge.isTerminal() && left == 0) {
-        if (norm(wp) > thr)
-            m[row] = wp;
+        if (norm(wp) > thr) m[row] = wp;
         return;
     } else if (edge.isTerminal()) {
         if (norm(wp) > thr) {
@@ -1277,7 +1288,6 @@ void vEdge::printVector_sparse() const {
 
 static void fillVector(const vEdge &edge, std::size_t row, const std_complex &w,
                        uint64_t left, std_complex *m) {
-
     std_complex wp = edge.w * w;
 
     if (edge.isTerminal() && left == 0) {
@@ -1305,25 +1315,22 @@ std_complex *vEdge::getVector(std::size_t *dim) const {
 
     std_complex *vector = new std_complex[d];
     fillVector(*this, 0, {1.0, 0.0}, q + 1, vector);
-    if (dim != nullptr)
-        *dim = d;
+    if (dim != nullptr) *dim = d;
     return vector;
 }
 
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
-
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return vEdge::zero;
     }
 
     if (current_var == -1) {
-
         assert(lhs.isTerminal() && rhs.isTerminal());
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
 #if defined(isMT) && !defined(CACHE_GLOBAL)
-    MulCache& _mCache = _mCaches.local();
+    MulCache &_mCache = _mCaches.local();
 #endif
     vEdge result;
 
@@ -1371,20 +1378,21 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
                 y = rcopy;
             }
 #ifdef isMT
-            if(current_var > LIMIT){
-                boost::fibers::packaged_task<vEdge()> pt(std::bind(mv_multiply2, x, y, current_var-1));
+            if (current_var > LIMIT) {
+                boost::fibers::packaged_task<vEdge()> pt(
+                    std::bind(mv_multiply2, x, y, current_var - 1));
                 products.emplace_back(pt.get_future());
                 boost::fibers::fiber f(std::move(pt));
                 f.detach();
-            }else{
+            } else {
 #endif
-            product[k] = mv_multiply2(x, y, current_var - 1);
+                product[k] = mv_multiply2(x, y, current_var - 1);
 #ifdef isMT
             }
 #endif
         }
 #ifdef isMT
-        if(current_var > LIMIT){
+        if (current_var > LIMIT) {
             product[0] = products[0].get();
             product[1] = products[1].get();
         }
@@ -1405,7 +1413,6 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
 }
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs) {
-
     if (lhs.isTerminal() && rhs.isTerminal()) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
@@ -1413,9 +1420,9 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
     //_mCache.hitRatio();
     //_aCache.hitRatio();
-    //vUnique.dump();
-    //mUnique.dump();
-    //genDot(v);
+    // vUnique.dump();
+    // mUnique.dump();
+    // genDot(v);
     return v;
 }
 
@@ -1435,53 +1442,55 @@ double assignProbabilities(const vEdge &edge) {
     return edge.w.mag2() * sum;
 }
 
-std::vector<double> probabilities(const vEdge &rootEdge){
+std::vector<double> probabilities(const vEdge &rootEdge) {
     const auto nqubits = static_cast<QubitCount>(rootEdge.getVar() + 1);
     assignProbabilities(rootEdge);
     std::vector<double> result;
-    for(auto i = 0; i < pow(2,nqubits); i++){
+    for (auto i = 0; i < pow(2, nqubits); i++) {
         vEdge cur = rootEdge;
         double prob = 1.0;
-        for(Qubit j = rootEdge.getVar(); j >= 0; j--){
+        for (Qubit j = rootEdge.getVar(); j >= 0; j--) {
             double p0 = probs[cur.n->getEdge(0).n] * cur.n->getEdge(0).w.mag2();
             double p1 = probs[cur.n->getEdge(1).n] * cur.n->getEdge(1).w.mag2();
             double tmp = p0 + p1;
-            if (tmp > 0){
+            if (tmp > 0) {
                 p0 /= tmp;
             }
-            if ((i>>j)%2 == 0){
+            if ((i >> j) % 2 == 0) {
                 prob *= p0;
+            } else {
+                prob *= (1 - p0);
             }
-            else {
-                prob *= (1-p0);
-            }
-            if (prob == 0){
+            if (prob == 0) {
                 continue;
             }
-            cur = cur.n->children.at((i>>j)%2);
+            cur = cur.n->children.at((i >> j) % 2);
         }
         result.push_back(prob);
     }
     return result;
 }
 
-template<typename T>
-std::vector<T> flatten(std::vector<std::vector<T>> const &vec)
-{
+template <typename T>
+std::vector<T> flatten(std::vector<std::vector<T>> const &vec) {
     std::vector<T> flattened;
-    for (auto const &v: vec) {
+    for (auto const &v : vec) {
         flattened.insert(flattened.end(), v.begin(), v.end());
     }
     return flattened;
 }
 
 #ifdef isMPI
-std::vector<double> probabilitiesMPI(bmpi::communicator &world, const vEdge &rootEdge){
+std::vector<double> probabilitiesMPI(bmpi::communicator &world,
+                                     const vEdge &rootEdge) {
     const double each_prob = assignProbabilities(rootEdge);
     std::vector<double> each_result = probabilities(rootEdge);
-    const double all_prob = bmpi::all_reduce(world, each_prob, std::plus<double>());
-    std::for_each(each_result.begin(), each_result.end(), [each_prob, all_prob](double &num)
-                  { num = num * each_prob / all_prob; });
+    const double all_prob =
+        bmpi::all_reduce(world, each_prob, std::plus<double>());
+    std::for_each(each_result.begin(), each_result.end(),
+                  [each_prob, all_prob](double &num) {
+                      num = num * each_prob / all_prob;
+                  });
 
     std::vector<std::vector<double>> all_result;
     bmpi::all_gather(world, each_result, all_result);
@@ -1490,9 +1499,11 @@ std::vector<double> probabilitiesMPI(bmpi::communicator &world, const vEdge &roo
     return final_result;
 }
 
-std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool collapse, std::mt19937_64 &mt, double epsilon){
+std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge,
+                          const bool collapse, std::mt19937_64 &mt,
+                          double epsilon) {
     assert(collapse == false);
-    if(probs.find(rootEdge.n) == probs.end()){
+    if (probs.find(rootEdge.n) == probs.end()) {
         assignProbabilities(rootEdge);
     }
     double each_prob = probs[rootEdge.n] * rootEdge.w.mag2();
@@ -1501,41 +1512,39 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge, const bool
     std::vector<double> vec_prob;
     std::vector<std::string> vec_strings;
 
-    if(world.rank()==0){
+    if (world.rank() == 0) {
         bmpi::gather(world, each_prob, vec_prob, 0);
         bmpi::gather(world, each_result, vec_strings, 0);
-        double sum=0;
-        for (int i = 0; i < world.size(); i++)
-        {
+        double sum = 0;
+        for (int i = 0; i < world.size(); i++) {
             sum += vec_prob[i];
         }
-        //std::cout << "sum=" << sum << std::endl;
+        // std::cout << "sum=" << sum << std::endl;
         std::uniform_real_distribution<double> dist(0.0, sum);
         const double threshold = dist(mt);
         double current = 0;
         int target_rank = 0;
-        for (int i = 0; i < world.size(); i++){
+        for (int i = 0; i < world.size(); i++) {
             current += vec_prob[i];
             target_rank = i;
-            if(threshold <= current){
+            if (threshold <= current) {
                 break;
             }
         }
         const int pre_length = log2(world.size());
-        //std::cout << "thre="<< threshold << " target_rank=" << target_rank << " " << std::endl;
+        // std::cout << "thre="<< threshold << " target_rank=" << target_rank <<
+        // " " << std::endl;
         int tmp = target_rank;
-        for (int i = pre_length-1; i >= 0; i--){
-            if(tmp/(int)pow(2,i)>=1){
+        for (int i = pre_length - 1; i >= 0; i--) {
+            if (tmp / (int)pow(2, i) >= 1) {
                 tmp -= (int)pow(2, i);
                 result += '1';
-            }else{
+            } else {
                 result += '0';
             }
         }
         result += vec_strings[target_rank];
-    }
-    else
-    {
+    } else {
         bmpi::gather(world, each_prob, vec_prob, 0);
         bmpi::gather(world, each_result, vec_strings, 0);
     }
@@ -1551,7 +1560,7 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
     std::string result(nqubits, '0');
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
-    if(probs.find(rootEdge.n) == probs.end()){
+    if (probs.find(rootEdge.n) == probs.end()) {
         assignProbabilities(rootEdge);
     }
 
@@ -1560,10 +1569,9 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
         double p1 = probs[cur.n->getEdge(1).n] * cur.n->getEdge(1).w.mag2();
         double tmp = p0 + p1;
 
-        if(tmp != 0){
+        if (tmp != 0) {
             p0 /= tmp;
-        }
-        else{
+        } else {
             p0 = 0.5;
         }
 
@@ -1595,8 +1603,8 @@ std::string measureAll(vEdge &rootEdge, const bool collapse,
     return std::string{result.rbegin(), result.rend()};
 }
 
-std::pair<double, double>
-determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
+std::pair<double, double> determineMeasurementProbabilities(
+    const vEdge &rootEdge, const Qubit index) {
     std::unordered_map<vNode *, double> probsMone;
     std::set<vNode *> visited;
     std::queue<vNode *> q;
@@ -1640,7 +1648,7 @@ determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
     double pzero{0};
     double pone{0};
 
-    if(probs.find(rootEdge.n) == probs.end()){
+    if (probs.find(rootEdge.n) == probs.end()) {
         assignProbabilities(rootEdge);
     }
 
@@ -1650,51 +1658,57 @@ determineMeasurementProbabilities(const vEdge &rootEdge, const Qubit index) {
 
         if (!ptr->children.at(0).w.isApproximatelyZero()) {
             pzero += probsMone[ptr] * probs[ptr->children.at(0).n] *
-                        ptr->children.at(0).w.mag2();
+                     ptr->children.at(0).w.mag2();
         }
 
         if (!ptr->children.at(1).w.isApproximatelyZero()) {
-            pone += probsMone[ptr] * probs[ptr->children.at(1).n] * ptr->children.at(1).w.mag2();
+            pone += probsMone[ptr] * probs[ptr->children.at(1).n] *
+                    ptr->children.at(1).w.mag2();
         }
     }
     return {pzero, pone};
 }
 
 #ifdef isMPI
-char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits,
-                          std::mt19937_64 &mt, bool collapse, double epsilon) {
-    const int global_size = log2(world.size()); // e.g. 1
-    const int local_size = n_qubits - global_size; // e.g. 3-1=2
+char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge,
+                             const Qubit index, const Qubit n_qubits,
+                             std::mt19937_64 &mt, bool collapse,
+                             double epsilon) {
+    const int global_size = log2(world.size());     // e.g. 1
+    const int local_size = n_qubits - global_size;  // e.g. 3-1=2
     const int rank = world.rank();
     char result = '1';
-    // std::cout << "global=" << global_size << " local=" << local_size << " index=" << index << " n_qubits=" << n_qubits << std::endl;
-    double pzero=0.0, pone=0.0;
-    
+    // std::cout << "global=" << global_size << " local=" << local_size << "
+    // index=" << index << " n_qubits=" << n_qubits << std::endl;
+    double pzero = 0.0, pone = 0.0;
+
     double p_each = assignProbabilities(rootEdge);
 
-    if(index >= local_size){
+    if (index >= local_size) {
         int id = (rank << index) & (1 << index);
-        if(id==0){
+        if (id == 0) {
             pzero = p_each;
-        }else{
+        } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl; 
-    }else{
-        if (p_each > 0){
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // << ")" << std::endl;
+    } else {
+        if (p_each > 0) {
             auto tmp = determineMeasurementProbabilities(rootEdge, index);
             pzero = tmp.first;
             pone = tmp.second;
-        }      
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl;  
+        }
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // << ")" << std::endl;
     }
 
     double pzero_all = bmpi::all_reduce(world, pzero, std::plus<double>());
     double pone_all = bmpi::all_reduce(world, pone, std::plus<double>());
     assert(pzero_all != 0.0 || pone_all != 0.0);
 
-    if (rank == 0){
-        std::uniform_real_distribution<double> dist(0.0, pzero_all+pone_all);
+    if (rank == 0) {
+        std::uniform_real_distribution<double> dist(0.0, pzero_all + pone_all);
         double threshold = dist(mt);
         if (threshold < pzero_all) {
             result = '0';
@@ -1702,23 +1716,25 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Q
     }
 
     bmpi::broadcast(world, result, 0);
-    if(collapse == false){
+    if (collapse == false) {
         return result;
     }
 
     double normalizationFactor;
     GateMatrix measurementMatrix{cf_zero, cf_zero, cf_zero, cf_zero};
-    if(result=='0'){
+    if (result == '0') {
         measurementMatrix[0] = cf_one;
         normalizationFactor = pzero_all;
-    }else{
+    } else {
         measurementMatrix[3] = cf_one;
         normalizationFactor = pone_all;
     }
     assert(normalizationFactor > 0);
     mEdge measurementGate = makeGate(n_qubits, measurementMatrix, index);
-    vEdge e = mv_multiply_MPI(measurementGate, rootEdge, world, n_qubits, index);
-    std_complex c = {std::sqrt((pzero_all+pone_all) / normalizationFactor), 0};
+    vEdge e =
+        mv_multiply_MPI(measurementGate, rootEdge, world, n_qubits, index);
+    std_complex c = {std::sqrt((pzero_all + pone_all) / normalizationFactor),
+                     0};
     c = e.w * c;
     e.w = c;
     rootEdge = e;
@@ -1726,32 +1742,36 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge, const Q
     return result;
 }
 
-double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit index, const Qubit n_qubits,
-                          std::mt19937_64 &mt, double epsilon) {
-    const int global_size = log2(world.size()); // e.g. 1
-    const int local_size = n_qubits - global_size; // e.g. 3-1=2
+double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge,
+                     const Qubit index, const Qubit n_qubits,
+                     std::mt19937_64 &mt, double epsilon) {
+    const int global_size = log2(world.size());     // e.g. 1
+    const int local_size = n_qubits - global_size;  // e.g. 3-1=2
     const int rank = world.rank();
     char result = '1';
-    // std::cout << "global=" << global_size << " local=" << local_size << " index=" << index << " n_qubits=" << n_qubits << std::endl;
-    double pzero=0.0, pone=0.0;
-    
+    // std::cout << "global=" << global_size << " local=" << local_size << "
+    // index=" << index << " n_qubits=" << n_qubits << std::endl;
+    double pzero = 0.0, pone = 0.0;
+
     double p_each = assignProbabilities(rootEdge);
 
-    if(index >= local_size){
+    if (index >= local_size) {
         int id = (rank << index) & (1 << index);
-        if(id==0){
+        if (id == 0) {
             pzero = p_each;
-        }else{
+        } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl; 
-    }else{
-        if (p_each > 0){
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // << ")" << std::endl;
+    } else {
+        if (p_each > 0) {
             auto tmp = determineMeasurementProbabilities(rootEdge, index);
             pzero = tmp.first;
             pone = tmp.second;
-        }      
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone << ")" << std::endl;  
+        }
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // << ")" << std::endl;
     }
 
     double pzero_all = bmpi::all_reduce(world, pzero, std::plus<double>());
@@ -1764,7 +1784,8 @@ double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge, const Qubit ind
 
 char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
                           std::mt19937_64 &mt, double epsilon) {
-    const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, index);
+    const auto &[pzero, pone] =
+        determineMeasurementProbabilities(rootEdge, index);
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
@@ -1779,10 +1800,10 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
 
     double threshold = dist(mt);
     double
-        normalizationFactor; // NOLINT(cppcoreguidelines-init-variables) always
-                             // assigned a value in the following block
-    char result; // NOLINT(cppcoreguidelines-init-variables) always assigned a
-                 // value in the following block
+        normalizationFactor;  // NOLINT(cppcoreguidelines-init-variables) always
+                              // assigned a value in the following block
+    char result;  // NOLINT(cppcoreguidelines-init-variables) always assigned a
+                  // value in the following block
 
     if (threshold < pzero / sum) {
         measurementMatrix[0] = cf_one;
@@ -1807,9 +1828,10 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     return result;
 }
 
-double measureOne(vEdge &rootEdge, const Qubit index,
-                          std::mt19937_64 &mt, double epsilon) {
-    const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, index);
+double measureOne(vEdge &rootEdge, const Qubit index, std::mt19937_64 &mt,
+                  double epsilon) {
+    const auto &[pzero, pone] =
+        determineMeasurementProbabilities(rootEdge, index);
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
@@ -1818,8 +1840,8 @@ double measureOne(vEdge &rootEdge, const Qubit index,
             std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
             std::to_string(pzero + pone) + ", but should be 1!");
     }
-  
-    return pzero/sum;
+
+    return pzero / sum;
 }
 
 mEdge RX(QubitCount qnum, int target, double angle) {
@@ -1847,7 +1869,7 @@ mEdge CX(QubitCount qnum, int target, int control) {
     return makeGate(qnum, GateMatrix{zero, one, one, zero}, target, controls);
 }
 
-mEdge makeSwap(QubitCount qnum, int target0, int target1){
+mEdge makeSwap(QubitCount qnum, int target0, int target1) {
     Controls c1{{Control{target0, Control::Type::pos}}};
     mEdge e1 = makeGate(qnum, Xmat, target1, c1);
     Controls c2{{Control{target1, Control::Type::pos}}};
@@ -1859,22 +1881,22 @@ mEdge makeSwap(QubitCount qnum, int target0, int target1){
 
 mEdge RXX(QubitCount qnum, int target0, int target1, double angle) {
     TwoQubitGateMatrix matrix = rxx_matrix(angle);
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeTwoQubitGate(qnum, matrix, target0, target1);
 }
 
 mEdge RYY(QubitCount qnum, int target0, int target1, double angle) {
     TwoQubitGateMatrix matrix = ryy_matrix(angle);
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeTwoQubitGate(qnum, matrix, target0, target1);
 }
 
 mEdge RZZ(QubitCount qnum, int target0, int target1, double angle) {
     TwoQubitGateMatrix matrix = rzz_matrix(angle);
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeTwoQubitGate(qnum, matrix, target0, target1);
 }
 
 mEdge RZX(QubitCount qnum, int target0, int target1, double angle) {
     TwoQubitGateMatrix matrix = rzx_matrix(angle);
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeTwoQubitGate(qnum, matrix, target0, target1);
 }
 
 mEdge SWAP(QubitCount qnum, int target0, int target1) {
@@ -1883,60 +1905,70 @@ mEdge SWAP(QubitCount qnum, int target0, int target1) {
 
 mEdge ISWAP(QubitCount qnum, int target0, int target1) {
     TwoQubitGateMatrix matrix = iswap_matrix();
-    return makeTwoQubitGate(qnum,matrix,target0,target1);
+    return makeTwoQubitGate(qnum, matrix, target0, target1);
 }
 
-mEdge CSWAP(QubitCount qnum, int target0, int target1, int control){
+mEdge CSWAP(QubitCount qnum, int target0, int target1, int control) {
     Controls controls;
     controls.emplace(Control{control, Control::Type::pos});
     TwoQubitGateMatrix matrix = swap_matrix();
-    return makeTwoQubitGate(qnum,matrix,target0,target1,controls);
+    return makeTwoQubitGate(qnum, matrix, target0, target1, controls);
 }
 
-GateMatrix rx(double angle){
+GateMatrix rx(double angle) {
     std::complex<double> i1 = {std::cos(angle / 2), 0};
     std::complex<double> i2 = {0, -std::sin(angle / 2)};
     return GateMatrix{i1, i2, i2, i1};
 }
 
-GateMatrix ry(double angle){
+GateMatrix ry(double angle) {
     std::complex<double> i1 = {std::cos(angle / 2), 0};
     std::complex<double> i2 = {-std::sin(angle / 2), 0};
     std::complex<double> i3 = {std::sin(angle / 2), 0};
     return GateMatrix{i1, i2, i3, i1};
 }
 
-GateMatrix rz(double angle){
+GateMatrix rz(double angle) {
     std::complex<double> i1 = {std::cos(angle / 2), -std::sin(angle / 2)};
     std::complex<double> i2 = {std::cos(angle / 2), std::sin(angle / 2)};
     return GateMatrix{i1, cf_zero, cf_zero, i2};
 }
 
+GateMatrix u3(double theta, double phi, double lambda) {
+    return u(theta, phi, lambda, 0);
+}
 
+GateMatrix u1(double lambda) { return u(0, 0, lambda, 0); }
 
-GateMatrix u3(double theta, double phi, double lambda){ return u(theta, phi, lambda, 0); }
+GateMatrix u2(double phi, double lambda) { return u(PI / 2, phi, lambda, 0); }
 
-GateMatrix u1(double lambda){ return u(0, 0, lambda, 0); }
-
-GateMatrix u2(double phi, double lambda){ return u(PI/2, phi, lambda, 0); }
-
-GateMatrix u(double theta, double phi, double lambda, double gamma){
-    std::complex<double> i1 = std::exp(std::complex<double>(0,gamma))*std::cos(theta / 2);
-    std::complex<double> i2 = -std::exp(std::complex<double>(0,lambda+gamma))*std::sin(theta/2);
-    std::complex<double> i3 = std::exp(std::complex<double>(0,phi+gamma))*std::sin(theta/2);
-    std::complex<double> i4 = std::exp(std::complex<double>(0,lambda+phi+gamma))*std::cos(theta/2);
+GateMatrix u(double theta, double phi, double lambda, double gamma) {
+    std::complex<double> i1 =
+        std::exp(std::complex<double>(0, gamma)) * std::cos(theta / 2);
+    std::complex<double> i2 =
+        -std::exp(std::complex<double>(0, lambda + gamma)) *
+        std::sin(theta / 2);
+    std::complex<double> i3 =
+        std::exp(std::complex<double>(0, phi + gamma)) * std::sin(theta / 2);
+    std::complex<double> i4 =
+        std::exp(std::complex<double>(0, lambda + phi + gamma)) *
+        std::cos(theta / 2);
     return GateMatrix{i1, i2, i3, i4};
 }
 
-GateMatrix p(double angle){
+GateMatrix p(double angle) {
     std::complex<double> i1 = {std::cos(angle), std::sin(angle)};
     return GateMatrix{1, 0, 0, i1};
 }
 
-GateMatrix r(double theta, double phi){
+GateMatrix r(double theta, double phi) {
     std::complex<double> i1 = {std::cos(theta / 2), 0};
-    std::complex<double> i2 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, -phi)) * std::sin(theta / 2);
-    std::complex<double> i3 = std::complex<double>(0, -1) * std::exp(std::complex<double>(0, phi)) * std::sin(theta / 2);
+    std::complex<double> i2 = std::complex<double>(0, -1) *
+                              std::exp(std::complex<double>(0, -phi)) *
+                              std::sin(theta / 2);
+    std::complex<double> i3 = std::complex<double>(0, -1) *
+                              std::exp(std::complex<double>(0, phi)) *
+                              std::sin(theta / 2);
     return GateMatrix{i1, i2, i3, i1};
 }
 
@@ -1990,8 +2022,9 @@ TwoQubitGateMatrix iswap_matrix() {
                                {cf_zero, cf_zero, cf_zero, cf_one}}};
 }
 
-void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unordered_set<vNode *> &done) {
-    if(done.find(node)!=done.end()){
+void genDot2(vNode *node, std::vector<std::string> &result, int depth,
+             std::unordered_set<vNode *> &done) {
+    if (done.find(node) != done.end()) {
         return;
     }
     done.insert(node);
@@ -2009,7 +2042,7 @@ void genDot2(vNode *node, std::vector<std::string> &result, int depth, std::unor
 }
 
 std::string genDot(vEdge &rootEdge) {
-    if(rootEdge.isTerminal()){
+    if (rootEdge.isTerminal()) {
         return "";
     }
     std::vector<std::string> result;
@@ -2018,7 +2051,8 @@ std::string genDot(vEdge &rootEdge) {
 
     // vNode::terminal
     std::stringstream node_ss;
-    node_ss << (uint64_t)vNode::terminal << " [label=\"Term w=" << rootEdge.w << "\"]";
+    node_ss << (uint64_t)vNode::terminal << " [label=\"Term w=" << rootEdge.w
+            << "\"]";
     result.push_back(node_ss.str());
 
     std::stringstream finalresult;
@@ -2031,8 +2065,9 @@ std::string genDot(vEdge &rootEdge) {
     return finalresult.str();
 }
 
-void genDot2(mNode *node, std::vector<std::string> &result, int depth, std::unordered_set<mNode *> &done) {
-    if(done.find(node)!=done.end()){
+void genDot2(mNode *node, std::vector<std::string> &result, int depth,
+             std::unordered_set<mNode *> &done) {
+    if (done.find(node) != done.end()) {
         return;
     }
     done.insert(node);
@@ -2040,7 +2075,7 @@ void genDot2(mNode *node, std::vector<std::string> &result, int depth, std::unor
     node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
     result.push_back(node_ss.str());
     for (int i = 0; i < node->children.size(); i++) {
-        if(node->children[i].w.isApproximatelyZero()){
+        if (node->children[i].w.isApproximatelyZero()) {
             continue;
         }
         std::stringstream ss;
@@ -2060,7 +2095,8 @@ std::string genDot(mEdge &rootEdge) {
 
     // vNode::terminal
     std::stringstream node_ss;
-    node_ss << (uint64_t)mNode::terminal << " [label=\"Term w=" << rootEdge.w << "\"]";
+    node_ss << (uint64_t)mNode::terminal << " [label=\"Term w=" << rootEdge.w
+            << "\"]";
     result.push_back(node_ss.str());
 
     std::stringstream finalresult;
@@ -2074,7 +2110,7 @@ std::string genDot(mEdge &rootEdge) {
 }
 
 #ifdef isMPI
-void save_binary(vEdge edge, std::string file_name){
+void save_binary(vEdge edge, std::string file_name) {
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
     int nNodes = vNode_to_vec(edge.n, v, map);
@@ -2085,7 +2121,7 @@ void save_binary(vEdge edge, std::string file_name){
     std::cout << "nNodes=" << nNodes << std::endl;
 }
 
-vEdge load_binary(std::string file_name){
+vEdge load_binary(std::string file_name) {
     std::vector<vContent> v;
     std::ifstream binary_ifs(file_name);
     boost::archive::binary_iarchive binary_ia(binary_ifs);
@@ -2128,7 +2164,8 @@ int vNode_to_vec(vNode *node, std::vector<vContent> &table,
 int mNode_to_vec(mNode *node, std::vector<mContent> &table,
                  std::unordered_map<mNode *, int> &map) {
     if (table.size() == 0) {
-        mContent terminal(-1, {0.0, 0.0},{0.0, 0.0},{0.0, 0.0},{0.0, 0.0}, 0, 0, 0, 0);
+        mContent terminal(-1, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, 0,
+                          0, 0, 0);
         table.push_back(terminal);
         map[node->terminal] = 0;
     }
@@ -2141,14 +2178,15 @@ int mNode_to_vec(mNode *node, std::vector<mContent> &table,
     int i1 = mNode_to_vec(node->children[1].getNode(), table, map);
     int i2 = mNode_to_vec(node->children[2].getNode(), table, map);
     int i3 = mNode_to_vec(node->children[3].getNode(), table, map);
-    mContent nodeData(node->v, node->children[0].w, node->children[1].w, node->children[2].w, node->children[3].w, 
-                        i0, i1, i2, i3);
+    mContent nodeData(node->v, node->children[0].w, node->children[1].w,
+                      node->children[2].w, node->children[3].w, i0, i1, i2, i3);
     table.push_back(nodeData);
     map[node] = table.size() - 1;
     return table.size() - 1;
 }
 
-vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no_lookup){
+vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable,
+                    bool no_lookup) {
     /*
     This function is to de-serialize table into vNode*.
     You can specify which uniqueTable to be used. (usually vUnique ?)
@@ -2166,13 +2204,15 @@ vNode *vec_to_vNode(std::vector<vContent> &table, vNodeTable &uniqTable, bool no
         vEdge e0 = {table[i].w[0], i0};
         vEdge e1 = {table[i].w[1], i1};
         node->children = {e0, e1};
-        node = no_lookup? uniqTable.register_wo_lookup(node): uniqTable.lookup(node);
+        node = no_lookup ? uniqTable.register_wo_lookup(node)
+                         : uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
 }
 
-mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no_lookup){
+mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable,
+                    bool no_lookup) {
     // The node(0) must be terminal node.
     std::unordered_map<int, mNode *> map;
     map[0] = &mNode::terminalNode;
@@ -2189,42 +2229,44 @@ mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable, bool no
         mEdge e2 = {table[i].w[2], i2};
         mEdge e3 = {table[i].w[3], i3};
         node->children = {e0, e1, e2, e3};
-        node = no_lookup? uniqTable.register_wo_lookup(node) : uniqTable.lookup(node);
+        node = no_lookup ? uniqTable.register_wo_lookup(node)
+                         : uniqTable.lookup(node);
         map[i] = node;
     }
     return map[table.size() - 1];
 }
 
 #ifdef isMPI
-vEdge receive_dd(boost::mpi::communicator &world, int source_node_id, bool isBlocking) {
+vEdge receive_dd(boost::mpi::communicator &world, int source_node_id,
+                 bool isBlocking) {
     std::vector<vContent> v;
     std_complex w;
-    if(isBlocking){
+    if (isBlocking) {
         world.recv(source_node_id, 0, w);
         world.recv(source_node_id, 1, v);
-    }else{
+    } else {
         world.irecv(source_node_id, 0, w);
         world.irecv(source_node_id, 1, v);
     }
     return {w, vec_to_vNode(v, vUnique)};
 }
 
-void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id, bool isBlocking) {
+void send_dd(boost::mpi::communicator &world, vEdge e, int dest_node_id,
+             bool isBlocking) {
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> mpi_map;
     vNode_to_vec(e.n, v, mpi_map);
-    if(isBlocking){
+    if (isBlocking) {
         world.send(dest_node_id, 0, e.w);
         world.send(dest_node_id, 1, v);
-    }else{
+    } else {
         world.isend(dest_node_id, 0, e.w);
         world.isend(dest_node_id, 1, v);
     }
     return;
 };
 
-
-void dump(boost::mpi::communicator &world, vEdge e, int cycle){
+void dump(boost::mpi::communicator &world, vEdge e, int cycle) {
     int rank = world.rank();
     std::size_t nNode;
     std::size_t send_Byte;
@@ -2240,20 +2282,21 @@ void dump(boost::mpi::communicator &world, vEdge e, int cycle){
     uniq_nNode = vUnique.get_allocations();
     uniq_Byte = sizeof(vNode) * uniq_nNode;
 
-    std::cout << rank << " " << cycle << " " << nNode << " " << send_Byte << " " << uniq_nNode << " " << uniq_Byte << std::endl;
+    std::cout << rank << " " << cycle << " " << nNode << " " << send_Byte << " "
+              << uniq_nNode << " " << uniq_Byte << std::endl;
 }
 
-double adjust_weight(bmpi::communicator &world, vEdge rootEdge){
+double adjust_weight(bmpi::communicator &world, vEdge rootEdge) {
     const auto &[pzero, pone] = determineMeasurementProbabilities(rootEdge, 0);
     double amp = pzero + pone;
     double amp_sum = bmpi::all_reduce(world, amp, std::plus<double>());
     assert(amp_sum > 0);
     rootEdge.w = rootEdge.w / std_complex(std::sqrt(amp_sum), 0);
-    return 1/std::sqrt(amp_sum);
+    return 1 / std::sqrt(amp_sum);
 }
 #endif
 
-int get_nNodes(vEdge e){
+int get_nNodes(vEdge e) {
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
     int num = vNode_to_vec(e.n, v, map);
@@ -2261,8 +2304,8 @@ int get_nNodes(vEdge e){
 }
 
 int GC_SIZE = 1024 * 64;
-vEdge gc(vEdge state, bool force){
-    if(vUnique.get_allocations()<GC_SIZE && force==false){
+vEdge gc(vEdge state, bool force) {
+    if (vUnique.get_allocations() < GC_SIZE && force == false) {
         return state;
     }
 
@@ -2270,10 +2313,11 @@ vEdge gc(vEdge state, bool force){
     std::vector<vContent> v;
     std::unordered_map<vNode *, int> map;
     int nNodes = vNode_to_vec(state.n, v, map);
-    if(nNodes>GC_SIZE){
+    if (nNodes > GC_SIZE) {
         GC_SIZE *= 2;
     }
-    std::cout << "GC_SIZE = " << GC_SIZE << " Current nNodes = " << nNodes << std::endl;
+    std::cout << "GC_SIZE = " << GC_SIZE << " Current nNodes = " << nNodes
+              << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
@@ -2295,16 +2339,15 @@ vEdge gc(vEdge state, bool force){
 }
 
 int GC_SIZE_M = 1024 * 64;
-mEdge gc_mat(mEdge mat, bool force){
-    if(mUnique.get_allocations()<GC_SIZE_M && force==false){
+mEdge gc_mat(mEdge mat, bool force) {
+    if (mUnique.get_allocations() < GC_SIZE_M && force == false) {
         return mat;
     }
-    
+
     std::vector<mContent> m;
     std::unordered_map<mNode *, int> map;
     int nNodes = mNode_to_vec(mat.n, m, map);
-    if (nNodes > GC_SIZE_M)
-    {
+    if (nNodes > GC_SIZE_M) {
         GC_SIZE_M += nNodes;
     }
     std::cout << " Current nNodes = " << nNodes << std::endl;
@@ -2316,7 +2359,7 @@ mEdge gc_mat(mEdge mat, bool force){
     // Clear identityTable
     std::vector<mEdge> new_identityTable(NQUBITS);
     identityTable = std::move(new_identityTable);
-    
+
     // Clear cache
 #if defined(isMT) && !defined(CACHE_GLOBAL)
     _aCaches.clear();
@@ -2333,36 +2376,36 @@ mEdge gc_mat(mEdge mat, bool force){
     return mat;
 }
 
-void set_gc_thr(int gc_v, int gc_m){
+void set_gc_thr(int gc_v, int gc_m) {
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
     return;
 }
 
-int prune(vEdge &v, double thr, std_complex num){
+int prune(vEdge &v, double thr, std_complex num) {
     std_complex current = num * v.w;
     double mag = std::sqrt(current.mag2());
     int result = 0;
-    if (mag < thr){
+    if (mag < thr) {
         v.w = {0.0, 0.0};
         v.n = vNode::terminal;
         result = 1;
-    }else{
+    } else {
         result += prune(v.n->children[0], thr, current);
         result += prune(v.n->children[1], thr, current);
     }
     return result;
 }
 
-int prune(mEdge &m, double thr, std_complex num){
+int prune(mEdge &m, double thr, std_complex num) {
     std_complex current = num * m.w;
     double mag = std::sqrt(current.mag2());
     int result = 0;
-    if(mag<thr){
+    if (mag < thr) {
         m.w = {0.0, 0.0};
         m.n = mNode::terminal;
         result = 1;
-    }else{
+    } else {
         result += prune(m.n->children[0], thr, current);
         result += prune(m.n->children[1], thr, current);
         result += prune(m.n->children[2], thr, current);

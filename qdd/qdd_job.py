@@ -14,7 +14,7 @@ class QddJob(JobV1):
         self._result = None
 
     def cancel(self):
-        raise RuntimeError('Cancel operation is not supported.')
+        raise RuntimeError("Cancel operation is not supported.")
 
     def submit(self):
         self._result = self._run_exp_fn(self._qobj, self.job_id())

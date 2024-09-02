@@ -3,11 +3,11 @@
 
 # This code is a part of a Qiskit project
 # (C) Copyright IBM 2017, 2024.
-# 
+#
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-# 
+#
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
@@ -63,7 +63,7 @@ class TestPortofolioOptimization:
         cobyla = COBYLA()
         cobyla.set_options(maxiter=500)
         ry = TwoLocal(num_assets, "ry", "cz", reps=3, entanglement="full")
-        vqe_mes = SamplingVQE(sampler=Sampler(),ansatz=ry,optimizer=cobyla)
+        vqe_mes = SamplingVQE(sampler=Sampler(), ansatz=ry, optimizer=cobyla)
         vqe = MinimumEigenOptimizer(vqe_mes)
         result_vqe = vqe.solve(qp)
         assert np.all(result_vqe.x == result_numpy.x)
@@ -71,7 +71,7 @@ class TestPortofolioOptimization:
         # QAOA
         cobyla = COBYLA()
         cobyla.set_options(maxiter=250)
-        qaoa_mes = QAOA(sampler=Sampler(),optimizer=cobyla, reps=3)
+        qaoa_mes = QAOA(sampler=Sampler(), optimizer=cobyla, reps=3)
         qaoa = MinimumEigenOptimizer(qaoa_mes)
         result_qaoa = qaoa.solve(qp)
         assert np.all(result_qaoa.x == result_numpy.x)

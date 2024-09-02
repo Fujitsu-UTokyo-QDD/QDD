@@ -16,7 +16,12 @@
 import numpy as np
 import pytest
 from qiskit import QuantumCircuit, transpile
-from qiskit.quantum_info import random_clifford, random_density_matrix, random_statevector, random_unitary
+from qiskit.quantum_info import (
+    random_clifford,
+    random_density_matrix,
+    random_statevector,
+    random_unitary,
+)
 from qiskit_aer import Aer
 
 from qdd import QddProvider
@@ -34,26 +39,26 @@ def test_simulate_quantum_circuits():
     # get counts
     result = simulator.run(circ, seed_simulator=80).result()
     counts = result.get_counts(circ)
-    assert '00' in counts
-    assert '11' in counts
+    assert "00" in counts
+    assert "11" in counts
 
     # get memory
     result = simulator.run(circ, shots=100, memory=True, seed_simulator=80).result()
     memory = result.get_memory(circ)
-    assert '00' in memory
-    assert '11' in memory
+    assert "00" in memory
+    assert "11" in memory
     assert len(memory) == 100
 
 
 def test_simulator_precision_options():
     simulator = QddProvider().get_backend()
     with pytest.raises(Exception):
-        simulator.set_options(precision='single')
+        simulator.set_options(precision="single")
 
 
 def test_custom_simulator_instructions():
     # load Aer class; this statement adds several attributes/methods to the QuantumCircuit class
-    Aer.get_backend('aer_simulator')
+    Aer.get_backend("aer_simulator")
 
     simulator = QddProvider().get_backend()
 
@@ -75,9 +80,9 @@ def test_custom_simulator_instructions():
     steps = 5
     circ = QuantumCircuit(1)
     for i in range(steps):
-        circ.save_statevector(label=f'psi_{i}')
+        circ.save_statevector(label=f"psi_{i}")
         circ.rx(i * np.pi / steps, 0)
-    circ.save_statevector(label=f'psi_{steps}')
+    circ.save_statevector(label=f"psi_{steps}")
     with pytest.raises(Exception):
         transpile(circ, simulator, seed_transpiler=50)
 
@@ -118,7 +123,7 @@ def test_custom_simulator_instructions():
 
     # set_statevector
     num_qubits = 2
-    psi = random_statevector(2 ** num_qubits, seed=100)
+    psi = random_statevector(2**num_qubits, seed=100)
     circ = QuantumCircuit(num_qubits)
     circ.set_statevector(psi)
     with pytest.raises(Exception):
@@ -130,11 +135,11 @@ def test_custom_simulator_instructions():
     circ.measure_all()
     circ = transpile(circ, simulator, seed_transpiler=50)
     counts = simulator.run(circ, seed_simulator=80).result().get_counts()
-    assert '01' in counts
-    assert '11' in counts
+    assert "01" in counts
+    assert "11" in counts
 
     # set_density_matrix
-    rho = random_density_matrix(2 ** num_qubits, seed=100)
+    rho = random_density_matrix(2**num_qubits, seed=100)
     circ = QuantumCircuit(num_qubits)
     circ.set_density_matrix(rho)
     with pytest.raises(Exception):
@@ -148,7 +153,7 @@ def test_custom_simulator_instructions():
         transpile(circ, simulator, seed_transpiler=50)
 
     # set_unitary
-    unitary = random_unitary(2 ** num_qubits, seed=100)
+    unitary = random_unitary(2**num_qubits, seed=100)
     circ = QuantumCircuit(num_qubits)
     circ.set_unitary(unitary)
     with pytest.raises(Exception):

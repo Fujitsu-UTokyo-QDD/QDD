@@ -1,19 +1,20 @@
 #include "algorithms/grover.hpp"
+
 #include "dd.h"
 #include "table.hpp"
 
 static unsigned long long CalculateIterations(const unsigned short n_qubits) {
     constexpr long double PI_4 =
-        0.785398163397448309615660845819875721049292349843776455243L; // dd::PI_4
-                                                                      // is of
-                                                                      // type fp
-                                                                      // and
-                                                                      // hence
-                                                                      // possibly
-                                                                      // smaller
-                                                                      // than
-                                                                      // long
-                                                                      // double
+        0.785398163397448309615660845819875721049292349843776455243L;  // dd::PI_4
+                                                                       // is of
+                                                                       // type
+                                                                       // fp and
+                                                                       // hence
+                                                                       // possibly
+                                                                       // smaller
+                                                                       // than
+                                                                       // long
+                                                                       // double
     if (n_qubits <= 3) {
         return 1;
     } else {
@@ -24,15 +25,14 @@ static unsigned long long CalculateIterations(const unsigned short n_qubits) {
 
 static mEdge groverIteration(Scheduler &s, const std::string &oracle,
                              QubitCount n_qubits) {
-
     std::vector<mEdge> g;
     QubitCount total_qubits = n_qubits + 1;
 
     // prepare oracle
     Controls controls;
     for (auto i = 0; i < n_qubits; i++) {
-        controls.emplace(Control{i, oracle.at(i) == '1' ? Control::Type::pos
-                                                        : Control::Type::neg});
+        controls.emplace(Control{
+            i, oracle.at(i) == '1' ? Control::Type::pos : Control::Type::neg});
     }
 
     mEdge o = makeGate(total_qubits, Zmat, n_qubits, controls);
@@ -100,7 +100,7 @@ vEdge grover(Scheduler &s, QubitCount n_qubits) {
     std::seed_seq seeds(std::begin(random_data), std::end(random_data));
     mt.seed(100);
     // Generate random oracle
-    std::uniform_int_distribution<int> dist(0, 1); // range is inclusive
+    std::uniform_int_distribution<int> dist(0, 1);  // range is inclusive
     std::string oracle = std::string(n_qubits, '0');
     for (Qubit i = 0; i < n_qubits; i++) {
         if (dist(mt) == 1) {

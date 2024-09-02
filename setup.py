@@ -6,6 +6,7 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(foo):
         return True
 
+
 setup(
     distclass=BinaryDistribution,
 )

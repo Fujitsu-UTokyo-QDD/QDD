@@ -29,8 +29,8 @@ def x_measurement(qc, qubit, cbit):
 def test_iqpe_1qubit():
     nq = 2
     m = 2
-    q = QuantumRegister(nq, 'q')
-    c = ClassicalRegister(m, 'c')
+    q = QuantumRegister(nq, "q")
+    c = ClassicalRegister(m, "c")
 
     qc_s = QuantumCircuit(q, c)
     qc_s.h(0)
@@ -50,10 +50,17 @@ def test_iqpe_1qubit():
 
     backend = QddProvider().get_backend()
     n_shots = 1024
-    count0 = backend.run(transpile(qc_s, backend, seed_transpiler=50), shots=n_shots, seed_simulator=80)\
-        .result().get_counts()
+    count0 = (
+        backend.run(
+            transpile(qc_s, backend, seed_transpiler=50),
+            shots=n_shots,
+            seed_simulator=80,
+        )
+        .result()
+        .get_counts()
+    )
 
-    key_new = [str(int(key, 2) / 2 ** m) for key in list(count0.keys())]
+    key_new = [str(int(key, 2) / 2**m) for key in list(count0.keys())]
     count1 = dict(zip(key_new, count0.values()))
     print(count1)
     assert count1["0.25"] == n_shots
@@ -62,8 +69,8 @@ def test_iqpe_1qubit():
 def test_iqpe_2qubits():
     nq = 3  # number of qubits
     m = 3  # number of classical bits
-    q = QuantumRegister(nq, 'q')
-    c = ClassicalRegister(m, 'c')
+    q = QuantumRegister(nq, "q")
+    c = ClassicalRegister(m, "c")
 
     qc = QuantumCircuit(q, c)
     qc.h(0)
@@ -100,20 +107,26 @@ def test_iqpe_2qubits():
 
     backend = QddProvider().get_backend()
     n_shots = 1024
-    count0 = backend.run(transpile(qc, backend, seed_transpiler=50), shots=n_shots, seed_simulator=80)\
-        .result().get_counts()
+    count0 = (
+        backend.run(
+            transpile(qc, backend, seed_transpiler=50), shots=n_shots, seed_simulator=80
+        )
+        .result()
+        .get_counts()
+    )
 
-    key_new = [str(int(key, 2) / 2 ** m) for key in list(count0.keys())]
+    key_new = [str(int(key, 2) / 2**m) for key in list(count0.keys())]
     count1 = dict(zip(key_new, count0.values()))
     print(count1)
 
     assert count1["0.125"] == n_shots
 
+
 def test_iqpe_1qubit_with_sampler():
     nq = 2
     m = 2
-    q = QuantumRegister(nq, 'q')
-    c = ClassicalRegister(m, 'c')
+    q = QuantumRegister(nq, "q")
+    c = ClassicalRegister(m, "c")
 
     qc_s = QuantumCircuit(q, c)
     qc_s.h(0)
@@ -136,7 +149,7 @@ def test_iqpe_1qubit_with_sampler():
     result = job.result()
     dist0 = result.quasi_dists[0]
 
-    key_new = [str(key/2 ** m) for key in list(dist0.keys())]
+    key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
     print(dist1)
     assert dist1["0.25"] == 1.0
@@ -147,7 +160,7 @@ def test_iqpe_1qubit_with_sampler():
     result = job.result()
     dist0 = result.quasi_dists[0]
 
-    key_new = [str(key/2 ** m) for key in list(dist0.keys())]
+    key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
     print(dist1)
     assert dist1["0.25"] == 1.0
@@ -156,8 +169,8 @@ def test_iqpe_1qubit_with_sampler():
 def test_iqpe_2qubits_with_sampler():
     nq = 3  # number of qubits
     m = 3  # number of classical bits
-    q = QuantumRegister(nq, 'q')
-    c = ClassicalRegister(m, 'c')
+    q = QuantumRegister(nq, "q")
+    c = ClassicalRegister(m, "c")
 
     qc = QuantumCircuit(q, c)
     qc.h(0)
@@ -197,7 +210,7 @@ def test_iqpe_2qubits_with_sampler():
     result = job.result()
     dist0 = result.quasi_dists[0]
 
-    key_new = [str(key/2 ** m) for key in list(dist0.keys())]
+    key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
     print(dist1)
     assert dist1["0.125"] == 1.0
@@ -208,7 +221,7 @@ def test_iqpe_2qubits_with_sampler():
     result = job.result()
     dist0 = result.quasi_dists[0]
 
-    key_new = [str(key/2 ** m) for key in list(dist0.keys())]
+    key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
     print(dist1)
     assert dist1["0.125"] == 1.0

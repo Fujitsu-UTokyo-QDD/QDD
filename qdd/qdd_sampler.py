@@ -31,6 +31,7 @@ from qiskit.result import QuasiDistribution
 
 from qdd import QddProvider
 
+
 class Sampler(BaseSampler):
     """
     QDD implementation of Sampler class.
@@ -123,7 +124,9 @@ class Sampler(BaseSampler):
                 num_qubits = result.results[i].header.n_qubits
                 quasi_dist = QuasiDistribution(probabilities)
                 quasis.append(quasi_dist)
-                metadata.append({"shots": None, "simulator_metadata": result.results[i]._metadata})
+                metadata.append(
+                    {"shots": None, "simulator_metadata": result.results[i]._metadata}
+                )
             else:
                 counts = result.get_counts(i)
                 shots = sum(counts.values())
@@ -133,7 +136,9 @@ class Sampler(BaseSampler):
                         shots=shots,
                     )
                 )
-                metadata.append({"shots": shots, "simulator_metadata": result.results[i]._metadata})
+                metadata.append(
+                    {"shots": shots, "simulator_metadata": result.results[i]._metadata}
+                )
 
         return SamplerResult(quasis, metadata)
 

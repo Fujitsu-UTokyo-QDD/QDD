@@ -1,7 +1,4 @@
 {
-    "editor.formatOnSave": false,
-    "extensions.ignoreRecommendations": false,
-    "editor.defaultFormatter": null,
     "[json]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
@@ -97,4 +94,9 @@
         "alignedvector3": "cpp",
         "adolcforward": "cpp"
     },
+    "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 4 }",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+    },
+    "formatFiles.extensionsToInclude": "",
 }

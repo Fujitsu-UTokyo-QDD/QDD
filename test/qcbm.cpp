@@ -1,7 +1,8 @@
-#include "table.hpp"
-#include "cache.hpp"
-#include<iostream>
+#include <iostream>
 #include <random>
+
+#include "cache.hpp"
+#include "table.hpp"
 #ifdef isMT
 #include "task.h"
 #endif
@@ -10,11 +11,9 @@ std::random_device seed_gen;
 std::mt19937_64 mt(seed_gen());
 std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
-//int GC_SIZE = 131072*2*2*2*2;
+// int GC_SIZE = 131072*2*2*2*2;
 
-double get_random(){
-    return dist(mt);
-}
+double get_random() { return dist(mt); }
 
 // int vNode_to_vec2(vNode *node, std::vector<vContent> &table,
 //                  std::unordered_map<vNode *, int> &map) {
@@ -73,7 +72,8 @@ double get_random(){
 //     if(vUnique.get_allocations()<GC_SIZE){
 //         return state;
 //     }
-//     std::cout << "vSize="<<vUnique.get_allocations() << " mSize=" << mUnique.get_allocations() << " vLimit="<<GC_SIZE;
+//     std::cout << "vSize="<<vUnique.get_allocations() << " mSize=" <<
+//     mUnique.get_allocations() << " vLimit="<<GC_SIZE;
 
 //     std::vector<vContent> v;
 //     std::unordered_map<vNode *, int> map;
@@ -96,30 +96,31 @@ double get_random(){
 //     return state;
 // }
 
-vEdge exec(int nQubits){
+vEdge exec(int nQubits) {
     int n_SingleGates = nQubits * 28;
     int n_CXGates = nQubits * 9;
-    std::cout << "nQubits=" << nQubits << " Total Gates=" << n_SingleGates + n_CXGates << std::endl;
+    std::cout << "nQubits=" << nQubits
+              << " Total Gates=" << n_SingleGates + n_CXGates << std::endl;
 
     vEdge v = makeZeroState(nQubits);
 
-    //first_rotation
+    // first_rotation
     double angle = get_random();
-    for (int target = 0; target < nQubits; target++){
+    for (int target = 0; target < nQubits; target++) {
         auto g = RX(nQubits, target, angle);
         v = mv_multiply(g, v);
         v = gc(v);
     }
     angle = get_random();
-    for (int target = 0; target < nQubits; target++){
+    for (int target = 0; target < nQubits; target++) {
         auto g = RZ(nQubits, target, angle);
         v = mv_multiply(g, v);
         v = gc(v);
     }
     std::cout << "First rotation" << std::endl;
 
-    //entangler
-    for (int i = 0; i < nQubits; i++){
+    // entangler
+    for (int i = 0; i < nQubits; i++) {
         int control = i;
         int target = (i + 1) % nQubits;
         auto g = CX(nQubits, target, control);
@@ -128,32 +129,31 @@ vEdge exec(int nQubits){
     }
     std::cout << "Entangler" << std::endl;
 
-    for (int k=0; k<8; k++){
+    for (int k = 0; k < 8; k++) {
         // mid rotation
         angle = get_random();
-        for (int target = 0; target < nQubits; target++){
+        for (int target = 0; target < nQubits; target++) {
             auto g = RZ(nQubits, target, angle);
             v = mv_multiply(g, v);
             v = gc(v);
         }
         std::cout << "mid rotation (1) " << k << std::endl;
         angle = get_random();
-        for (int target = 0; target < nQubits; target++)
-        {
+        for (int target = 0; target < nQubits; target++) {
             auto g = RX(nQubits, target, angle);
             v = mv_multiply(g, v);
             v = gc(v);
         }
         std::cout << "mid rotation (2) " << k << std::endl;
         angle = get_random();
-        for (int target = 0; target < nQubits; target++){
+        for (int target = 0; target < nQubits; target++) {
             auto g = RZ(nQubits, target, angle);
             v = mv_multiply(g, v);
             v = gc(v);
         }
         std::cout << "mid rotation (3) " << k << std::endl;
-        //entangler
-        for (int i = 0; i < nQubits; i++){
+        // entangler
+        for (int i = 0; i < nQubits; i++) {
             int control = i;
             int target = (i + 1) % nQubits;
             auto g = CX(nQubits, target, control);
@@ -162,15 +162,15 @@ vEdge exec(int nQubits){
         }
         std::cout << "entangler " << k << std::endl;
     }
-    //last rotation
+    // last rotation
     angle = get_random();
-    for (int target = 0; target < nQubits; target++){
+    for (int target = 0; target < nQubits; target++) {
         auto g = RZ(nQubits, target, angle);
         v = mv_multiply(g, v);
         v = gc(v);
     }
     angle = get_random();
-    for (int target = 0; target < nQubits; target++){
+    for (int target = 0; target < nQubits; target++) {
         auto g = RX(nQubits, target, angle);
         v = mv_multiply(g, v);
         v = gc(v);
@@ -178,16 +178,17 @@ vEdge exec(int nQubits){
     return v;
 }
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
 #ifdef isMT
     Scheduler s(8);
 #endif
-    
+
     auto v = exec(std::atoi(argv[1]));
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = end - start;
-    std::cout << "nQubits " << std::atoi(argv[1]) << " nNodes " << get_nNodes(v) << " "<< ms.count() / 1000000 << " sec"  << std::endl;
+    std::cout << "nQubits " << std::atoi(argv[1]) << " nNodes " << get_nNodes(v)
+              << " " << ms.count() / 1000000 << " sec" << std::endl;
 }
