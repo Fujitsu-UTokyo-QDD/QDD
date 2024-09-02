@@ -3,11 +3,11 @@
 
 # This code is a part of a Qiskit project
 # (C) Copyright IBM 2017, 2024.
-# 
+#
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-# 
+#
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
@@ -42,9 +42,9 @@ def test_vqe_convergence():
     converge_vals = np.empty([len(optimizers)], dtype=object)
     results = []
     for i, optimizer in enumerate(optimizers):
-        print('\rOptimizer: {}        '.format(type(optimizer).__name__), end='')
+        print("\rOptimizer: {}        ".format(type(optimizer).__name__), end="")
         algorithm_globals.random_seed = 50
-        ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+        ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
 
         counts = []
         values = []
@@ -53,25 +53,28 @@ def test_vqe_convergence():
             counts.append(eval_count)
             values.append(mean)
 
-        vqe = VQE(Estimator(),ansatz, optimizer, callback=store_intermediate_result)
+        vqe = VQE(Estimator(), ansatz, optimizer, callback=store_intermediate_result)
         result = vqe.compute_minimum_eigenvalue(operator=H2_op)
         converge_cnts[i] = np.asarray(counts)
         converge_vals[i] = np.asarray(values)
         results.append(result)
         print(result)
-    print('\rOptimization complete')
+    print("\rOptimization complete")
 
     npme = NumPyMinimumEigensolver()
     result = npme.compute_minimum_eigenvalue(operator=H2_op)
     ref_value = result.eigenvalue.real
-    print(f'Reference value: {ref_value:.5f}')
+    print(f"Reference value: {ref_value:.5f}")
 
-    print(f'Qdd result: COBYLA={results[0].eigenvalue.real}, LBFGS_B={results[1].eigenvalue.real},'
-          f' SLSQP={results[2].eigenvalue.real}')
+    print(
+        f"Qdd result: COBYLA={results[0].eigenvalue.real}, LBFGS_B={results[1].eigenvalue.real},"
+        f" SLSQP={results[2].eigenvalue.real}"
+    )
 
     assert results[0].eigenvalue.real == pytest.approx(ref_value, abs=0.1)
     # The optimizers of L_BFGS_B and SLSQP with sampling-based simulation produce results of poor precision;
     # so, we do not assert result[1] and result[2].
+
 
 def test_vqe_initial_points():
     H2_op = SparsePauliOp.from_list(
@@ -86,7 +89,7 @@ def test_vqe_initial_points():
     seed = 50
     algorithm_globals.random_seed = seed
 
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+    ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
     optimizer = COBYLA(maxiter=100)
     vqe = VQE(Estimator(), ansatz, optimizer)
     result = vqe.compute_minimum_eigenvalue(operator=H2_op)
@@ -98,15 +101,17 @@ def test_vqe_initial_points():
     initial_pt = result.optimal_point
     algorithm_globals.random_seed = seed
 
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+    ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
     optimizer = COBYLA(maxiter=100)
-    vqe = VQE(Estimator(),ansatz, optimizer, initial_point=initial_pt)
+    vqe = VQE(Estimator(), ansatz, optimizer, initial_point=initial_pt)
     result_with_initial_points = vqe.compute_minimum_eigenvalue(operator=H2_op)
     print(result_with_initial_points)
     optimizer_evals_with_initial_points = result_with_initial_points.cost_function_evals
     optimal_value_with_initial_points = result.optimal_value
-    print(f'optimizer_evals is {optimizer_evals_with_initial_points} with initial point'
-          f' versus {optimizer_evals} without it.')
+    print(
+        f"optimizer_evals is {optimizer_evals_with_initial_points} with initial point"
+        f" versus {optimizer_evals} without it."
+    )
 
     reference_value = -1.85728
     assert optimal_value == pytest.approx(reference_value, abs=0.1)
@@ -115,7 +120,9 @@ def test_vqe_initial_points():
 
 def test_vqe_with_gradient_framework_and_logging():
     logging.basicConfig(level=logging.INFO)
-    logging.getLogger('qiskit.algorithms.minimum_eigen_solvers.vqe').setLevel(logging.INFO)
+    logging.getLogger("qiskit.algorithms.minimum_eigen_solvers.vqe").setLevel(
+        logging.INFO
+    )
 
     H2_op = SparsePauliOp.from_list(
         [
@@ -128,7 +135,7 @@ def test_vqe_with_gradient_framework_and_logging():
     )
 
     algorithm_globals.random_seed = 50
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+    ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
 
     # although the Qiskit tutorial uses SLSQP, we use COBYLA instead because SLSQP produces imprecise results
     optimizer = COBYLA(maxiter=80)
@@ -141,20 +148,28 @@ def test_vqe_with_gradient_framework_and_logging():
         values.append(mean)
 
     estimator = Estimator()
-    gradient = FiniteDiffEstimatorGradient(estimator,epsilon=0.01)
-    vqe = VQE(estimator,ansatz, optimizer, callback=store_intermediate_result,
-              gradient=gradient)
+    gradient = FiniteDiffEstimatorGradient(estimator, epsilon=0.01)
+    vqe = VQE(
+        estimator,
+        ansatz,
+        optimizer,
+        callback=store_intermediate_result,
+        gradient=gradient,
+    )
     result = vqe.compute_minimum_eigenvalue(operator=H2_op)
-    print(f'Value using Gradient: {result.eigenvalue.real:.5f}')
+    print(f"Value using Gradient: {result.eigenvalue.real:.5f}")
 
     print(result)
 
     reference_value = -1.85728
     assert result.eigenvalue.real == pytest.approx(reference_value, abs=0.1)
 
+
 def test_vqe_with_gradient_framework_and_logging_statevector():
     logging.basicConfig(level=logging.INFO)
-    logging.getLogger('qiskit.algorithms.minimum_eigen_solvers.vqe').setLevel(logging.INFO)
+    logging.getLogger("qiskit.algorithms.minimum_eigen_solvers.vqe").setLevel(
+        logging.INFO
+    )
 
     H2_op = SparsePauliOp.from_list(
         [
@@ -167,7 +182,7 @@ def test_vqe_with_gradient_framework_and_logging_statevector():
     )
 
     algorithm_globals.random_seed = 50
-    ansatz = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+    ansatz = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
 
     # although the Qiskit tutorial uses SLSQP, we use COBYLA instead because SLSQP produces imprecise results
     optimizer = COBYLA(maxiter=80)
@@ -180,11 +195,16 @@ def test_vqe_with_gradient_framework_and_logging_statevector():
         values.append(mean)
 
     estimator = Estimator()
-    gradient = FiniteDiffEstimatorGradient(estimator,epsilon=0.01)
-    vqe = VQE(estimator,ansatz, optimizer, callback=store_intermediate_result,
-              gradient=gradient)
+    gradient = FiniteDiffEstimatorGradient(estimator, epsilon=0.01)
+    vqe = VQE(
+        estimator,
+        ansatz,
+        optimizer,
+        callback=store_intermediate_result,
+        gradient=gradient,
+    )
     result = vqe.compute_minimum_eigenvalue(operator=H2_op)
-    print(f'Value using Gradient: {result.eigenvalue.real:.5f}')
+    print(f"Value using Gradient: {result.eigenvalue.real:.5f}")
 
     print(result)
 

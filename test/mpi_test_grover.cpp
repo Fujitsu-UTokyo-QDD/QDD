@@ -1,10 +1,10 @@
-#include "table.hpp"
 #include "cache.hpp"
+#include "table.hpp"
 #ifdef isMT
-    #include "task.h"
+#include "task.h"
 #endif
-#include<iostream>
-#include<fstream>
+#include <fstream>
+#include <iostream>
 
 static unsigned long long CalculateIterations(const unsigned short n_qubits) {
     constexpr long double PI_4 =
@@ -18,7 +18,6 @@ static unsigned long long CalculateIterations(const unsigned short n_qubits) {
 }
 
 mEdge buildUnitary(const std::vector<mEdge> &g) {
-
     if (g.size() == 0) {
         return mEdge();
     }
@@ -26,14 +25,15 @@ mEdge buildUnitary(const std::vector<mEdge> &g) {
     mEdge rhs = g[0];
     for (int i = 1; i < g.size(); i++) {
         rhs = mm_multiply(g[i], rhs);
-        std::cout << i << "/"<<g.size() <<" Alloc " << mUnique.get_allocations() << std::endl;
+        std::cout << i << "/" << g.size() << " Alloc "
+                  << mUnique.get_allocations() << std::endl;
     }
     return rhs;
 }
 
-mEdge allH(int total_qubits){
+mEdge allH(int total_qubits) {
     std::vector<mEdge> g;
-    for (auto i = 0; i < total_qubits-1; i++) {
+    for (auto i = 0; i < total_qubits - 1; i++) {
         g.emplace_back(makeGate(total_qubits, Hmat, i));
     }
     mEdge rhs = g[0];
@@ -43,9 +43,9 @@ mEdge allH(int total_qubits){
     return rhs;
 }
 
-mEdge allX(int total_qubits){
+mEdge allX(int total_qubits) {
     std::vector<mEdge> g;
-    for (auto i = 0; i < total_qubits-1; i++) {
+    for (auto i = 0; i < total_qubits - 1; i++) {
         g.emplace_back(makeGate(total_qubits, Xmat, i));
     }
     mEdge rhs = g[0];
@@ -55,24 +55,23 @@ mEdge allX(int total_qubits){
     return rhs;
 }
 
-mEdge allXthenH(int total_qubits){
+mEdge allXthenH(int total_qubits) {
     return mm_multiply(allH(total_qubits), allX(total_qubits));
 }
 
-mEdge allHthenX(int total_qubits){
+mEdge allHthenX(int total_qubits) {
     return mm_multiply(allX(total_qubits), allH(total_qubits));
 }
 
 static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
-
     std::vector<mEdge> g;
     QubitCount total_qubits = n_qubits + 1;
 
     // prepare oracle
     Controls controls;
     for (auto i = 0; i < n_qubits; i++) {
-        controls.emplace(Control{i, oracle.at(i) == '1' ? Control::Type::pos
-                                                        : Control::Type::neg});
+        controls.emplace(Control{
+            i, oracle.at(i) == '1' ? Control::Type::pos : Control::Type::neg});
     }
 
     mEdge o = makeGate(total_qubits, Zmat, n_qubits, controls);
@@ -102,9 +101,8 @@ static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
     return buildUnitary(g);
 }
 
-
 int vNode_to_vec2(vNode *node, std::vector<vContent> &table,
-                 std::unordered_map<vNode *, int> &map) {
+                  std::unordered_map<vNode *, int> &map) {
     /*
     This function is to serialize vNode* recursively.
     'table' is the outcome for serialization.
@@ -168,15 +166,14 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
     std::seed_seq seeds(std::begin(random_data), std::end(random_data));
     mt.seed(100);
     // Generate random oracle
-    std::uniform_int_distribution<int> dist(0, 1); // range is inclusive
+    std::uniform_int_distribution<int> dist(0, 1);  // range is inclusive
     std::string oracle = std::string(n_qubits, '0');
     for (Qubit i = 0; i < n_qubits; i++) {
         if (dist(mt) == 1) {
             oracle[i] = '1';
         }
     }
-    if(world.rank()==0)
-        std::cout << "orcale: " << oracle << std::endl;
+    if (world.rank() == 0) std::cout << "orcale: " << oracle << std::endl;
 
     QubitCount total_qubits = n_qubits + 1;
 
@@ -184,48 +181,58 @@ vEdge grover_MPI(QubitCount n_qubits, bmpi::communicator &world) {
 
     // set it up
     vEdge state = makeZeroStateMPI(total_qubits, world);
-    state = mv_multiply_MPI(makeGate(total_qubits, Xmat, n_qubits), state, world, total_qubits, n_qubits);
+    state = mv_multiply_MPI(makeGate(total_qubits, Xmat, n_qubits), state,
+                            world, total_qubits, n_qubits);
     for (auto i = 0; i < n_qubits; i++) {
-        state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world, total_qubits, i);
+        state = mv_multiply_MPI(makeGate(total_qubits, Hmat, i), state, world,
+                                total_qubits, i);
     }
     full_iteration = gc_mat(full_iteration, true);
     std::cout << "Setup fin" << std::endl;
 
-
     unsigned int j_pre = 0;
-    if(world.rank()==0)
+    if (world.rank() == 0)
         std::cout << "iterations: " << iterations << std::endl;
 
-    while ((iterations - j_pre) % 8 != 0){
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
+    while ((iterations - j_pre) % 8 != 0) {
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
         j_pre++;
     }
     int i = 0;
     for (unsigned long long j = j_pre; j < iterations; j += 8) {
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        state = mv_multiply_MPI(full_iteration, state, world, total_qubits, total_qubits-1);
-        if(j%10000<8 && j>10000){
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        state = mv_multiply_MPI(full_iteration, state, world, total_qubits,
+                                total_qubits - 1);
+        if (j % 10000 < 8 && j > 10000) {
             std::cout << j << std::endl;
         }
-        if(j%100000<8 && j>100000){
+        if (j % 100000 < 8 && j > 100000) {
             state = gc(state);
         }
     }
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::micro> ms = t2 - t1;
-    std::cout<<ms.count()/1000000<<" seconds"<<std::endl;
+    std::cout << ms.count() / 1000000 << " seconds" << std::endl;
     std::cout << "nQubit nNodes" << std::endl;
     std::cout << total_qubits << " " << get_nNodes(state) << std::endl;
     return state;
 }
 
-int main(int argc, char** argv){
+int main(int argc, char **argv) {
     bmpi::environment env(argc, argv);
     bmpi::communicator world;
     assert(argc == 2);

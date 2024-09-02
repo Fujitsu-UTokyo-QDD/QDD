@@ -10,13 +10,13 @@ class QddFailedJob(JobV1):
         self._result = result
 
     def submit(self):
-        raise RuntimeError('Submit operation is not supported.')
+        raise RuntimeError("Submit operation is not supported.")
 
     def result(self) -> Result:
         return self._result
 
     def cancel(self):
-        raise RuntimeError('Cancel operation is not supported.')
+        raise RuntimeError("Cancel operation is not supported.")
 
     def status(self) -> JobStatus:
         return JobStatus.ERROR

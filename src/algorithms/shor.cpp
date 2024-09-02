@@ -1,4 +1,5 @@
 #include "algorithms/shor.hpp"
+
 #include "dd.h"
 
 int Shor::inverse_mod(int a, int n) {
@@ -210,7 +211,6 @@ void Shor::u_a(unsigned long long a, int N, int c) {
 }
 
 void Shor::run() {
-
     auto t1 = std::chrono::high_resolution_clock::now();
 
     s.addGate(makeGate(n_qubits, Xmat, n_qubits - 1));
@@ -230,13 +230,12 @@ void Shor::run() {
         s.addGate(makeGate(n_qubits, Hmat, (n_qubits - 1) - i));
     }
     const int mod =
-        std::ceil(2 * required_bits / 6.0); // log_0.9(0.5) is about 6
+        std::ceil(2 * required_bits / 6.0);  // log_0.9(0.5) is about 6
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
         u_a(as[i], n, 0);
     }
 
     for (unsigned int i = 0; i < 2 * required_bits; i++) {
-
         double q = 2;
 
         for (int j = i - 1; j >= 0; j--) {
@@ -271,8 +270,8 @@ void Shor::run() {
 */
     delete[] as;
 }
-std::pair<unsigned int, unsigned int>
-Shor::post_processing(const std::string &sample) const {
+std::pair<unsigned int, unsigned int> Shor::post_processing(
+    const std::string &sample) const {
     unsigned long long res = 0;
     if (verbose) {
         std::clog << "measurement: ";

@@ -3,11 +3,11 @@
 
 # This code is a part of a Qiskit project
 # (C) Copyright IBM 2017, 2024.
-# 
+#
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-# 
+#
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
@@ -40,7 +40,6 @@ def test_solver():
     es_problem = driver.run()
     mapper = JordanWignerMapper()
 
-
     ansatz = UCCSD(
         es_problem.num_spatial_orbitals,
         es_problem.num_particles,
@@ -51,7 +50,6 @@ def test_solver():
             mapper,
         ),
     )
-
 
     # numpy
     numpy_solver = NumPyMinimumEigensolver()
@@ -68,7 +66,7 @@ def test_solver():
     assert res_vqe.groundenergy == pytest.approx(res_numpy.groundenergy, abs=0.2)
 
     # VQE2
-    tl_circuit = TwoLocal(rotation_blocks='ry', entanglement_blocks='cz')
+    tl_circuit = TwoLocal(rotation_blocks="ry", entanglement_blocks="cz")
     optimizer = COBYLA(maxiter=100)
     another_solver = VQE(estimator=Estimator(), ansatz=tl_circuit, optimizer=optimizer)
     calc = GroundStateEigensolver(mapper, another_solver)

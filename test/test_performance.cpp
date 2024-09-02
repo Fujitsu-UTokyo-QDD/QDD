@@ -1,6 +1,6 @@
-#include "gtest/gtest.h"
-#include "dd.h"
 #include "common.h"
+#include "dd.h"
+#include "gtest/gtest.h"
 
 static unsigned long long CalculateIterations(const unsigned short n_qubits) {
     constexpr long double PI_4 =
@@ -14,7 +14,6 @@ static unsigned long long CalculateIterations(const unsigned short n_qubits) {
 }
 
 mEdge buildUnitary(const std::vector<mEdge> &g) {
-
     if (g.size() == 0) {
         return mEdge();
     }
@@ -28,15 +27,14 @@ mEdge buildUnitary(const std::vector<mEdge> &g) {
 }
 
 static mEdge groverIteration(const std::string &oracle, QubitCount n_qubits) {
-
     std::vector<mEdge> g;
     QubitCount total_qubits = n_qubits + 1;
 
     // prepare oracle
     Controls controls;
     for (auto i = 0; i < n_qubits; i++) {
-        controls.emplace(Control{i, oracle.at(i) == '1' ? Control::Type::pos
-                                                        : Control::Type::neg});
+        controls.emplace(Control{
+            i, oracle.at(i) == '1' ? Control::Type::pos : Control::Type::neg});
     }
 
     mEdge o = makeGate(total_qubits, Zmat, n_qubits, controls);
@@ -97,7 +95,7 @@ vEdge grover(QubitCount n_qubits) {
     std::seed_seq seeds(std::begin(random_data), std::end(random_data));
     mt.seed(100);
     // Generate random oracle
-    std::uniform_int_distribution<int> dist(0, 1); // range is inclusive
+    std::uniform_int_distribution<int> dist(0, 1);  // range is inclusive
     std::string oracle = std::string(n_qubits, '0');
     for (Qubit i = 0; i < n_qubits; i++) {
         if (dist(mt) == 1) {
@@ -124,7 +122,7 @@ vEdge grover(QubitCount n_qubits) {
 
     unsigned int j_pre = 0;
 
-    while ((iterations - j_pre) % 8 != 0){
+    while ((iterations - j_pre) % 8 != 0) {
         state = mv_multiply(full_iteration, state);
         j_pre++;
     }
@@ -142,11 +140,11 @@ vEdge grover(QubitCount n_qubits) {
     return state;
 }
 
-TEST(QddTest, MV_PerformanceTest){
+TEST(QddTest, MV_PerformanceTest) {
     auto t1 = std::chrono::high_resolution_clock::now();
     grover(20);
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> ms = t2 - t1;
     std::cout << ms.count() << " milliseconds" << std::endl;
-    ASSERT_TRUE(ms.count() < 5000); // less than 1 second
+    ASSERT_TRUE(ms.count() < 5000);  // less than 1 second
 }

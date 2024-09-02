@@ -25,7 +25,7 @@ from test.python.helpers.circuit_helper import get_counts
 
 def test_using_operators_in_circuits():
     # Create an operator
-    xx = Operator(Pauli('XX'))
+    xx = Operator(Pauli("XX"))
 
     # Add to a circuit
     circ = QuantumCircuit(2, 2)
@@ -33,25 +33,27 @@ def test_using_operators_in_circuits():
     circ.measure([0, 1], [0, 1])
 
     backend = QddProvider().get_backend()
-    circ = transpile(circ, backend, basis_gates=['rx', 'ry', 'rz', 'cx'], seed_transpiler=50)
+    circ = transpile(
+        circ, backend, basis_gates=["rx", "ry", "rz", "cx"], seed_transpiler=50
+    )
     job = backend.run(circ, seed_simulator=80)
-    assert job.result().get_counts(0) == {'11': 1024}
+    assert job.result().get_counts(0) == {"11": 1024}
 
     # Add Pauli to a circuit directly
     circ2 = QuantumCircuit(2, 2)
-    circ2.append(Pauli('XX'), [0, 1])
+    circ2.append(Pauli("XX"), [0, 1])
     circ2.measure([0, 1], [0, 1])
     backend = QddProvider().get_backend()
     _, counts = get_counts(circ2, backend, 1024)
-    assert counts == {'11': 1024}
+    assert counts == {"11": 1024}
 
 
 def test_operator_methods():
-    op_x = Operator(Pauli('X'))
-    op_z = Operator(Pauli('Z'))
-    assert op_x.tensor(op_z) == Operator(Pauli('XZ')) == op_z.expand(op_x)
+    op_x = Operator(Pauli("X"))
+    op_z = Operator(Pauli("Z"))
+    assert op_x.tensor(op_z) == Operator(Pauli("XZ")) == op_z.expand(op_x)
     assert op_x.compose(op_z) == Operator([[0, 1], [-1, 0]])
-    assert Operator(Pauli('X')) == Operator(XGate())
+    assert Operator(Pauli("X")) == Operator(XGate())
     assert Operator(XGate()) != np.exp(1j * 0.5) * Operator(XGate())
 
     # Two operators which differ only by phase

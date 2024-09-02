@@ -22,12 +22,15 @@ from qiskit.circuit import Gate, Parameter
 from qiskit_aer import Aer
 
 from qdd import QddProvider
-from test.python.helpers.circuit_helper import assert_probabilities_are_close, get_counts
+from test.python.helpers.circuit_helper import (
+    assert_probabilities_are_close,
+    get_counts,
+)
 
 
 def test_opaque_gates():
-    my_gate = Gate(name='my_gate', num_qubits=2, params=[])
-    qr = QuantumRegister(3, 'q')
+    my_gate = Gate(name="my_gate", num_qubits=2, params=[])
+    qr = QuantumRegister(3, "q")
     circ = QuantumCircuit(qr)
     circ.append(my_gate, [qr[0], qr[1]])
     circ.append(my_gate, [qr[1], qr[2]])
@@ -41,7 +44,7 @@ def test_opaque_gates():
 def test_composite_gates():
     # Build a sub-circuit
     sub_q = QuantumRegister(2)
-    sub_circ = QuantumCircuit(sub_q, name='sub_circ')
+    sub_circ = QuantumCircuit(sub_q, name="sub_circ")
     sub_circ.h(sub_q[0])
     sub_circ.crz(1, sub_q[0], sub_q[1])
     sub_circ.barrier()
@@ -51,7 +54,7 @@ def test_composite_gates():
     # Convert to a gate and stick it into an arbitrary place in the bigger circuit
     sub_inst = sub_circ.to_instruction()
 
-    qr = QuantumRegister(3, 'q')
+    qr = QuantumRegister(3, "q")
     circ = QuantumCircuit(qr)
     circ.h(qr[0])
     circ.cx(qr[0], qr[1])
@@ -62,7 +65,7 @@ def test_composite_gates():
     decomposed_circ = circ.decompose()  # Does not modify original circuit
     print(decomposed_circ)
 
-    aer_backend = Aer.get_backend('aer_simulator')
+    aer_backend = Aer.get_backend("aer_simulator")
     qdd_backend = QddProvider().get_backend()
 
     _, aer_result = get_counts(circ, aer_backend, 5000, optimization_level=0)
@@ -72,7 +75,7 @@ def test_composite_gates():
 
 
 def test_parameterized_circuits():
-    theta = Parameter('θ')
+    theta = Parameter("θ")
 
     n = 5
 
@@ -93,16 +96,21 @@ def test_parameterized_circuits():
 
     theta_range = np.linspace(0, 2 * np.pi, 128)
 
-    circuits = [qc.assign_parameters({theta: theta_val})
-                for theta_val in theta_range]
+    circuits = [qc.assign_parameters({theta: theta_val}) for theta_val in theta_range]
 
-    aer_backend = Aer.get_backend('aer_simulator')
+    aer_backend = Aer.get_backend("aer_simulator")
     qdd_backend = QddProvider().get_backend()
 
-    aer_job = aer_backend.run(transpile(circuits, aer_backend, optimization_level=0, seed_transpiler=50),
-                              shots=5000, seed_simulator=80)
-    qdd_job = qdd_backend.run(transpile(circuits, qdd_backend, optimization_level=0, seed_transpiler=50),
-                                    shots=5000, seed_simulator=80)
+    aer_job = aer_backend.run(
+        transpile(circuits, aer_backend, optimization_level=0, seed_transpiler=50),
+        shots=5000,
+        seed_simulator=80,
+    )
+    qdd_job = qdd_backend.run(
+        transpile(circuits, qdd_backend, optimization_level=0, seed_transpiler=50),
+        shots=5000,
+        seed_simulator=80,
+    )
 
     aer_counts_list = aer_job.result().get_counts()
     qdd_counts_list = qdd_job.result().get_counts()
@@ -135,11 +143,11 @@ def test_reducing_compilation_cost():
     # qobj = assemble(compiled_circuits, backend=backend)
 
     end = time.time()
-    print('Time compiling over set of bound circuits: ', end - start)
+    print("Time compiling over set of bound circuits: ", end - start)
 
     start = time.time()
     qc = QuantumCircuit(5)
-    theta = Parameter('theta')
+    theta = Parameter("theta")
 
     for k in range(8):
         for i, j in combinations(range(5), 2):
@@ -154,7 +162,7 @@ def test_reducing_compilation_cost():
     # qobj = assemble([transpiled_qc.bind_parameters({theta: n}) for n in theta_range], backend=backend)
 
     end = time.time()
-    print('Time compiling over parameterized circuit, then binding: ', end - start)
+    print("Time compiling over parameterized circuit, then binding: ", end - start)
 
     # In this test, we would like to see the above code finishes with no errors raised.
     # So, here, no specific properties to assert.
@@ -162,13 +170,13 @@ def test_reducing_compilation_cost():
 
 
 def test_composition():
-    phi = Parameter('phi')
+    phi = Parameter("phi")
 
-    sub_circ1 = QuantumCircuit(2, name='sc_1')
+    sub_circ1 = QuantumCircuit(2, name="sc_1")
     sub_circ1.rz(phi, 0)
     sub_circ1.rx(phi, 1)
 
-    sub_circ2 = QuantumCircuit(2, name='sc_2')
+    sub_circ2 = QuantumCircuit(2, name="sc_2")
     sub_circ2.rx(phi, 0)
     sub_circ2.rz(phi, 1)
 
@@ -182,7 +190,7 @@ def test_composition():
     qc = qc.assign_parameters({phi: 1})
     qc.measure_all()
 
-    aer_backend = Aer.get_backend('aer_simulator')
+    aer_backend = Aer.get_backend("aer_simulator")
     qdd_backend = QddProvider().get_backend()
     _, aer_result = get_counts(qc, aer_backend, 5000, optimization_level=0)
     _, qdd_result = get_counts(qc, qdd_backend, 5000, optimization_level=0)
@@ -191,17 +199,17 @@ def test_composition():
 
 
 def test_composition_with_parameter_map():
-    p = Parameter('p')
-    qc = QuantumCircuit(3, name='oracle')
+    p = Parameter("p")
+    qc = QuantumCircuit(3, name="oracle")
     qc.rz(p, 0)
     qc.cx(0, 1)
     qc.rz(p, 1)
     qc.cx(1, 2)
     qc.rz(p, 2)
 
-    theta = Parameter('theta')
-    phi = Parameter('phi')
-    gamma = Parameter('gamma')
+    theta = Parameter("theta")
+    phi = Parameter("phi")
+    gamma = Parameter("gamma")
 
     qr = QuantumRegister(9)
     larger_qc = QuantumCircuit(qr)
@@ -212,7 +220,7 @@ def test_composition_with_parameter_map():
     larger_qc = larger_qc.assign_parameters({theta: 2, phi: 4, gamma: 6})
     larger_qc.measure_all()
 
-    aer_backend = Aer.get_backend('aer_simulator')
+    aer_backend = Aer.get_backend("aer_simulator")
     qdd_backend = QddProvider().get_backend()
     _, aer_result = get_counts(larger_qc, aer_backend, 5000, optimization_level=0)
     _, qdd_result = get_counts(larger_qc, qdd_backend, 5000, optimization_level=0)

@@ -1,14 +1,14 @@
 
-#include "dd.h"
-#include "gtest/gtest.h"
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <cstdio>
 #include <fstream>
 #include <vector>
 
-TEST(SerializationTest, InitTest2) {
+#include "dd.h"
+#include "gtest/gtest.h"
 
+TEST(SerializationTest, InitTest2) {
     std::ofstream ofs("filename");
 
     // create class instance
@@ -33,6 +33,7 @@ TEST(SerializationTest, InitTest2) {
         // archive and stream closed when destructors are called
     }
     std::cout << "input:" << std::endl;
-    v.printVector(); std::cout << "output:" << std::endl;
+    v.printVector();
+    std::cout << "output:" << std::endl;
     newv.printVector();
 }

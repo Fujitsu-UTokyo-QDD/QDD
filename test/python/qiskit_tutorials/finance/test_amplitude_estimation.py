@@ -3,19 +3,24 @@
 
 # This code is a part of a Qiskit project
 # (C) Copyright IBM 2017, 2024.
-# 
+#
 # This code is licensed under the Apache License, Version 2.0. You may
 # obtain a copy of this license in the LICENSE.txt file in the root directory
 # of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-# 
+#
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
 import numpy as np
 import pytest
-from qiskit_algorithms import (AmplitudeEstimation, EstimationProblem, FasterAmplitudeEstimation,
-                               IterativeAmplitudeEstimation, MaximumLikelihoodAmplitudeEstimation)
+from qiskit_algorithms import (
+    AmplitudeEstimation,
+    EstimationProblem,
+    FasterAmplitudeEstimation,
+    IterativeAmplitudeEstimation,
+    MaximumLikelihoodAmplitudeEstimation,
+)
 from qiskit.circuit import QuantumCircuit
 
 from qdd.qdd_sampler import Sampler
@@ -46,6 +51,7 @@ class BernoulliQ(QuantumCircuit):
         q_k.ry(2 * k * self._theta_p, 0)
         return q_k
 
+
 @pytest.mark.no_mpi_support
 def test_qae():
     sampler = Sampler()
@@ -56,7 +62,9 @@ def test_qae():
     problem = EstimationProblem(
         state_preparation=circ_a,  # A operator
         grover_operator=circ_q,  # Q operator
-        objective_qubits=[0],  # the "good" state Psi1 is identified as measuring |1> in qubit 0
+        objective_qubits=[
+            0
+        ],  # the "good" state Psi1 is identified as measuring |1> in qubit 0
     )
 
     ae = AmplitudeEstimation(
@@ -80,7 +88,7 @@ def test_qae():
 
     # Maximum Likelihood Amplitude Estimation
     mlae = MaximumLikelihoodAmplitudeEstimation(
-        evaluation_schedule=3, # log2 of the maximal Grover power
+        evaluation_schedule=3,  # log2 of the maximal Grover power
         sampler=sampler,
     )
     mlae_result = mlae.estimate(problem)
@@ -91,7 +99,9 @@ def test_qae():
     # redefine the problem without the grover operator because FasterAmplitudeEstimation with rescaling discards it
     problem = EstimationProblem(
         state_preparation=circ_a,  # A operator
-        objective_qubits=[0],  # the "good" state Psi1 is identified as measuring |1> in qubit 0
+        objective_qubits=[
+            0
+        ],  # the "good" state Psi1 is identified as measuring |1> in qubit 0
     )
     fae = FasterAmplitudeEstimation(
         delta=0.01,  # target accuracy

@@ -35,6 +35,6 @@ def test_circuit_basics():
     result_sim = job_sim.result()
     counts = result_sim.get_counts(qc_compiled)
     print(counts)
-    assert '000' in counts
-    assert '111' in counts
+    assert "000" in counts
+    assert "111" in counts
     assert counts["000"] + counts["111"] == 1024
