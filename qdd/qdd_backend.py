@@ -688,6 +688,20 @@ class QddBackend(BackendV1):
                 else pyQDD.makeZeroStateMPI(n_qubit)
             )
             for i, qargs, cargs in circ.data:
+                skip = False
+                if i.condition is not None:
+                    classical , val = i.condition
+                    if isinstance(classical, Clbit):
+                        if val_cbit[self.get_cID(classical)] != str(int(val)):
+                            skip = True
+                    else:
+                        for clbit in classical:
+                            idx = self.get_cID(clbit)
+                            if val_cbit[idx] != str((val >> idx) & 1):
+                                skip = True
+                                break
+                if skip:
+                    continue
                 qiskit_gate_type = i.base_class
                 # print("#", MPI.COMM_WORLD.Get_rank(), "#", qiskit_gate_type, qargs)
 
