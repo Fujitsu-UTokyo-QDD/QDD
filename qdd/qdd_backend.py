@@ -671,6 +671,17 @@ class QddBackend(BackendV1):
             sampled_values = [None] * options["shots"]
         #        print(len(circ.data), " gates")
 
+        if options["shots"] is None:
+            has_classical_condition = False
+            for i, qargs, cargs in circ.data:
+                if i.condition is not None:
+                    has_classical_condition = True
+                    break
+            if has_classical_condition:
+                raise RuntimeError(
+                    "ERROR: Classical condition is not supported when shots=None"
+                )
+
         reps = 1
         if circ_prop.stable_final_state == False and isinstance(options["shots"], int):
             reps = options["shots"]
