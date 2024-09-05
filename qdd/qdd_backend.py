@@ -52,7 +52,6 @@ _qiskit_gates_1q_1param: Dict = {
     qiskit_gates.RXGate: pyQDD.rxmat,
     qiskit_gates.RYGate: pyQDD.rymat,
     qiskit_gates.RZGate: pyQDD.rzmat,
-    qiskit_gates.U1Gate: pyQDD.u1,
     qiskit_gates.PhaseGate: pyQDD.p,
     qiskit_gates.CPhaseGate: pyQDD.p,
     qiskit_gates.MCPhaseGate: pyQDD.p,
@@ -63,12 +62,10 @@ _qiskit_gates_1q_1param: Dict = {
 }
 
 _qiskit_gates_1q_2param: Dict = {
-    qiskit_gates.U2Gate: pyQDD.u2,
     qiskit_gates.RGate: pyQDD.r,
 }
 
 _qiskit_gates_1q_3param: Dict = {
-    qiskit_gates.U3Gate: pyQDD.u3,
     qiskit_gates.UGate: pyQDD.u3,
     qiskit_gates.CU3Gate: pyQDD.u3,
 }
@@ -149,9 +146,6 @@ class QddBackend(BackendV1):
                 "rx",
                 "ry",
                 "rz",
-                "u1",
-                "u2",
-                "u3",
                 "u",
                 "p",
                 "r",
