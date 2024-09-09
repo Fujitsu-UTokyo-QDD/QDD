@@ -52,7 +52,6 @@ _qiskit_gates_1q_1param: Dict = {
     qiskit_gates.RXGate: pyQDD.rxmat,
     qiskit_gates.RYGate: pyQDD.rymat,
     qiskit_gates.RZGate: pyQDD.rzmat,
-    qiskit_gates.U1Gate: pyQDD.u1,
     qiskit_gates.PhaseGate: pyQDD.p,
     qiskit_gates.CPhaseGate: pyQDD.p,
     qiskit_gates.MCPhaseGate: pyQDD.p,
@@ -63,12 +62,10 @@ _qiskit_gates_1q_1param: Dict = {
 }
 
 _qiskit_gates_1q_2param: Dict = {
-    qiskit_gates.U2Gate: pyQDD.u2,
     qiskit_gates.RGate: pyQDD.r,
 }
 
 _qiskit_gates_1q_3param: Dict = {
-    qiskit_gates.U3Gate: pyQDD.u3,
     qiskit_gates.UGate: pyQDD.u3,
     qiskit_gates.CU3Gate: pyQDD.u3,
 }
@@ -149,9 +146,6 @@ class QddBackend(BackendV1):
                 "rx",
                 "ry",
                 "rz",
-                "u1",
-                "u2",
-                "u3",
                 "u",
                 "p",
                 "r",
@@ -671,6 +665,17 @@ class QddBackend(BackendV1):
             sampled_values = [None] * options["shots"]
         #        print(len(circ.data), " gates")
 
+        if options["shots"] is None:
+            has_classical_condition = False
+            for i, qargs, cargs in circ.data:
+                if i.condition is not None:
+                    has_classical_condition = True
+                    break
+            if has_classical_condition:
+                raise RuntimeError(
+                    "ERROR: Classical condition is not supported when shots=None"
+                )
+
         reps = 1
         if circ_prop.stable_final_state == False and isinstance(options["shots"], int):
             reps = options["shots"]
@@ -688,6 +693,20 @@ class QddBackend(BackendV1):
                 else pyQDD.makeZeroStateMPI(n_qubit)
             )
             for i, qargs, cargs in circ.data:
+                skip = False
+                if i.condition is not None:
+                    classical , val = i.condition
+                    if isinstance(classical, Clbit):
+                        if val_cbit[self.get_cID(classical)] != str(int(val)):
+                            skip = True
+                    else:
+                        for clbit in classical:
+                            idx = self.get_cID(clbit)
+                            if val_cbit[idx] != str((val >> idx) & 1):
+                                skip = True
+                                break
+                if skip:
+                    continue
                 qiskit_gate_type = i.base_class
                 # print("#", MPI.COMM_WORLD.Get_rank(), "#", qiskit_gate_type, qargs)
 

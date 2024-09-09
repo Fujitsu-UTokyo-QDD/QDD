@@ -19,6 +19,8 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qdd import QddProvider
 from qdd.qdd_sampler import Sampler
 
+from qiskit.primitives import Sampler as QiskitSampler
+
 
 def x_measurement(qc, qubit, cbit):
     """Measure 'qubit' in the X-basis, and store the result in 'cbit'"""
@@ -151,18 +153,7 @@ def test_iqpe_1qubit_with_sampler():
 
     key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
-    print(dist1)
-    assert dist1["0.25"] == 1.0
-
-    # test below is for the case where the quantum circuit has reset gate and the sampler caluculates the exact distribution
-    sampler = Sampler(run_options={"shots": None})
-    job = sampler.run(qc_s)
-    result = job.result()
-    dist0 = result.quasi_dists[0]
-
-    key_new = [str(key / 2**m) for key in list(dist0.keys())]
-    dist1 = dict(zip(key_new, dist0.values()))
-    print(dist1)
+    print(f"dist1: {dist1}")
     assert dist1["0.25"] == 1.0
 
 
@@ -206,17 +197,6 @@ def test_iqpe_2qubits_with_sampler():
     qc.measure(0, 2)
 
     sampler = Sampler()
-    job = sampler.run(qc)
-    result = job.result()
-    dist0 = result.quasi_dists[0]
-
-    key_new = [str(key / 2**m) for key in list(dist0.keys())]
-    dist1 = dict(zip(key_new, dist0.values()))
-    print(dist1)
-    assert dist1["0.125"] == 1.0
-
-    # test below is for the case where the quantum circuit has reset gate and the sampler caluculates the exact distribution
-    sampler = Sampler(run_options={"shots": None})
     job = sampler.run(qc)
     result = job.result()
     dist0 = result.quasi_dists[0]

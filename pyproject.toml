@@ -31,17 +31,10 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.2",
-    "qiskit-algorithms==0.3.0",
-    "qiskit-finance>=0.4.0",
     "qiskit-ibm-runtime>=0.21.1",
-    "qiskit-optimization>=0.6.0",
-    "qiskit-nature[pyscf]>=0.7.2",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
-    "scipy<1.11.0; python_version<'3.12'",
-    "scipy<1.14.0; python_version>='3.12'",
 ]
-# scipy<1.11.0: workaround for the deprecation bugs in qiskit with py3.10
 
 # Specifies the path of the root directory
 [tool.setuptools.packages.find]
