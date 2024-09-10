@@ -28,7 +28,7 @@ def test_qaoa():
     ]
     graph.add_edges_from(edge_list)
 
-    def build_max_cut_paulis(graph: rx.PyGraph) -> list[tuple[str, float]]:
+    def build_max_cut_paulis(graph: rx.PyGraph):
         """Convert the graph to Pauli list.
 
         This function does the inverse of `build_max_cut_graph`
