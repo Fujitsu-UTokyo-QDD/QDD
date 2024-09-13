@@ -242,6 +242,8 @@ struct mEdge {
     std_complex **getMatrix(std::size_t *dim) const;
     MatrixXcf getEigenMatrix();
 
+    mEdge tryIdentity();
+
     inline bool operator==(const mEdge &e) const noexcept {
 
         // because nullptr == nullptr
