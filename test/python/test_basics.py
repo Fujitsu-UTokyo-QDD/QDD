@@ -43,7 +43,7 @@ def test_num_qubits_2():
 
 def test_num_qubits_max_plus_1():
     max_qubits = QddBackend._DEFAULT_CONFIG["n_qubits"]
-    job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20)
+    job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20, skip_transpile=True)
     assert_job_failed(job)
 
 
