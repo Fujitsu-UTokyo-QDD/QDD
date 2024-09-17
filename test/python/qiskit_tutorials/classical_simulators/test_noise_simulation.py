@@ -19,13 +19,13 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Kraus, Operator, SuperOp
 from qiskit_aer import Aer
 from qiskit_aer.noise import NoiseModel, QuantumError, pauli_error
-from qiskit_ibm_runtime.fake_provider import FakeVigo
+from qiskit_ibm_runtime.fake_provider import FakeVigoV2
 
 from qdd import QddBackend, QddProvider
 
 
 def test_noise_simulation():
-    device_backend = FakeVigo()
+    device_backend = FakeVigoV2()
     with pytest.raises(Exception):
         QddBackend.from_backend(device_backend)
 

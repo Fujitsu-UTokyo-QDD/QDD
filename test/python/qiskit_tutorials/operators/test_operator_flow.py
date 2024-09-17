@@ -17,7 +17,7 @@ import pytest
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
-from qiskit.primitives import Estimator as QiskitEstimator
+from qiskit.primitives import StatevectorEstimator as QiskitEstimator
 from qiskit.synthesis import SuzukiTrotter
 
 from qdd.qdd_estimator import Estimator
@@ -55,15 +55,13 @@ def test_circuit_sampler():
                 circuits=evo_circ, observables=h2_measurement, parameter_values=time
             )
             .result()
-            .values
+            .values[0]
         )
         print(f"with QDD Estimator : {qdd_value}")
         qiskit_value = (
-            estimator_qiskit.run(
-                circuits=evo_circ, observables=h2_measurement, parameter_values=time
-            )
-            .result()
-            .values
+            estimator_qiskit.run(pubs=[(evo_circ, h2_measurement, time)])
+            .result()[0]
+            .data.evs
         )
         print(f"with Qiskit Estimator : {qiskit_value}")
         assert qiskit_value == pytest.approx(qdd_value, abs=0.02)

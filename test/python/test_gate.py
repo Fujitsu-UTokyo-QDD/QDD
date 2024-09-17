@@ -12,7 +12,8 @@ from qdd.qdd_backend import (
 from qdd.qdd_sampler import Sampler as qdd_sampler
 from qiskit import QuantumCircuit
 import qiskit.circuit.library as qiskit_gates
-from qiskit.primitives import Sampler as qiskit_sampler
+from qiskit.primitives import StatevectorSampler as qiskit_sampler
+from qiskit.result import QuasiDistribution
 import numpy as np
 import math
 import random
@@ -37,20 +38,23 @@ def test_1q_0param_gates():
             qc.h(range(qc_size))
             qc.append(qis_gate, targets)
             qc.measure_all()
-            job_qis = sampler_qiskit.run(
-                circuits=[qc], parameter_values=[[]], parameters=[[]]
-            )
+            pubs = [(qc, [])]
+            job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
+
             job_qdd = sampler_qdd.run(
                 circuits=[qc], parameter_values=[[]], parameters=[[]]
             )
-            job_result_qis = job_qis.result()
+            qiskit_dists = []
+            for result in job_qis.result():
+                shots = result.metadata["shots"]
+                qiskit_counts = result.data.meas.get_counts()
+                quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                qiskit_dists.append(QuasiDistribution(quasidist_dict))
             job_result_qdd = job_qdd.result()
-            for dist_qis, dist_qdd in zip(
-                job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-            ):
-                dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+            for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_1q_1param_gates():
@@ -67,20 +71,22 @@ def test_1q_1param_gates():
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
                 qc.measure_all()
-                job_qis = sampler_qiskit.run(
-                    circuits=[qc], parameter_values=[[]], parameters=[[]]
-                )
+                pubs = [(qc, [])]
+                job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
                 job_qdd = sampler_qdd.run(
                     circuits=[qc], parameter_values=[[]], parameters=[[]]
                 )
-                job_result_qis = job_qis.result()
+                qiskit_dists = []
+                for result in job_qis.result():
+                    shots = result.metadata["shots"]
+                    qiskit_counts = result.data.meas.get_counts()
+                    quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                    qiskit_dists.append(QuasiDistribution(quasidist_dict))
                 job_result_qdd = job_qdd.result()
-                for dist_qis, dist_qdd in zip(
-                    job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-                ):
-                    dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                    dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                    assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+                for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                    dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                    dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                    assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_1q_2param_gates():
@@ -96,20 +102,22 @@ def test_1q_2param_gates():
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
                 qc.measure_all()
-                job_qis = sampler_qiskit.run(
-                    circuits=[qc], parameter_values=[[]], parameters=[[]]
-                )
+                pubs = [(qc, [])]
+                job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
                 job_qdd = sampler_qdd.run(
                     circuits=[qc], parameter_values=[[]], parameters=[[]]
                 )
-                job_result_qis = job_qis.result()
+                qiskit_dists = []
+                for result in job_qis.result():
+                    shots = result.metadata["shots"]
+                    qiskit_counts = result.data.meas.get_counts()
+                    quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                    qiskit_dists.append(QuasiDistribution(quasidist_dict))
                 job_result_qdd = job_qdd.result()
-                for dist_qis, dist_qdd in zip(
-                    job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-                ):
-                    dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                    dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                    assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+                for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                    dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                    dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                    assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_1q_3param_gates():
@@ -126,20 +134,22 @@ def test_1q_3param_gates():
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
                 qc.measure_all()
-                job_qis = sampler_qiskit.run(
-                    circuits=[qc], parameter_values=[[]], parameters=[[]]
-                )
+                pubs = [(qc, [])]
+                job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
                 job_qdd = sampler_qdd.run(
                     circuits=[qc], parameter_values=[[]], parameters=[[]]
                 )
-                job_result_qis = job_qis.result()
+                qiskit_dists = []
+                for result in job_qis.result():
+                    shots = result.metadata["shots"]
+                    qiskit_counts = result.data.meas.get_counts()
+                    quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                    qiskit_dists.append(QuasiDistribution(quasidist_dict))
                 job_result_qdd = job_qdd.result()
-                for dist_qis, dist_qdd in zip(
-                    job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-                ):
-                    dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                    dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                    assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+                for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                    dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                    dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                    assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_1q_4param_gates():
@@ -157,20 +167,22 @@ def test_1q_4param_gates():
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
                 qc.measure_all()
-                job_qis = sampler_qiskit.run(
-                    circuits=[qc], parameter_values=[[]], parameters=[[]]
-                )
+                pubs = [(qc, [])]
+                job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
                 job_qdd = sampler_qdd.run(
                     circuits=[qc], parameter_values=[[]], parameters=[[]]
                 )
-                job_result_qis = job_qis.result()
+                qiskit_dists = []
+                for result in job_qis.result():
+                    shots = result.metadata["shots"]
+                    qiskit_counts = result.data.meas.get_counts()
+                    quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                    qiskit_dists.append(QuasiDistribution(quasidist_dict))
                 job_result_qdd = job_qdd.result()
-                for dist_qis, dist_qdd in zip(
-                    job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-                ):
-                    dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                    dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                    assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+                for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                    dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                    dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                    assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_2q_0param_gates():
@@ -183,20 +195,22 @@ def test_2q_0param_gates():
             qc.h(range(qc_size))
             qc.append(qis_gate, targets)
             qc.measure_all()
-            job_qis = sampler_qiskit.run(
-                circuits=[qc], parameter_values=[[]], parameters=[[]]
-            )
+            pubs = [(qc, [])]
+            job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
             job_qdd = sampler_qdd.run(
                 circuits=[qc], parameter_values=[[]], parameters=[[]]
             )
-            job_result_qis = job_qis.result()
+            qiskit_dists = []
+            for result in job_qis.result():
+                shots = result.metadata["shots"]
+                qiskit_counts = result.data.meas.get_counts()
+                quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                qiskit_dists.append(QuasiDistribution(quasidist_dict))
             job_result_qdd = job_qdd.result()
-            for dist_qis, dist_qdd in zip(
-                job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-            ):
-                dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+            for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_2q_1param_gates():
@@ -211,20 +225,22 @@ def test_2q_1param_gates():
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
                 qc.measure_all()
-                job_qis = sampler_qiskit.run(
-                    circuits=[qc], parameter_values=[[]], parameters=[[]]
-                )
+                pubs = [(qc, [])]
+                job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
                 job_qdd = sampler_qdd.run(
                     circuits=[qc], parameter_values=[[]], parameters=[[]]
                 )
-                job_result_qis = job_qis.result()
+                qiskit_dists = []
+                for result in job_qis.result():
+                    shots = result.metadata["shots"]
+                    qiskit_counts = result.data.meas.get_counts()
+                    quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                    qiskit_dists.append(QuasiDistribution(quasidist_dict))
                 job_result_qdd = job_qdd.result()
-                for dist_qis, dist_qdd in zip(
-                    job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-                ):
-                    dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                    dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                    assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+                for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                    dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                    dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                    assert dist_qis == pytest.approx(dist_qdd, rel=0.01)
 
 
 def test_unitary():
@@ -237,17 +253,19 @@ def test_unitary():
             qc.h(range(qc_size))
             qc.append(qiskit_gates.UnitaryGate(random_matrix), targets)
             qc.measure_all()
-            job_qis = sampler_qiskit.run(
-                circuits=[qc], parameter_values=[[]], parameters=[[]]
-            )
+            pubs = [(qc, [])]
+            job_qis = sampler_qiskit.run(pubs=pubs, shots=1024)
             job_qdd = sampler_qdd.run(
                 circuits=[qc], parameter_values=[[]], parameters=[[]]
             )
-            job_result_qis = job_qis.result()
+            qiskit_dists = []
+            for result in job_qis.result():
+                shots = result.metadata["shots"]
+                qiskit_counts = result.data.meas.get_counts()
+                quasidist_dict = {k: v / shots for k, v in qiskit_counts.items()}
+                qiskit_dists.append(QuasiDistribution(quasidist_dict))
             job_result_qdd = job_qdd.result()
-            for dist_qis, dist_qdd in zip(
-                job_result_qis.quasi_dists, job_result_qdd.quasi_dists
-            ):
-                dist_qis = {k: v for k, v in dist_qis.items() if v != 0}
-                dist_qdd = {k: v for k, v in dist_qdd.items() if v != 0}
-                assert dist_qis == pytest.approx(dist_qdd, rel=1e-6)
+            for dist_qis, dist_qdd in zip(qiskit_dists, job_result_qdd.quasi_dists):
+                dist_qis = {k: v for k, v in dist_qis.items() if v >= 0.1}
+                dist_qdd = {k: v for k, v in dist_qdd.items() if v >= 0.1}
+                assert dist_qis == pytest.approx(dist_qdd, rel=0.01)

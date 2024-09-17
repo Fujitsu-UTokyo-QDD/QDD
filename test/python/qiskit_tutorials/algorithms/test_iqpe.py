@@ -19,8 +19,6 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister, transpile
 from qdd import QddProvider
 from qdd.qdd_sampler import Sampler
 
-from qiskit.primitives import Sampler as QiskitSampler
-
 
 def x_measurement(qc, qubit, cbit):
     """Measure 'qubit' in the X-basis, and store the result in 'cbit'"""
