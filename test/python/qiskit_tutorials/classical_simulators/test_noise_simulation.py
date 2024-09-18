@@ -59,7 +59,8 @@ def test_gates_with_labels():
     cx_circ.measure_all()
 
     qdd_backend = QddProvider().get_backend()
-    circ = transpile(cx_circ, backend=qdd_backend, seed_transpiler=50)
+    basis_gates = qdd_backend.configuration().basis_gates
+    circ = transpile(cx_circ, basis_gates=basis_gates, seed_transpiler=50)
     qdd_counts = qdd_backend.run(circ, seed_simulator=80).result().get_counts()
 
     aer_backend = Aer.get_backend("aer_simulator")
