@@ -162,13 +162,14 @@ class QddBackend(BackendV1):
                 "cu3",
                 "crx",
                 "cry",
-                "crz"  # rotation + 1 control
+                "crz",  # rotation + 1 control
                 # "mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
                 "rxx",
                 "ryy",
                 "rzz",
                 "rzx",
                 # "unitary",
+                "reset",
             ]
         ),
         "gates": [],
@@ -695,7 +696,7 @@ class QddBackend(BackendV1):
             for i, qargs, cargs in circ.data:
                 skip = False
                 if i.condition is not None:
-                    classical , val = i.condition
+                    classical, val = i.condition
                     if isinstance(classical, Clbit):
                         if val_cbit[self.get_cID(classical)] != str(int(val)):
                             skip = True
