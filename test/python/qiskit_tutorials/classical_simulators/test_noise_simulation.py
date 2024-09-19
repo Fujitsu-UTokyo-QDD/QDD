@@ -19,13 +19,13 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Kraus, Operator, SuperOp
 from qiskit_aer import Aer
 from qiskit_aer.noise import NoiseModel, QuantumError, pauli_error
-from qiskit_ibm_runtime.fake_provider import FakeVigo
+from qiskit_ibm_runtime.fake_provider import FakeVigoV2
 
 from qdd import QddBackend, QddProvider
 
 
 def test_noise_simulation():
-    device_backend = FakeVigo()
+    device_backend = FakeVigoV2()
     with pytest.raises(Exception):
         QddBackend.from_backend(device_backend)
 
@@ -59,7 +59,8 @@ def test_gates_with_labels():
     cx_circ.measure_all()
 
     qdd_backend = QddProvider().get_backend()
-    circ = transpile(cx_circ, backend=qdd_backend, seed_transpiler=50)
+    basis_gates = qdd_backend.configuration().basis_gates
+    circ = transpile(cx_circ, basis_gates=basis_gates, seed_transpiler=50)
     qdd_counts = qdd_backend.run(circ, seed_simulator=80).result().get_counts()
 
     aer_backend = Aer.get_backend("aer_simulator")

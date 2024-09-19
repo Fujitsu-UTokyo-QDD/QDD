@@ -88,6 +88,7 @@ def test_transpiler_log(caplog):
     log_circ.h(1)
     log_circ.x(1)
     log_circ.cx(0, 1)
+    log_circ.dcx(0, 1)
     log_circ.measure([0, 1], [0, 1])
 
     backend = QddProvider().get_backend()

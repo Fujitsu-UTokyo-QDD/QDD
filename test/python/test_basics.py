@@ -43,7 +43,7 @@ def test_num_qubits_2():
 
 def test_num_qubits_max_plus_1():
     max_qubits = QddBackend._DEFAULT_CONFIG["n_qubits"]
-    job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20)
+    job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20, skip_transpile=True)
     assert_job_failed(job)
 
 
@@ -133,9 +133,10 @@ def test_sv():
         transpile(circuits=circ_h, backend=qdd_backend, seed_transpiler=50),
         seed_simulator=80,
     )
+    global_phase = qdd_job_h.result().results[0].header.global_phase
     sv = qdd_job_h.result().get_statevector()
-    assert cmath.isclose(sv[0], 1 / math.sqrt(2))
-    assert cmath.isclose(sv[1], 1 / math.sqrt(2))
+    assert cmath.isclose(sv[0] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
+    assert cmath.isclose(sv[1] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
 
 
 def test_get_counts():

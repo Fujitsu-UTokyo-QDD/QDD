@@ -21,16 +21,19 @@ def get_simple_circuit(num_qubits: int) -> QuantumCircuit:
     return circ
 
 
-def run_simple_circuit(num_qubits: int, shots: int) -> JobV1:
+def run_simple_circuit(num_qubits: int, shots: int, skip_transpile=False) -> JobV1:
     """Executes a simple circuit that contains no stochastic operations and returns a 'counts' result."""
 
     circ = get_simple_circuit(num_qubits)
     backend = QddProvider().get_backend()
-    job = backend.run(
-        transpile(circuits=circ, backend=backend, seed_transpiler=50),
-        shots=shots,
-        seed_simulator=80,
-    )
+    if skip_transpile:
+        job = backend.run(circ, shots=shots, seed_simulator=80)
+    else:
+        job = backend.run(
+            transpile(circuits=circ, backend=backend, seed_transpiler=50),
+            shots=shots,
+            seed_simulator=80,
+        )
     return job
 
 
