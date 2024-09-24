@@ -350,7 +350,7 @@ class Estimator(BaseEstimator):
         layout = self._layouts[circuit_index]
         passmanager = PassManager([SetLayout(layout)])
         opt1q = Optimize1qGatesDecomposition(
-            target=convert_to_target(self._backend.configuration())
+            target=self._backend.target
         )
         passmanager.append(opt1q)
         if isinstance(self._backend.coupling_map, CouplingMap):

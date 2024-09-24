@@ -47,7 +47,7 @@ def test_num_qubits_2():
 
 
 def test_num_qubits_max_plus_1():
-    max_qubits = QddBackend._DEFAULT_CONFIG["n_qubits"]
+    max_qubits = QddBackend(provider=QddProvider()).num_qubits
     job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20, skip_transpile=True)
     assert_job_failed(job)
 
@@ -63,7 +63,7 @@ def test_shots_0():
 
 
 def test_shots_max_shots():
-    max_shots = QddBackend._DEFAULT_CONFIG["max_shots"]
+    max_shots = QddBackend._MAX_SHOTS
     counts = run_simple_circuit(num_qubits=2, shots=max_shots).result().get_counts()
     expected = get_oracle_counts_of_simple_circuit_run(num_qubit=2, shots=max_shots)
     counts = {k: v for k, v in counts.items() if v != 0}
@@ -71,7 +71,7 @@ def test_shots_max_shots():
 
 
 def test_shots_max_shots_plus_1():
-    max_shots = QddBackend._DEFAULT_CONFIG["max_shots"]
+    max_shots = QddBackend._MAX_SHOTS
     if max_shots < 1024:
         assert (
             0
