@@ -349,9 +349,7 @@ class Estimator(BaseEstimator):
 
         layout = self._layouts[circuit_index]
         passmanager = PassManager([SetLayout(layout)])
-        opt1q = Optimize1qGatesDecomposition(
-            target=self._backend.target
-        )
+        opt1q = Optimize1qGatesDecomposition(target=self._backend.target)
         passmanager.append(opt1q)
         if isinstance(self._backend.coupling_map, CouplingMap):
             coupling_map = self._backend.coupling_map
@@ -463,7 +461,7 @@ class Estimator(BaseEstimator):
                 num_qubits = circuit.num_qubits
                 circuit = self._transpile(circuit)
                 bit_map = {bit: index for index, bit in enumerate(circuit.qubits)}
-                layout = [bit_map[qr[0]] for _, qr, _ in circuit[-num_qubits:]]
+                layout = [bit_map[ci.qubits[0]] for ci in circuit[-num_qubits:]]
                 circuit.remove_final_measurements()
                 self._transpiled_circuits[i] = circuit
                 self._layouts[i] = layout

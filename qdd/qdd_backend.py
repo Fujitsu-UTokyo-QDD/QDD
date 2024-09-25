@@ -424,7 +424,8 @@ class QddBackend(BackendV2):
 
         current = pyQDD.makeGate(n_qubit, "I", 0)
         count = 0
-        for i, qargs, cargs in circ.data:
+        for ci in circ.data:
+            i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
             qiskit_gate_type = i.base_class
             # filter out special cases first
             if qiskit_gate_type == Barrier:
@@ -680,7 +681,8 @@ class QddBackend(BackendV2):
 
         if options["shots"] is None:
             has_classical_condition = False
-            for i, qargs, cargs in circ.data:
+            for ci in circ.data:
+                i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
                 if i.condition is not None:
                     has_classical_condition = True
                     break
@@ -705,7 +707,8 @@ class QddBackend(BackendV2):
                 if use_mpi == False
                 else pyQDD.makeZeroStateMPI(n_qubit)
             )
-            for i, qargs, cargs in circ.data:
+            for ci in circ.data:
+                i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
                 skip = False
                 if i.condition is not None:
                     classical, val = i.condition
@@ -1087,7 +1090,8 @@ class QddBackend(BackendV2):
         clbit_final_values: Dict[Clbit, Qubit] = (
             {}
         )  # for each clbit, this holds the qubit last assigned to the clbit.
-        for i, (inst, qargs, cargs) in enumerate(circ.data):
+        for i, ci in enumerate(circ.data):
+            inst, qargs, cargs = ci.operation, ci.qubits, ci.clbits
             if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)
