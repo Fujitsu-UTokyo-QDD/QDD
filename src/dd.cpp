@@ -2449,7 +2449,7 @@ mEdge mEdge::tryIdentity(){
     return *this;
   }
 
-  if (n->getEdge(0).n == n->getEdge(1).n &&n->getEdge(0).n ==n->getEdge(2).n&&n->getEdge(0).n ==n->getEdge(3).n ){
+  if (n->getEdge(0).n == n->getEdge(3).n){
     return {.w=this->w, .n=n->getEdge(0).n};
   }else{
     return *this;
