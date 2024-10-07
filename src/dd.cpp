@@ -149,7 +149,7 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
 
     mEdge e = normalizeM({.w = {1.0, 0.0}, .n = node});
 
-    return e;
+    return e.tryIdentity();
 }
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
@@ -269,7 +269,7 @@ mEdge makeIdent(Qubit q) {
     if (q < 0) return mEdge::one;
 
     if (identityTable[q].n != nullptr) {
-        assert(identityTable[q].n->v > -1);
+        //assert(identityTable[q].n->v > -1);
         return identityTable[q];
     }
 
@@ -910,13 +910,21 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             x = lnode->getEdge(i);
             x.w = lhs.w * x.w;
         } else {
-            x = lhs;
+            if(i==1 || i==2){
+                x = mEdge::zero;
+            }else{
+                x = lhs;
+            }
         }
         if (rv == current_var && !rhs.isTerminal()) {
             y = rnode->getEdge(i);
             y.w = rhs.w * y.w;
         } else {
-            y = rhs;
+            if(i==1 || i==2){
+                y = mEdge::zero;
+            }else{
+                y = rhs;
+            }
         }
 
         edges[i] = mm_add2(x, y, current_var - 1);
@@ -986,13 +994,23 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((row << 1) | k);
             } else {
-                x = lcopy;
+                auto index = row << 1 | k;
+                if(index == 1 || index == 2){
+                    x = mEdge::zero;
+                }else{
+                    x = lcopy;
+                }
             }
 
             if (rv == current_var && !rhs.isTerminal()) {
                 y = rnode->getEdge((k << 1) | col);
             } else {
-                y = rcopy;
+                auto index = k << 1 | col;
+                if(index == 1 || index == 2){
+                    y = mEdge::zero;
+                }else{
+                    y = rcopy;
+                }
             }
 
             product[k] = mm_multiply2(x, y, current_var - 1);
@@ -2412,4 +2430,28 @@ int prune(mEdge &m, double thr, std_complex num) {
         result += prune(m.n->children[3], thr, current);
     }
     return result;
+}
+
+mEdge mEdge::tryIdentity(){
+  if (!n->getEdge(0).w.isOne()){
+    return *this;
+  }
+
+  if (!n->getEdge(1).w.isZero()){
+    return *this;
+  }
+
+  if (!n->getEdge(2).w.isZero()){
+    return *this;
+  }
+
+  if (!n->getEdge(3).w.isOne()){
+    return *this;
+  }
+
+  if (n->getEdge(0).n == n->getEdge(1).n &&n->getEdge(0).n ==n->getEdge(2).n&&n->getEdge(0).n ==n->getEdge(3).n ){
+    return {.w=this->w, .n=n->getEdge(0).n};
+  }else{
+    return *this;
+  }
 }
