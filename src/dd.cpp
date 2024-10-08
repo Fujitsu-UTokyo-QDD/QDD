@@ -179,31 +179,38 @@ bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
-    std_complex wp = edge.w * w;
+    if ( (1 << (edge.getVar()+1)) == dim) {
+        std_complex wp = edge.w * w;
 
-    if (edge.isTerminal()) {
-        for (auto i = row; i < row + dim; i++) {
-            for (auto j = col; j < col + dim; j++) {
-                m[i][j] = wp;
+        if (edge.isTerminal()) {
+            for (auto i = row; i < row + dim; i++) {
+                for (auto j = col; j < col + dim; j++) {
+                    m[i][j] = wp;
+                }
             }
+            return;
         }
-        return;
-    }
 
-    mNode *node = edge.getNode();
-    fillMatrix(node->getEdge(0), row, col, wp, dim / 2, m);
-    fillMatrix(node->getEdge(1), row, col + dim / 2, wp, dim / 2, m);
-    fillMatrix(node->getEdge(2), row + dim / 2, col, wp, dim / 2, m);
-    fillMatrix(node->getEdge(3), row + dim / 2, col + dim / 2, wp, dim / 2, m);
+        mNode *node = edge.getNode();
+        fillMatrix(node->getEdge(0), row, col, wp, dim / 2, m);
+        fillMatrix(node->getEdge(1), row, col + dim / 2, wp, dim / 2, m);
+        fillMatrix(node->getEdge(2), row + dim / 2, col, wp, dim / 2, m);
+        fillMatrix(node->getEdge(3), row + dim / 2, col + dim / 2, wp, dim / 2, m);
+    }else{
+        std_complex wp = w;
+
+        fillMatrix(edge, row, col, wp, dim / 2, m);
+        fillMatrix(edge, row, col + dim / 2, {0.0,0.0}, dim / 2, m);
+        fillMatrix(edge, row + dim / 2, col, {0.0,0.0}, dim / 2, m);
+        fillMatrix(edge, row + dim / 2, col + dim / 2, wp, dim / 2, m);
+    }
 }
 
-void mEdge::printMatrix() const {
-    if (this->isTerminal()) {
-        std::cout << this->w << std::endl;
-        return;
+void mEdge::printMatrix(Qubit nQubits) const {
+    if(nQubits==-1){
+        nQubits = this->getVar() + 1;
     }
-    Qubit q = this->getVar();
-    std::size_t dim = 1 << (q + 1);
+    std::size_t dim = 1 << nQubits;
 
     std_complex **matrix = new std_complex *[dim];
     for (std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
@@ -224,11 +231,11 @@ void mEdge::printMatrix() const {
     delete[] matrix;
 }
 
-std_complex **mEdge::getMatrix(std::size_t *dim) const {
-    assert(!this->isTerminal());
-
-    Qubit q = this->getVar();
-    std::size_t d = 1 << (q + 1);
+std_complex **mEdge::getMatrix(std::size_t *dim, Qubit nQubits) const {
+    if(nQubits==-1){
+        nQubits = this->getVar() + 1;
+    }
+    std::size_t d = 1 << nQubits;
 
     std_complex **matrix = new std_complex *[d];
     for (std::size_t i = 0; i < d; i++) matrix[i] = new std_complex[d];

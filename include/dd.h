@@ -237,11 +237,11 @@ struct mEdge {
     bool isTerminal() const;
     mNode *getNode() const { return n; };
 
-    void printMatrix() const;
+    void printMatrix(Qubit nQubits = -1) const;
 
     mEdge tryIdentity();
 
-    std_complex **getMatrix(std::size_t *dim) const;
+    std_complex **getMatrix(std::size_t *dim, Qubit nQubits = -1) const;
     MatrixXcf getEigenMatrix();
 
     inline bool operator==(const mEdge &e) const noexcept {
