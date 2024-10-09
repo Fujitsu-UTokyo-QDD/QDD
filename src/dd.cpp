@@ -2097,7 +2097,7 @@ void genDot2(mNode *node, std::vector<std::string> &result, int depth,
     }
     done.insert(node);
     std::stringstream node_ss;
-    node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
+    node_ss << (uint64_t)node << " [label=\"q" << node->v << "\"]";
     result.push_back(node_ss.str());
     for (int i = 0; i < node->children.size(); i++) {
         if (node->children[i].w.isApproximatelyZero()) {

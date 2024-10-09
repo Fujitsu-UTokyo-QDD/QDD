@@ -481,7 +481,6 @@ class QddBackend(BackendV1):
                     )
 
             count += 1
-            print(count, "/", len(circ.data))
             current = pyQDD.gc_mat(current, False)
             # pyQDD.clear_cache(False)
         return current
