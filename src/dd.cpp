@@ -1204,7 +1204,12 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
       if (lv == current_var && !lhs.isTerminal()) {
         x = lnode->getEdge((i << 1) | k);
       } else {
-        x = lcopy;
+        auto index = i<<1 | k;
+        if(index == 1 || index == 2){
+          x = mEdge::zero;
+        }else{
+          x = lcopy;
+        }
       }
 
       if (rv == current_var && !rhs.isTerminal()) {
