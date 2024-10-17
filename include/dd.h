@@ -239,8 +239,6 @@ struct mEdge {
 
     void printMatrix(Qubit nQubits = -1) const;
 
-    mEdge tryIdentity();
-
     std_complex **getMatrix(std::size_t *dim, Qubit nQubits = -1) const;
     MatrixXcf getEigenMatrix();
 

@@ -143,13 +143,18 @@ static vEdge normalizeV(const vEdge &e) {
 }
 
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
+    // Identity Stripping
+    if( c[0].n==c[3].n && c[1].w.isApproximatelyZero() && c[2].w.isApproximatelyZero() && c[0].w.isApproximatelyEqual(c[3].w)){
+        return {c[0].w, c[0].n};
+    }
+
     mNode *node = mUnique.getNode();
     node->v = q;
     node->children = c;
 
     mEdge e = normalizeM({.w = {1.0, 0.0}, .n = node});
 
-    return e.tryIdentity();
+    return e;
 }
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
@@ -273,20 +278,7 @@ MatrixXcf mEdge::getEigenMatrix() {
 }
 
 mEdge makeIdent(Qubit q) {
-    if (q < 0) return mEdge::one;
-
-    if (identityTable[q].n != nullptr) {
-        //assert(identityTable[q].n->v > -1);
-        return identityTable[q];
-    }
-
-    mEdge e = makeMEdge(0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
-    for (Qubit i = 1; i <= q; i++) {
-        e = makeMEdge(i, {{e, mEdge::zero, mEdge::zero, e}});
-    }
-
-    identityTable[q] = e;
-    return e;
+    return mEdge::one;
 }
 
 vEdge makeZeroState(QubitCount q) {
@@ -2440,28 +2432,4 @@ int prune(mEdge &m, double thr, std_complex num) {
         result += prune(m.n->children[3], thr, current);
     }
     return result;
-}
-
-mEdge mEdge::tryIdentity(){
-  if (!n->getEdge(0).w.isOne()){
-    return *this;
-  }
-
-  if (!n->getEdge(1).w.isZero()){
-    return *this;
-  }
-
-  if (!n->getEdge(2).w.isZero()){
-    return *this;
-  }
-
-  if (!n->getEdge(3).w.isOne()){
-    return *this;
-  }
-
-  if (n->getEdge(0).n == n->getEdge(3).n){
-    return {.w=this->w, .n=n->getEdge(0).n};
-  }else{
-    return *this;
-  }
 }
