@@ -46,8 +46,11 @@ def test_schedule():
     circ.measure([0, 1], [0, 1])
 
     with pulse.build() as h_q0:
-        pulse.play(pulse.library.Gaussian(duration=256, amp=0.2, sigma=50, name='custom'), pulse.DriveChannel(0))
+        pulse.play(
+            pulse.library.Gaussian(duration=256, amp=0.2, sigma=50, name="custom"),
+            pulse.DriveChannel(0),
+        )
 
-    circ.add_calibration('h', [0], h_q0)
+    circ.add_calibration("h", [0], h_q0)
     with pytest.raises(Exception):
         schedule(circ, backend)

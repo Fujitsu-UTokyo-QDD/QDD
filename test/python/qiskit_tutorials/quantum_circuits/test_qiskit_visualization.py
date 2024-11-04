@@ -28,9 +28,11 @@ def test_circuit_evaluation():
 
     backend = QddProvider().get_backend()
     circ = bell.compose(meas)
-    result = backend.run(transpile(circ, backend, seed_transpiler=50), shots=1000, seed_simulator=80).result()
+    result = backend.run(
+        transpile(circ, backend, seed_transpiler=50), shots=1000, seed_simulator=80
+    ).result()
     counts = result.get_counts(circ)
 
-    assert '00' in counts
-    assert '11' in counts
+    assert "00" in counts
+    assert "11" in counts
     assert counts["00"] + counts["11"] == 1000

@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 from .qdd_backend import QddBackend
 from .qdd_job import QddJob

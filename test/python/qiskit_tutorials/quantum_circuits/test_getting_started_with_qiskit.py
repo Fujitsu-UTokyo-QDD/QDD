@@ -37,7 +37,9 @@ def test_circuit_basics():
     circ.add_register(meas.cregs[0])
     qc = circ.compose(meas)
 
-    job = backend.run(transpile(qc, backend, seed_transpiler=50), shots=1024, seed_simulator=80)
+    job = backend.run(
+        transpile(qc, backend, seed_transpiler=50), shots=1024, seed_simulator=80
+    )
     result = job.result()
 
     with pytest.raises(Exception):
@@ -46,6 +48,6 @@ def test_circuit_basics():
         result.get_unitary(circ, decimals=3)
 
     counts = result.get_counts(qc)
-    assert '000' in counts
-    assert '111' in counts
+    assert "000" in counts
+    assert "111" in counts
     assert counts["000"] + counts["111"] == 1024

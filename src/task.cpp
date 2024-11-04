@@ -3,18 +3,16 @@
 #include <sched.h>
 #endif
 
-#include "task.h"
-#include <chrono>
-#include <iostream>
-#include <table.hpp>
-
-#include <random>
-
 #include <boost/assert.hpp>
 #include <boost/context/detail/prefetch.hpp>
+#include <chrono>
+#include <iostream>
+#include <random>
+#include <table.hpp>
 
 #include "boost/fiber/detail/thread_barrier.hpp"
 #include "boost/fiber/type.hpp"
+#include "task.h"
 
 using namespace std::chrono_literals;
 
@@ -110,12 +108,11 @@ void my_ws::notify() noexcept {
     }
 }
 
-} // namespace algo
-} // namespace fibers
-} // namespace boost
+}  // namespace algo
+}  // namespace fibers
+}  // namespace boost
 
 void Scheduler::spawn() {
-
     for (int i = 0; i < _nworkers; i++) {
         _workers[i]._id = i;
         _workers[i]._sched = this;
@@ -149,7 +146,7 @@ void Scheduler::spawn() {
         this->_nworkers + 1);
 }
 
-Scheduler::Scheduler(int n) : _nworkers(n){
+Scheduler::Scheduler(int n) : _nworkers(n) {
     for (int i = 0; i < _nworkers; i++) {
         _workers.emplace_back(WorkerThread());
     }

@@ -21,12 +21,19 @@ def get_simple_circuit(num_qubits: int) -> QuantumCircuit:
     return circ
 
 
-def run_simple_circuit(num_qubits: int, shots: int) -> JobV1:
+def run_simple_circuit(num_qubits: int, shots: int, skip_transpile=False) -> JobV1:
     """Executes a simple circuit that contains no stochastic operations and returns a 'counts' result."""
 
     circ = get_simple_circuit(num_qubits)
     backend = QddProvider().get_backend()
-    job = backend.run(transpile(circuits=circ,backend=backend,seed_transpiler=50),shots=shots,seed_simulator=80)
+    if skip_transpile:
+        job = backend.run(circ, shots=shots, seed_simulator=80)
+    else:
+        job = backend.run(
+            transpile(circuits=circ, backend=backend, seed_transpiler=50),
+            shots=shots,
+            seed_simulator=80,
+        )
     return job
 
 
@@ -39,31 +46,43 @@ def get_oracle_counts_of_simple_circuit_run(num_qubit: int, shots: int) -> dict:
     reversed_measured_values = []
     for i in range(num_qubit):
         if i % 2 == 0:
-            reversed_measured_values.append('1')
+            reversed_measured_values.append("1")
         else:
-            reversed_measured_values.append('0')
+            reversed_measured_values.append("0")
 
-    measured_value_binary = ''.join(reversed(reversed_measured_values))
+    measured_value_binary = "".join(reversed(reversed_measured_values))
     return {measured_value_binary: shots}
 
 
-def get_counts(circuit: QuantumCircuit, backend: Backend, n_shots: int, optimization_level: int = 1):
+def get_counts(
+    circuit: QuantumCircuit, backend: Backend, n_shots: int, optimization_level: int = 1
+):
     """Simulates the given circuit via the given backend {n_shots} times.
     Returns:
         (dict, dict): the first dict is raw data (i.e., result.data()['counts']).
                       the second one is formatted data (i.e., result.get_counts()).
     """
 
-    job = backend.run(transpile(circuits=circuit,backend=backend,optimization_level=optimization_level,seed_transpiler=50),
-            shots=n_shots,seed_simulator=80)
+    job = backend.run(
+        transpile(
+            circuits=circuit,
+            backend=backend,
+            optimization_level=optimization_level,
+            seed_transpiler=50,
+        ),
+        shots=n_shots,
+        seed_simulator=80,
+    )
     result = job.result()
-    counts = result.data()['counts']
+    counts = result.data()["counts"]
     formatted_counts = result.get_counts()
 
     return counts, formatted_counts
 
 
-def assert_probabilities_are_close(counts_1st: Dict[str, int], counts_2nd: Dict[str, int], atol=0.05):
+def assert_probabilities_are_close(
+    counts_1st: Dict[str, int], counts_2nd: Dict[str, int], atol=0.05
+):
     measured_count = sum(counts_1st.values())
     counts_1st_sorted = sorted(counts_1st.items())
     counts_2nd_sorted = sorted(counts_2nd.items())

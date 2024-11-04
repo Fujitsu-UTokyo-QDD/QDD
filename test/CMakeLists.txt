@@ -1,3 +1,4 @@
+set(CMAKE_GTEST_DISCOVER_TESTS_DISCOVERY_MODE PRE_TEST)
 add_executable(qdd_test test.cpp test_performance.cpp)
 target_link_libraries(qdd_test PUBLIC engine PUBLIC GTest::gtest_main)
 target_include_directories(qdd_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)

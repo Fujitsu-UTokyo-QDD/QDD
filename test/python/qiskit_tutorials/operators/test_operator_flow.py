@@ -17,7 +17,7 @@ import pytest
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import SparsePauliOp
-from qiskit.primitives import Estimator as QiskitEstimator
+from qiskit.primitives import StatevectorEstimator as QiskitEstimator
 from qiskit.synthesis import SuzukiTrotter
 
 from qdd.qdd_estimator import Estimator
@@ -36,20 +36,32 @@ def test_circuit_sampler():
         ]
     )
 
-    evo_time = Parameter('θ')
-    evo_gate = PauliEvolutionGate(operator=two_qubit_h2,time=evo_time,synthesis=SuzukiTrotter())
+    evo_time = Parameter("θ")
+    evo_gate = PauliEvolutionGate(
+        operator=two_qubit_h2, time=evo_time, synthesis=SuzukiTrotter()
+    )
     h2_measurement = two_qubit_h2.adjoint()
     bell = QuantumCircuit(2)
     bell.h(0)
-    bell.cx(0,1)
+    bell.cx(0, 1)
     evo_circ = bell.compose(evo_gate)
 
     estimator = Estimator()
     estimator_qiskit = QiskitEstimator()
 
     for time in range(8):
-        qdd_value = estimator.run(circuits=evo_circ,observables=h2_measurement,parameter_values=time).result().values
+        qdd_value = (
+            estimator.run(
+                circuits=evo_circ, observables=h2_measurement, parameter_values=time
+            )
+            .result()
+            .values[0]
+        )
         print(f"with QDD Estimator : {qdd_value}")
-        qiskit_value = estimator_qiskit.run(circuits=evo_circ,observables=h2_measurement,parameter_values=time).result().values
+        qiskit_value = (
+            estimator_qiskit.run(pubs=[(evo_circ, h2_measurement, time)])
+            .result()[0]
+            .data.evs
+        )
         print(f"with Qiskit Estimator : {qiskit_value}")
         assert qiskit_value == pytest.approx(qdd_value, abs=0.02)

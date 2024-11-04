@@ -6,11 +6,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qdd"
-version = "0.2.4"
+version = "0.2.5"
 description = "Qiskit Provider for QDD"
 authors = [{name = "Yusuke Kimura", email = "yusuke-kimura@fujitsu.com"}]
 readme = "README.md"
-requires-python = ">= 3.8, < 3.12"
+requires-python = ">= 3.8, < 3.13"
 license = {file = "LICENSE.txt"}
 
 classifiers = [
@@ -19,10 +19,11 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 
 dependencies = [
-    "qiskit~=1.0.0",
+    "qiskit~=1.2.0",
 ]
 
 # This command, 'pip install {package-name}[test]',
@@ -30,16 +31,10 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.2",
-    "qiskit-algorithms==0.3.0",
-    "qiskit-finance>=0.4.0",
     "qiskit-ibm-runtime>=0.21.1",
-    "qiskit-optimization>=0.6.0",
-    "qiskit-nature[pyscf]>=0.7.2",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
-    "scipy<1.11.0",
 ]
-# scipy<1.11.0: workaround for the deprecation bugs in qiskit with py3.10
 
 # Specifies the path of the root directory
 [tool.setuptools.packages.find]
