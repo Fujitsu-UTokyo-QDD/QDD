@@ -5,12 +5,13 @@ on: pull_request
 jobs:
   build:
     name: Build and test distribution
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
         include:
           - python-version: "3.8"
             python-version-sub: "38"
