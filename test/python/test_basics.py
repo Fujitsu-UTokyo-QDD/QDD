@@ -12,6 +12,8 @@ import pytest
 from qiskit import QiskitError, QuantumCircuit, transpile
 from qiskit_aer import Aer
 from qiskit.circuit import Parameter
+from qiskit.circuit.random import random_circuit
+import numpy as np
 
 from qdd import QddBackend, QddProvider
 from test.python.helpers.circuit_helper import (
@@ -264,3 +266,74 @@ def test_parametric_circuit_with_unbound_parameter():
         transpile(circuits=qc, backend=backend, seed_transpiler=50), seed_simulator=80
     )
     assert_job_failed(job)
+
+def create_random(nQubits):
+    circ = QuantumCircuit(nQubits);
+    # TODO: random circuit creation
+    return circ
+
+def test_mv_multiply():
+    for i in range(10):
+        nQubits = 5
+        circ = random_circuit(num_qubits=nQubits, depth=1,)
+        circ.measure_all()
+
+        backend = QddProvider().get_backend()
+        circ2 = transpile(circ, backend=backend)
+        circ2.measure_all()
+        result = backend.run(circ2).result().to_dict()["results"][0]["edge"]    
+        qdd_vector = result.getEigenVector()
+
+        circ.save_statevector()
+        aer_backend = Aer.get_backend("aer_simulator")
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_vector = aer_result.get_statevector(circ2)
+        aer_vector_np = np.asarray(aer_vector)
+        if np.allclose(qdd_vector, aer_vector_np) == False:
+            print("###",i,"###")
+            print(circ)
+            print(qdd_vector)
+            print(aer_vector_np)
+            assert(False)
+
+def test_mm_multiply_x():
+    for _ in range(1):
+        nQubits = 2
+        circ = QuantumCircuit(nQubits)
+        circ.x(1)
+        #circ.cx(1,3)
+        print(circ)
+
+        backend = QddProvider().get_backend()
+        result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        circ.save_unitary()
+        aer_backend = Aer.get_backend("unitary_simulator")
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_unitary = aer_result.get_unitary(circ2)
+        aer_unitary_np = np.asarray(aer_unitary)
+        print(qdd_unitary)
+        print(aer_unitary_np)
+        assert(np.allclose(qdd_unitary, aer_unitary_np))
+
+
+def test_mm_multiply():
+    for _ in range(1):
+        nQubits = 5
+        circ = random_circuit(num_qubits=nQubits, depth=1,)
+        print(circ)
+
+        backend = QddProvider().get_backend()
+        result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        circ.save_unitary()
+        aer_backend = Aer.get_backend("unitary_simulator")
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_unitary = aer_result.get_unitary(circ2)
+        aer_unitary_np = np.asarray(aer_unitary)
+        #assert(np.allclose(qdd_unitary, aer_unitary_np))

@@ -184,6 +184,7 @@ std::vector<double> _probabilities(const vEdge &rootEdge) {
 
 PYBIND11_MODULE(pyQDD, m) {
     py::class_<vEdge>(m, "vEdge")
+        .def("getEigenVector", &vEdge::getEigenVector)
         .def("printVector", &vEdge::printVector)
         .def("printVector_sparse", &vEdge::printVector_sparse)
 #ifdef isMPI

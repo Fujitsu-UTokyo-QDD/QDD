@@ -263,9 +263,9 @@ struct MatrixGuard {
     const std::size_t _dim;
 };
 
-MatrixXcf mEdge::getEigenMatrix() {
+MatrixXcf mEdge::getEigenMatrix(Qubit nQubit) {
     std::size_t dim;
-    auto m = getMatrix(&dim);
+    auto m = getMatrix(&dim, nQubit);
     MatrixGuard g(m, dim);
     MatrixXcf M(dim, dim);
 
@@ -1334,6 +1334,17 @@ std_complex *vEdge::getVector(std::size_t *dim) const {
     fillVector(*this, 0, {1.0, 0.0}, q + 1, vector);
     if (dim != nullptr) *dim = d;
     return vector;
+}
+
+VectorXcf vEdge::getEigenVector() {
+    std::size_t dim;
+    auto v = getVector(&dim);
+    VectorXcf V(dim);
+
+    for (auto i = 0; i < dim; i++) {
+        V(i) = std::complex<double>{v[i].r, v[i].i};
+    }
+    return V;
 }
 
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {

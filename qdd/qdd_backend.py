@@ -1005,6 +1005,7 @@ class QddBackend(BackendV1):
             # Note: header information is used by several Qiskit functions; it must be contained in every result object.
             # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
             "header": header,
+            "edge": current,
         }
 
         #        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
