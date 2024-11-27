@@ -419,7 +419,7 @@ class QddBackend(BackendV1):
         current = pyQDD.makeGate(n_qubit, "I", 0)
         count = 0
         for i, qargs, cargs in circ.data:
-            qiskit_gate_type = type(i)
+            qiskit_gate_type = i.base_class
             # filter out special cases first
             if qiskit_gate_type == Barrier:
                 continue
@@ -483,6 +483,7 @@ class QddBackend(BackendV1):
             count += 1
             current = pyQDD.gc_mat(current, False)
             # pyQDD.clear_cache(False)
+        current = pyQDD.applyGlobal(current, circ.global_phase)
         return current
 
     def get_initial_qmap(self, num_qubits, size_global):
@@ -941,6 +942,8 @@ class QddBackend(BackendV1):
             current, map_after_swap = self.restore_swap(
                 MPI, current, circ, map_after_swap, use_bcast
             )
+
+        current = pyQDD.applyGlobal(current, circ.global_phase)
 
         if options["shots"] and circ_prop.stable_final_state == True:
             for i in range(options["shots"]):

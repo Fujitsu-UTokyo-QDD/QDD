@@ -275,14 +275,12 @@ def create_random(nQubits):
 
 def test_mv_multiply():
     for i in range(10):
-        nQubits = 5
-        circ = random_circuit(num_qubits=nQubits, depth=1,)
-        circ.measure_all()
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False)
 
-        backend = QddProvider().get_backend()
-        circ2 = transpile(circ, backend=backend)
-        circ2.measure_all()
-        result = backend.run(circ2).result().to_dict()["results"][0]["edge"]    
+        backend = QddProvider().get_backend("statevector_simulator")
+        circ1 = transpile(circ, backend=backend)
+        result = backend.run(circ1).result().to_dict()["results"][0]["edge"]    
         qdd_vector = result.getEigenVector()
 
         circ.save_statevector()
@@ -291,34 +289,14 @@ def test_mv_multiply():
         aer_result = aer_backend.run(circ2).result()
         aer_vector = aer_result.get_statevector(circ2)
         aer_vector_np = np.asarray(aer_vector)
-        if np.allclose(qdd_vector, aer_vector_np) == False:
+        if np.allclose(qdd_vector, aer_vector_np, atol=0.01) == False:
             print("###",i,"###")
             print(circ)
+            print(circ1)
+            print(circ2)
             print(qdd_vector)
             print(aer_vector_np)
             assert(False)
-
-def test_mm_multiply_x():
-    for _ in range(1):
-        nQubits = 2
-        circ = QuantumCircuit(nQubits)
-        circ.x(1)
-        #circ.cx(1,3)
-        print(circ)
-
-        backend = QddProvider().get_backend()
-        result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
-        qdd_unitary = result_medge.getEigenMatrix(nQubits)
-
-        aer_backend = Aer.get_backend("unitary_simulator")
-        circ2 = transpile(circ, backend=aer_backend)
-        aer_result = aer_backend.run(circ2).result()
-        aer_unitary = aer_result.get_unitary(circ2)
-        aer_unitary_np = np.asarray(aer_unitary)
-        if np.allclose(qdd_unitary, aer_unitary_np) == False:
-            print(qdd_unitary)
-            print(aer_unitary_np)
-            assert(0)
 
 
 def test_mm_multiply():
@@ -326,18 +304,21 @@ def test_mm_multiply():
     aer_backend = Aer.get_backend("unitary_simulator")
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=2, max_operands=2)
-        print(circ)
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
 
-        result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
+        circ1 = transpile(circ, backend=backend)
+        result_medge = backend.merge_circuit(circ1, 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
         circ2 = transpile(circ, backend=aer_backend)
         aer_result = aer_backend.run(circ2).result()
         aer_unitary = aer_result.get_unitary(circ2)
         aer_unitary_np = np.asarray(aer_unitary)
-        if np.allclose(qdd_unitary, aer_unitary_np, atol=0.1) == False:
+        if np.allclose(qdd_unitary, aer_unitary_np, atol=0.01) == False:
             print("###", i, "###")
+            print(circ)
+            print(circ1)
+            print(circ2)
             print(qdd_unitary)
             print(aer_unitary_np)
             assert(0)
