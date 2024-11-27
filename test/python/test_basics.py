@@ -21,6 +21,7 @@ from test.python.helpers.circuit_helper import (
     get_oracle_counts_of_simple_circuit_run,
     run_simple_circuit,
 )
+from qdd import pyQDD
 
 
 def test_num_qubits_2():
@@ -309,31 +310,34 @@ def test_mm_multiply_x():
         result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
-        circ.save_unitary()
         aer_backend = Aer.get_backend("unitary_simulator")
         circ2 = transpile(circ, backend=aer_backend)
         aer_result = aer_backend.run(circ2).result()
         aer_unitary = aer_result.get_unitary(circ2)
         aer_unitary_np = np.asarray(aer_unitary)
-        print(qdd_unitary)
-        print(aer_unitary_np)
-        assert(np.allclose(qdd_unitary, aer_unitary_np))
+        if np.allclose(qdd_unitary, aer_unitary_np) == False:
+            print(qdd_unitary)
+            print(aer_unitary_np)
+            assert(0)
 
 
 def test_mm_multiply():
-    for _ in range(1):
-        nQubits = 5
-        circ = random_circuit(num_qubits=nQubits, depth=1,)
+    backend = QddProvider().get_backend()
+    aer_backend = Aer.get_backend("unitary_simulator")
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=2, max_operands=2)
         print(circ)
 
-        backend = QddProvider().get_backend()
         result_medge = backend.merge_circuit(transpile(circ, backend=backend), 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
-        circ.save_unitary()
-        aer_backend = Aer.get_backend("unitary_simulator")
         circ2 = transpile(circ, backend=aer_backend)
         aer_result = aer_backend.run(circ2).result()
         aer_unitary = aer_result.get_unitary(circ2)
         aer_unitary_np = np.asarray(aer_unitary)
-        #assert(np.allclose(qdd_unitary, aer_unitary_np))
+        if np.allclose(qdd_unitary, aer_unitary_np, atol=0.1) == False:
+            print("###", i, "###")
+            print(qdd_unitary)
+            print(aer_unitary_np)
+            assert(0)
