@@ -867,6 +867,10 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
 }
 
 mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero || rhs == mEdge::zero){
+        return (lhs==mEdge::zero)? rhs : lhs;
+    }
+
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
     } else if (rhs.w.isApproximatelyZero()) {
@@ -945,6 +949,14 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
 }
 
 mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero || rhs == mEdge::zero){
+        return mEdge::zero;
+    }else if(lhs == mEdge::one){
+        return rhs;
+    }else if(rhs==mEdge::one){
+        return lhs;
+    }
+
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return mEdge::zero;
     }
@@ -1348,6 +1360,12 @@ VectorXcf vEdge::getEigenVector() {
 }
 
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero){
+        return vEdge::zero;
+    }else if(lhs == mEdge::one){
+        return rhs;
+    }
+
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return vEdge::zero;
     }
