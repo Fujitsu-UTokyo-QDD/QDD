@@ -169,6 +169,7 @@ struct vEdge {
 #endif
     void printVector_sparse() const;
     std_complex *getVector(std::size_t *dim) const;
+    VectorXcf getEigenVector();
 
     inline bool operator==(const vEdge &e) const noexcept {
         return w.isApproximatelyEqual(e.w) && n == e.n;
@@ -237,10 +238,10 @@ struct mEdge {
     bool isTerminal() const;
     mNode *getNode() const { return n; };
 
-    void printMatrix() const;
+    void printMatrix(Qubit nQubits = -1) const;
 
-    std_complex **getMatrix(std::size_t *dim) const;
-    MatrixXcf getEigenMatrix();
+    std_complex **getMatrix(std::size_t *dim, Qubit nQubits = -1) const;
+    MatrixXcf getEigenMatrix(Qubit nQubits);
 
     inline bool operator==(const mEdge &e) const noexcept {
 

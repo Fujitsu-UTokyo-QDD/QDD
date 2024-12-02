@@ -143,6 +143,11 @@ static vEdge normalizeV(const vEdge &e) {
 }
 
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
+    // Identity Stripping
+    if( c[0].n==c[3].n && c[1].w.isApproximatelyZero() && c[2].w.isApproximatelyZero() && c[0].w.isApproximatelyEqual(c[3].w)){
+        return {c[0].w, c[0].n};
+    }
+
     mNode *node = mUnique.getNode();
     node->v = q;
     node->children = c;
@@ -179,31 +184,38 @@ bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
-    std_complex wp = edge.w * w;
+    if ( (1 << (edge.getVar()+1)) == dim) {
+        std_complex wp = edge.w * w;
 
-    if (edge.isTerminal()) {
-        for (auto i = row; i < row + dim; i++) {
-            for (auto j = col; j < col + dim; j++) {
-                m[i][j] = wp;
+        if (edge.isTerminal()) {
+            for (auto i = row; i < row + dim; i++) {
+                for (auto j = col; j < col + dim; j++) {
+                    m[i][j] = wp;
+                }
             }
+            return;
         }
-        return;
-    }
 
-    mNode *node = edge.getNode();
-    fillMatrix(node->getEdge(0), row, col, wp, dim / 2, m);
-    fillMatrix(node->getEdge(1), row, col + dim / 2, wp, dim / 2, m);
-    fillMatrix(node->getEdge(2), row + dim / 2, col, wp, dim / 2, m);
-    fillMatrix(node->getEdge(3), row + dim / 2, col + dim / 2, wp, dim / 2, m);
+        mNode *node = edge.getNode();
+        fillMatrix(node->getEdge(0), row, col, wp, dim / 2, m);
+        fillMatrix(node->getEdge(1), row, col + dim / 2, wp, dim / 2, m);
+        fillMatrix(node->getEdge(2), row + dim / 2, col, wp, dim / 2, m);
+        fillMatrix(node->getEdge(3), row + dim / 2, col + dim / 2, wp, dim / 2, m);
+    }else{
+        std_complex wp = w;
+
+        fillMatrix(edge, row, col, wp, dim / 2, m);
+        fillMatrix(edge, row, col + dim / 2, {0.0,0.0}, dim / 2, m);
+        fillMatrix(edge, row + dim / 2, col, {0.0,0.0}, dim / 2, m);
+        fillMatrix(edge, row + dim / 2, col + dim / 2, wp, dim / 2, m);
+    }
 }
 
-void mEdge::printMatrix() const {
-    if (this->isTerminal()) {
-        std::cout << this->w << std::endl;
-        return;
+void mEdge::printMatrix(Qubit nQubits) const {
+    if(nQubits==-1){
+        nQubits = this->getVar() + 1;
     }
-    Qubit q = this->getVar();
-    std::size_t dim = 1 << (q + 1);
+    std::size_t dim = 1 << nQubits;
 
     std_complex **matrix = new std_complex *[dim];
     for (std::size_t i = 0; i < dim; i++) matrix[i] = new std_complex[dim];
@@ -224,11 +236,11 @@ void mEdge::printMatrix() const {
     delete[] matrix;
 }
 
-std_complex **mEdge::getMatrix(std::size_t *dim) const {
-    assert(!this->isTerminal());
-
-    Qubit q = this->getVar();
-    std::size_t d = 1 << (q + 1);
+std_complex **mEdge::getMatrix(std::size_t *dim, Qubit nQubits) const {
+    if(nQubits==-1){
+        nQubits = this->getVar() + 1;
+    }
+    std::size_t d = 1 << nQubits;
 
     std_complex **matrix = new std_complex *[d];
     for (std::size_t i = 0; i < d; i++) matrix[i] = new std_complex[d];
@@ -251,9 +263,9 @@ struct MatrixGuard {
     const std::size_t _dim;
 };
 
-MatrixXcf mEdge::getEigenMatrix() {
+MatrixXcf mEdge::getEigenMatrix(Qubit nQubit) {
     std::size_t dim;
-    auto m = getMatrix(&dim);
+    auto m = getMatrix(&dim, nQubit);
     MatrixGuard g(m, dim);
     MatrixXcf M(dim, dim);
 
@@ -266,20 +278,7 @@ MatrixXcf mEdge::getEigenMatrix() {
 }
 
 mEdge makeIdent(Qubit q) {
-    if (q < 0) return mEdge::one;
-
-    if (identityTable[q].n != nullptr) {
-        assert(identityTable[q].n->v > -1);
-        return identityTable[q];
-    }
-
-    mEdge e = makeMEdge(0, {mEdge::one, mEdge::zero, mEdge::zero, mEdge::one});
-    for (Qubit i = 1; i <= q; i++) {
-        e = makeMEdge(i, {{e, mEdge::zero, mEdge::zero, e}});
-    }
-
-    identityTable[q] = e;
-    return e;
+    return mEdge::one;
 }
 
 vEdge makeZeroState(QubitCount q) {
@@ -868,6 +867,10 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
 }
 
 mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero || rhs == mEdge::zero){
+        return (lhs==mEdge::zero)? rhs : lhs;
+    }
+
     if (lhs.w.isApproximatelyZero()) {
         return rhs;
     } else if (rhs.w.isApproximatelyZero()) {
@@ -910,13 +913,21 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             x = lnode->getEdge(i);
             x.w = lhs.w * x.w;
         } else {
-            x = lhs;
+            if(i==1 || i==2){
+                x = mEdge::zero;
+            }else{
+                x = lhs;
+            }
         }
         if (rv == current_var && !rhs.isTerminal()) {
             y = rnode->getEdge(i);
             y.w = rhs.w * y.w;
         } else {
-            y = rhs;
+            if(i==1 || i==2){
+                y = mEdge::zero;
+            }else{
+                y = rhs;
+            }
         }
 
         edges[i] = mm_add2(x, y, current_var - 1);
@@ -938,6 +949,14 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
 }
 
 mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero || rhs == mEdge::zero){
+        return mEdge::zero;
+    }else if(lhs == mEdge::one){
+        return rhs;
+    }else if(rhs==mEdge::one){
+        return lhs;
+    }
+
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return mEdge::zero;
     }
@@ -986,13 +1005,23 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((row << 1) | k);
             } else {
-                x = lcopy;
+                auto index = row << 1 | k;
+                if(index == 1 || index == 2){
+                    x = mEdge::zero;
+                }else{
+                    x = lcopy;
+                }
             }
 
             if (rv == current_var && !rhs.isTerminal()) {
                 y = rnode->getEdge((k << 1) | col);
             } else {
-                y = rcopy;
+                auto index = k << 1 | col;
+                if(index == 1 || index == 2){
+                    y = mEdge::zero;
+                }else{
+                    y = rcopy;
+                }
             }
 
             product[k] = mm_multiply2(x, y, current_var - 1);
@@ -1319,7 +1348,24 @@ std_complex *vEdge::getVector(std::size_t *dim) const {
     return vector;
 }
 
+VectorXcf vEdge::getEigenVector() {
+    std::size_t dim;
+    auto v = getVector(&dim);
+    VectorXcf V(dim);
+
+    for (auto i = 0; i < dim; i++) {
+        V(i) = std::complex<double>{v[i].r, v[i].i};
+    }
+    return V;
+}
+
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+    if(lhs == mEdge::zero){
+        return vEdge::zero;
+    }else if(lhs == mEdge::one){
+        return rhs;
+    }
+
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
         return vEdge::zero;
     }
@@ -1369,7 +1415,10 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((i << 1) | k);
             } else {
-                x = lcopy;
+                if( ((i << 1) | k)==0 || ((i << 1) | k)==3 )
+                    x = lcopy;
+                else
+                    x = mEdge::zero;
             }
 
             if (rv == current_var && !rhs.isTerminal()) {
@@ -2072,7 +2121,7 @@ void genDot2(mNode *node, std::vector<std::string> &result, int depth,
     }
     done.insert(node);
     std::stringstream node_ss;
-    node_ss << (uint64_t)node << " [label=\"q" << depth << "\"]";
+    node_ss << (uint64_t)node << " [label=\"q" << node->v << "\"]";
     result.push_back(node_ss.str());
     for (int i = 0; i < node->children.size(); i++) {
         if (node->children[i].w.isApproximatelyZero()) {

@@ -12,6 +12,8 @@ import pytest
 from qiskit import QiskitError, QuantumCircuit, transpile
 from qiskit_aer import Aer
 from qiskit.circuit import Parameter
+from qiskit.circuit.random import random_circuit
+import numpy as np
 
 from qdd import QddBackend, QddProvider
 from test.python.helpers.circuit_helper import (
@@ -19,6 +21,7 @@ from test.python.helpers.circuit_helper import (
     get_oracle_counts_of_simple_circuit_run,
     run_simple_circuit,
 )
+from qdd import pyQDD
 
 
 def test_num_qubits_2():
@@ -264,3 +267,58 @@ def test_parametric_circuit_with_unbound_parameter():
         transpile(circuits=qc, backend=backend, seed_transpiler=50), seed_simulator=80
     )
     assert_job_failed(job)
+
+def create_random(nQubits):
+    circ = QuantumCircuit(nQubits);
+    # TODO: random circuit creation
+    return circ
+
+def test_mv_multiply():
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False)
+
+        backend = QddProvider().get_backend("statevector_simulator")
+        circ1 = transpile(circ, backend=backend)
+        result = backend.run(circ1).result().to_dict()["results"][0]["edge"]    
+        qdd_vector = result.getEigenVector()
+
+        circ.save_statevector()
+        aer_backend = Aer.get_backend("aer_simulator")
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_vector = aer_result.get_statevector(circ2)
+        aer_vector_np = np.asarray(aer_vector)
+        if np.allclose(qdd_vector, aer_vector_np, atol=0.01) == False:
+            print("###",i,"###")
+            print(circ)
+            print(circ1)
+            print(circ2)
+            print(qdd_vector)
+            print(aer_vector_np)
+            assert(False)
+
+
+def test_mm_multiply():
+    backend = QddProvider().get_backend()
+    aer_backend = Aer.get_backend("unitary_simulator")
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+
+        circ1 = transpile(circ, backend=backend)
+        result_medge = backend.merge_circuit(circ1, 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_unitary = aer_result.get_unitary(circ2)
+        aer_unitary_np = np.asarray(aer_unitary)
+        if np.allclose(qdd_unitary, aer_unitary_np, atol=0.01) == False:
+            print("###", i, "###")
+            print(circ)
+            print(circ1)
+            print(circ2)
+            print(qdd_unitary)
+            print(aer_unitary_np)
+            assert(0)

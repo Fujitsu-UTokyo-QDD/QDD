@@ -419,7 +419,7 @@ class QddBackend(BackendV1):
         current = pyQDD.makeGate(n_qubit, "I", 0)
         count = 0
         for i, qargs, cargs in circ.data:
-            qiskit_gate_type = type(i)
+            qiskit_gate_type = i.base_class
             # filter out special cases first
             if qiskit_gate_type == Barrier:
                 continue
@@ -481,9 +481,9 @@ class QddBackend(BackendV1):
                     )
 
             count += 1
-            print(count, "/", len(circ.data))
             current = pyQDD.gc_mat(current, False)
             # pyQDD.clear_cache(False)
+        current = pyQDD.applyGlobal(current, circ.global_phase)
         return current
 
     def get_initial_qmap(self, num_qubits, size_global):
@@ -943,6 +943,8 @@ class QddBackend(BackendV1):
                 MPI, current, circ, map_after_swap, use_bcast
             )
 
+        current = pyQDD.applyGlobal(current, circ.global_phase)
+
         if options["shots"] and circ_prop.stable_final_state == True:
             for i in range(options["shots"]):
                 _, result_tmp = (
@@ -1006,6 +1008,7 @@ class QddBackend(BackendV1):
             # Note: header information is used by several Qiskit functions; it must be contained in every result object.
             # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
             "header": header,
+            "edge": current,
         }
 
         #        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
