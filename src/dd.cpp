@@ -951,10 +951,14 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
 mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return mEdge::zero;
-    }else if(lhs == mEdge::one){
-        return rhs;
-    }else if(rhs==mEdge::one){
-        return lhs;
+    }else if(lhs.isTerminal()){
+        auto result = rhs;
+        result.w *= lhs.w;
+        return result;
+    }else if(rhs.isTerminal()){
+        auto result = lhs;
+        result.w *= rhs.w;
+        return result;
     }
 
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {
@@ -1362,8 +1366,10 @@ VectorXcf vEdge::getEigenVector() {
 vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero){
         return vEdge::zero;
-    }else if(lhs == mEdge::one){
-        return rhs;
+    }else if(lhs.isTerminal()){
+        auto result = rhs;
+        result.w *= lhs.w;
+        return result;
     }
 
     if (lhs.w.isApproximatelyZero() || rhs.w.isApproximatelyZero()) {

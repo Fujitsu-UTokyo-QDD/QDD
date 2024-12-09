@@ -273,6 +273,27 @@ def create_random(nQubits):
     # TODO: random circuit creation
     return circ
 
+
+def test_gc_mat_correctness():
+    backend = QddProvider().get_backend()
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+
+        circ = transpile(circ, backend=backend)
+        result_medge = backend.merge_circuit(circ, 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        result_aftergc = pyQDD.gc_mat(result_medge, True)
+        qdd_aftergc = result_aftergc.getEigenMatrix(nQubits)
+
+        if np.allclose(qdd_unitary, qdd_aftergc, atol=0.01) == False:
+            print("###", i, "###")
+            print(circ)
+            print(qdd_unitary)
+            print(qdd_aftergc)
+            assert(0)
+
 def test_mv_multiply():
     for i in range(10):
         nQubits = 10
