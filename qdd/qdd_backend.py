@@ -220,6 +220,8 @@ class QddBackend(BackendV1):
             use_auto_swap=True,
             swap_ver="v1",
             n_threads=1,
+            show_progress=False,
+            show_progress_frequency=10000,
         )
 
     @staticmethod
@@ -326,6 +328,8 @@ class QddBackend(BackendV1):
             ),
             "swap_ver": run_options.get("swap_ver", self.options.swap_ver),
             "n_threads": run_options.get("n_threads", self.options.n_threads),
+            "show_progress": run_options.get("show_progress", self.options.show_progress),
+            "show_progress_frequency": run_options.get("show_progress_frequency", self.options.show_progress_frequency),
         }
 
         if ("parameter_binds" in run_options) and (
@@ -481,6 +485,8 @@ class QddBackend(BackendV1):
                     )
 
             count += 1
+            if self.options.show_progress and count % self.options.show_progress_frequency == 0:
+                print(count,"/",len(circ.data))
             current = pyQDD.gc_mat(current, False)
             # pyQDD.clear_cache(False)
         current = pyQDD.applyGlobal(current, circ.global_phase)
@@ -933,6 +939,8 @@ class QddBackend(BackendV1):
                         )
                 current = pyQDD.gc(current, False)
                 count = count + 1
+                if options["show_progress"] and count % options["show_progress_frequency"] == 0:
+                    print(count,"/",len(circ.data))
 
             # print(shot, val_cbit)
             if options["shots"] and circ_prop.stable_final_state == False:
