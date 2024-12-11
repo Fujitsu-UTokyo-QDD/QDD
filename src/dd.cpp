@@ -2359,15 +2359,20 @@ int get_nNodes(vEdge e) {
 }
 
 int GC_SIZE = 1024 * 64;
-vEdge gc(vEdge state, bool force) {
+std::vector<vEdge> gc(std::vector<vEdge> states, bool force) {
     if (vUnique.get_allocations() < GC_SIZE && force == false) {
-        return state;
+        return states;
     }
 
     probs.clear();
-    std::vector<vContent> v;
-    std::unordered_map<vNode *, int> map;
-    int nNodes = vNode_to_vec(state.n, v, map);
+    std::vector<std::vector<vContent>> v;
+    int nNodes = 0;
+    for(int i=0; i<states.size(); i++){
+        std::vector<vContent> vtmp;
+        std::unordered_map<vNode *, int> map;
+        nNodes += vNode_to_vec(states[i].n, vtmp, map);
+        v.push_back(vtmp);
+    }
     if (nNodes > GC_SIZE) {
         GC_SIZE *= 2;
     }
@@ -2376,7 +2381,9 @@ vEdge gc(vEdge state, bool force) {
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
-    state.n = vec_to_vNode(v, vUnique, true);
+    for(int i=0; i<states.size(); i++){
+        states[i].n = vec_to_vNode(v[i], vUnique, i==0);
+    }
 
 #if defined(isMT) && !defined(CACHE_GLOBAL)
     _aCaches.clear();
@@ -2390,18 +2397,29 @@ vEdge gc(vEdge state, bool force) {
     _aCache.clearAll();
 #endif
     std::cout << "gc_done " << std::endl;
-    return state;
+    return states;
+}
+
+vEdge gc(vEdge state, bool force) {
+    std::vector<vEdge> input = {state};
+    std::vector<vEdge> result = gc(input, force);
+    return result[0];
 }
 
 int GC_SIZE_M = 1024 * 64;
-mEdge gc_mat(mEdge mat, bool force) {
+std::vector<mEdge> gc_mat(std::vector<mEdge> mats, bool force) {
     if (mUnique.get_allocations() < GC_SIZE_M && force == false) {
-        return mat;
+        return mats;
     }
 
-    std::vector<mContent> m;
-    std::unordered_map<mNode *, int> map;
-    int nNodes = mNode_to_vec(mat.n, m, map);
+    std::vector<std::vector<mContent>> m;
+    int nNodes = 0;
+    for(int i=0; i<mats.size();i++){
+        std::vector<mContent> mtmp;
+        std::unordered_map<mNode *, int> map;
+        nNodes += mNode_to_vec(mats[i].n, mtmp, map);
+        m.push_back(mtmp);
+    }
     if (nNodes > GC_SIZE_M) {
         GC_SIZE_M += nNodes;
     }
@@ -2409,7 +2427,9 @@ mEdge gc_mat(mEdge mat, bool force) {
 
     mNodeTable new_table(NQUBITS);
     mUnique = std::move(new_table);
-    mat.n = vec_to_mNode(m, mUnique, true);
+    for(int i=0; i<mats.size();i++){
+        mats[i].n = vec_to_mNode(m[i], mUnique, i==0);
+    }
 
     // Clear identityTable
     std::vector<mEdge> new_identityTable(NQUBITS);
@@ -2428,7 +2448,13 @@ mEdge gc_mat(mEdge mat, bool force) {
     _aCache.clearAll();
 #endif
     std::cout << "gc_mat_done " << std::endl;
-    return mat;
+    return mats;
+}
+
+mEdge gc_mat(mEdge mat, bool force) {
+    std::vector<mEdge> input = {mat};
+    std::vector<mEdge> result = gc_mat(input, force);
+    return result[0];
 }
 
 void set_gc_thr(int gc_v, int gc_m) {
