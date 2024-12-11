@@ -21,6 +21,7 @@ from qiskit.circuit import library
 from qdd import __version__
 from qdd.qdd_failed_job import QddFailedJob
 from qdd.qdd_job import QddJob
+from qdd.qdd_gate import QDDGate
 from .circuit_property import CircuitProperty
 
 from qdd import pyQDD
@@ -105,10 +106,15 @@ _qiskit_gates_unitary: Dict = {
     qiskit_gates.UnitaryGate: pyQDD.unitary,
 }
 
+_qdd_gate: Dict = {
+    QDDGate: None,
+}
+
 _supported_qiskit_gates: Dict = {
     **_qiskit_gates_1q,
     **_qiskit_gates_2q,
     **_qiskit_gates_unitary,
+    **_qdd_gate,
 }
 
 
@@ -170,6 +176,7 @@ class QddBackend(BackendV1):
                 "rzx",
                 # "unitary",
                 "reset",
+                "qdd",
             ]
         ),
         "gates": [],
@@ -220,6 +227,8 @@ class QddBackend(BackendV1):
             use_auto_swap=True,
             swap_ver="v1",
             n_threads=1,
+            show_progress=False,
+            show_progress_frequency=10000,
         )
 
     @staticmethod
@@ -326,6 +335,8 @@ class QddBackend(BackendV1):
             ),
             "swap_ver": run_options.get("swap_ver", self.options.swap_ver),
             "n_threads": run_options.get("n_threads", self.options.n_threads),
+            "show_progress": run_options.get("show_progress", self.options.show_progress),
+            "show_progress_frequency": run_options.get("show_progress_frequency", self.options.show_progress_frequency),
         }
 
         if ("parameter_binds" in run_options) and (
@@ -419,7 +430,7 @@ class QddBackend(BackendV1):
         current = pyQDD.makeGate(n_qubit, "I", 0)
         count = 0
         for i, qargs, cargs in circ.data:
-            qiskit_gate_type = type(i)
+            qiskit_gate_type = i.base_class
             # filter out special cases first
             if qiskit_gate_type == Barrier:
                 continue
@@ -473,6 +484,9 @@ class QddBackend(BackendV1):
                     targets = qargs
                     gate = pyQDD.unitary(n_qubit, matrix, targets)
                     current = pyQDD.mm_multiply(gate, current)
+                elif qiskit_gate_type in _qdd_gate:
+                    gate = i.params[0]
+                    current = pyQDD.mm_multiply(gate, current)
                 else:
                     raise RuntimeError(
                         f"Unsupported gate or instruction:"
@@ -481,9 +495,12 @@ class QddBackend(BackendV1):
                     )
 
             count += 1
-            print(count, "/", len(circ.data))
-            current = pyQDD.gc_mat(current, False)
+            if self.options.show_progress and count % self.options.show_progress_frequency == 0:
+                print(count,"/",len(circ.data))
+            if count%gc_freq==0:
+                current = pyQDD.gc_mat(current, False)
             # pyQDD.clear_cache(False)
+        current = pyQDD.applyGlobal(current, circ.global_phase)
         return current
 
     def get_initial_qmap(self, num_qubits, size_global):
@@ -860,6 +877,15 @@ class QddBackend(BackendV1):
                                 )
                             )
                         )
+                    elif qiskit_gate_type in _qdd_gate:
+                        gate = i.params[0]
+                        if use_mpi and use_auto_swap:
+                            current, map_after_swap = self.restore_swap(
+                               MPI, current, circ, map_after_swap, use_bcast
+                            )
+                        current = (pyQDD.mv_multiply(gate, current) if use_mpi == False
+                             else (pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]),) if use_bcast == False
+                             else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]),)))
                     else:
                         raise RuntimeError(
                             f"Unsupported gate or instruction:"
@@ -933,6 +959,8 @@ class QddBackend(BackendV1):
                         )
                 current = pyQDD.gc(current, False)
                 count = count + 1
+                if options["show_progress"] and count % options["show_progress_frequency"] == 0:
+                    print(count,"/",len(circ.data))
 
             # print(shot, val_cbit)
             if options["shots"] and circ_prop.stable_final_state == False:
@@ -942,6 +970,8 @@ class QddBackend(BackendV1):
             current, map_after_swap = self.restore_swap(
                 MPI, current, circ, map_after_swap, use_bcast
             )
+
+        current = pyQDD.applyGlobal(current, circ.global_phase)
 
         if options["shots"] and circ_prop.stable_final_state == True:
             for i in range(options["shots"]):
@@ -1006,6 +1036,7 @@ class QddBackend(BackendV1):
             # Note: header information is used by several Qiskit functions; it must be contained in every result object.
             # E.g., header['memory_slots'] is used in Result#get_counts() for formatting sampled counts.
             "header": header,
+            "edge": current,
         }
 
         #        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))

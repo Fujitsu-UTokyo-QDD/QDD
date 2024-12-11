@@ -34,7 +34,7 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
     print(new_circ.num_qubits, len(new_circ.data))
 
     start = time.perf_counter()
-    job = backend.run(new_circ, shots=1)
+    job = backend.run(new_circ, shots=1, show_progress = True)
     print(len(job.result().data()['counts']))
     end = time.perf_counter()
     print(end-start, " sec")

@@ -38,7 +38,7 @@ class AddCache{
             T find(T lhs, T rhs){
                 lookups++;
 
-                if(lhs.getVar() > rhs.getVar()){
+                if(lhs.getVar() < rhs.getVar()){
                     swap(lhs, rhs);
                 }
 
@@ -64,7 +64,7 @@ class AddCache{
         template<typename T>
             void set(T lhs, T rhs, const T& result){
 
-                if(lhs.getVar() > rhs.getVar()){
+                if(lhs.getVar() < rhs.getVar()){
                     swap(lhs, rhs);
                 }
 
@@ -202,7 +202,7 @@ class AddCache{
 
         template<typename T>
             std::size_t hash(const T& lhs, const T& rhs){
-                assert(lhs.getVar() <= rhs.getVar());
+                assert(lhs.getVar() >= rhs.getVar());
                 auto h1 = std::hash<T>()(lhs);
                 auto h2 = std::hash<T>()(rhs);
                 return hash_combine(h1,h2);
