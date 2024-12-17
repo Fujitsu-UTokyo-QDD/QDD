@@ -948,7 +948,7 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
     return mm_add2(lhs, rhs, root);
 }
 
-mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var, int32_t mt_level) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return mEdge::zero;
     }else if(lhs.isTerminal()){
@@ -999,12 +999,15 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     rcopy.w = {1.0, 0.0};
 
     std::array<mEdge, 4> edges;
+#ifdef isMT
+    std::array<boost::fibers::future<mEdge>, 8> products;
+#endif
+    std::array<mEdge, 8> product;
 
     for (auto i = 0; i < 4; i++) {
         std::size_t row = i >> 1;
         std::size_t col = i & 0x1;
 
-        std::array<mEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
                 x = lnode->getEdge((row << 1) | k);
@@ -1027,10 +1030,32 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
                     y = rcopy;
                 }
             }
-
-            product[k] = mm_multiply2(x, y, current_var - 1);
+#ifdef isMT
+            if (mt_level < 1) {
+                boost::fibers::packaged_task<mEdge()> pt(
+                    std::bind(mm_multiply2, x, y, current_var - 1, mt_level+1));
+                products[k+2*i] = pt.get_future();
+                boost::fibers::fiber f(std::move(pt));
+                f.detach();
+            } else {
+#endif
+            product[k+2*i] = mm_multiply2(x, y, current_var - 1, mt_level);
+#ifdef isMT
+            }
+#endif
         }
-        edges[i] = mm_add2(product[0], product[1], current_var - 1);
+    }
+
+#ifdef isMT
+        if (mt_level < 1) {
+            for(int i=0; i<4; i++){
+                product[2*i] = products[2*i].get();
+                product[2*i+1] = products[2*i+1].get();
+            }
+        }
+#endif
+    for(int i=0; i<4; i++){
+        edges[i] = mm_add2(product[2*i], product[2*i+1], current_var - 1);
     }
 
     result = makeMEdge(current_var, edges);
@@ -1048,7 +1073,7 @@ mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs) {
     }
 
     Qubit root = rootVar(lhs, rhs);
-    mEdge result = mm_multiply2(lhs, rhs, root);
+    mEdge result = mm_multiply2(lhs, rhs, root, 0);
     return result;
 }
 
@@ -1363,7 +1388,7 @@ VectorXcf vEdge::getEigenVector() {
     return V;
 }
 
-vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var, int32_t mt_level) {
     if(lhs == mEdge::zero){
         return vEdge::zero;
     }else if(lhs.isTerminal()){
@@ -1433,21 +1458,21 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
                 y = rcopy;
             }
 #ifdef isMT
-            if (current_var > LIMIT) {
+            if (mt_level < 1) {
                 boost::fibers::packaged_task<vEdge()> pt(
-                    std::bind(mv_multiply2, x, y, current_var - 1));
+                    std::bind(mv_multiply2, x, y, current_var - 1, mt_level+1));
                 products.emplace_back(pt.get_future());
                 boost::fibers::fiber f(std::move(pt));
                 f.detach();
             } else {
 #endif
-                product[k] = mv_multiply2(x, y, current_var - 1);
+                product[k] = mv_multiply2(x, y, current_var - 1, mt_level);
 #ifdef isMT
             }
 #endif
         }
 #ifdef isMT
-        if (current_var > LIMIT) {
+        if (mt_level < 1) {
             product[0] = products[0].get();
             product[1] = products[1].get();
         }
@@ -1472,7 +1497,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
     LIMIT = rhs.getVar() - MINUS;
-    vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
+    vEdge v = mv_multiply2(lhs, rhs, rhs.getVar(), 0);
     //_mCache.hitRatio();
     //_aCache.hitRatio();
     // vUnique.dump();
@@ -2406,7 +2431,7 @@ vEdge gc(vEdge state, bool force) {
     return result[0];
 }
 
-int GC_SIZE_M = 1024 * 64;
+int GC_SIZE_M = 1024 * 512;
 std::vector<mEdge> gc_mat(std::vector<mEdge> mats, bool force) {
     if (mUnique.get_allocations() < GC_SIZE_M && force == false) {
         return mats;

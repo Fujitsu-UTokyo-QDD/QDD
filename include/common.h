@@ -28,7 +28,7 @@ using duration_micro = std::chrono::duration<double, std::micro>;
 const std::size_t NQUBITS = 100;
 const std::size_t NBUCKETS = 524288;
 const std::size_t INITIAL_ALLOCATION_SIZE = 1024*2;
-const std::size_t INITIAL_ALLOCATION_SIZE_CACHE = 1024*8;
+const std::size_t INITIAL_ALLOCATION_SIZE_CACHE = 1024*1024*8;
 const std::size_t GROWTH_FACTOR = 2;
 
 using Qubit = int32_t;

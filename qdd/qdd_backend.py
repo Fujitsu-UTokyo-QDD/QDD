@@ -422,6 +422,10 @@ class QddBackend(BackendV1):
         return self.cbitmap[cbit]
 
     def merge_circuit(self, circ: QiskitCircuit, gc_freq=20):
+        if self.options["n_threads"] > 1:
+            nt = pyQDD.initMT(self.options["n_threads"])
+            print(nt, "threads")
+
         n_qubit = circ.num_qubits
         n_cbit = circ.num_clbits
         self._create_qubitmap(circ)
