@@ -12,13 +12,18 @@ import pytest
 from qiskit import QiskitError, QuantumCircuit, transpile
 from qiskit_aer import Aer
 from qiskit.circuit import Parameter
+from qiskit.circuit.random import random_circuit
+from qiskit.transpiler import TranspilerError
+import numpy as np
 
 from qdd import QddBackend, QddProvider
+from qdd.qdd_gate import QDDGate
 from test.python.helpers.circuit_helper import (
     assert_job_failed,
     get_oracle_counts_of_simple_circuit_run,
     run_simple_circuit,
 )
+from qdd import pyQDD
 
 
 def test_num_qubits_2():
@@ -264,3 +269,143 @@ def test_parametric_circuit_with_unbound_parameter():
         transpile(circuits=qc, backend=backend, seed_transpiler=50), seed_simulator=80
     )
     assert_job_failed(job)
+
+def create_random(nQubits):
+    circ = QuantumCircuit(nQubits);
+    # TODO: random circuit creation
+    return circ
+
+
+def test_gc_mat_correctness():
+    backend = QddProvider().get_backend()
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+
+        circ = transpile(circ, backend=backend)
+        result_medge = backend.merge_circuit(circ, 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        result_aftergc = pyQDD.gc_mat(result_medge, True)
+        qdd_aftergc = result_aftergc.getEigenMatrix(nQubits)
+
+        if np.allclose(qdd_unitary, qdd_aftergc, atol=0.01) == False:
+            print("###", i, "###")
+            print(circ)
+            print(qdd_unitary)
+            print(qdd_aftergc)
+            assert(0)
+
+def test_mv_multiply():
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False)
+
+        backend = QddProvider().get_backend("statevector_simulator")
+        circ1 = transpile(circ, backend=backend)
+        result = backend.run(circ1).result().to_dict()["results"][0]["edge"]    
+        qdd_vector = result.getEigenVector()
+
+        circ.save_statevector()
+        aer_backend = Aer.get_backend("aer_simulator")
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_vector = aer_result.get_statevector(circ2)
+        aer_vector_np = np.asarray(aer_vector)
+        if np.allclose(qdd_vector, aer_vector_np, atol=0.01) == False:
+            print("###",i,"###")
+            print(circ)
+            print(circ1)
+            print(circ2)
+            print(qdd_vector)
+            print(aer_vector_np)
+            assert(False)
+
+
+def test_mm_multiply():
+    backend = QddProvider().get_backend()
+    aer_backend = Aer.get_backend("unitary_simulator")
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+
+        circ1 = transpile(circ, backend=backend)
+        result_medge = backend.merge_circuit(circ1, 100000)
+        qdd_unitary = result_medge.getEigenMatrix(nQubits)
+
+        circ2 = transpile(circ, backend=aer_backend)
+        aer_result = aer_backend.run(circ2).result()
+        aer_unitary = aer_result.get_unitary(circ2)
+        aer_unitary_np = np.asarray(aer_unitary)
+        if np.allclose(qdd_unitary, aer_unitary_np, atol=0.01) == False:
+            print("###", i, "###")
+            print(circ)
+            print(circ1)
+            print(circ2)
+            print(qdd_unitary)
+            print(aer_unitary_np)
+            assert(0)
+
+def test_qdd_gate():
+    backend = QddProvider().get_backend("statevector_simulator")
+    for i in range(10):
+        nQubits = 10
+        circ = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+        result1 = backend.run(circ).result().to_dict()["results"][0]["edge"]
+        vector1 = result1.getEigenVector()
+
+        result_medge = backend.merge_circuit(circ, 100000)
+        qgate = QDDGate(nQubits, result_medge)
+        circ_qddgate = QuantumCircuit(nQubits)
+        circ_qddgate.append(qgate, list(range(nQubits)))
+        result2 = backend.run(circ_qddgate).result().to_dict()["results"][0]["edge"]
+        vector2 = result2.getEigenVector()
+
+        
+        if np.allclose(vector1, vector2, atol=0.01) == False:
+            print("###",i,"###")
+            print(circ)
+            print(vector1)
+            print(vector2)
+            assert(False)
+
+def test_qdd_gate_merge():
+    backend = QddProvider().get_backend()
+    aer_backend = Aer.get_backend("unitary_simulator")
+    for i in range(10):
+        nQubits = 10
+        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+
+        result_medge2 = backend.merge_circuit(circ2, 100000)
+        qgate2 = QDDGate(nQubits, result_medge2)
+        all_circ_qdd = circ1.copy()
+        all_circ_qdd.append(qgate2, list(range(nQubits)))
+        #all_circ_qdd = transpile(all_circ_qdd, backend=backend, optimization_level=0)
+
+        result_all = backend.merge_circuit(all_circ_qdd, 100000)
+        unitary_merged = result_all.getEigenMatrix(nQubits)
+
+        circ1.append(circ2, list(range(nQubits)))
+        all_circ = transpile(circ1, backend=aer_backend)
+        aer_result = aer_backend.run(all_circ).result()
+        aer_unitary = aer_result.get_unitary(all_circ)
+        aer_unitary_np = np.asarray(aer_unitary)
+
+        if np.allclose(unitary_merged, aer_unitary_np, atol=0.01) == False:
+            print("###", i, "###")
+            print(unitary_merged)
+            print(aer_unitary_np)
+            assert(0)
+
+def test_qddgate_error():
+    backend = QddProvider().get_backend()
+    nQubits = 10
+    circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+    circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+
+    result_medge2 = backend.merge_circuit(circ2, 100000)
+    qgate2 = QDDGate(nQubits, result_medge2)
+    circ1.append(qgate2, list(range(nQubits)))
+    with pytest.raises(TranspilerError):
+        circ1 = transpile(circ1, backend=backend, optimization_level=0)
