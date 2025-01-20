@@ -85,6 +85,21 @@ mEdge makeTwoQubitGate(QubitCount q, TwoQubitGateMatrix m, Qubit target0,
     return makeTwoQubitGate(q, m, target0, target1, c);
 }
 
+mEdge applyGlobal(mEdge org, double angle){
+    mEdge result = org;
+    Complex e = {std::cos(angle), std::sin(angle)};
+    result.w *= e;
+    return result;
+}
+
+vEdge applyGlobal(vEdge org, double angle){
+    vEdge result = org;
+    Complex e = {std::cos(angle), std::sin(angle)};
+    result.w *= e;
+    return result;
+}
+
+
 #ifdef isMPI
 
 boost::mpi::communicator _world;
@@ -184,6 +199,7 @@ std::vector<double> _probabilities(const vEdge &rootEdge) {
 
 PYBIND11_MODULE(pyQDD, m) {
     py::class_<vEdge>(m, "vEdge")
+        .def("getEigenVector", &vEdge::getEigenVector)
         .def("printVector", &vEdge::printVector)
         .def("printVector_sparse", &vEdge::printVector_sparse)
 #ifdef isMPI
@@ -196,9 +212,13 @@ PYBIND11_MODULE(pyQDD, m) {
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
     m.def("get_nNodes", get_nNodes)
-        .def("gc", gc)
-        .def("gc_mat", gc_mat)
+        .def("gc", py::overload_cast<std::vector<vEdge>, bool>(&gc))
+        .def("gc", py::overload_cast<vEdge, bool>(&gc))
+        .def("gc_mat", py::overload_cast<std::vector<mEdge>, bool>(&gc_mat))
+        .def("gc_mat", py::overload_cast<mEdge, bool>(&gc_mat))
         .def("set_gc_thr", set_gc_thr);
+    m.def("applyGlobal", py::overload_cast<mEdge, double>(&applyGlobal))
+     .def("applyGlobal", py::overload_cast<vEdge, double>(&applyGlobal));
 
     // Gates
     m.def("makeGate",
