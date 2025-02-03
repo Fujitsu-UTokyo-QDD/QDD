@@ -15,26 +15,27 @@ def test_sampler():
     bell.h(0)
     bell.cx(0, 1)
     bell.measure_all()
+    pubs = [(bell, [])]
 
     # initialization of the sampler
     sampler_qiskit = QiskitSampler()
-    sampler = Sampler(
-        run_options={"shots": 4096}
+    sampler = (
+        Sampler()
     )  # if shots is default value, tests sometimes fail because precision is not enough
-    sampler_exact = Sampler(run_options={"shots": None})
 
     # Sampler runs a job on the Bell circuit
-    job = sampler.run(circuits=[bell], parameter_values=[[]], parameters=[[]])
+    job = sampler.run(pubs=pubs, shots=4096)
     job_result = job.result()
     print("QDD Sampler with shots:")
-    print([q.binary_probabilities() for q in job_result.quasi_dists])
-    job_exact = sampler_exact.run(
-        circuits=[bell], parameter_values=[[]], parameters=[[]]
-    )
+    print([result.data.quasi_dist.binary_probabilities() for result in job_result])
+    dists = [result.data.quasi_dist for result in job_result]
+    job_exact = sampler.run(pubs=pubs, is_exact=True)
     job_result_exact = job_exact.result()
     print("QDD Sampler without shots:")
-    print([q.binary_probabilities() for q in job_result_exact.quasi_dists])
-    pubs = [(bell, [])]
+    print(
+        [result.data.quasi_dist.binary_probabilities() for result in job_result_exact]
+    )
+    dists_exact = [result.data.quasi_dist for result in job_result_exact]
     job_qiskit = sampler_qiskit.run(pubs=pubs, shots=4096)
     qiskit_dists = []
     for result in job_qiskit.result():
@@ -44,11 +45,7 @@ def test_sampler():
         qiskit_dists.append(QuasiDistribution(quasidist_dict))
     print("Qiskit Sampler:")
     print([q.binary_probabilities() for q in qiskit_dists])
-    for dist, dist_exact, dist_qiskit in zip(
-        job_result.quasi_dists,
-        job_result_exact.quasi_dists,
-        qiskit_dists,
-    ):
+    for dist, dist_exact, dist_qiskit in zip(dists, dists_exact, qiskit_dists):
         # delete 0s from the distribution
         dist = {k: v for k, v in dist.items() if v != 0}
         dist_exact = {k: v for k, v in dist_exact.items() if v != 0}
@@ -67,30 +64,31 @@ def test_sampler_param():
     theta1 = [0, 1, 1, 2, 3, 5]
     theta2 = [0, 1, 2, 3, 4, 5, 6, 7]
 
+    pubs = [(pqc, theta1), (pqc2, theta2)]
+
     # initialization of the sampler
     sampler_qiskit = QiskitSampler()
-    sampler = Sampler(
-        run_options={"shots": 4096}
-    )  # if shots is default value, tests sometimes fail because precision is not enough
-    sampler_exact = Sampler(run_options={"shots": None})
+    sampler = Sampler()
 
     # Sampler runs a job on the parameterized circuits
     job2 = sampler.run(
-        circuits=[pqc, pqc2],
-        parameter_values=[theta1, theta2],
-        parameters=[pqc.parameters, pqc2.parameters],
+        pubs=pubs,
+        shots=4096,
     )
     job_result = job2.result()
     print("QDD Sampler with shots:")
-    print([q.binary_probabilities() for q in job_result.quasi_dists])
-    job2_exact = sampler_exact.run(
-        circuits=[pqc, pqc2],
-        parameter_values=[theta1, theta2],
-        parameters=[pqc.parameters, pqc2.parameters],
+    print([result.data.quasi_dist.binary_probabilities() for result in job_result])
+    dists = [result.data.quasi_dist for result in job_result]
+    job2_exact = sampler.run(
+        pubs=pubs,
+        is_exact=True,
     )
     job_result_exact = job2_exact.result()
     print("QDD Sampler without shots:")
-    print([q.binary_probabilities() for q in job_result_exact.quasi_dists])
+    print(
+        [result.data.quasi_dist.binary_probabilities() for result in job_result_exact]
+    )
+    dists_exact = [result.data.quasi_dist for result in job_result_exact]
     pubs = [(pqc, theta1), (pqc2, theta2)]
     job2_qiskit = sampler_qiskit.run(pubs=pubs, shots=4096)
     job_result_qiskit = job2_qiskit.result()
@@ -103,8 +101,8 @@ def test_sampler_param():
     print("Qiskit Sampler:")
     print([q.binary_probabilities() for q in qiskit_dists])
     for dist, dist_exact, dist_qiskit in zip(
-        job_result.quasi_dists,
-        job_result_exact.quasi_dists,
+        dists,
+        dists_exact,
         qiskit_dists,
     ):
         assert dist == pytest.approx(dist_qiskit, rel=0.2, abs=0.01)

@@ -87,11 +87,11 @@ def test_qaoa():
 
     optimized_circuit = candidate_circuit.assign_parameters(result.x)
 
-    sampler = Sampler(run_options={"shots": None})
+    sampler = Sampler()
 
-    job = sampler.run(optimized_circuit)
+    job = sampler.run(pubs=[optimized_circuit], is_exact=True)
     result = job.result()
-    final_distribution_int = result.quasi_dists[0]
+    final_distribution_int = result[0].data.quasi_dist
 
     # auxiliary functions to sample most likely bitstring
     def to_bitstring(integer, num_bits):

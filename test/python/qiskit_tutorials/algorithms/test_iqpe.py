@@ -145,9 +145,9 @@ def test_iqpe_1qubit_with_sampler():
     x_measurement(qc_s, q[0], c[1])
 
     sampler = Sampler()
-    job = sampler.run(qc_s)
+    job = sampler.run(pubs=[qc_s])
     result = job.result()
-    dist0 = result.quasi_dists[0]
+    dist0 = result[0].data.quasi_dist
 
     key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
@@ -195,9 +195,9 @@ def test_iqpe_2qubits_with_sampler():
     qc.measure(0, 2)
 
     sampler = Sampler()
-    job = sampler.run(qc)
+    job = sampler.run(pubs=[qc])
     result = job.result()
-    dist0 = result.quasi_dists[0]
+    dist0 = result[0].data.quasi_dist
 
     key_new = [str(key / 2**m) for key in list(dist0.keys())]
     dist1 = dict(zip(key_new, dist0.values()))
