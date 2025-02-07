@@ -68,14 +68,14 @@ def test_qaoa():
         # an observable defined on all physical qubits
         isa_hamiltonian = hamiltonian.apply_layout(ansatz.layout)
 
-        job = estimator.run([ansatz], [isa_hamiltonian], [params])
+        job = estimator.run(pubs=[(ansatz, [isa_hamiltonian], params)], precision=0.0)
 
         results = job.result()
-        cost = results.values[0]
+        cost = results[0].data.evs
 
         return cost
 
-    estimator = Estimator(run_options={"shots": None}, approximation=True)
+    estimator = Estimator()
 
     result = minimize(
         cost_func_estimator,

@@ -15,7 +15,7 @@ from qdd.qdd_estimator import Estimator as QddEstimator
 
 def test_vqe():
     backend = QddProvider().get_backend()
-    estimator_qdd = QddEstimator(run_options={"shots": None}, approximation=True)
+    estimator_qdd = QddEstimator()
 
     estimator_qiskit = QiskitEstimator()
 
@@ -31,8 +31,10 @@ def test_vqe():
     ansatz_isa = pm.run(ansatz)
 
     def cost_func_qdd(params, ansatz, hamiltonian, estimator):
-        result = estimator.run(ansatz, hamiltonian, params).result()
-        energy = result.values[0]
+        result = estimator.run(
+            pubs=[(ansatz, [hamiltonian], params)], precision=0.0
+        ).result()
+        energy = result[0].data.evs
 
         return energy
 
@@ -46,7 +48,9 @@ def test_vqe():
     energy_qdd = result_qdd.fun
 
     def cost_func_qiskit(params, ansatz, hamiltonian, estimator):
-        result = estimator.run(pubs=[(ansatz, hamiltonian, params)]).result()
+        result = estimator.run(
+            pubs=[(ansatz, [hamiltonian], params)], precision=0.0
+        ).result()
         energy = result[0].data.evs
 
         return energy

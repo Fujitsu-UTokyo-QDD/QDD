@@ -51,15 +51,15 @@ def test_circuit_sampler():
 
     for time in range(8):
         qdd_value = (
-            estimator.run(
-                circuits=evo_circ, observables=h2_measurement, parameter_values=time
-            )
-            .result()
-            .values[0]
+            estimator.run(pubs=[(evo_circ, [h2_measurement], time)], precision=0.0)
+            .result()[0]
+            .data.evs
         )
         print(f"with QDD Estimator : {qdd_value}")
         qiskit_value = (
-            estimator_qiskit.run(pubs=[(evo_circ, h2_measurement, time)])
+            estimator_qiskit.run(
+                pubs=[(evo_circ, [h2_measurement], time)], precision=0.0
+            )
             .result()[0]
             .data.evs
         )
