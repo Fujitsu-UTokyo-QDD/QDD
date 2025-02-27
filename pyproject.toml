@@ -10,12 +10,11 @@ version = "0.2.6"
 description = "Qiskit Provider for QDD"
 authors = [{name = "Yusuke Kimura", email = "yusuke-kimura@fujitsu.com"}]
 readme = "README.md"
-requires-python = ">= 3.8, < 3.13"
+requires-python = ">= 3.9, < 3.13"
 license = {file = "LICENSE.txt"}
 
 classifiers = [
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
