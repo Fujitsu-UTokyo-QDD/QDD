@@ -564,19 +564,10 @@ mEdge makeLargeGate(ComplexMatrix &g, const Qubit level,
                     const std::vector<bool> skip, const Qubit target_min) {
     if (level == target_min) {
         assert(rowEnd - rowStart == 2 && colEnd - colStart == 2);
-        return makeMEdge(
-            target_min,
-            {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart][colStart + 1].real(),
-                    g[rowStart][colStart + 1].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart + 1][colStart].real(),
-                    g[rowStart + 1][colStart].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart + 1][colStart + 1].real(),
-                    g[rowStart + 1][colStart + 1].imag()},
-                   mNode::terminal}});
+        GateMatrix g_tmp = {g[rowStart][colStart], g[rowStart][colStart + 1],
+                            g[rowStart + 1][colStart],
+                            g[rowStart + 1][colStart + 1]};
+        return makeGate(level + 1, g_tmp, target_min);
     }
 
     const auto l = level - 1;
@@ -1587,8 +1578,8 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge,
             }
         }
         const int pre_length = log2(world.size());
-        // std::cout << "thre="<< threshold << " target_rank=" << target_rank <<
-        // " " << std::endl;
+        // std::cout << "thre="<< threshold << " target_rank=" <<
+        // target_rank << " " << std::endl;
         int tmp = target_rank;
         for (int i = pre_length - 1; i >= 0; i--) {
             if (tmp / (int)pow(2, i) >= 1) {
@@ -1746,7 +1737,8 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge,
         } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     } else {
         if (p_each > 0) {
@@ -1754,7 +1746,8 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge,
             pzero = tmp.first;
             pone = tmp.second;
         }
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     }
 
@@ -1817,7 +1810,8 @@ double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge,
         } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     } else {
         if (p_each > 0) {
@@ -1825,7 +1819,8 @@ double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge,
             pzero = tmp.first;
             pone = tmp.second;
         }
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     }
 
@@ -1844,7 +1839,8 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
-            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "Numerical instability occurred during measurement: |alpha|^2 "
+            "+ "
             "|beta|^2 = " +
             std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
             std::to_string(pzero + pone) + ", but should be 1!");
@@ -1854,11 +1850,11 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
     double threshold = dist(mt);
-    double
-        normalizationFactor;  // NOLINT(cppcoreguidelines-init-variables) always
-                              // assigned a value in the following block
-    char result;  // NOLINT(cppcoreguidelines-init-variables) always assigned a
-                  // value in the following block
+    double normalizationFactor;  // NOLINT(cppcoreguidelines-init-variables)
+                                 // always assigned a value in the following
+                                 // block
+    char result;  // NOLINT(cppcoreguidelines-init-variables) always
+                  // assigned a value in the following block
 
     if (threshold < pzero / sum) {
         measurementMatrix[0] = cf_one;
@@ -1890,7 +1886,8 @@ double measureOne(vEdge &rootEdge, const Qubit index, std::mt19937_64 &mt,
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
-            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "Numerical instability occurred during measurement: |alpha|^2 "
+            "+ "
             "|beta|^2 = " +
             std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
             std::to_string(pzero + pone) + ", but should be 1!");

@@ -22,13 +22,6 @@ from qdd import QddProvider
 from test.python.helpers.circuit_helper import assert_job_failed
 
 
-def test_pulse_backend_configuration():
-    """Tests that Pulse is not supported in QddBackend."""
-
-    backend = QddProvider().get_backend()
-    assert backend.configuration().open_pulse is False
-
-
 def test_schedule():
     """Tests schedule-related backend behavior."""
 

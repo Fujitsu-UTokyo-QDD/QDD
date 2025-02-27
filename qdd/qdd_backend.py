@@ -1,31 +1,29 @@
-from typing import Any, Dict, List, Union
-import traceback
+from collections import Counter
+import dataclasses
+import math
 import os
 import sys
-import uuid
-import dataclasses
-from collections import Counter
-from warnings import warn
 import time
+import traceback
+from typing import Any, Dict, List, Union
+import uuid
+from warnings import warn
 
-from qiskit.providers import BackendV1, JobV1, Options, Provider
-from qiskit.providers.models import BackendConfiguration
-from qiskit import QuantumCircuit as QiskitCircuit
-from qiskit.result import Result
+from qiskit.circuit import QuantumCircuit as QiskitCircuit
 from qiskit.circuit import Barrier, Clbit, Measure, Qubit, Reset
 import qiskit.circuit.library as qiskit_gates
 from qiskit.circuit.library import Initialize
-from qiskit.transpiler import CouplingMap
-from qiskit.circuit import library
+from qiskit.providers import BackendV2, JobV1,Options
+from qiskit.result import Result
+from qiskit.transpiler import Target
 
-from qdd import __version__
+from qdd import __version__ as qdd_version
+from qdd import pyQDD
 from qdd.qdd_failed_job import QddFailedJob
 from qdd.qdd_job import QddJob
 from qdd.qdd_gate import QDDGate
 from .circuit_property import CircuitProperty
 
-from qdd import pyQDD
-import math
 
 _qiskit_gates_1q_0param: Dict = {
     qiskit_gates.HGate: "H",
@@ -125,70 +123,56 @@ class QddExperiments:
     options: dict
 
 
-class QddBackend(BackendV1):
+class QddBackend(BackendV2):
     """A backend used for evaluating circuits with QDD simulator."""
 
     _save_SV = False
+    _basis_gates: List[str] = [
+        "ccx",
+        "cp",
+        "crx",
+        "cry",
+        "crz",
+        "cswap",
+        "csx",
+        "cu",
+        "cu1",
+        "cu3",
+        "cx",
+        "cy",
+        "cz",
+        "h",
+        "id",
+        "iswap",
+        "mcx",
+        "measure",
+        "p",
+        "r",
+        "reset",
+        "rx",
+        "rxx",
+        "ry",
+        "ryy",
+        "rz",
+        "rzx",
+        "rzz",
+        "s",
+        "sdg",
+        "swap",
+        "sx",
+        "sxdg",
+        "t",
+        "tdg",
+        "u",
+        "unitary",
+        "x",
+        "y",
+        "z",
+    ]
 
-    _DEFAULT_CONFIG: Dict[str, Any] = {
-        "backend_name": "qasm_simulator",
-        "backend_version": __version__,
-        "n_qubits": 100,  # inclusive
-        "basis_gates": sorted(
-            [
-                "x",
-                "y",
-                "z",
-                "h",
-                "s",
-                "sdg",
-                "t",
-                "tdg",
-                "id",
-                "sx",
-                "sxdg",
-                "swap",
-                "iswap",
-                "rx",
-                "ry",
-                "rz",
-                "u",
-                "p",
-                "r",
-                "cx",
-                "cy",
-                "cz",
-                "csx",
-                "ccx",
-                "mcx",
-                "cswap",
-                "cu",
-                "cp",
-                "cu1",
-                "cu3",
-                "crx",
-                "cry",
-                "crz",  # rotation + 1 control
-                # "mcu1", "mcu2", "mcu3","mcu","mcp","mcphase", "mcrx", "mcry", "mcrz", "mcr", # rotation + multi controls
-                "rxx",
-                "ryy",
-                "rzz",
-                "rzx",
-                # "unitary",
-                "reset",
-                "qdd",
-            ]
-        ),
-        "gates": [],
-        "local": True,
-        "simulator": True,
-        "conditional": False,
-        "open_pulse": False,
-        "memory": False,
-        "max_shots": int(1e6),  # same as AerSimulator
-        "coupling_map": None,
-        "description": "Backend for QDD",
-    }
+    _NUM_QUBITS = 100
+
+    _MAX_SHOTS = int(1e6)
 
     _DEFAULT_SHOTS = 1024
 
@@ -199,27 +183,38 @@ class QddBackend(BackendV1):
         # Entries of "the option key": "whether the option value can be ignored without warning"
         # 'parameter_binds' is a very exceptional option. The option is always not ignored even though it is not in the
         # default option list; so, ignorance warning should not be emitted.
-        "parameter_binds": lambda v: True,
-        "max_credits": lambda v: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
+        "parameter_binds": lambda _: True,
+        "max_credits": lambda _: True,  # it is obvious to users that max_credits has no meaning in the Qdd simulator
     }
 
-    def __init__(self, provider: Provider, configuration=None):
-        if configuration == None:
-            configuration = BackendConfiguration.from_dict(QddBackend._DEFAULT_CONFIG)
-        super().__init__(configuration=configuration, provider=provider)
-        if self.configuration().coupling_map is not None:
-            self.coupling_map = CouplingMap(self.configuration().coupling_map)
-        else:
-            self.coupling_map = None
+    def __init__(self, provider, name="qasm_simulator"):
+        super().__init__(
+            provider=provider,
+            name=name,
+            description="Backend for QDD",
+            backend_version=qdd_version,
+        )
+
+    @property
+    def target(self):
+        target = Target.from_configuration(
+            basis_gates=self._basis_gates,
+            num_qubits=self._NUM_QUBITS,
+            custom_name_mapping={
+                "mcx": qiskit_gates.MCXGate,
+                "unitary": qiskit_gates.UnitaryGate,
+            },
+        )
+        return target
+
+    @property
+    def max_circuits(self):
+        return None
 
     @classmethod
-    def _default_options(cls) -> Options:
-        # Note: regarding the 'parameter_binds' option, QddBackend does not include it in the default option list
-        # below because AerSimulator also does not.
-        # Normally, user-specified runtime options are filtered out in execute(...) if they are not listed below.
-        # However, 'parameter_binds' is an exceptional one; it is not excluded regardless of whether to be listed below.
+    def _default_options(cls):
         return Options(
-            shots=QddBackend._DEFAULT_SHOTS,
+            shots=cls._DEFAULT_SHOTS,
             memory=False,
             seed_simulator=None,
             use_mpi=False,
@@ -285,7 +280,7 @@ class QddBackend(BackendV1):
                 else:
                     arg_circ_type = str(type(circuits))
                 raise RuntimeError(
-                    f"{QddBackend.__name__}.run(...) accepts one or more"
+                    f"{self.name}.run(...) accepts one or more"
                     f" qiskit.{QiskitCircuit.__qualname__} objects only,"
                     f" but the following arguments were specified.{os.linesep}"
                     f"    type={arg_circ_type},{os.linesep}"
@@ -310,8 +305,8 @@ class QddBackend(BackendV1):
             result = Result.from_dict(
                 {
                     "results": [],
-                    "backend_name": self.configuration().backend_name,
-                    "backend_version": self.configuration().backend_version,
+                    "backend_name": self.name,
+                    "backend_version": self.backend_version,
                     "job_id": job_id,
                     "qobj_id": "N/A",
                     "success": False,
@@ -384,8 +379,8 @@ class QddBackend(BackendV1):
         result = Result.from_dict(
             {
                 "results": results,
-                "backend_name": self.configuration().backend_name,
-                "backend_version": self.configuration().backend_version,
+                "backend_name": self.name,
+                "backend_version": self.backend_version,
                 "job_id": job_id,
                 "qobj_id": "N/A",
                 "success": True,
@@ -429,7 +424,8 @@ class QddBackend(BackendV1):
 
         current = pyQDD.makeGate(n_qubit, "I", 0)
         count = 0
-        for i, qargs, cargs in circ.data:
+        for ci in circ.data:
+            i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
             qiskit_gate_type = i.base_class
             # filter out special cases first
             if qiskit_gate_type == Barrier:
@@ -685,7 +681,8 @@ class QddBackend(BackendV1):
 
         if options["shots"] is None:
             has_classical_condition = False
-            for i, qargs, cargs in circ.data:
+            for ci in circ.data:
+                i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
                 if i.condition is not None:
                     has_classical_condition = True
                     break
@@ -710,7 +707,8 @@ class QddBackend(BackendV1):
                 if use_mpi == False
                 else pyQDD.makeZeroStateMPI(n_qubit)
             )
-            for i, qargs, cargs in circ.data:
+            for ci in circ.data:
+                i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
                 skip = False
                 if i.condition is not None:
                     classical, val = i.condition
@@ -1061,7 +1059,7 @@ class QddBackend(BackendV1):
         """
 
         # #qubit must be lower than #max-qubits
-        max_qubits: int = QddBackend._DEFAULT_CONFIG["n_qubits"]
+        max_qubits: int = QddBackend._NUM_QUBITS
         if circ.num_qubits > max_qubits:  # num_qubits includes ancilla registers
             raise RuntimeError(
                 f'Circuit "{circ.name}" has {circ.num_qubits} qubits,'
@@ -1092,7 +1090,8 @@ class QddBackend(BackendV1):
         clbit_final_values: Dict[Clbit, Qubit] = (
             {}
         )  # for each clbit, this holds the qubit last assigned to the clbit.
-        for i, (inst, qargs, cargs) in enumerate(circ.data):
+        for i, ci in enumerate(circ.data):
+            inst, qargs, cargs = ci.operation, ci.qubits, ci.clbits
             if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)
@@ -1141,7 +1140,7 @@ class QddBackend(BackendV1):
         if "shots" in run_options:
             shots = run_options["shots"]
             if shots is not None:
-                max_shots = QddBackend._DEFAULT_CONFIG["max_shots"]
+                max_shots = QddBackend._MAX_SHOTS
                 if not (0 < shots <= max_shots):
                     raise RuntimeError(
                         f"Shots={shots} is specified, but #shots must be positive and <= {max_shots}"
