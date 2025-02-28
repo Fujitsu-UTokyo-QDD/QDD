@@ -22,6 +22,7 @@ from test.python.helpers.circuit_helper import (
     assert_job_failed,
     get_oracle_counts_of_simple_circuit_run,
     run_simple_circuit,
+    assert_probabilities_are_close,
 )
 from qdd import pyQDD
 
@@ -299,16 +300,15 @@ def test_gc_mat_correctness():
 def test_mv_multiply():
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False)
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False, seed=i*i)
 
         backend = QddProvider().get_backend("statevector_simulator")
-        circ1 = transpile(circ, backend=backend)
-        result = backend.run(circ1).result().to_dict()["results"][0]["edge"]    
-        qdd_vector = result.getEigenVector()
+        circ1 = transpile(circ, backend=backend, optimization_level=0)
+        qdd_vector = backend.run(circ1).result().to_dict()["results"][0]['data']['statevector']
 
         circ.save_statevector()
         aer_backend = Aer.get_backend("aer_simulator")
-        circ2 = transpile(circ, backend=aer_backend)
+        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(circ2).result()
         aer_vector = aer_result.get_statevector(circ2)
         aer_vector_np = np.asarray(aer_vector)
@@ -321,6 +321,22 @@ def test_mv_multiply():
             print(aer_vector_np)
             assert(False)
 
+def test_mv_multiply_count():
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=True, seed=i*i)
+
+        backend = QddProvider().get_backend()
+        circ1 = transpile(circ, backend=backend, optimization_level=0)
+        qdd_count = backend.run(circ1, shots=1000).result().get_counts()
+
+        circ.save_statevector()
+        aer_backend = Aer.get_backend("aer_simulator")
+        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
+        aer_result = aer_backend.run(circ2, shots=1000).result()
+        aer_count = aer_result.get_counts()
+        print("i=",i)
+        assert_probabilities_are_close(qdd_count, aer_count, atol=0.1)
 
 def test_mm_multiply():
     backend = QddProvider().get_backend()

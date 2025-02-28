@@ -147,8 +147,10 @@ void dump_mpi() {
     std::cout << _world.rank() << "/" << _world.size() << std::endl;
 }
 
-std::vector<std::complex<double>> _getVectorMPI(vEdge &edge) {
-    size_t dim;
+std::vector<std::complex<double>> _getVectorMPI(vEdge &edge, int n_qubits, int worldsize) {
+    const int global_size = log2(worldsize);     // e.g. 1
+    const int local_size = n_qubits - global_size;  // e.g. 3-1=2
+    size_t dim = 1<<local_size;
     std_complex *vec = edge.getVector(&dim);
     std::vector<std_complex> result;
     for (int i = 0; i < dim; i++) {
@@ -161,8 +163,8 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge) {
     std::vector<std::complex<double>> final_result;
     for (int i = 0; i < all_results.size(); i++) {
         for (int j = 0; j < all_results[i].size(); j++) {
-            final_result.push_back(
-                std::complex(all_results[i][j].r, all_results[i][j].i));
+            std::complex<double> tmp(all_results[i][j].r, all_results[i][j].i);
+            final_result.push_back(tmp);
         }
     }
     return final_result;

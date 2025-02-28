@@ -876,6 +876,12 @@ class QddBackend(BackendV2):
                             )
                         )
                     elif qiskit_gate_type in _qdd_gate:
+                        if use_mpi:
+                            raise RuntimeError(
+                                f"Unsupported gate or instruction:"
+                                f" type={qiskit_gate_type.__name__}, name={i.name}."
+                                f" QDDGate is not supported with MPI now."
+                            )
                         gate = i.params[0]
                         if use_mpi and use_auto_swap:
                             current, map_after_swap = self.restore_swap(
@@ -998,7 +1004,7 @@ class QddBackend(BackendV2):
                 result_data["statevector"] = (
                     pyQDD.getVector(current)
                     if use_mpi == False
-                    else pyQDD.getVectorMPI(current)
+                    else pyQDD.getVectorMPI(current, n_qubit, MPI.COMM_WORLD.Get_size())
                 )
 
         else:
@@ -1024,7 +1030,7 @@ class QddBackend(BackendV2):
                 result_data["statevector"] = (
                     pyQDD.getVector(current)
                     if use_mpi == False
-                    else pyQDD.getVectorMPI(current)
+                    else pyQDD.getVectorMPI(current, n_qubit, MPI.COMM_WORLD.Get_size())
                 )
         header = QddBackend._create_experiment_header(circ)
         result = {
