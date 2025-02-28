@@ -454,7 +454,7 @@ mEdge makeLargeGate(QubitCount q, ComplexMatrix &g, const std::vector<Qubit> &ta
 mEdge makeLargeGate(ComplexMatrix &g, const Qubit level, const std::size_t rowStart, const std::size_t rowEnd,
                     const std::size_t colStart, const std::size_t colEnd, const std::vector<bool> skip, const Qubit target_min);
 
-mEdge getMPIGate(mEdge root, int row, int col, int world_size);
+mEdge getMPIGate(mEdge root, int row, int col, int world_size, Qubit current_var);
 
 mEdge mm_add(const mEdge &lhs, const mEdge &rhs);
 mEdge mm_multiply(const mEdge &lhs, const mEdge &rhs);
