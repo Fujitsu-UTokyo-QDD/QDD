@@ -2248,8 +2248,6 @@ std::vector<vEdge> gc(std::vector<vEdge> states, bool force) {
     if (nNodes > GC_SIZE) {
         GC_SIZE *= 2;
     }
-    std::cout << "GC_SIZE = " << GC_SIZE << " Current nNodes = " << nNodes
-              << std::endl;
 
     vNodeTable new_table(NQUBITS);
     vUnique = std::move(new_table);
@@ -2268,7 +2266,6 @@ std::vector<vEdge> gc(std::vector<vEdge> states, bool force) {
     _mCache.clearAll();
     _aCache.clearAll();
 #endif
-    std::cout << "gc_done " << std::endl;
     return states;
 }
 
@@ -2333,6 +2330,13 @@ void set_gc_thr(int gc_v, int gc_m) {
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
     return;
+}
+
+std::size_t get_alloc_v(){
+    return vUnique.get_allocations();
+}
+std::size_t get_alloc_m(){
+    return mUnique.get_allocations();
 }
 
 int prune(vEdge &v, double thr, std_complex num) {

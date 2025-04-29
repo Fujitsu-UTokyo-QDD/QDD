@@ -2,6 +2,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/operators.h>
 
 #include <map>
 #ifdef isMPI
@@ -204,6 +205,7 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("getEigenVector", &vEdge::getEigenVector)
         .def("printVector", &vEdge::printVector)
         .def("printVector_sparse", &vEdge::printVector_sparse)
+        .def(pybind11::self == pybind11::self)
 #ifdef isMPI
         .def("printVectorMPI", _printVectorMPI)
 #endif
@@ -218,7 +220,9 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("gc", py::overload_cast<vEdge, bool>(&gc))
         .def("gc_mat", py::overload_cast<std::vector<mEdge>, bool>(&gc_mat))
         .def("gc_mat", py::overload_cast<mEdge, bool>(&gc_mat))
-        .def("set_gc_thr", set_gc_thr);
+        .def("set_gc_thr", set_gc_thr)
+        .def("get_alloc_v", get_alloc_v)
+        .def("get_alloc_m", get_alloc_m);
     m.def("applyGlobal", py::overload_cast<mEdge, double>(&applyGlobal))
      .def("applyGlobal", py::overload_cast<vEdge, double>(&applyGlobal));
 

@@ -551,5 +551,8 @@ std::vector<mEdge> gc_mat(std::vector<mEdge> mat, bool force=false);
 void clear_cache(bool force=false);
 void set_gc_thr(int gc_v, int gc_m);
 
+std::size_t get_alloc_v();
+std::size_t get_alloc_m();
+
 int prune(vEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
 int prune(mEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
