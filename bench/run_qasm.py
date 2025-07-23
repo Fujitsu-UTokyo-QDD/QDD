@@ -1,4 +1,5 @@
 from qiskit.compiler import transpile
+from qiskit import qasm2
 import sys, time
 
 from qdd import QddProvider, pyQDD
@@ -7,11 +8,9 @@ import QuantumFactoring
 #from mpi4py import MPI
 import sys
 
-def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_auto_swap=True, swap_ver='v1', use_ordering=False):
+def run_qasm(filename, nNode=1, nThread=1, use_bcast=False, use_auto_swap=True, swap_ver='v1', use_ordering=False):
 
     #optimizer = QuantumCircuitOptimizer()
-
-    print("##", N, len(bin(N)) - 2, a)
 
     print("backend creating...")
     backend = QddProvider().get_backend()
@@ -27,13 +26,10 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
     if nThread>1:
         backend.set_options(n_threads=nThread)
 
-    f_gt_add = QuantumFactoring.QuantumCircuitForFactoringWithQulacs(N, "GT-ADD")
-    f_gt_add.qisc.barrier(list(range(f_gt_add.qisc.num_qubits)))
-    f_gt_add.find_order_algorithm(a, 100, measure=False)
-    #f_gt_add.qisc.measure_all()
-    print(f_gt_add.qisc.num_qubits, len(f_gt_add.qisc.data))
+    qisc = qasm2.load(filename, custom_instructions=qasm2.LEGACY_CUSTOM_INSTRUCTIONS)
+    print(qisc.num_qubits, len(qisc.data))
 
-    new_circ = transpile(f_gt_add.qisc, backend=backend, optimization_level=0)
+    new_circ = transpile(qisc, backend=backend, optimization_level=0)
     print(new_circ.num_qubits, len(new_circ.data))
 
     start = time.perf_counter()
@@ -41,15 +37,13 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
     print(job.result().data()['nNodes'])
     end = time.perf_counter()
     print(end-start, " sec")
-    
-    del f_gt_add
 
 
 if __name__ == '__main__':
     # USAGE
-    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1 # N a $nNodes $nThreads(=1) $use_bcast $use_auto_swap $swap_ver $ordering
+    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1 # qasm_path $nNodes $nThreads(=1) $use_bcast $use_auto_swap $swap_ver
     args = sys.argv
     print(args)
-    compute_gates_for_all_ADD(int(args[1]), int(args[2]), int(args[3]), int(args[4]), bool(int(args[5])), bool(int(args[6])), args[7], bool(int(args[8])))
+    run_qasm(args[1], int(args[2]), int(args[3]), bool(int(args[4])), bool(int(args[5])), args[6], bool(int(args[7])))
 
     #MPI.Finalize()

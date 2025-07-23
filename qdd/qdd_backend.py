@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 import dataclasses
 import math
 import os
@@ -224,6 +224,7 @@ class QddBackend(BackendV2):
             n_threads=1,
             show_progress=False,
             show_progress_frequency=10000,
+            ordering=False,
         )
 
     @staticmethod
@@ -332,6 +333,7 @@ class QddBackend(BackendV2):
             "n_threads": run_options.get("n_threads", self.options.n_threads),
             "show_progress": run_options.get("show_progress", self.options.show_progress),
             "show_progress_frequency": run_options.get("show_progress_frequency", self.options.show_progress_frequency),
+            "ordering": run_options.get("ordering", self.options.ordering),
         }
 
         if ("parameter_binds" in run_options) and (
@@ -646,6 +648,68 @@ class QddBackend(BackendV2):
                 assert next_map[ii] == map_after_swap[ii]
         return current, next_map
 
+    def proposed_ordering(self, circ: QiskitCircuit):
+        counter = {}
+        for q in circ.qubits:
+            counter[q] = 0
+        #start_scoring = False
+        for i, qargs, cargs in circ.data:
+            ##NEW
+            # if start_scoring==False:
+            #     if len(i.params)>0:
+            #         start_scoring=True
+            #     else:
+            #         continue
+            ##END
+            if len(qargs)>1:
+                for q in qargs:
+                    counter[q] += 1
+            elif len(i.params)>0:
+                if(math.isclose(i.params[0] % math.pi/2, 0.0, abs_tol=0.01)):
+                    continue
+                for q in qargs:
+                    counter[q] += 1
+        counter_sorted = sorted(counter.items(), key=lambda x:x[1], reverse=True)
+        result = []
+        tmp = defaultdict(list)
+        for q,score in counter.items():
+            tmp[score].append(q)
+        if len(tmp)==1:
+            print("Not good sorting?")
+            return list(reversed(range(len(circ.qubits))))
+        all_qubits = list(circ.qubits)
+        for t in counter_sorted:
+            q = t[0]
+            result.append(all_qubits.index(q))
+        return result
+
+    def reorder_circuit(self, circ:QiskitCircuit, vorder_input:list):
+        vorder = vorder_input.copy()
+        vorder = list(reversed(vorder))
+        qubits = circ.qubits
+        mapping = {}
+        new_circ = circ.copy()
+        for idx in range(len(qubits)):
+            mapping[qubits[idx]] = qubits[vorder.index(idx)]
+        
+        for idx in range(len(circ.data)):
+            after = []
+            for q in circ.data[idx].qubits:
+                after.append(mapping[q])
+            new_circ.data[idx] = circ.data[idx].replace(operation=circ.data[idx].operation, qubits=tuple(after), clbits=circ.data[idx].clbits, params=circ.data[idx].params)
+        
+        # current_order = vorder
+        # for idx in range(len(qubits)):
+        #     if idx!=current_order[idx]:
+        #         idx0 = idx
+        #         idx1 = current_order.index(idx)
+        #         q0 = current_order[idx0]
+        #         q1 = idx
+        #         new_circ.swap(idx0, idx1)
+        #         current_order[idx0] = q1
+        #         current_order[idx1] = q0
+        return new_circ
+
     def _evaluate_circuit(
         self, circ: QiskitCircuit, circ_prop: CircuitProperty, options: dict
     ):
@@ -653,6 +717,7 @@ class QddBackend(BackendV2):
         use_auto_swap = options["use_auto_swap"]
         swap_ver = options["swap_ver"]
         use_bcast = options["use_bcast"]
+        ordering = options["ordering"]
         assert (not use_bcast) or use_mpi
         local_set = set(range(circ.num_qubits))
         global_set = set()
@@ -660,6 +725,12 @@ class QddBackend(BackendV2):
         global_list = list()
         map_after_swap = {x: x for x in range(circ.num_qubits)}
         size_global = 0
+
+        if ordering:
+            new_order = self.proposed_ordering(circ)
+            print(new_order)
+            circ = self.reorder_circuit(circ, new_order)
+
         if use_mpi:
             from mpi4py import MPI
 
@@ -695,6 +766,9 @@ class QddBackend(BackendV2):
         if circ_prop.stable_final_state == False and isinstance(options["shots"], int):
             reps = options["shots"]
 
+
+        count_global=0
+        
         prob_cbit = [0] * n_cbit
         for shot in range(reps):
             global_set, local_set = self.get_initial_qmap(circ.num_qubits, size_global)
@@ -709,6 +783,12 @@ class QddBackend(BackendV2):
             )
             for ci in circ.data:
                 i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
+                
+                if max([map_after_swap[self.get_qID(i)] for i in qargs]) < (n_qubit - size_global) :
+                    pass
+                else:
+                    count_global += 1
+
                 skip = False
                 if i.condition is not None:
                     classical, val = i.condition
@@ -1033,6 +1113,7 @@ class QddBackend(BackendV2):
                     else pyQDD.getVectorMPI(current, n_qubit, MPI.COMM_WORLD.Get_size())
                 )
         header = QddBackend._create_experiment_header(circ)
+        result_data["nNodes"] = pyQDD.get_nNodes(current)
         result = {
             "success": True,
             "shots": options["shots"],
@@ -1042,7 +1123,7 @@ class QddBackend(BackendV2):
             "header": header,
             "edge": current,
         }
-
+        print("#GlobalGate:",count_global)
         #        print("nQubit", n_qubit, "nGates", len(circ.data), "nNodes", pyQDD.get_nNodes(current))
         return result
 
@@ -1128,12 +1209,12 @@ class QddBackend(BackendV2):
         # Notice: here, 'measured_qubits' may not contain all measured qubits due to 'break' above
 
         # The circuit must have measurement gates
-        if not measured_qubits:
-            if require_measurement:
-                raise RuntimeError(
-                    f'Circuit "{circ.name}" has no measurement gates.'
-                    f" Every circuit must have measurement gates when using {QddBackend.__name__}."
-                )
+        # if not measured_qubits:
+        #     if require_measurement:
+        #         raise RuntimeError(
+        #             f'Circuit "{circ.name}" has no measurement gates.'
+        #             f" Every circuit must have measurement gates when using {QddBackend.__name__}."
+        #         )
 
         return CircuitProperty(
             stable_final_state=stable_final_state, clbit_final_values=clbit_final_values
