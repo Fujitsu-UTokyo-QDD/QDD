@@ -42,7 +42,8 @@ def test_iqpe_1qubit():
 
     qc_s.reset(0)
     qc_s.h(0)
-    qc_s.p(-np.pi / 2, 0).c_if(c, 1)
+    with qc_s.if_test((c, 1)):
+        qc_s.p(-np.pi / 2, 0)
     for _ in range(2 ** (m - 2)):
         qc_s.cp(np.pi / 2, 0, 1)
 
@@ -81,7 +82,8 @@ def test_iqpe_2qubits():
     x_measurement(qc, q[0], c[0])
     qc.reset(0)
     qc.h(0)
-    qc.p(-np.pi / 2, 0).c_if(c, 1)
+    with qc.if_test((c, 1)):
+        qc.p(-np.pi / 2, 0)
     for _ in range(2 ** (m - 2)):
         qc.mcp(np.pi / 4, [0, 1], 2)
 
@@ -92,10 +94,13 @@ def test_iqpe_2qubits():
     qc.h(0)
 
     # phase correction
-    qc.p(-np.pi / 4, 0).c_if(c, 1)
+    with qc.if_test((c, 1)):
+        qc.p(-np.pi / 4, 0)
 
-    qc.p(-np.pi / 2, 0).c_if(c, 2)
-    qc.p(-3 * np.pi / 2, 0).c_if(c, 3)
+    with qc.if_test((c, 2)):
+        qc.p(-np.pi / 2, 0)
+    with qc.if_test((c, 3)):
+        qc.p(-3 * np.pi / 2, 0)
 
     # c-U operations
     for _ in range(2 ** (m - 3)):
@@ -138,7 +143,8 @@ def test_iqpe_1qubit_with_sampler():
 
     qc_s.reset(0)
     qc_s.h(0)
-    qc_s.p(-np.pi / 2, 0).c_if(c, 1)
+    with qc_s.if_test((c, 1)):
+        qc_s.p(-np.pi / 2, 0)
     for _ in range(2 ** (m - 2)):
         qc_s.cp(np.pi / 2, 0, 1)
 
@@ -170,7 +176,8 @@ def test_iqpe_2qubits_with_sampler():
     x_measurement(qc, q[0], c[0])
     qc.reset(0)
     qc.h(0)
-    qc.p(-np.pi / 2, 0).c_if(c, 1)
+    with qc.if_test((c, 1)):
+        qc.p(-np.pi / 2, 0)
     for _ in range(2 ** (m - 2)):
         qc.mcp(np.pi / 4, [0, 1], 2)
 
@@ -181,10 +188,13 @@ def test_iqpe_2qubits_with_sampler():
     qc.h(0)
 
     # phase correction
-    qc.p(-np.pi / 4, 0).c_if(c, 1)
+    with qc.if_test((c, 1)):
+        qc.p(-np.pi / 4, 0)
 
-    qc.p(-np.pi / 2, 0).c_if(c, 2)
-    qc.p(-3 * np.pi / 2, 0).c_if(c, 3)
+    with qc.if_test((c, 2)):
+        qc.p(-np.pi / 2, 0)
+    with qc.if_test((c, 3)):
+        qc.p(-3 * np.pi / 2, 0)
 
     # c-U operations
     for _ in range(2 ** (m - 3)):
