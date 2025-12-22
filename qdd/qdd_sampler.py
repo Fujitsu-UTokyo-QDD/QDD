@@ -20,38 +20,29 @@ Sampler class.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Iterable
 
 import numpy as np
-from qiskit.circuit import ParameterExpression, QuantumCircuit
 from qiskit.compiler import transpile
 from qiskit.exceptions import QiskitError
-from qiskit.primitives import BaseSampler, SamplerResult
-from qiskit.primitives.utils import final_measurement_mapping, init_circuit
+from qiskit.primitives import SamplerResult
+from qiskit.primitives import (
+    BaseSamplerV2,
+    SamplerPubResult,
+    SamplerPubLike,
+    DataBin,
+    BitArray,
+)
+from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.result import QuasiDistribution
 
 from qdd import QddProvider
+from .qdd_utils import _circuit_key
 
 
-class Sampler(BaseSampler):
+class Sampler(BaseSamplerV2):
     """
-    QDD implementation of Sampler class.
-
-    :Run Options:
-
-        - **shots** (None or int) --
-          The number of shots. If None, it calculates the probabilities exactly.
-          Otherwise, it samples from multinomial distributions.
-
-        - **seed** (int) --
-          Set a fixed seed for ``seed_simulator``. If shots is None, this option is ignored.
-
-    .. note::
-        Precedence of seeding is as follows:
-
-        1. ``seed_simulator`` in runtime (i.e. in :meth:`__call__`)
-        2. ``seed`` in runtime (i.e. in :meth:`__call__`)
-        3. ``seed_simulator`` of ``backend_options``.
-        4. default.
+    QDD implementation of SamplerV2 class.
     """
 
     def __init__(
@@ -59,43 +50,73 @@ class Sampler(BaseSampler):
         *,
         backend_options: dict | None = None,
         transpile_options: dict | None = None,
-        run_options: dict | None = None,
         skip_transpilation: bool = False,
     ):
         """
         Args:
             backend_options: Options passed to QDDSimulator.
             transpile_options: Options passed to transpile.
-            run_options: Options passed to run.
             skip_transpilation: if True, transpilation is skipped.
         """
-        super().__init__(options=run_options)
         self._circuits = []
         self._parameters = []
 
         self._backend = QddProvider().get_backend()
         backend_options = {} if backend_options is None else backend_options
         self._backend.set_options(**backend_options)
+        self._default_shots = self._backend.options.get("shots")
         self._transpile_options = {} if transpile_options is None else transpile_options
         self._skip_transpilation = skip_transpilation
 
         self._transpiled_circuits = {}
         self._circuit_ids = {}
 
+    def run(self, pubs: Iterable[SamplerPubLike], *, shots=None, is_exact=False):
+        if shots is None:
+            shots = self._default_shots
+        if is_exact:
+            shots = None
+        coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
+        circuits = [pub.circuit for pub in coerced_pubs]
+        parameter_values = [pub.parameter_values.as_array() for pub in coerced_pubs]
+
+        from typing import List
+
+        from qiskit.primitives.primitive_job import PrimitiveJob
+
+        circuit_indices: List[int] = []
+        for circuit in circuits:
+            key = _circuit_key(circuit)
+            is_parameterized = circuit.num_parameters > 0
+
+            index = None
+            if not is_parameterized:
+                index = self._circuit_ids.get(key)
+
+            if index is None:
+                index = len(self._circuits)
+                self._circuits.append(circuit)
+                self._parameters.append(circuit.parameters)
+                if not is_parameterized:
+                    self._circuit_ids[key] = index
+
+            circuit_indices.append(index)
+        job = PrimitiveJob(self._call, circuit_indices, parameter_values, shots)
+        job._submit()
+        return job
+
     def _call(
         self,
         circuits: Sequence[int],
-        parameter_values: Sequence[Sequence[float]],
-        **run_options,
+        parameter_values,
+        shots,
     ) -> SamplerResult:
-        seed = run_options.pop("seed", None)
-        if seed is not None:
-            run_options.setdefault("seed_simulator", seed)
 
-        is_shots_none = "shots" in run_options and run_options["shots"] is None
+        is_shots_none = shots is None
         self._transpile(circuits)
 
-        experiment_manager = _ExperimentManager()
+        experiment_circuits = []
+        parameter_binds = []
         for i, value in zip(circuits, parameter_values):
             if len(value) != len(self._parameters[i]):
                 raise QiskitError(
@@ -103,69 +124,48 @@ class Sampler(BaseSampler):
                     f"the number of parameters ({len(self._parameters[i])})."
                 )
 
-            experiment_manager.append(
-                key=i,
-                parameter_bind=dict(zip(self._parameters[i], value)),
-                experiment_circuit=self._transpiled_circuits[i],
-            )
+            experiment_circuits.append(self._transpiled_circuits[i])
+            parameter_binds.append(dict(zip(self._parameters[i], value)))
 
         result = self._backend.run(
-            experiment_manager.experiment_circuits,
-            parameter_binds=experiment_manager.parameter_binds,
-            **run_options,
+            experiment_circuits,
+            parameter_binds=parameter_binds,
+            shots=shots,
+            memory=True,
         ).result()
 
+        results = []
         # Postprocessing
-        metadata = []
-        quasis = []
-        for i in experiment_manager.experiment_indices:
+        for i in range(len(experiment_circuits)):
             if is_shots_none:
                 probabilities = result.data(i)["probabilities"]
-                num_qubits = result.results[i].header.n_qubits
                 quasi_dist = QuasiDistribution(probabilities)
-                quasis.append(quasi_dist)
-                metadata.append(
-                    {"shots": None, "simulator_metadata": result.results[i]._metadata}
-                )
+                data = DataBin(quasi_dist=quasi_dist)
+                metadata = {
+                    "shots": None,
+                    "simulator_metadata": result.results[i]._metadata,
+                }
+                results.append(SamplerPubResult(data, metadata))
             else:
                 counts = result.get_counts(i)
-                shots = sum(counts.values())
-                quasis.append(
-                    QuasiDistribution(
-                        {k.replace(" ", ""): v / shots for k, v in counts.items()},
-                        shots=shots,
-                    )
+                quasi_dist = QuasiDistribution(
+                    {k.replace(" ", ""): v / shots for k, v in counts.items()},
+                    shots=shots,
                 )
-                metadata.append(
-                    {"shots": shots, "simulator_metadata": result.results[i]._metadata}
+                memory = result.get_memory(i)
+                memory_uint8 = [[np.uint8(int(mem, 2))] for mem in memory]
+                bit_array = BitArray(
+                    np.array(memory_uint8), result.results[i].meas_level
                 )
 
-        return SamplerResult(quasis, metadata)
+                data = DataBin(quasi_dist=quasi_dist, meas=bit_array)
+                metadata = {
+                    "shots": shots,
+                    "simulator_metadata": result.results[i]._metadata,
+                }
+                results.append(SamplerPubResult(data, metadata))
 
-    def _run(
-        self,
-        circuits: Sequence[QuantumCircuit],
-        parameter_values: Sequence[Sequence[float]],
-        **run_options,
-    ):
-        from typing import List
-
-        from qiskit.primitives.primitive_job import PrimitiveJob
-        from qiskit.primitives.utils import _circuit_key
-
-        circuit_indices: List[int] = []
-        for circuit in circuits:
-            index = self._circuit_ids.get(_circuit_key(circuit))
-            if index is not None:
-                circuit_indices.append(index)
-            else:
-                circuit_indices.append(len(self._circuits))
-                self._circuit_ids[_circuit_key(circuit)] = len(self._circuits)
-                self._circuits.append(circuit)
-                self._parameters.append(circuit.parameters)
-        job = PrimitiveJob(self._call, circuit_indices, parameter_values, **run_options)
-        job._submit()
-        return job
+        return results
 
     def _transpile(self, circuit_indices: Sequence[int]):
         to_handle = [
@@ -181,40 +181,3 @@ class Sampler(BaseSampler):
                 )
             for i, circuit in zip(to_handle, circuits):
                 self._transpiled_circuits[i] = circuit
-
-
-class _ExperimentManager:
-    def __init__(self):
-        self.keys: list[int] = []
-        self.experiment_circuits: list[QuantumCircuit] = []
-        self.parameter_binds: list[dict[ParameterExpression, float]] = []
-        self._input_indices: list[list[int]] = []
-        self._num_experiment: int = 0
-
-    def __len__(self):
-        return self._num_experiment
-
-    @property
-    def experiment_indices(self):
-        """indices of experiments"""
-        return np.argsort(sum(self._input_indices, [])).tolist()
-
-    def append(
-        self,
-        key: tuple[int, int],
-        parameter_bind: dict[ParameterExpression, float],
-        experiment_circuit: QuantumCircuit,
-    ):
-        """append experiments"""
-        if parameter_bind and key in self.keys:
-            key_index = self.keys.index(key)
-            for k, vs in self.parameter_binds[key_index].items():
-                vs.append(parameter_bind[k])
-            self._input_indices[key_index].append(self._num_experiment)
-        else:
-            self.experiment_circuits.append(experiment_circuit)
-            self.keys.append(key)
-            self.parameter_binds.append({k: v for k, v in parameter_bind.items()})
-            self._input_indices.append([self._num_experiment])
-
-        self._num_experiment += 1

@@ -16,7 +16,7 @@ BSD 3-Clause Clear License
 
 Supported environment
 
-- Linux x86_64 with Python3.8 ~ 3.10
+- Linux x86_64 with Python3.9 ~ 3.12
 
 Command
 

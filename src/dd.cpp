@@ -564,19 +564,10 @@ mEdge makeLargeGate(ComplexMatrix &g, const Qubit level,
                     const std::vector<bool> skip, const Qubit target_min) {
     if (level == target_min) {
         assert(rowEnd - rowStart == 2 && colEnd - colStart == 2);
-        return makeMEdge(
-            target_min,
-            {mEdge{{g[rowStart][colStart].real(), g[rowStart][colStart].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart][colStart + 1].real(),
-                    g[rowStart][colStart + 1].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart + 1][colStart].real(),
-                    g[rowStart + 1][colStart].imag()},
-                   mNode::terminal},
-             mEdge{{g[rowStart + 1][colStart + 1].real(),
-                    g[rowStart + 1][colStart + 1].imag()},
-                   mNode::terminal}});
+        GateMatrix g_tmp = {g[rowStart][colStart], g[rowStart][colStart + 1],
+                            g[rowStart + 1][colStart],
+                            g[rowStart + 1][colStart + 1]};
+        return makeGate(level + 1, g_tmp, target_min);
     }
 
     const auto l = level - 1;
@@ -601,8 +592,8 @@ mEdge makeLargeGate(ComplexMatrix &g, const Qubit level,
 }
 
 #ifdef isMPI
-mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
-    if (root.isTerminal() || world_size <= 1) {
+mEdge getMPIGate(mEdge root, int row, int col, int world_size, int total_qubits) {
+    if (world_size <= 1) {
         return root;
     }
 
@@ -624,9 +615,16 @@ mEdge getMPIGate(mEdge root, int row, int col, int world_size) {
     if (col >= border) {
         index += 1;
     }
+    if(root.getVar() < total_qubits-1){
+        if(index==0 || index==3){
+            return getMPIGate(root, row % border, col % border, border, total_qubits-1);
+        }else{
+            return mEdge::zero;
+        }
+    }
     mEdge tmp = root.getNode()->children[index];
     tmp.w *= root.w;
-    return getMPIGate(tmp, row % border, col % border, border);
+    return getMPIGate(tmp, row % border, col % border, border, total_qubits-1);
 }
 #endif
 
@@ -640,42 +638,6 @@ mNode *vec_to_mNode(std::vector<mContent> &table, mNodeTable &uniqTable,
                     bool no_lookup = false);
 
 #ifdef isMPI
-vEdge mv_multiply_MPI_org(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
-    int row = world.rank();
-    int world_size = world.size();
-    int left_neighbor = (world.rank() - 1) % world_size;
-    int right_neighbor = (world.rank() + 1) % world_size;
-
-    std_complex send_w, recv_w;
-    std::vector<vContent> send_buffer, recv_buffer;
-    std::unordered_map<vNode *, int> rhs_map;
-
-    send_w = rhs.w;
-    vNode_to_vec(rhs.n, send_buffer, rhs_map);
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
-    vEdge result = mv_multiply(gate, rhs);
-
-    for (int i = 1; i < world_size; i++) {
-        std::vector<bmpi::request> recv_reqs;
-        std::vector<bmpi::request> send_reqs;
-        recv_buffer.clear();
-        send_reqs.push_back(world.isend(right_neighbor, 2 * i - 2, send_w));
-        send_reqs.push_back(
-            world.isend(right_neighbor, 2 * i - 1, send_buffer));
-        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, recv_w));
-        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 1, recv_buffer));
-        int col = (row - i + world.size()) % world_size;
-        gate = getMPIGate(lhs, row, col, world_size);
-        bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
-        vEdge received = {recv_w, vec_to_vNode(recv_buffer, vUnique)};
-        result = vv_add(result, mv_multiply(gate, received));
-        bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
-        send_buffer = recv_buffer;
-        send_w = recv_w;
-    }
-    return result;
-}
-
 vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world,
                       std::size_t total_qubits, std::size_t largest_qubit) {
     int row = world.rank();
@@ -687,7 +649,7 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world,
     std::unordered_map<vNode *, int> rhs_map;
 
     send_data.first = rhs.w;
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    mEdge gate = getMPIGate(lhs, row, row, world_size, total_qubits);
     vEdge result = mv_multiply(gate, rhs);
     if (largest_qubit < total_qubits - int(log2(world_size))) {
         return result;
@@ -705,7 +667,7 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world,
         send_reqs.push_back(world.isend(right_neighbor, i, send_data));
         world.recv(left_neighbor, i, recv_data);
         int col = (row - i + world.size()) % small_world_size + offset;
-        gate = getMPIGate(lhs, row, col, world_size);
+        gate = getMPIGate(lhs, row, col, world_size, total_qubits);
         // bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
         vEdge received = {recv_data.first,
                           vec_to_vNode(recv_data.second, vUnique)};
@@ -713,108 +675,6 @@ vEdge mv_multiply_MPI(mEdge lhs, vEdge rhs, bmpi::communicator &world,
         bmpi::wait_all(std::begin(send_reqs), std::end(send_reqs));
         send_data = recv_data;
     }
-    return result;
-}
-
-vEdge mv_multiply_MPI_new(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
-    int row = world.rank();
-    int world_size = world.size();
-    int left_neighbor = (world.rank() - 1) % world_size;
-    int right_neighbor = (world.rank() + 1) % world_size;
-
-    std::vector<std_complex> buffer_w(world_size);
-    buffer_w[0] = rhs.w;
-
-    std::vector<std::vector<vContent>> buffer_table(world_size);
-    std::unordered_map<vNode *, int> rhs_map;
-    vNode_to_vec(rhs.n, buffer_table[0], rhs_map);
-
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
-    vEdge result = mv_multiply(gate, rhs);
-
-    for (int i = 1; i < world_size; i++) {
-        std::vector<bmpi::request> recv_reqs;
-        world.isend(right_neighbor, 2 * i - 2, buffer_w[i - 1]);
-        world.isend(right_neighbor, 2 * i - 1, buffer_table[i - 1]);
-        recv_reqs.push_back(world.irecv(left_neighbor, 2 * i - 2, buffer_w[i]));
-        recv_reqs.push_back(
-            world.irecv(left_neighbor, 2 * i - 1, buffer_table[i]));
-        bmpi::wait_all(std::begin(recv_reqs), std::end(recv_reqs));
-    }
-
-    for (int i = 1; i < world_size; i++) {
-        int col = (row - i + world.size()) % world_size;
-        gate = getMPIGate(lhs, row, col, world_size);
-        vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
-        result = vv_add(result, mv_multiply(gate, received));
-    }
-
-    return result;
-}
-
-vEdge mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
-    int row = world.rank();
-    int world_size = world.size();
-    int left_neighbor = (world.rank() - 1) % world_size;
-    int right_neighbor = (world.rank() + 1) % world_size;
-
-    std::vector<std_complex> buffer_w(world_size);
-    buffer_w[row] = rhs.w;
-
-    std::vector<std::vector<vContent>> buffer_table(world_size);
-    std::unordered_map<vNode *, int> rhs_map;
-    vNode_to_vec(rhs.n, buffer_table[row], rhs_map);
-
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
-    vEdge result = mv_multiply(gate, rhs);
-
-    for (int i = 0; i < world_size; i++) {
-        bmpi::broadcast(world, buffer_w[i], i);
-        bmpi::broadcast(world, buffer_table[i], i);
-    }
-
-    for (int i = 0; i < world_size; i++) {
-        int col = i;
-        if (col == row) continue;
-        gate = getMPIGate(lhs, row, col, world_size);
-        vEdge received = {buffer_w[i], vec_to_vNode(buffer_table[i], vUnique)};
-        result = vv_add(result, mv_multiply(gate, received));
-    }
-
-    return result;
-}
-
-vEdge mv_multiply_MPI_bcast2(mEdge lhs, vEdge rhs, bmpi::communicator &world) {
-    int row = world.rank();
-    int world_size = world.size();
-    int left_neighbor = (world.rank() - 1) % world_size;
-    int right_neighbor = (world.rank() + 1) % world_size;
-
-    // prepare data to be sent
-    std_complex send_w = rhs.w;
-    std::vector<vContent> send_table;
-    std::unordered_map<vNode *, int> rhs_map;
-    vNode_to_vec(rhs.n, send_table, rhs_map);
-
-    // calculate initial result
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
-    vEdge result = mv_multiply(gate, rhs);
-
-    for (int i = 0; i < world_size; i++) {
-        if (row == i) {
-            bmpi::broadcast(world, send_w, i);
-            bmpi::broadcast(world, send_table, i);
-        } else {
-            std_complex buffer_w;
-            std::vector<vContent> buffer_table;
-            bmpi::broadcast(world, buffer_w, i);
-            bmpi::broadcast(world, buffer_table, i);
-            gate = getMPIGate(lhs, row, i, world_size);
-            vEdge received = {buffer_w, vec_to_vNode(buffer_table, vUnique)};
-            result = vv_add(result, mv_multiply(gate, received));
-        }
-    }
-
     return result;
 }
 
@@ -827,7 +687,7 @@ vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world,
     int right_neighbor = (world.rank() + 1) % world_size;
 
     // calculate initial result
-    mEdge gate = getMPIGate(lhs, row, row, world_size);
+    mEdge gate = getMPIGate(lhs, row, row, world_size, total_qubits);
     vEdge result = mv_multiply(gate, rhs);
     if (largest_qubit < total_qubits - int(log2(world_size))) {
         return result;
@@ -845,7 +705,7 @@ vEdge mv_multiply_MPI_bcast3(mEdge lhs, vEdge rhs, bmpi::communicator &world,
         } else {
             std::pair<std_complex, std::vector<vContent>> recv_data;
             bmpi::broadcast(world, recv_data, i);
-            gate = getMPIGate(lhs, row, i, world_size);
+            gate = getMPIGate(lhs, row, i, world_size, total_qubits);
             vEdge received = {recv_data.first,
                               vec_to_vNode(recv_data.second, vUnique)};
             result = vv_add(result, mv_multiply(gate, received));
@@ -1341,7 +1201,13 @@ static void fillVector(const vEdge &edge, std::size_t row, const std_complex &w,
 }
 
 std_complex *vEdge::getVector(std::size_t *dim) const {
-    assert(!this->isTerminal());
+    if(this->isTerminal() || this->w.isApproximatelyZero()){
+        std_complex c = this->w;
+        std_complex *vector = new std_complex[*dim];
+        for(int i=0; i<*dim; i++)
+            vector[i] = c;
+        return vector;
+    }
 
     Qubit q = this->getVar();
     std::size_t d = 1 << (q + 1);
@@ -1587,8 +1453,8 @@ std::string measureAllMPI(bmpi::communicator &world, vEdge &rootEdge,
             }
         }
         const int pre_length = log2(world.size());
-        // std::cout << "thre="<< threshold << " target_rank=" << target_rank <<
-        // " " << std::endl;
+        // std::cout << "thre="<< threshold << " target_rank=" <<
+        // target_rank << " " << std::endl;
         int tmp = target_rank;
         for (int i = pre_length - 1; i >= 0; i--) {
             if (tmp / (int)pow(2, i) >= 1) {
@@ -1746,7 +1612,8 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge,
         } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     } else {
         if (p_each > 0) {
@@ -1754,7 +1621,8 @@ char measureOneCollapsingMPI(bmpi::communicator &world, vEdge &rootEdge,
             pzero = tmp.first;
             pone = tmp.second;
         }
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     }
 
@@ -1817,7 +1685,8 @@ double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge,
         } else {
             pone = p_each;
         }
-        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Global: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     } else {
         if (p_each > 0) {
@@ -1825,7 +1694,8 @@ double measureOneMPI(bmpi::communicator &world, vEdge &rootEdge,
             pzero = tmp.first;
             pone = tmp.second;
         }
-        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " << pone
+        // std::cout << "Local: rank=" << rank << " (" << pzero << ", " <<
+        // pone
         // << ")" << std::endl;
     }
 
@@ -1844,7 +1714,8 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
-            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "Numerical instability occurred during measurement: |alpha|^2 "
+            "+ "
             "|beta|^2 = " +
             std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
             std::to_string(pzero + pone) + ", but should be 1!");
@@ -1854,11 +1725,11 @@ char measureOneCollapsing(vEdge &rootEdge, const Qubit index,
     std::uniform_real_distribution<double> dist(0.0, 1.0L);
 
     double threshold = dist(mt);
-    double
-        normalizationFactor;  // NOLINT(cppcoreguidelines-init-variables) always
-                              // assigned a value in the following block
-    char result;  // NOLINT(cppcoreguidelines-init-variables) always assigned a
-                  // value in the following block
+    double normalizationFactor;  // NOLINT(cppcoreguidelines-init-variables)
+                                 // always assigned a value in the following
+                                 // block
+    char result;  // NOLINT(cppcoreguidelines-init-variables) always
+                  // assigned a value in the following block
 
     if (threshold < pzero / sum) {
         measurementMatrix[0] = cf_one;
@@ -1890,7 +1761,8 @@ double measureOne(vEdge &rootEdge, const Qubit index, std::mt19937_64 &mt,
     const double sum = pzero + pone;
     if (std::abs(sum - 1) > epsilon) {
         throw std::runtime_error(
-            "Numerical instability occurred during measurement: |alpha|^2 + "
+            "Numerical instability occurred during measurement: |alpha|^2 "
+            "+ "
             "|beta|^2 = " +
             std::to_string(pzero) + " + " + std::to_string(pone) + " = " +
             std::to_string(pzero + pone) + ", but should be 1!");

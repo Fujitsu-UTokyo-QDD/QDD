@@ -37,10 +37,10 @@ TEST(MPITest, MPIAllTest) {
             tmp.printMatrix();
             std::cout << "----" << std::endl;
         }
-        mEdge mat00 = getMPIGate(tmp, 0, 0, world.size());
-        mEdge mat01 = getMPIGate(tmp, 0, 1, world.size());
-        mEdge mat10 = getMPIGate(tmp, 1, 0, world.size());
-        mEdge mat11 = getMPIGate(tmp, 1, 1, world.size());
+        mEdge mat00 = getMPIGate(tmp, 0, 0, world.size(),2);
+        mEdge mat01 = getMPIGate(tmp, 0, 1, world.size(),2);
+        mEdge mat10 = getMPIGate(tmp, 1, 0, world.size(),2);
+        mEdge mat11 = getMPIGate(tmp, 1, 1, world.size(),2);
         if (world.rank() == 0) {
             mat00.printMatrix();
             mat01.printMatrix();

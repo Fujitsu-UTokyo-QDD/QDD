@@ -5,39 +5,34 @@ from qdd import QddProvider
 
 def test_backend_config():
     backend = QddProvider().get_backend()
-    config = backend.configuration()
+    target = backend.target
 
-    print(f"{config.backend_name=}")
-    assert isinstance(config.backend_name, str)
-    print(f"{config.backend_version=}")
-    assert isinstance(config.backend_version, str)
-    print(f"{config.n_qubits=}")
-    assert isinstance(config.n_qubits, int)
-    print(f"{config.open_pulse=}")
-    assert isinstance(config.open_pulse, bool)
-    print(f"{config.basis_gates=}")
-    assert isinstance(config.basis_gates, list)
+    print(f"{backend.name=}")
+    assert isinstance(backend.name, str)
+    print(f"{backend.backend_version=}")
+    assert isinstance(backend.backend_version, str)
+    print(f"{backend.num_qubits=}")
+    assert isinstance(backend.num_qubits, int)
+    print(f"{target.instructions=}")
+    assert isinstance(target.instructions, list)
 
+    assert backend.dt is None
     with pytest.raises(Exception):
-        print(config.dt)
+        print(backend.dtm)
     with pytest.raises(Exception):
-        print(config.meas_levels)
+        print(backend.meas_map)
     with pytest.raises(Exception):
-        print(config.dtm)
+        print(backend.drive_channel(0))
     with pytest.raises(Exception):
-        print(config.meas_map)
+        print(backend.measure_channel(0))
     with pytest.raises(Exception):
-        print(config.drive(0))
-    with pytest.raises(Exception):
-        print(config.measure(0))
-    with pytest.raises(Exception):
-        print(config.acquire(0))
+        print(backend.acquire_channel(0))
 
 
 def test_backend_properties():
     backend = QddProvider().get_backend()
-    props = backend.properties()
-    assert props is None
+    with pytest.raises(Exception):
+        backend.properties()
 
 
 def test_backend_defaults():

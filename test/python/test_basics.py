@@ -22,6 +22,7 @@ from test.python.helpers.circuit_helper import (
     assert_job_failed,
     get_oracle_counts_of_simple_circuit_run,
     run_simple_circuit,
+    assert_probabilities_are_close,
 )
 from qdd import pyQDD
 
@@ -47,7 +48,7 @@ def test_num_qubits_2():
 
 
 def test_num_qubits_max_plus_1():
-    max_qubits = QddBackend._DEFAULT_CONFIG["n_qubits"]
+    max_qubits = QddBackend(provider=QddProvider()).num_qubits
     job = run_simple_circuit(num_qubits=max_qubits + 1, shots=20, skip_transpile=True)
     assert_job_failed(job)
 
@@ -63,7 +64,7 @@ def test_shots_0():
 
 
 def test_shots_max_shots():
-    max_shots = QddBackend._DEFAULT_CONFIG["max_shots"]
+    max_shots = QddBackend._MAX_SHOTS
     counts = run_simple_circuit(num_qubits=2, shots=max_shots).result().get_counts()
     expected = get_oracle_counts_of_simple_circuit_run(num_qubit=2, shots=max_shots)
     counts = {k: v for k, v in counts.items() if v != 0}
@@ -71,7 +72,7 @@ def test_shots_max_shots():
 
 
 def test_shots_max_shots_plus_1():
-    max_shots = QddBackend._DEFAULT_CONFIG["max_shots"]
+    max_shots = QddBackend._MAX_SHOTS
     if max_shots < 1024:
         assert (
             0
@@ -138,7 +139,7 @@ def test_sv():
         transpile(circuits=circ_h, backend=qdd_backend, seed_transpiler=50),
         seed_simulator=80,
     )
-    global_phase = qdd_job_h.result().results[0].header.global_phase
+    global_phase = qdd_job_h.result().results[0].header["global_phase"]
     sv = qdd_job_h.result().get_statevector()
     assert cmath.isclose(sv[0] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
     assert cmath.isclose(sv[1] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
@@ -299,16 +300,15 @@ def test_gc_mat_correctness():
 def test_mv_multiply():
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False)
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=False, seed=i*i)
 
         backend = QddProvider().get_backend("statevector_simulator")
-        circ1 = transpile(circ, backend=backend)
-        result = backend.run(circ1).result().to_dict()["results"][0]["edge"]    
-        qdd_vector = result.getEigenVector()
+        circ1 = transpile(circ, backend=backend, optimization_level=0)
+        qdd_vector = backend.run(circ1).result().to_dict()["results"][0]['data']['statevector']
 
         circ.save_statevector()
         aer_backend = Aer.get_backend("aer_simulator")
-        circ2 = transpile(circ, backend=aer_backend)
+        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(circ2).result()
         aer_vector = aer_result.get_statevector(circ2)
         aer_vector_np = np.asarray(aer_vector)
@@ -321,6 +321,22 @@ def test_mv_multiply():
             print(aer_vector_np)
             assert(False)
 
+def test_mv_multiply_count():
+    for i in range(10):
+        nQubits = 10
+        circ = random_circuit(num_qubits=nQubits, depth=5, measure=True, seed=i*i)
+
+        backend = QddProvider().get_backend()
+        circ1 = transpile(circ, backend=backend, optimization_level=0)
+        qdd_count = backend.run(circ1, shots=1000).result().get_counts()
+
+        circ.save_statevector()
+        aer_backend = Aer.get_backend("aer_simulator")
+        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
+        aer_result = aer_backend.run(circ2, shots=1000).result()
+        aer_count = aer_result.get_counts()
+        print("i=",i)
+        assert_probabilities_are_close(qdd_count, aer_count, atol=0.1)
 
 def test_mm_multiply():
     backend = QddProvider().get_backend()
@@ -374,8 +390,8 @@ def test_qdd_gate_merge():
     aer_backend = Aer.get_backend("unitary_simulator")
     for i in range(10):
         nQubits = 10
-        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
-        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
+        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
 
         result_medge2 = backend.merge_circuit(circ2, 100000)
         qgate2 = QDDGate(nQubits, result_medge2)
@@ -387,7 +403,7 @@ def test_qdd_gate_merge():
         unitary_merged = result_all.getEigenMatrix(nQubits)
 
         circ1.append(circ2, list(range(nQubits)))
-        all_circ = transpile(circ1, backend=aer_backend)
+        all_circ = transpile(circ1, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(all_circ).result()
         aer_unitary = aer_result.get_unitary(all_circ)
         aer_unitary_np = np.asarray(aer_unitary)
@@ -407,5 +423,5 @@ def test_qddgate_error():
     result_medge2 = backend.merge_circuit(circ2, 100000)
     qgate2 = QDDGate(nQubits, result_medge2)
     circ1.append(qgate2, list(range(nQubits)))
-    with pytest.raises(TranspilerError):
+    with pytest.raises(TypeError):
         circ1 = transpile(circ1, backend=backend, optimization_level=0)
