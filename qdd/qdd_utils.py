@@ -3,7 +3,7 @@ from qiskit.qasm2 import dumps as qasm2_dumps, QASM2ExportError
 from qiskit.quantum_info import SparsePauliOp
 
 
-def _circuit_key(circuit: QuantumCircuit) -> str | int:
+def _circuit_key(circuit: QuantumCircuit):
     """Convert a circuit to a hashable key.
     If a circuit is serializable, a string is returned.
     Otherwise, the id of the circuit is returned.
