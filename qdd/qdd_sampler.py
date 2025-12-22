@@ -37,6 +37,7 @@ from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.result import QuasiDistribution
 
 from qdd import QddProvider
+from .qdd_utils import _circuit_key
 
 
 class Sampler(BaseSamplerV2):
@@ -82,18 +83,24 @@ class Sampler(BaseSamplerV2):
         from typing import List
 
         from qiskit.primitives.primitive_job import PrimitiveJob
-        from qiskit.primitives.utils import _circuit_key
 
         circuit_indices: List[int] = []
         for circuit in circuits:
-            index = self._circuit_ids.get(_circuit_key(circuit))
-            if index is not None:
-                circuit_indices.append(index)
-            else:
-                circuit_indices.append(len(self._circuits))
-                self._circuit_ids[_circuit_key(circuit)] = len(self._circuits)
+            key = _circuit_key(circuit)
+            is_parameterized = circuit.num_parameters > 0
+
+            index = None
+            if not is_parameterized:
+                index = self._circuit_ids.get(key)
+
+            if index is None:
+                index = len(self._circuits)
                 self._circuits.append(circuit)
                 self._parameters.append(circuit.parameters)
+                if not is_parameterized:
+                    self._circuit_ids[key] = index
+
+            circuit_indices.append(index)
         job = PrimitiveJob(self._call, circuit_indices, parameter_values, shots)
         job._submit()
         return job

@@ -36,7 +36,7 @@ from qiskit.primitives.containers import (
 )
 from qiskit.primitives.containers.estimator_pub import EstimatorPub
 from qiskit.primitives.primitive_job import PrimitiveJob
-from qiskit.primitives.utils import _circuit_key, _observable_key
+# from qiskit.primitives.containers.keys import _circuit_key, _observable_key
 from qiskit.providers import Options
 from qiskit.quantum_info import Pauli, PauliList, SparsePauliOp
 from qiskit.result import QuasiDistribution
@@ -51,6 +51,7 @@ from qiskit.transpiler.passes import (
 )
 
 from qdd import QddProvider
+from .qdd_utils import _circuit_key, _observable_key
 
 
 class Estimator(BaseEstimatorV2):
@@ -147,14 +148,21 @@ class Estimator(BaseEstimatorV2):
         observables = pub.observables.ravel()
         precision = pub.precision
         for observable in observables:
-            circuit_index = self._circuit_ids.get(_circuit_key(circuit))
-            if circuit_index is not None:
-                circuit_indices.append(circuit_index)
-            else:
-                circuit_indices.append(len(self._circuits))
-                self._circuit_ids[_circuit_key(circuit)] = len(self._circuits)
+            key = _circuit_key(circuit)
+            is_parameterized = circuit.num_parameters > 0
+
+            circuit_index = None
+            if not is_parameterized:
+                circuit_index = self._circuit_ids.get(key)
+
+            if circuit_index is None:
+                circuit_index = len(self._circuits)
                 self._circuits.append(circuit)
                 self._parameters.append(circuit.parameters)
+                if not is_parameterized:
+                    self._circuit_ids[key] = circuit_index
+
+            circuit_indices.append(circuit_index)
 
             basis = []
             coeffs = []
@@ -513,7 +521,7 @@ class _PostProcessing:
                 else:
                     result = results[c_i]
                     count = result.data.counts
-                    basis = result.header.metadata["basis"]
+                    basis = result.header["metadata"]["basis"]
                     indices = np.where(basis.z | basis.x)[0]
                     measured_paulis = PauliList.from_symplectic(
                         paulis.z[:, indices], paulis.x[:, indices], 0
@@ -538,7 +546,7 @@ class _PostProcessing:
                     result = results[c_i]
                     probabilities = result.data.probabilities
                     quasi_dist = QuasiDistribution(probabilities)
-                    basis = result.header.metadata["basis"]
+                    basis = result.header["metadata"]["basis"]
                     indices = np.where(basis.z | basis.x)[0]
                     measured_paulis = PauliList.from_symplectic(
                         paulis.z[:, indices], paulis.x[:, indices], 0
