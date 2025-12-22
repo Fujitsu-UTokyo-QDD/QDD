@@ -30,7 +30,6 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.2",
-    "qiskit-ibm-runtime>=0.21.1",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
 ]
