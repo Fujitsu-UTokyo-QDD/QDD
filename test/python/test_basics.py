@@ -139,7 +139,7 @@ def test_sv():
         transpile(circuits=circ_h, backend=qdd_backend, seed_transpiler=50),
         seed_simulator=80,
     )
-    global_phase = qdd_job_h.result().results[0].header.global_phase
+    global_phase = qdd_job_h.result().results[0].header["global_phase"]
     sv = qdd_job_h.result().get_statevector()
     assert cmath.isclose(sv[0] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
     assert cmath.isclose(sv[1] * cmath.exp(1j * global_phase), 1 / math.sqrt(2))
@@ -390,8 +390,8 @@ def test_qdd_gate_merge():
     aer_backend = Aer.get_backend("unitary_simulator")
     for i in range(10):
         nQubits = 10
-        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
-        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
+        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
 
         result_medge2 = backend.merge_circuit(circ2, 100000)
         qgate2 = QDDGate(nQubits, result_medge2)
@@ -403,7 +403,7 @@ def test_qdd_gate_merge():
         unitary_merged = result_all.getEigenMatrix(nQubits)
 
         circ1.append(circ2, list(range(nQubits)))
-        all_circ = transpile(circ1, backend=aer_backend)
+        all_circ = transpile(circ1, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(all_circ).result()
         aer_unitary = aer_result.get_unitary(all_circ)
         aer_unitary_np = np.asarray(aer_unitary)
@@ -423,5 +423,5 @@ def test_qddgate_error():
     result_medge2 = backend.merge_circuit(circ2, 100000)
     qgate2 = QDDGate(nQubits, result_medge2)
     circ1.append(qgate2, list(range(nQubits)))
-    with pytest.raises(TranspilerError):
+    with pytest.raises(TypeError):
         circ1 = transpile(circ1, backend=backend, optimization_level=0)

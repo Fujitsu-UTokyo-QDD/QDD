@@ -477,7 +477,7 @@ class QddBackend(BackendV2):
                     current = pyQDD.mm_multiply(gate, current)
                 elif qiskit_gate_type in _qiskit_gates_unitary:
                     matrix = i.to_matrix()
-                    targets = qargs
+                    targets = [self.get_qID(q) for q in qargs]
                     gate = pyQDD.unitary(n_qubit, matrix, targets)
                     current = pyQDD.mm_multiply(gate, current)
                 elif qiskit_gate_type in _qdd_gate:
@@ -710,7 +710,7 @@ class QddBackend(BackendV2):
             for ci in circ.data:
                 i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
                 skip = False
-                if i.condition is not None:
+                if hasattr(i, "condition") and i.condition is not None:
                     classical, val = i.condition
                     if isinstance(classical, Clbit):
                         if val_cbit[self.get_cID(classical)] != str(int(val)):
@@ -1104,7 +1104,7 @@ class QddBackend(BackendV2):
                 clbit_final_values[cargs[0]] = qargs[0]
                 measured_qubits |= set(qargs)
             elif (
-                inst.condition is not None
+                hasattr(inst, "condition") and inst.condition is not None
                 or any(qubit in measured_qubits for qubit in qargs)
                 or inst.base_class == Reset
                 or inst.name == "kraus"
