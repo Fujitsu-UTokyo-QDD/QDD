@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "main"
+  workflow_dispatch: {}
+
 jobs:
   build:
     name: Build distribution
@@ -56,5 +58,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist/
+      - name: Flatten downloaded artifact directories
+        run: |
+          set -eux
+          # Move any wheel/sdist/zip files from nested artifact dirs into dist/
+          mkdir -p dist_root
+          find dist -type f \( -iname '*.whl' -o -iname '*.tar.gz' -o -iname '*.zip' \) -print0 | xargs -0 -I{} mv {} dist_root/ || true
+          rm -rf dist
+          mv dist_root dist || true
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
