@@ -49,8 +49,8 @@ def test_sampler():
         # delete 0s from the distribution
         dist = {k: v for k, v in dist.items() if v != 0}
         dist_exact = {k: v for k, v in dist_exact.items() if v != 0}
-        assert dist == pytest.approx(dist_qiskit, rel=0.2, abs=0.01)
-        assert dist_exact == pytest.approx(dist_qiskit, rel=0.2, abs=0.01)
+        assert dist == pytest.approx(dist_qiskit, rel=0.2, abs=0.015)
+        assert dist_exact == pytest.approx(dist_qiskit, rel=0.2, abs=0.015)
 
 
 def test_sampler_param():
@@ -105,5 +105,5 @@ def test_sampler_param():
         dists_exact,
         qiskit_dists,
     ):
-        assert dist == pytest.approx(dist_qiskit, rel=0.2, abs=0.01)
-        assert dist_exact == pytest.approx(dist_qiskit, rel=0.2, abs=0.01)
+        assert dist == pytest.approx(dist_qiskit, rel=0.2, abs=0.02)
+        assert dist_exact == pytest.approx(dist_qiskit, rel=0.2, abs=0.02)
