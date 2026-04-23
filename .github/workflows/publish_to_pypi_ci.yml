@@ -1,70 +1,69 @@
-name: Publish Python distribution to PyPI
+name: Publish to PyPI
 
 on:
   push:
-    branches:
-      - "main"
+    tags:
+      - "v*"
   workflow_dispatch: {}
 
 jobs:
-  build:
-    name: Build distribution
-    runs-on: ubuntu-22.04
-
+  build_wheels:
+    name: Build wheels (${{ matrix.os }} ${{ matrix.arch }} / cp${{ matrix.python-tag }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        python-tag: ["39", "310", "311", "312", "313"]
         include:
-          - python-version: "3.9"
-            python-version-sub: "39"
-          - python-version: "3.10"
-            python-version-sub: "310"
-          - python-version: "3.11"
-            python-version-sub: "311"
-          - python-version: "3.12"
-            python-version-sub: "312"
-
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
     steps:
       - uses: actions/checkout@v4
-
-      # Build by cibuildwheel
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
-        env:
-          python-version: ${{ matrix.python-version }}
-          # Modify as needed, you may need to adjust this line according to your requirements
-          CIBW_BUILD: "cp${{ matrix.python-version-sub }}-manylinux_x86_64"
-          CIBW_BEFORE_BUILD: "cmake . -DPYTHON_EXECUTABLE=/usr/local/bin/python${{ matrix.python-version }} -DCMAKE_BUILD_TYPE=Release && cmake --build . -j"
-
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
         with:
-          name: python-package-distributions-${{ matrix.python-version-sub }}
+          fetch-depth: 0
+      - uses: pypa/cibuildwheel@v3.3.0
+        env:
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_BUILD: cp${{ matrix.python-tag }}-manylinux_${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.arch }}-cp${{ matrix.python-tag }}
           path: ./wheelhouse/*.whl
 
-  publish-to-pypi:
-    name: Publish Python distribution to PyPI
-    needs:
-      - build
-    runs-on: ubuntu-22.04
+  build_sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+      - run: pipx run build --sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
 
+  publish-to-pypi:
+    needs: [build_wheels, build_sdist]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/qdd
     permissions:
-      id-token: write # IMPORTANT: mandatory for trusted publishing
-
+      id-token: write
     steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: dist/
-      - name: Flatten downloaded artifact directories
-        run: |
-          set -eux
-          # Move any wheel/sdist/zip files from nested artifact dirs into dist/
-          mkdir -p dist_root
-          find dist -type f \( -iname '*.whl' -o -iname '*.tar.gz' -o -iname '*.zip' \) -print0 | xargs -0 -I{} mv {} dist_root/ || true
-          rm -rf dist
-          mv dist_root dist || true
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          pattern: "wheels-*"
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          name: sdist
+      - run: ls -la dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

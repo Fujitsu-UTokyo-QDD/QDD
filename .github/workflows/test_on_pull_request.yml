@@ -4,12 +4,18 @@ on: pull_request
 
 jobs:
   python_test:
-    name: Python test
-    runs-on: ubuntu-latest
+    name: Python test (${{ matrix.os }} ${{ matrix.arch }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v4
@@ -36,8 +42,17 @@ jobs:
           python -m pytest -m "not slow and not mpi"
 
   cpp_test:
-    name: C++ test
-    runs-on: ubuntu-latest
+    name: C++ test (${{ matrix.os }} ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
 
     steps:
       - uses: actions/checkout@v4
