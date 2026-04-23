@@ -49,4 +49,9 @@ jobs:
 
       - name: Run Python MPI tests
         run: |
-          mpirun --oversubscribe -np 2 python -m pytest test/python/test_mpi.py
+          rm -rf /tmp/qdd-mpi-tests
+          mkdir -p /tmp/qdd-mpi-tests
+          cp pyproject.toml /tmp/qdd-mpi-tests/pyproject.toml
+          cp -r test /tmp/qdd-mpi-tests/test
+          cd /tmp/qdd-mpi-tests
+          mpirun --oversubscribe -np 2 python -m pytest -o addopts="" test/python/test_mpi.py
