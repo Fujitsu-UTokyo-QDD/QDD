@@ -60,5 +60,8 @@ test/qcbm
 test/qdd_test
 
 
-.venv_qdd*/
+.venv*/
 *.egg-info/
+qdd/_version.py
+
+.codex
