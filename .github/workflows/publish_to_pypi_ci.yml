@@ -8,11 +8,13 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels (${{ matrix.os }} ${{ matrix.arch }})
+    name: Build wheels (${{ matrix.os }} ${{ matrix.arch }} / cp${{ matrix.python-tag }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        python-tag: ["39", "310", "311", "312", "313"]
         include:
           - os: ubuntu-latest
             arch: x86_64
@@ -25,9 +27,10 @@ jobs:
       - uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_BUILD: cp${{ matrix.python-tag }}-manylinux_${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.arch }}
+          name: wheels-${{ matrix.arch }}-cp${{ matrix.python-tag }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
