@@ -10,4 +10,9 @@ You can run the MPI programs as follows.
 $ mpirun -np 4 ./build/test/mpt_test
 $ mpirun -np 4 ./build/test/mpi_test_grover 20
 ```
-Currently, python bindings does NOT support MPI.
+
+Python bindings with MPI:
+```sh
+$ CMAKE_ARGS="-DisMPI=ON" CC=mpicc CXX=mpicxx pip install .
+$ mpirun -np 2 python -m pytest test/python/test_mpi.py
+```
