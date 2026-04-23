@@ -53,7 +53,8 @@ fallback_version = "0.2.7"
 skip = ["*-musllinux_*", "*_i686", "pp*"]
 build-frontend = "build"
 test-extras = "test"
-test-command = 'pytest {project}/test/python -m "not slow and not mpi"'
+test-command = 'pytest test/python -m "not slow and not mpi"'
+test-sources = ["test", "pyproject.toml"]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 
