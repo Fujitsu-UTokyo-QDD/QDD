@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-project(QDD)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
 
 
 get_filename_component(USER $ENV{HOME} NAME)
@@ -53,12 +53,7 @@ add_subdirectory(test)
 
 option(BINDINGS "Configure for building Python bindings" ON)
 if (BINDINGS)
-  find_package(Python COMPONENTS Interpreter Development)
-  FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG        v2.10.3
-  )
-  FetchContent_MakeAvailable(pybind11)
+  set(PYBIND11_FINDPYTHON ON)
+  find_package(pybind11 CONFIG REQUIRED)
   add_subdirectory(qdd)
 endif ()
