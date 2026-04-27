@@ -1,0 +1,58 @@
+name: MPI test on pull request
+
+on: pull_request
+
+jobs:
+  mpi_test:
+    name: MPI test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install OpenMPI and Boost
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libopenmpi-dev \
+            openmpi-bin \
+            libboost-mpi-dev \
+            libboost-serialization-dev
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build C++ MPI tests
+        run: |
+          cmake -S . -B build-mpi \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DisMPI=ON \
+            -DBINDINGS=OFF \
+            -DCMAKE_C_COMPILER=mpicc \
+            -DCMAKE_CXX_COMPILER=mpicxx
+          cmake --build build-mpi -j
+
+      - name: Run C++ MPI tests
+        run: |
+          set -e
+          mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test
+          mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test_grover 6
+          mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_qcbm 6
+
+      - name: Install qdd with MPI bindings
+        run: |
+          python -m pip install --upgrade pip build
+          python -m pip install mpi4py
+          CMAKE_ARGS="-DisMPI=ON" CC=mpicc CXX=mpicxx python -m pip install .[test]
+
+      - name: Run Python MPI tests
+        run: |
+          rm -rf /tmp/qdd-mpi-tests
+          mkdir -p /tmp/qdd-mpi-tests
+          cp pyproject.toml /tmp/qdd-mpi-tests/pyproject.toml
+          cp -r test /tmp/qdd-mpi-tests/test
+          cd /tmp/qdd-mpi-tests
+          mpirun --oversubscribe -np 2 python -m pytest -o addopts="" test/python/test_mpi.py
