@@ -12,17 +12,27 @@ At this point, we do not distribute wheel file, so you need to build it locally.
 
 BSD 3-Clause Clear License
 
-## Install
+## Installation
+
+### Standard (without MPI)
+
+```sh
+pip install qdd
+```
+
+### With MPI support
+
+```sh
+pip install qdd-mpi
+```
+
+See [README_MPI.md](README_MPI.md) for prerequisites and details.
+
+---
 
 Supported environment
 
 - Linux x86_64 with Python3.9 ~ 3.12
-
-Command
-
-```sh
-$ pip install qdd
-```
 
 ## Install from source
 
