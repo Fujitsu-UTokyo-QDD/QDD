@@ -1,6 +1,9 @@
 name: Publish qdd-mpi sdist to PyPI
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
