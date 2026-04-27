@@ -27,6 +27,7 @@ EOF
 
 # Build sdist
 rm -rf dist-mpi
+pip install build
 python -m build --sdist --outdir dist-mpi/
 
 echo ""
