@@ -88,11 +88,7 @@ class AddCache{
                 
             }
 
-    void clearAll() {
-        #ifdef CACHE_GLOBAL
-        std::lock_guard<std::shared_mutex> lock(c._mtx);
-        #endif
-        
+    void clearAll() {        
         for(std::vector<Table>& vt: _tables){
             for(Table& t: vt){
                 std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
@@ -135,9 +131,6 @@ class AddCache{
             Edge rhs;
             Edge result;
             bool valid;
-            #ifdef CACHE_GLOBAL
-            mutable std::shared_mutex _mtx;
-            #endif
         };
 
         struct alignas(hardware_constructive_interference_size) // the same cacheline
@@ -160,9 +153,6 @@ class AddCache{
             typename std::vector<Bucket>::iterator chunkEndIt;
             std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
             std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
-            #ifdef CACHE_GLOBAL
-            mutable std::shared_mutex _mtx;
-            #endif
         };
 
         Cache c;
@@ -183,9 +173,6 @@ class AddCache{
 
 
         Bucket* getBucket() {
-            #ifdef CACHE_GLOBAL
-            std::lock_guard<std::shared_mutex> lock(c._mtx);
-            #endif
             if (c.chunkIt == c.chunkEndIt) {
                 c.chunks.emplace_back(std::vector<Bucket>(c.allocationSize));
                 c.allocations += c.allocationSize;
@@ -214,9 +201,6 @@ class AddCache{
                 Bucket* b = t._table[key];
 
                 Entry& e = b->e;
-                #ifdef CACHE_GLOBAL
-                std::shared_lock<std::shared_mutex> lock(e._mtx);
-                #endif
                 if constexpr(std::is_same_v<T, mEdge>){
                     if(e.valid && e.lhs.m == l && e.rhs.m ==r){
                         if(e.result.m.getVar() != -2){
@@ -257,9 +241,6 @@ class AddCache{
 
         template<typename T>
             void set(Entry& e, const T& l , const T& r, const T& res){
-                #ifdef CACHE_GLOBAL
-                    std::lock_guard<std::shared_mutex> lock(e._mtx);
-                #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         e.lhs.m = l;
                         e.rhs.m = r;
@@ -352,10 +333,6 @@ class MulCache{
             }
 
     void clearAll() {
-        #ifdef CACHE_GLOBAL
-        std::lock_guard<std::shared_mutex> lock(c._mtx);
-        #endif
-
         for(std::vector<Table>& vt: _tables){
             for(Table& t: vt){
                 std::memset(t._table, 0, sizeof(void*)*NBUCKETS);
@@ -401,9 +378,6 @@ class MulCache{
             
             bool valid;
             int picked;
-        #ifdef CACHE_GLOBAL
-            mutable std::shared_mutex _mtx;
-        #endif
         };
 
         static_assert(std::is_default_constructible_v<Entry>);
@@ -427,9 +401,6 @@ class MulCache{
             typename std::vector<Bucket>::iterator chunkEndIt;
             std::size_t                          allocationSize{INITIAL_ALLOCATION_SIZE_CACHE * GROWTH_FACTOR};
             std::size_t                       allocations = INITIAL_ALLOCATION_SIZE_CACHE;
-            #ifdef CACHE_GLOBAL
-            mutable std::shared_mutex _mtx;
-            #endif
         };
 
         Cache c;
@@ -450,9 +421,6 @@ class MulCache{
 
 
         Bucket* getBucket() {
-            #ifdef CACHE_GLOBAL
-            std::lock_guard<std::shared_mutex> lock(c._mtx);
-            #endif
             if (c.chunkIt == c.chunkEndIt) {
                 c.chunks.emplace_back(c.allocationSize);
                 c.allocations += c.allocationSize;
@@ -478,10 +446,7 @@ class MulCache{
                     mNode* lp = reinterpret_cast<mNode*>(l); 
                     mNode* rp = reinterpret_cast<mNode*>(r); 
                     
-                    for(Entry& e: b->es){            
-                        #ifdef CACHE_GLOBAL
-                        std::shared_lock<std::shared_mutex> lock(e._mtx);
-                        #endif
+                    for(Entry& e: b->es){
                         if(e.valid && e.lhs == l && e.rhs == r){
                             if(e.result.m.getVar() != -2){
                                 hits++;
@@ -506,9 +471,6 @@ class MulCache{
                     vNode* rp = reinterpret_cast<vNode*>(r); 
 
                     for(Entry& e: b->es){
-                    #ifdef CACHE_GLOBAL
-                        std::shared_lock<std::shared_mutex> lock(e._mtx);
-                    #endif
                         if(e.valid && e.lhs == l && e.rhs == r){
                             if(e.result.v.getVar() != -2){
                                 hits++;
@@ -534,9 +496,6 @@ class MulCache{
 
         template<typename T>
             void set(Entry& e, uintptr_t& l , uintptr_t& r, const T& res){
-                #ifdef CACHE_GLOBAL
-                    std::lock_guard<std::shared_mutex> lock(e._mtx);
-                #endif
                     if constexpr(std::is_same_v<T, mEdge>){
                         mNode* lp = reinterpret_cast<mNode*>(l); 
                         mNode* rp = reinterpret_cast<mNode*>(r); 

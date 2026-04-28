@@ -9,16 +9,7 @@
 #endif
 #include "common.h"
 #include "dd.h"
-#ifdef isMT
-#include "task.h"
-#endif
 namespace py = pybind11;
-
-#ifdef isMT
-bool mt_initialized = false;
-int n_threads = 1;
-Scheduler *s;
-#endif
 
 std::map<std::string, GateMatrix> gateMap{
     {"I", Imat},       {"H", Hmat},   {"X", Xmat},         {"Y", Ymat},
@@ -171,29 +162,6 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge, int n_qubits, int w
 }
 #endif
 
-#ifdef isMT
-void terminate_mt() {
-    if (mt_initialized) {
-        mt_initialized = false;
-        n_threads = 1;
-        delete s;
-    }
-    return;
-}
-
-int init_mt(int n = 8) {
-    if (n != n_threads) {
-        terminate_mt();
-        if (n > 1) {
-            mt_initialized = true;
-            n_threads = n;
-            s = new Scheduler(n - 1);
-        }
-    }
-    return n_threads;
-}
-#endif
-
 std::vector<double> _probabilities(const vEdge &rootEdge) {
     std::vector<double> result = probabilities(rootEdge);
     return result;
@@ -294,8 +262,5 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("load_binary", load_binary)
         .def("measureOneCollapsingMPI", _measureOneCollapsingMPI)
         .def("measureOneMPI", _measureOneMPI);
-#endif
-#ifdef isMT
-    m.def("initMT", init_mt).def("terminateMT", terminate_mt);
 #endif
 }

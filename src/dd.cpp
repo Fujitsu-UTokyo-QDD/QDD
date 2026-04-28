@@ -24,13 +24,6 @@
 #include <boost/serialization/utility.hpp>
 #endif
 
-#ifdef isMT
-#include <oneapi/tbb/enumerable_thread_specific.h>
-
-#include <boost/fiber/future/future.hpp>
-#include <boost/fiber/future/packaged_task.hpp>
-#endif
-
 #define SUBTASK_THRESHOLD 5
 
 mNodeTable mUnique(NQUBITS);
@@ -47,13 +40,8 @@ mEdge mEdge::zero{.w = {0.0, 0.0}, .n = mNode::terminal};
 vEdge vEdge::one{.w = {1.0, 0.0}, .n = vNode::terminal};
 vEdge vEdge::zero{.w = {0.0, 0.0}, .n = vNode::terminal};
 
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-oneapi::tbb::enumerable_thread_specific<AddCache> _aCaches(NQUBITS);
-oneapi::tbb::enumerable_thread_specific<MulCache> _mCaches(NQUBITS);
-#else
 AddCache _aCache(NQUBITS);
 MulCache _mCache(NQUBITS);
-#endif
 
 static int LIMIT = 10000;
 const int MINUS = 6;
@@ -746,10 +734,6 @@ mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     }
 
     mEdge result;
-
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    AddCache &_aCache = _aCaches.local();
-#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -830,9 +814,6 @@ mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, mNode::terminal};
     }
 
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    MulCache &_mCache = _mCaches.local();
-#endif
     mEdge result;
     result = _mCache.find(lhs.n, rhs.n);
     if (result.n != nullptr) {
@@ -982,9 +963,6 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     vEdge result;
 
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    AddCache &_aCache = _aCaches.local();
-#endif
     result = _aCache.find(lhs, rhs);
     if (result.n != nullptr) {
         if (result.w.isApproximatelyZero()) {
@@ -1000,9 +978,6 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     vNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     std::array<vEdge, 2> edges;
-#ifdef isMT
-    std::vector<boost::fibers::future<vEdge>> sums;
-#endif
 
     for (auto i = 0; i < 2; i++) {
         if (lv == current_var && !lhs.isTerminal()) {
@@ -1017,28 +992,8 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
         } else {
             y = rhs;
         }
-#ifdef isMT
-        if (current_var > LIMIT) {
-            boost::fibers::packaged_task<vEdge()> pt(
-                std::bind(vv_add2, x, y, current_var - 1));
-            sums.emplace_back(pt.get_future());
-            boost::fibers::fiber f(std::move(pt));
-            f.detach();
-        } else {
-#endif
             edges[i] = vv_add2(x, y, current_var - 1);
-#ifdef isMT
-        }
-#endif
     }
-
-#ifdef isMT
-    if (current_var > LIMIT) {
-        assert(sums.size() == 2);
-        edges[0] = sums[0].get();
-        edges[1] = sums[1].get();
-    }
-#endif
     result = makeVEdge(current_var, edges);
     _aCache.set(lhs, rhs, result);
 
@@ -1247,9 +1202,6 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
         return {lhs.w * rhs.w, vNode::terminal};
     }
 
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    MulCache &_mCache = _mCaches.local();
-#endif
     vEdge result;
 
     result = _mCache.find(lhs.n, rhs.n);
@@ -1279,9 +1231,6 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
-#ifdef isMT
-        std::vector<boost::fibers::future<vEdge>> products;
-#endif
         std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
             if (lv == current_var && !lhs.isTerminal()) {
@@ -1298,26 +1247,8 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
             } else {
                 y = rcopy;
             }
-#ifdef isMT
-            if (current_var > LIMIT) {
-                boost::fibers::packaged_task<vEdge()> pt(
-                    std::bind(mv_multiply2, x, y, current_var - 1));
-                products.emplace_back(pt.get_future());
-                boost::fibers::fiber f(std::move(pt));
-                f.detach();
-            } else {
-#endif
                 product[k] = mv_multiply2(x, y, current_var - 1);
-#ifdef isMT
-            }
-#endif
         }
-#ifdef isMT
-        if (current_var > LIMIT) {
-            product[0] = products[0].get();
-            product[1] = products[1].get();
-        }
-#endif
         edges[i] = vv_add2(product[0], product[1], current_var - 1);
     }
 
@@ -2257,17 +2188,9 @@ std::vector<vEdge> gc(std::vector<vEdge> states, bool force) {
         states[i].n = vec_to_vNode(v[i], vUnique, i==0);
     }
 
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    _aCaches.clear();
-    _mCaches.clear();
-#else
-    // AddCache newA(NQUBITS);
-    // MulCache newM(NQUBITS);
-    // _aCache = std::move(newA);
-    // _mCache = std::move(newM);
     _mCache.clearAll();
     _aCache.clearAll();
-#endif
+
     std::cout << "gc_done " << std::endl;
     return states;
 }
@@ -2308,17 +2231,9 @@ std::vector<mEdge> gc_mat(std::vector<mEdge> mats, bool force) {
     identityTable = std::move(new_identityTable);
 
     // Clear cache
-#if defined(isMT) && !defined(CACHE_GLOBAL)
-    _aCaches.clear();
-    _mCaches.clear();
-#else
-    // AddCache newA(NQUBITS);
-    // MulCache newM(NQUBITS);
-    // _mCache = std::move(newM);
-    // _aCache = std::move(newA);
     _mCache.clearAll();
     _aCache.clearAll();
-#endif
+
     std::cout << "gc_mat_done " << std::endl;
     return mats;
 }
