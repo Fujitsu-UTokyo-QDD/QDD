@@ -1270,11 +1270,6 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     }
     LIMIT = rhs.getVar() - MINUS;
     vEdge v = mv_multiply2(lhs, rhs, rhs.getVar());
-    //_mCache.hitRatio();
-    //_aCache.hitRatio();
-    // vUnique.dump();
-    // mUnique.dump();
-    // genDot(v);
     return v;
 }
 
@@ -2248,36 +2243,4 @@ void set_gc_thr(int gc_v, int gc_m) {
     GC_SIZE = gc_v;
     GC_SIZE_M = gc_m;
     return;
-}
-
-int prune(vEdge &v, double thr, std_complex num) {
-    std_complex current = num * v.w;
-    double mag = std::sqrt(current.mag2());
-    int result = 0;
-    if (mag < thr) {
-        v.w = {0.0, 0.0};
-        v.n = vNode::terminal;
-        result = 1;
-    } else {
-        result += prune(v.n->children[0], thr, current);
-        result += prune(v.n->children[1], thr, current);
-    }
-    return result;
-}
-
-int prune(mEdge &m, double thr, std_complex num) {
-    std_complex current = num * m.w;
-    double mag = std::sqrt(current.mag2());
-    int result = 0;
-    if (mag < thr) {
-        m.w = {0.0, 0.0};
-        m.n = mNode::terminal;
-        result = 1;
-    } else {
-        result += prune(m.n->children[0], thr, current);
-        result += prune(m.n->children[1], thr, current);
-        result += prune(m.n->children[2], thr, current);
-        result += prune(m.n->children[3], thr, current);
-    }
-    return result;
 }

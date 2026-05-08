@@ -550,6 +550,3 @@ mEdge gc_mat(mEdge mat, bool force=false);
 std::vector<mEdge> gc_mat(std::vector<mEdge> mat, bool force=false);
 void clear_cache(bool force=false);
 void set_gc_thr(int gc_v, int gc_m);
-
-int prune(vEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
-int prune(mEdge &v, double thr = 1e-3, std_complex num = {1.0, 0.0});
