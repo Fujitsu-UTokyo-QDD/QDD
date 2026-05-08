@@ -7,7 +7,7 @@ import QuantumFactoring
 from mpi4py import MPI
 import sys
 
-def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_auto_swap=True, swap_ver='v1'):
+def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_auto_swap=True, swap_ver='v1'):
 
     #optimizer = QuantumCircuitOptimizer()
 
@@ -16,8 +16,8 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
     print("backend creating...")
     backend = QddProvider().get_backend()
     if nNode>1:
-        backend.set_options(use_mpi=True, use_auto_swap=use_auto_swap, swap_ver=swap_ver, use_bcast=use_bcast)
-        print("MPI enabled, use_bcast=",use_bcast)
+        backend.set_options(use_mpi=True, use_auto_swap=use_auto_swap, swap_ver=swap_ver)
+        print("MPI enabled")
         print("use_auto_swap", use_auto_swap, swap_ver)
     pyQDD.set_gc_thr(1024*1024, 1024*1024) # You can manipulate these parameters
     #backend = Aer.get_backend('qasm_simulator')
@@ -44,8 +44,8 @@ def compute_gates_for_all_ADD(N, a, nNode=1, nThread=1, use_bcast=False, use_aut
 
 if __name__ == '__main__':
     # USAGE
-    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1 # N a $nNodes $nThreads(=1) $use_bcast $use_auto_swap $swap_ver
+    # mpiexec -n 1 python -u bench/shor_main.py 51 2 1 1 0 1 v1 # N a $nNodes $nThreads(=1) $use_auto_swap $swap_ver
     args = sys.argv
-    compute_gates_for_all_ADD(int(args[1]), int(args[2]), int(args[3]), int(args[4]), bool(int(args[5])), bool(int(args[6])), args[7])
+    compute_gates_for_all_ADD(int(args[1]), int(args[2]), int(args[3]), int(args[4]), bool(int(args[5])), args[6])
 
     MPI.Finalize()

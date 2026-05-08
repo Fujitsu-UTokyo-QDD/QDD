@@ -220,7 +220,6 @@ class QddBackend(BackendV2):
             memory=False,
             seed_simulator=None,
             use_mpi=False,
-            use_bcast=False,
             use_auto_swap=True,
             swap_ver="v1",
             n_threads=1,
@@ -326,7 +325,6 @@ class QddBackend(BackendV2):
                 "seed_simulator", self.options.seed_simulator
             ),
             "use_mpi": run_options.get("use_mpi", self.options.use_mpi),
-            "use_bcast": run_options.get("use_bcast", self.options.use_bcast),
             "use_auto_swap": run_options.get(
                 "use_auto_swap", self.options.use_auto_swap
             ),
@@ -514,7 +512,6 @@ class QddBackend(BackendV2):
         count,
         local_set,
         map_after_swap,
-        use_bcast,
     ):
         n_qubit = circ.num_qubits
         next_local = set()
@@ -551,11 +548,7 @@ class QddBackend(BackendV2):
         local_set = next_local
         global_set = next_global
 
-        current = (
-            pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit - 1)
-            if use_bcast == False
-            else pyQDD.mv_multiply_MPI_bcast(fused_swap, current, n_qubit, n_qubit - 1)
-        )
+        current = pyQDD.mv_multiply_MPI(fused_swap, current, n_qubit, n_qubit - 1)
         # if MPI.COMM_WORLD.Get_rank()==0:
         #     print(count, tmp_idx, move_from_local, move_from_global, map_after_swap)
 
@@ -569,7 +562,6 @@ class QddBackend(BackendV2):
         count,
         local_list,
         map_after_swap,
-        use_bcast,
     ):
         next_local_set = set()
         n_qubit = circ.num_qubits
@@ -605,13 +597,7 @@ class QddBackend(BackendV2):
                 q1 = next_map[ii]
                 pos1 = {v: k for k, v in map_after_swap.items()}[q1]
                 gate = pyQDD.SWAP(n_qubit, q1, q2)
-                current = (
-                    pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1 > q2 else q2)
-                    if use_bcast == False
-                    else pyQDD.mv_multiply_MPI_bcast(
-                        gate, current, n_qubit, q1 if q1 > q2 else q2
-                    )
-                )
+                current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1 > q2 else q2)
                 map_after_swap[pos1] = q2
                 map_after_swap[pos2] = q1
                 assert next_map[ii] == map_after_swap[ii]
@@ -623,7 +609,7 @@ class QddBackend(BackendV2):
         return current, next_global, next_local, map_after_swap
 
     def restore_swap(
-        self, MPI, current, circ: QiskitCircuit, map_after_swap, use_bcast
+        self, MPI, current, circ: QiskitCircuit, map_after_swap
     ):
         next_map = {x: x for x in range(circ.num_qubits)}
         n_qubit = circ.num_qubits
@@ -636,13 +622,7 @@ class QddBackend(BackendV2):
                 q1 = next_map[ii]
                 pos1 = {v: k for k, v in map_after_swap.items()}[q1]
                 gate = pyQDD.SWAP(n_qubit, q1, q2)
-                current = (
-                    pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1 > q2 else q2)
-                    if use_bcast == False
-                    else pyQDD.mv_multiply_MPI_bcast(
-                        gate, current, n_qubit, q1 if q1 > q2 else q2
-                    )
-                )
+                current = pyQDD.mv_multiply_MPI(gate, current, n_qubit, q1 if q1 > q2 else q2)
                 map_after_swap[pos1] = q2
                 map_after_swap[pos2] = q1
                 assert next_map[ii] == map_after_swap[ii]
@@ -668,7 +648,6 @@ class QddBackend(BackendV2):
         use_mpi = options["use_mpi"]
         use_auto_swap = options["use_auto_swap"]
         swap_ver = options["swap_ver"]
-        use_bcast = options["use_bcast"]
         if use_mpi:
             from mpi4py import MPI
 
@@ -743,7 +722,7 @@ class QddBackend(BackendV2):
                 and swap_ver == "v2"
             ):
                 current, global_set, local_set, map_after_swap = self.do_swap_v2(
-                    MPI, current, circ, count_ref[0], local_set, map_after_swap, use_bcast
+                    MPI, current, circ, count_ref[0], local_set, map_after_swap
                 )
             elif (
                 use_mpi
@@ -753,8 +732,7 @@ class QddBackend(BackendV2):
                 )
             ):
                 current, global_list, local_list, map_after_swap = self.do_swap_v1(
-                    MPI, current, circ, count_ref[0], local_list, map_after_swap, use_bcast
-                )
+                    MPI, current, circ, count_ref[0], local_list, map_after_swap
 
             if qiskit_gate_type in _supported_qiskit_gates:
                 if qiskit_gate_type in _qiskit_gates_1q:
@@ -788,8 +766,7 @@ class QddBackend(BackendV2):
                     current = (
                         pyQDD.mv_multiply(gate, current)
                         if use_mpi == False
-                        else (
-                            pyQDD.mv_multiply_MPI(
+                        else pyQDD.mv_multiply_MPI(
                                 gate,
                                 current,
                                 n_qubit,
@@ -797,16 +774,6 @@ class QddBackend(BackendV2):
                                     [map_after_swap[self.get_qID(i)] for i in qargs]
                                 ),
                             )
-                            if use_bcast == False
-                            else pyQDD.mv_multiply_MPI_bcast(
-                                gate,
-                                current,
-                                n_qubit,
-                                max(
-                                    [map_after_swap[self.get_qID(i)] for i in qargs]
-                                ),
-                            )
-                        )
                     )
                 elif qiskit_gate_type in _qiskit_gates_2q:
                     controls = []
@@ -837,15 +804,6 @@ class QddBackend(BackendV2):
                                     [map_after_swap[self.get_qID(i)] for i in qargs]
                                 ),
                             )
-                            if use_bcast == False
-                            else pyQDD.mv_multiply_MPI_bcast(
-                                gate,
-                                current,
-                                n_qubit,
-                                max(
-                                    [map_after_swap[self.get_qID(i)] for i in qargs]
-                                ),
-                            )
                         )
                     )
                 elif qiskit_gate_type in _qiskit_gates_unitary:
@@ -857,15 +815,6 @@ class QddBackend(BackendV2):
                         if use_mpi == False
                         else (
                             pyQDD.mv_multiply_MPI(
-                                gate,
-                                current,
-                                n_qubit,
-                                max(
-                                    [map_after_swap[self.get_qID(i)] for i in qargs]
-                                ),
-                            )
-                            if use_bcast == False
-                            else pyQDD.mv_multiply_MPI_bcast(
                                 gate,
                                 current,
                                 n_qubit,
@@ -885,11 +834,10 @@ class QddBackend(BackendV2):
                     gate = i.params[0]
                     if use_mpi and use_auto_swap:
                         current, map_after_swap = self.restore_swap(
-                           MPI, current, circ, map_after_swap, use_bcast
+                           MPI, current, circ, map_after_swap
                         )
                     current = (pyQDD.mv_multiply(gate, current) if use_mpi == False
-                         else (pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]),) if use_bcast == False
-                         else pyQDD.mv_multiply_MPI_bcast(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]),)))
+                         else pyQDD.mv_multiply_MPI(gate, current, n_qubit, max([map_after_swap[self.get_qID(i)] for i in qargs]),) )
                 else:
                     raise RuntimeError(
                         f"Unsupported gate or instruction:"
@@ -973,8 +921,6 @@ class QddBackend(BackendV2):
     ):
         use_mpi = options["use_mpi"]
         use_auto_swap = options["use_auto_swap"]
-        use_bcast = options["use_bcast"]
-        assert (not use_bcast) or use_mpi
         map_after_swap = {x: x for x in range(circ.num_qubits)}
         size_global = 0
         if use_mpi:
@@ -1038,7 +984,7 @@ class QddBackend(BackendV2):
 
         if use_mpi and use_auto_swap:
             current, map_after_swap = self.restore_swap(
-                MPI, current, circ, map_after_swap, use_bcast
+                MPI, current, circ, map_after_swap
             )
 
         current = pyQDD.applyGlobal(current, circ.global_phase)
