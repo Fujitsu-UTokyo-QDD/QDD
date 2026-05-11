@@ -43,11 +43,11 @@ def test_circuit_basics():
     result = job.result()
 
     with pytest.raises(Exception):
-        result.get_statevector(circ, decimals=3)
+        result.get_statevector(decimals=3)
     with pytest.raises(Exception):
-        result.get_unitary(circ, decimals=3)
+        result.get_unitary(decimals=3)
 
-    counts = result.get_counts(qc)
+    counts = result.get_counts()
     assert "000" in counts
     assert "111" in counts
     assert counts["000"] + counts["111"] == 1024

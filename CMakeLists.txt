@@ -37,17 +37,6 @@ if (isMPI)
   message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
 endif()
 
-option(isMT "Configure for using multi-threading" OFF)
-if (isMT)
-  add_compile_definitions(isMT)
-  set(THREADS_PREFER_PTHREAD_FLAG ON)
-  find_package(Threads REQUIRED)
-  find_package(TBB REQUIRED)
-  find_package(Boost REQUIRED COMPONENTS fiber context)
-  message(STATUS "Boost include: ${Boost_INCLUDE_DIRS}")
-endif()
-
-
 add_subdirectory(src)
 add_subdirectory(test)
 
