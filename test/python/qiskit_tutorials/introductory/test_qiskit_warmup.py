@@ -42,7 +42,7 @@ def test_warmup():
     result = job.result()
 
     # Returns counts
-    counts = result.get_counts(compiled_circuit)
+    counts = result.get_counts()
     print("\nTotal count for 00 and 11 are:", counts)
     assert "00" in counts
     assert "11" in counts

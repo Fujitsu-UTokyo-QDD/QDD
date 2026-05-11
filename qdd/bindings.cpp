@@ -9,16 +9,7 @@
 #endif
 #include "common.h"
 #include "dd.h"
-#ifdef isMT
-#include "task.h"
-#endif
 namespace py = pybind11;
-
-#ifdef isMT
-bool mt_initialized = false;
-int n_threads = 1;
-Scheduler *s;
-#endif
 
 std::map<std::string, GateMatrix> gateMap{
     {"I", Imat},       {"H", Hmat},   {"X", Xmat},         {"Y", Ymat},
@@ -118,11 +109,6 @@ vEdge _mv_multiply_MPI(mEdge lhs, vEdge rhs, std::size_t total_qubits,
                        std::size_t largest_qubit) {
     return mv_multiply_MPI(lhs, rhs, _world, total_qubits, largest_qubit);
 }
-vEdge _mv_multiply_MPI_bcast(mEdge lhs, vEdge rhs, std::size_t total_qubits,
-                             std::size_t largest_qubit) {
-    return mv_multiply_MPI_bcast3(lhs, rhs, _world, total_qubits,
-                                  largest_qubit);
-}
 std::pair<vEdge, std::string> _measureAllMPI(vEdge &rootEdge,
                                              const bool collapse) {
     std::string result = measureAllMPI(_world, rootEdge, collapse, mt);
@@ -168,29 +154,6 @@ std::vector<std::complex<double>> _getVectorMPI(vEdge &edge, int n_qubits, int w
         }
     }
     return final_result;
-}
-#endif
-
-#ifdef isMT
-void terminate_mt() {
-    if (mt_initialized) {
-        mt_initialized = false;
-        n_threads = 1;
-        delete s;
-    }
-    return;
-}
-
-int init_mt(int n = 8) {
-    if (n != n_threads) {
-        terminate_mt();
-        if (n > 1) {
-            mt_initialized = true;
-            n_threads = n;
-            s = new Scheduler(n - 1);
-        }
-    }
-    return n_threads;
 }
 #endif
 
@@ -287,15 +250,11 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("makeZeroStateMPI", _makeZeroStateMPI)
         .def("makeOneStateMPI", _makeOneStateMPI)
         .def("mv_multiply_MPI", _mv_multiply_MPI)
-        .def("mv_multiply_MPI_bcast", _mv_multiply_MPI_bcast)
         .def("measureAllMPI", _measureAllMPI)
         .def("getVectorMPI", _getVectorMPI)
         .def("save_binary", save_binary)
         .def("load_binary", load_binary)
         .def("measureOneCollapsingMPI", _measureOneCollapsingMPI)
         .def("measureOneMPI", _measureOneMPI);
-#endif
-#ifdef isMT
-    m.def("initMT", init_mt).def("terminateMT", terminate_mt);
 #endif
 }
