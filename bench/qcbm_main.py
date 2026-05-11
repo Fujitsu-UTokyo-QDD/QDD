@@ -12,17 +12,11 @@ def exec(backend, circuit):
     end = time.perf_counter()
     print(end-start, "sec")
 
-def native_execute(circuit, use_auto_swap=True, swap_ver='v1'):
+def native_execute(circuit):
     backend=QddProvider().get_backend()
-    backend.set_options(use_mpi=True, use_auto_swap=use_auto_swap, swap_ver=swap_ver)
-    print("use_auto_swap",use_auto_swap)
+    backend.set_options(use_mpi=True)
     #experiment = transpile(circuit, backend, optimization_level=0)
     exec(backend, circuit)
-
-def run_bench(benchmark, nqubits, gate, args=(3, )):
-    qc = QuantumCircuit(nqubits)
-    getattr(qc, gate)(*args)
-    native_execute(benchmark, qc)
 
 def first_rotation(circuit, nqubits):
     circuit.rx(np.random.rand(), range(nqubits))
@@ -63,7 +57,7 @@ nqubit = 15
 pairs = [(i, (i + 1) % nqubit) for i in range(nqubit)]
 circuit = generate_qcbm_circuit(nqubit, 9, pairs)
 circuit.measure_all()
-native_execute(circuit, bool(int(args[1])), args[2])
+native_execute(circuit)
 
 # USAGE
-# mpiexec -n 1 ./qcbm_main.py 0 1 v1 # $use_auto_swap $swap_ver 
+# mpiexec -n 1 ./qcbm_main.py

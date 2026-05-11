@@ -159,19 +159,19 @@ def test_get_counts():
         shots=20,
         seed_simulator=80,
     )
-    single_exp_counts_with_circ = single_exp_job.result().get_counts(qc1)
-    single_exp_counts_with_circ = {
-        k: v for k, v in single_exp_counts_with_circ.items() if v != 0
+    single_exp_counts_with_index = single_exp_job.result().get_counts(0)
+    single_exp_counts_with_index = {
+        k: v for k, v in single_exp_counts_with_index.items() if v != 0
     }
     single_exp_counts_without_circ = single_exp_job.result().get_counts()
     single_exp_counts_without_circ = {
         k: v for k, v in single_exp_counts_without_circ.items() if v != 0
     }
     print(
-        f"Result: {single_exp_counts_with_circ=} and {single_exp_counts_without_circ}"
+        f"Result: {single_exp_counts_with_index=} and {single_exp_counts_without_circ}"
     )
 
-    assert single_exp_counts_with_circ == single_exp_counts_without_circ == {"01": 20}
+    assert single_exp_counts_with_index == single_exp_counts_without_circ == {"01": 20}
 
     # execute multiple experiments
     qc2 = QuantumCircuit(2)
@@ -189,11 +189,11 @@ def test_get_counts():
         {k: v for k, v in conunts.items() if v != 0}
         for conunts in multi_exp_job_counts_all
     ]
-    multi_exp_job_counts_qc1 = multi_exp_job.result().get_counts(qc1)
+    multi_exp_job_counts_qc1 = multi_exp_job.result().get_counts(0)
     multi_exp_job_counts_qc1 = {
         k: v for k, v in multi_exp_job_counts_qc1.items() if v != 0
     }
-    multi_exp_job_counts_qc2 = multi_exp_job.result().get_counts(qc2)
+    multi_exp_job_counts_qc2 = multi_exp_job.result().get_counts(1)
     multi_exp_job_counts_qc2 = {
         k: v for k, v in multi_exp_job_counts_qc2.items() if v != 0
     }
@@ -362,6 +362,7 @@ def test_mm_multiply():
             print(aer_unitary_np)
             assert(0)
 
+@pytest.mark.no_mpi_support
 def test_qdd_gate():
     backend = QddProvider().get_backend("statevector_simulator")
     for i in range(10):

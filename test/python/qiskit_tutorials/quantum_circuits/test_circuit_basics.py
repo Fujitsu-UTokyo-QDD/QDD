@@ -33,7 +33,7 @@ def test_circuit_basics():
     qc_compiled = transpile(qc, backend, seed_transpiler=50)
     job_sim = backend.run(qc_compiled, shots=1024, seed_simulator=80)
     result_sim = job_sim.result()
-    counts = result_sim.get_counts(qc_compiled)
+    counts = result_sim.get_counts()
     print(counts)
     assert "000" in counts
     assert "111" in counts

@@ -31,7 +31,7 @@ def test_circuit_evaluation():
     result = backend.run(
         transpile(circ, backend, seed_transpiler=50), shots=1000, seed_simulator=80
     ).result()
-    counts = result.get_counts(circ)
+    counts = result.get_counts()
 
     assert "00" in counts
     assert "11" in counts

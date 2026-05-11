@@ -38,13 +38,13 @@ def test_simulate_quantum_circuits():
 
     # get counts
     result = simulator.run(circ, seed_simulator=80).result()
-    counts = result.get_counts(circ)
+    counts = result.get_counts()
     assert "00" in counts
     assert "11" in counts
 
     # get memory
     result = simulator.run(circ, shots=100, memory=True, seed_simulator=80).result()
-    memory = result.get_memory(circ)
+    memory = result.get_memory()
     assert "00" in memory
     assert "11" in memory
     assert len(memory) == 100
