@@ -1,4 +1,7 @@
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://fujitsu-utokyo-qdd.github.io/QDD/)
+
 # QDD
+[Documentation](https://fujitsu-utokyo-qdd.github.io/QDD/) is available on GitHub Pages.
 
 QDD is a decision diagram based quantum computing simulator for Qiskit. It can
 reduce memory usage compared with typical state-vector simulators when the
