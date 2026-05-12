@@ -28,6 +28,12 @@ dependencies = [
     "qiskit~=2.2.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Fujitsu-UTokyo-QDD/QDD"
+Documentation = "https://fujitsu-utokyo-qdd.github.io/QDD/"
+Repository = "https://github.com/Fujitsu-UTokyo-QDD/QDD"
+Issues = "https://github.com/Fujitsu-UTokyo-QDD/QDD/issues"
+
 # Optional dependency groups for local development and documentation builds.
 [project.optional-dependencies]
 test = [
