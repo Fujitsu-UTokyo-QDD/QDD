@@ -23,6 +23,13 @@ static const uint64_t CL_MASK_R = ((LINE_SIZE) / 8) - 1;  // X&CL_MASK_R = X%8
 
 template <typename T, typename Hash = std::hash<T>,
           typename ValueEqual = std::equal_to<T>>
+/**
+ * @brief Unique table and node allocator for decision diagram nodes.
+ *
+ * The table interns equivalent nodes per qubit variable and reuses returned
+ * nodes through an internal free list. This keeps canonical decision diagram
+ * nodes shared across operations.
+ */
 class CHashTable {
   public:
     CHashTable(QubitCount n) : _tables{n}, _qn(n){};

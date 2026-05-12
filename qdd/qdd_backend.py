@@ -124,7 +124,13 @@ class QddExperiments:
 
 
 class QddBackend(BackendV2):
-    """A backend used for evaluating circuits with QDD simulator."""
+    """Qiskit backend that evaluates circuits with the QDD simulator.
+
+    The backend accepts Qiskit ``QuantumCircuit`` objects and returns Qiskit
+    ``Result`` objects through ``QddJob``. It supports shot-based qasm-style
+    simulation by default. ``QddSVBackend`` enables statevector output by
+    changing the backend mode.
+    """
 
     _save_SV = False
     _basis_gates: List[str] = [
@@ -189,6 +195,12 @@ class QddBackend(BackendV2):
     }
 
     def __init__(self, provider, name="qasm_simulator"):
+        """Create a QDD backend.
+
+        Args:
+            provider: Provider object that owns this backend.
+            name: Backend name reported to Qiskit.
+        """
         super().__init__(
             provider=provider,
             name=name,
@@ -198,6 +210,7 @@ class QddBackend(BackendV2):
 
     @property
     def target(self):
+        """Return the Qiskit target describing supported operations."""
         target = Target.from_configuration(
             basis_gates=self._basis_gates,
             num_qubits=self._NUM_QUBITS,
@@ -211,10 +224,15 @@ class QddBackend(BackendV2):
 
     @property
     def max_circuits(self):
+        """Return the maximum number of circuits accepted in one run.
+
+        ``None`` means that QDD does not impose a fixed limit at this layer.
+        """
         return None
 
     @classmethod
     def _default_options(cls):
+        """Return default runtime options for the backend."""
         return Options(
             shots=cls._DEFAULT_SHOTS,
             memory=False,
@@ -261,6 +279,17 @@ class QddBackend(BackendV2):
     def run(
         self, circuits: Union[QiskitCircuit, List[QiskitCircuit]], **run_options
     ) -> JobV1:
+        """Run one or more circuits on the QDD backend.
+
+        Args:
+            circuits: A single Qiskit ``QuantumCircuit`` or a list of circuits.
+            **run_options: Runtime options such as ``shots``, ``memory``,
+                ``seed_simulator``, ``use_mpi``, and ``parameter_binds``.
+
+        Returns:
+            A ``QddJob`` on success, or a ``QddFailedJob`` containing the
+            failure status if validation or execution fails.
+        """
         qiskit_circs: List[QiskitCircuit] = []
 
         try:

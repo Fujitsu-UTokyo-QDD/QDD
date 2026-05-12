@@ -4,7 +4,10 @@ from qdd.qdd_backend import QddBackend
 
 
 class QddSVBackend(QddBackend):
+    """Statevector variant of the QDD backend."""
+
     def __init__(self, provider):
+        """Create the statevector backend owned by ``provider``."""
         self._save_SV = True
         self._NUM_QUBITS = 20
         super().__init__(provider, name="statevector_simulator")

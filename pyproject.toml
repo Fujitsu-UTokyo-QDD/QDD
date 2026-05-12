@@ -21,19 +21,25 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = [
     "qiskit~=2.2.0",
 ]
 
-# This command, 'pip install {package-name}[test]',
-# enables you to install the test dependencies along with the main dependencies
+# Optional dependency groups for local development and documentation builds.
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.2",
     "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
+]
+docs = [
+    "sphinx>=7.4",
+    "myst-parser>=4.0",
+    "breathe>=4.35",
+    "sphinx-rtd-theme>=2.0",
 ]
 
 [tool.scikit-build]

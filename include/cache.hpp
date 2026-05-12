@@ -22,6 +22,13 @@
 #endif
 
 
+/**
+ * @brief Memoization cache for decision diagram addition.
+ *
+ * The cache stores results of vector-vector and matrix-matrix addition keyed by
+ * operand edges. It reduces repeated recursive work during decision diagram
+ * arithmetic.
+ */
 class AddCache{
     public:
         AddCache(QubitCount q):_tables{2}, rng(std::random_device()()), dist(0,1){
@@ -265,6 +272,12 @@ class AddCache{
 
 };
 
+/**
+ * @brief Memoization cache for decision diagram multiplication.
+ *
+ * The cache stores multiplication results for edge operands and is shared by
+ * matrix-vector and matrix-matrix recursive operations.
+ */
 class MulCache{
 
     public:
