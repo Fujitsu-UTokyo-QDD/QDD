@@ -28,7 +28,11 @@ jobs:
         run: python -m pip install --upgrade pip build
 
       - name: Build qdd-mpi sdist
-        run: bash scripts/build_mpi_sdist.sh
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == v* ]]; then
+            export SETUPTOOLS_SCM_PRETEND_VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          bash scripts/build_mpi_sdist.sh
 
       - uses: actions/upload-artifact@v4
         with:
