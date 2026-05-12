@@ -343,13 +343,13 @@ def test_mm_multiply():
     aer_backend = Aer.get_backend("unitary_simulator")
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=i*i)
 
-        circ1 = transpile(circ, backend=backend)
+        circ1 = transpile(circ, backend=backend, optimization_level=0)
         result_medge = backend.merge_circuit(circ1, 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
-        circ2 = transpile(circ, backend=aer_backend)
+        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(circ2).result()
         aer_unitary = aer_result.get_unitary(circ2)
         aer_unitary_np = np.asarray(aer_unitary)
