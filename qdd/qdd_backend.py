@@ -284,7 +284,10 @@ class QddBackend(BackendV2):
         Args:
             circuits: A single Qiskit ``QuantumCircuit`` or a list of circuits.
             **run_options: Runtime options such as ``shots``, ``memory``,
-                ``seed_simulator``, ``use_mpi``, and ``parameter_binds``.
+                ``seed_simulator``, and ``use_mpi``. ``parameter_binds`` is
+                accepted as a Qiskit compatibility keyword, but it is not a
+                backend option; prefer binding parameters on the circuit before
+                calling this method.
 
         Returns:
             A ``QddJob`` on success, or a ``QddFailedJob`` containing the

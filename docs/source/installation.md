@@ -15,7 +15,7 @@ The package exposes the Python package name `qdd`.
 Install the MPI-enabled package from PyPI:
 
 ```sh
-pip install qdd-mpi
+CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
 ```
 
 The standard `qdd` package and the MPI-enabled `qdd-mpi` package both provide
@@ -24,7 +24,7 @@ Uninstall the existing package before switching variants.
 
 ```sh
 pip uninstall qdd
-pip install qdd-mpi
+CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
 ```
 
 See {doc}`mpi` for MPI prerequisites and build details.

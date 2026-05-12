@@ -15,7 +15,7 @@ pip install qdd
 Install the MPI-enabled package from PyPI:
 
 ```sh
-pip install qdd-mpi
+CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
 ```
 
 The `qdd` and `qdd-mpi` distributions provide the same `import qdd` Python

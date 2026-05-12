@@ -4,7 +4,7 @@
 
 Development work is done on topic branches based on `develop`. Feature branches
 use names such as `feature/add-circuit`; bug-fix branches use names such as
-`bugfix/py-version`.
+`fix/bug-aa`.
 
 Release preparation is merged from `develop` to `main`. Version tags are created
 from `main`.
@@ -32,13 +32,6 @@ Build the documentation:
 
 ```sh
 doxygen docs/Doxyfile
-sphinx-build -b html docs/source docs/build/html
-```
-
-If Doxygen is not installed, Sphinx can still build the Markdown and Python API
-pages, but the C++ API page is skipped:
-
-```sh
 sphinx-build -b html docs/source docs/build/html
 ```
 

@@ -24,7 +24,7 @@ autodoc_default_options = {
     "undoc-members": False,
     "show-inheritance": True,
 }
-autodoc_typehints = "description"
+autodoc_typehints = "none"
 
 breathe_projects = {
     "qdd": str(ROOT / "docs" / "build" / "doxygen" / "xml"),

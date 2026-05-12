@@ -20,6 +20,8 @@ sudo apt-get install -y libopenmpi-dev openmpi-bin \
 CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
 ```
 
+Use the MPI wrapper compilers so the source build uses the MPI implementation's
+compiler and linker flags.
 The `--no-binary qdd-mpi` option makes the source-build requirement explicit.
 
 ## Manual Build
