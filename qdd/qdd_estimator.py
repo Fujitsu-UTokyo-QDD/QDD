@@ -55,8 +55,11 @@ from .qdd_utils import _circuit_key, _observable_key
 
 
 class Estimator(BaseEstimatorV2):
-    """
-    QDD implmentation of Estimator.
+    """QDD implementation of Qiskit's Estimator V2 primitive.
+
+    The estimator evaluates expectation values using QDD backend runs. Exact
+    probabilities are used when precision is zero; positive precision values
+    are converted to a finite shot count.
     """
 
     def __init__(
@@ -106,6 +109,16 @@ class Estimator(BaseEstimatorV2):
         *,
         precision: float | None = None,
     ) -> PrimitiveJob:
+        """Submit estimator primitive inputs for execution.
+
+        Args:
+            pubs: Iterable of estimator primitive inputs accepted by Qiskit.
+            precision: Target precision. If omitted, ``default_precision`` from
+                the constructor is used.
+
+        Returns:
+            A Qiskit ``PrimitiveJob`` whose result contains expectation values.
+        """
 
         self._precision = (
             precision if precision is not None else self._default_precision

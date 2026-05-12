@@ -41,8 +41,10 @@ from .qdd_utils import _circuit_key
 
 
 class Sampler(BaseSamplerV2):
-    """
-    QDD implementation of SamplerV2 class.
+    """QDD implementation of Qiskit's Sampler V2 primitive.
+
+    The sampler evaluates circuits with the QDD qasm backend and returns
+    quasi-distributions, and shot memory when finite shots are requested.
     """
 
     def __init__(
@@ -72,6 +74,17 @@ class Sampler(BaseSamplerV2):
         self._circuit_ids = {}
 
     def run(self, pubs: Iterable[SamplerPubLike], *, shots=None, is_exact=False):
+        """Submit sampler primitive inputs for execution.
+
+        Args:
+            pubs: Iterable of sampler primitive inputs accepted by Qiskit.
+            shots: Number of shots. If omitted, the backend default is used.
+            is_exact: If true, compute exact probabilities by running with
+                ``shots=None``.
+
+        Returns:
+            A Qiskit ``PrimitiveJob`` whose result contains sampler results.
+        """
         if shots is None:
             shots = self._default_shots
         if is_exact:

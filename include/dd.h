@@ -19,6 +19,13 @@ using Eigen::VectorXcf;
 namespace bmpi = boost::mpi;
 #endif
 
+/**
+ * @brief Lightweight complex number used as a decision diagram edge weight.
+ *
+ * QDD uses this type instead of std::complex so that equality, approximate
+ * comparisons, hashing, and optional MPI serialization remain consistent
+ * across vector and matrix decision diagram operations.
+ */
 struct Complex {
 #ifdef isMPI
     friend class boost::serialization::access;
@@ -145,6 +152,12 @@ using std_complex = Complex;
 struct mNode;
 struct vNode;
 
+/**
+ * @brief Weighted edge in a vector decision diagram.
+ *
+ * A vector edge combines a complex weight with a pointer to a vector node. The
+ * terminal and zero edges are represented by the static members of this type.
+ */
 struct vEdge {
 #ifdef isMPI
     friend class boost::serialization::access;
@@ -184,6 +197,12 @@ inline void swap(vEdge &lhs, vEdge &rhs) {
     swap(lhs.n, rhs.n);
 }
 
+/**
+ * @brief Node in a vector decision diagram.
+ *
+ * Each vector node is associated with a qubit variable and has two child edges,
+ * corresponding to the low and high branches of that variable.
+ */
 struct vNode {
 #ifdef isMPI
     friend class boost::serialization::access;
@@ -220,6 +239,12 @@ struct vNode {
 
 };
 
+/**
+ * @brief Weighted edge in a matrix decision diagram.
+ *
+ * A matrix edge combines a complex weight with a pointer to a matrix node. The
+ * edge is the public handle used by matrix operations and Python bindings.
+ */
 struct mEdge {
 #ifdef isMPI
     friend class boost::serialization::access;
@@ -295,6 +320,12 @@ inline std::ostream &operator<<(std::ostream &os, const mEdge &c) {
     return os;
 }
 
+/**
+ * @brief Node in a matrix decision diagram.
+ *
+ * Each matrix node is associated with a qubit variable and has four child
+ * edges, corresponding to the 2x2 block decomposition of an operator.
+ */
 struct mNode {
 #ifdef isMPI
     friend class boost::serialization::access;
@@ -352,6 +383,9 @@ template <> struct std::hash<vNode> {
     }
 };
 
+/**
+ * @brief Control qubit descriptor for controlled gate construction.
+ */
 struct Control {
     enum class Type : bool { pos = true, neg = false };
     Qubit qubit;
