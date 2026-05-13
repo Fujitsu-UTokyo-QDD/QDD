@@ -1,6 +1,59 @@
 #include "common.h"
 #include "dd.h"
 #include "gtest/gtest.h"
+#include "table.hpp"
+
+namespace {
+struct CountingNode {
+    static int constructed;
+    static int destroyed;
+
+    CountingNode() { ++constructed; }
+    ~CountingNode() { ++destroyed; }
+
+    bool operator==(const CountingNode &other) const noexcept {
+        return v == other.v;
+    }
+
+    int v{0};
+    CountingNode *next{nullptr};
+};
+
+int CountingNode::constructed = 0;
+int CountingNode::destroyed = 0;
+
+struct CountingHash {
+    std::size_t operator()(const CountingNode &node) const noexcept {
+        return static_cast<std::size_t>(node.v);
+    }
+};
+} // namespace
+
+TEST(CacheTest, ConstructsFreshNodesLazily) {
+    CountingNode::constructed = 0;
+    CountingNode::destroyed = 0;
+
+    {
+        CHashTable<CountingNode, CountingHash> table(1);
+        ASSERT_EQ(table.get_allocations(), INITIAL_ALLOCATION_SIZE);
+        ASSERT_EQ(CountingNode::constructed, 0);
+
+        CountingNode *first = table.getNode();
+        ASSERT_EQ(CountingNode::constructed, 1);
+
+        CountingNode *second = table.getNode();
+        ASSERT_EQ(CountingNode::constructed, 2);
+
+        table.returnNode(first);
+        CountingNode *reused = table.getNode();
+        ASSERT_EQ(reused, first);
+        ASSERT_EQ(CountingNode::constructed, 2);
+
+        (void)second;
+    }
+
+    ASSERT_EQ(CountingNode::destroyed, 2);
+}
 
 bool isNearlyEqual(std_complex lhs, std::complex<double> rhs) {
     // Here, tolerance is larger than dd.h

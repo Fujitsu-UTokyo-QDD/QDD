@@ -7,8 +7,11 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <stdio.h>
+#include <type_traits>
+#include <utility>
 
 /*
  * CL_MASK and CL_MASK_R are for the probe sequence calculation.
@@ -43,15 +46,14 @@ class CHashTable {
         }
 
         if (_cache.chunkIt == _cache.chunkEndIt) {
-            _cache.chunks.emplace_back(_cache.allocationSize);
-            _cache.allocations += _cache.allocationSize;
+            _cache.addChunk(_cache.allocationSize);
             _cache.allocationSize *= GROWTH_FACTOR;
-            _cache.chunkID++;
-            _cache.chunkIt = _cache.chunks[_cache.chunkID].begin();
-            _cache.chunkEndIt = _cache.chunks[_cache.chunkID].end();
         }
 
-        auto p = &(*_cache.chunkIt);
+        auto p = _cache.chunkIt;
+        std::allocator_traits<typename Cache::Allocator>::construct(
+            _cache.allocator, p);
+        ++_cache.chunks[_cache.chunkID].constructed;
         p->next = nullptr;
         ++_cache.chunkIt;
         return p;
@@ -139,14 +141,108 @@ class CHashTable {
     std::vector<Table> _tables;
 
     struct Cache {
+        using Allocator = std::allocator<T>;
+        using AllocatorTraits = std::allocator_traits<Allocator>;
+
+        struct Chunk {
+            T *data{nullptr};
+            std::size_t capacity{0};
+            std::size_t constructed{0};
+        };
+
         T *available{};
-        std::vector<std::vector<T>> chunks{
-            1, std::vector<T>{INITIAL_ALLOCATION_SIZE}};
+        std::vector<Chunk> chunks{};
         std::size_t chunkID{0};
-        typename std::vector<T>::iterator chunkIt{chunks[0].begin()};
-        typename std::vector<T>::iterator chunkEndIt{chunks[0].end()};
+        T *chunkIt{nullptr};
+        T *chunkEndIt{nullptr};
         std::size_t allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
-        std::size_t allocations = INITIAL_ALLOCATION_SIZE;
+        std::size_t allocations{0};
+        Allocator allocator{};
+
+        Cache() {
+            addChunk(INITIAL_ALLOCATION_SIZE);
+        }
+
+        ~Cache() {
+            clear();
+        }
+
+        Cache(const Cache &) = delete;
+        Cache &operator=(const Cache &) = delete;
+
+        Cache(Cache &&other) noexcept {
+            moveFrom(std::move(other));
+        }
+
+        Cache &operator=(Cache &&other) noexcept {
+            if (this != &other) {
+                clear();
+                moveFrom(std::move(other));
+            }
+            return *this;
+        }
+
+        void addChunk(std::size_t capacity) {
+            T *data = AllocatorTraits::allocate(allocator, capacity);
+            Chunk chunk{data, capacity, 0};
+            try {
+                chunks.push_back(chunk);
+            } catch (...) {
+                AllocatorTraits::deallocate(allocator, data, capacity);
+                throw;
+            }
+
+            allocations += capacity;
+            chunkID = chunks.size() - 1;
+            chunkIt = data;
+            chunkEndIt = data + capacity;
+        }
+
+      private:
+        void clear() noexcept {
+            for (auto &chunk : chunks) {
+                if (chunk.data == nullptr) {
+                    continue;
+                }
+
+                if constexpr (!std::is_trivially_destructible_v<T>) {
+                    for (std::size_t i = 0; i < chunk.constructed; ++i) {
+                        AllocatorTraits::destroy(allocator, chunk.data + i);
+                    }
+                }
+                AllocatorTraits::deallocate(allocator, chunk.data,
+                                            chunk.capacity);
+            }
+
+            chunks.clear();
+            available = nullptr;
+            chunkID = 0;
+            chunkIt = nullptr;
+            chunkEndIt = nullptr;
+            allocations = 0;
+        }
+
+        void moveFrom(Cache &&other) noexcept {
+            available = other.available;
+            chunks = std::move(other.chunks);
+            chunkID = other.chunkID;
+            chunkIt = other.chunkIt;
+            chunkEndIt = other.chunkEndIt;
+            allocationSize = other.allocationSize;
+            allocations = other.allocations;
+            allocator = std::move(other.allocator);
+
+            other.available = nullptr;
+            for (auto &chunk : other.chunks) {
+                chunk = {};
+            }
+            other.chunks.clear();
+            other.chunkID = 0;
+            other.chunkIt = nullptr;
+            other.chunkEndIt = nullptr;
+            other.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+            other.allocations = 0;
+        }
     };
 
     std::size_t collected;
