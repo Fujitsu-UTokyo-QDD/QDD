@@ -2,7 +2,6 @@
 
 #include "Eigen/Dense"
 #include "common.h"
-#include <atomic>
 #include <complex>
 #include <random>
 #include <vector>

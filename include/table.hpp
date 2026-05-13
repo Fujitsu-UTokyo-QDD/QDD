@@ -7,8 +7,6 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <mutex>
-#include <atomic>
 #include <random>
 #include <stdio.h>
 
@@ -74,7 +72,7 @@ class CHashTable {
 
     T *register_wo_lookup(T *node){
         // Assuming single threaded
-        const auto key = Hash()(*node) % NBUCKETS;
+        const auto key = bucket_index(Hash()(*node));
         const Qubit v = node->v;
 
          T *current = _tables[v]._table[key].node;
@@ -92,7 +90,7 @@ class CHashTable {
     }
 
     T *lookup(T *node) {
-        const auto key = Hash()(*node) % NBUCKETS;
+        const auto key = bucket_index(Hash()(*node));
         const Qubit v = node->v;      
         T *current = _tables[v]._table[key].node;
 
@@ -126,11 +124,21 @@ class CHashTable {
     }
 
   private:
+    static constexpr bool is_power_of_two(std::size_t x) noexcept {
+        return x != 0 && (x & (x - 1)) == 0;
+    }
+
+    static_assert(is_power_of_two(NBUCKETS),
+                  "NBUCKETS must be a power of two");
+
+    static constexpr std::size_t bucket_index(std::size_t h) noexcept {
+        return h & (NBUCKETS - 1);
+    }
 
     struct NodeSlot {
         T *node;
-        std::atomic_flag locked;
     };
+    static_assert(sizeof(NodeSlot) == sizeof(T*));
     
     struct Table {
         NodeSlot _table[NBUCKETS] = {nullptr};
