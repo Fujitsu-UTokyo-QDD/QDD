@@ -61,12 +61,14 @@ class CHashTable {
         if constexpr (std::is_same_v<T, mNode>) {
             if (p == mNode::terminal)
                 return;
+        } else if constexpr (std::is_same_v<T, vNode>) {
+            if (p == vNode::terminal)
+                return;
         }
 
         p->v = -2;
 
         p->next = _cache.available;
-        p->previous = nullptr;
         _cache.available = p;
     }
 
@@ -75,16 +77,7 @@ class CHashTable {
         const auto key = bucket_index(Hash()(*node));
         const Qubit v = node->v;
 
-         T *current = _tables[v]._table[key].node;
-        //T *previous = current;
-
-        if (current == nullptr) {
-            _tables[v]._table[key].node = node;
-            return node;
-        }
-
-        node->previous = _tables[v]._table[key].node;
-        _tables[v]._table[key].node->next = node;
+        node->next = _tables[v]._table[key].node;
         _tables[v]._table[key].node = node;
         return node;
     }
@@ -106,11 +99,10 @@ class CHashTable {
                 returnNode(node);
                 return current;
             }
-            current = current->previous;
+            current = current->next;
         }
 
-        node->previous = _tables[v]._table[key].node;
-        _tables[v]._table[key].node->next = node;
+        node->next = _tables[v]._table[key].node;
         _tables[v]._table[key].node = node;
         return node;
     }

@@ -211,14 +211,17 @@ struct vNode {
         ar &v;
         ar &children;
         ar &next;
-        ar & previous;
     }
 #endif
 
     vNode() = default;
     vNode(const vNode &vv) : v(vv.v), children(vv.children) {}
-    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, vNode *p)
-        : v(q), children(c), next(n), previous(p) {}
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n)
+        : v(q), children(c), next(n) {}
+    // Backward-compatible overload for old four-argument call sites.
+    // The fourth argument is intentionally ignored.
+    vNode(Qubit q, const std::array<vEdge, 2> &c, vNode *n, vNode *)
+        : v(q), children(c), next(n) {}
 
     vEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -234,7 +237,6 @@ struct vNode {
     Qubit v;
     std::array<vEdge, 2> children;
     vNode *next{nullptr};
-    vNode *previous{nullptr};
 
 };
 
@@ -334,13 +336,16 @@ struct mNode {
         ar &v;
         ar &children;
         ar &next;
-        ar & previous;
     }
 #endif
 
     mNode() = default;
-    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, mNode *p)
-        : v(q), children(c), next(n), previous(p){}
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n)
+        : v(q), children(c), next(n) {}
+    // Backward-compatible overload for old four-argument call sites.
+    // The fourth argument is intentionally ignored.
+    mNode(Qubit q, const std::array<mEdge, 4> &c, mNode *n, mNode *)
+        : v(q), children(c), next(n) {}
     mNode(const mNode &vv) : v(vv.v), children(vv.children) {}
     mEdge &operator[](std::size_t i) { return children[i]; }
 
@@ -356,7 +361,6 @@ struct mNode {
     Qubit v;
     std::array<mEdge, 4> children;
     mNode *next{nullptr};
-    mNode *previous{nullptr};
 
 };
 
