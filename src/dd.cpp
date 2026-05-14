@@ -90,18 +90,20 @@ static mEdge normalizeM(const mEdge &e) {
 }
 
 static vEdge normalizeV(const vEdge &e) {
-    // check for all zero weights
-    if (std::all_of(e.n->children.begin(), e.n->children.end(),
-                    [](const vEdge &e) { return e.w.isApproximatelyZero(); })) {
+    const bool z0 = e.n->children[0].w.isApproximatelyZero();
+    const bool z1 = e.n->children[1].w.isApproximatelyZero();
+    if (z0 && z1) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
-                                   [](const vEdge &lhs, const vEdge &rhs) {
-                                       return norm2(lhs.w) < norm2(rhs.w);
-                                   });
-    std_complex max_weight = result->w;
+    const std::size_t max_idx =
+            z0 ? 1 : z1 ? 0 : (norm2(e.n->children[0].w) <
+                                       norm2(e.n->children[1].w)
+                               ? 1
+                               : 0);
+    const std::size_t min_idx = 1 - max_idx;
+    std_complex max_weight = e.n->children[max_idx].w;
 
     // parents weight
     std_complex new_weight = max_weight * e.w;
@@ -113,16 +115,18 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     // child weight (larger one)
-    size_t max_idx = (result == &(e.n->children[1])) ? 1 : 0;
     e.n->children[max_idx].w = {1.0, 0.0};
 
     // child weight (smaller one)
-    size_t min_idx = (max_idx == 1) ? 0 : 1;
-    e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
-    if (e.n->children[min_idx].w.isApproximatelyOne()) {
-        e.n->children[min_idx].w = {1.0, 0.0};
-    } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
+    if (e.n->children[min_idx].w.isApproximatelyZero()) {
         e.n->children[min_idx] = vEdge::zero;
+    } else {
+        e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
+        if (e.n->children[min_idx].w.isApproximatelyOne()) {
+            e.n->children[min_idx].w = {1.0, 0.0};
+        } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
+            e.n->children[min_idx] = vEdge::zero;
+        }
     }
 
     // making new node
@@ -146,6 +150,12 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
 }
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
+    const bool z0 = c[0].w.isApproximatelyZero();
+    const bool z1 = c[1].w.isApproximatelyZero();
+    if (z0 && z1) {
+        return vEdge::zero;
+    }
+
     vNode *node = vUnique.getNode();
     node->v = q;
     node->children = c;
