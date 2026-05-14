@@ -929,18 +929,21 @@ static vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
+    // current_var >= 0 here, so lv/rv == current_var implies a non-terminal edge.
+    const bool lhs_expands = (lv == current_var);
+    const bool rhs_expands = (rv == current_var);
     vNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
-        if (lv == current_var && !lhs.isTerminal()) {
+        if (lhs_expands) {
             x = lnode->getEdge(i);
             x.w = lhs.w * x.w;
         } else {
             x = lhs;
         }
-        if (rv == current_var && !rhs.isTerminal()) {
+        if (rhs_expands) {
             y = rnode->getEdge(i);
             y.w = rhs.w * y.w;
         } else {
@@ -1198,6 +1201,9 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
+    // current_var >= 0 here, so lv/rv == current_var implies a non-terminal edge.
+    const bool lhs_expands = (lv == current_var);
+    const bool rhs_expands = (rv == current_var);
     mNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     mEdge x;
@@ -1222,7 +1228,7 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
     };
 
     mEdge m00, m01, m10, m11;
-    if (lv == current_var && !lhs.isTerminal()) {
+    if (lhs_expands) {
         m00 = lnode->getEdge(0);
         m01 = lnode->getEdge(1);
         m10 = lnode->getEdge(2);
@@ -1235,7 +1241,7 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
     }
 
     vEdge y0, y1;
-    if (rv == current_var && !rhs.isTerminal()) {
+    if (rhs_expands) {
         y0 = rnode->getEdge(0);
         y1 = rnode->getEdge(1);
     } else {
@@ -1258,7 +1264,7 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
     for (auto i = 0; i < 2; i++) {
         std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
-            if (lv == current_var && !lhs.isTerminal()) {
+            if (lhs_expands) {
                 x = lnode->getEdge((i << 1) | k);
             } else {
                 if( ((i << 1) | k)==0 || ((i << 1) | k)==3 )
@@ -1267,7 +1273,7 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
                     x = mEdge::zero;
             }
 
-            if (rv == current_var && !rhs.isTerminal()) {
+            if (rhs_expands) {
                 y = rnode->getEdge(k);
             } else {
                 y = rcopy;
