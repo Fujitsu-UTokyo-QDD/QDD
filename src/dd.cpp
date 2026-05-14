@@ -962,6 +962,31 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs) {
     return vv_add2(lhs, rhs, rhs.getVar());
 }
 
+static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs,
+                          int32_t current_var);
+
+static inline vEdge mv_mul_or_zero(const mEdge &x, const vEdge &y,
+                                   int32_t next_var) {
+    if (x.w.isApproximatelyZero() || y.w.isApproximatelyZero()) {
+        return vEdge::zero;
+    }
+    return mv_multiply2(x, y, next_var);
+}
+
+static inline vEdge vv_add_or_other(const vEdge &a, const vEdge &b,
+                                    int32_t next_var) {
+    if (a.w.isApproximatelyZero()) {
+        if (b.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
+        return b;
+    }
+    if (b.w.isApproximatelyZero()) {
+        return a;
+    }
+    return vv_add2(a, b, next_var);
+}
+
 static vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
@@ -1183,6 +1208,52 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
     rcopy.w = {1.0, 0.0};
 
     std::array<vEdge, 2> edges;
+    auto finalize_result = [&](const std::array<vEdge, 2> &result_edges) {
+        result = makeVEdge(current_var, result_edges);
+        _mCache.set(lhs.n, rhs.n, result);
+        result.w = result.w * lhs.w * rhs.w;
+        if (result.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
+        if (result.w.isApproximatelyOne()) {
+            result.w = {1.0, 0.0};
+        }
+        return result;
+    };
+
+    mEdge m00, m01, m10, m11;
+    if (lv == current_var && !lhs.isTerminal()) {
+        m00 = lnode->getEdge(0);
+        m01 = lnode->getEdge(1);
+        m10 = lnode->getEdge(2);
+        m11 = lnode->getEdge(3);
+    } else {
+        m00 = lcopy;
+        m01 = mEdge::zero;
+        m10 = mEdge::zero;
+        m11 = lcopy;
+    }
+
+    vEdge y0, y1;
+    if (rv == current_var && !rhs.isTerminal()) {
+        y0 = rnode->getEdge(0);
+        y1 = rnode->getEdge(1);
+    } else {
+        y0 = rcopy;
+        y1 = rcopy;
+    }
+
+    if (m01.w.isApproximatelyZero() && m10.w.isApproximatelyZero()) {
+        edges[0] = mv_mul_or_zero(m00, y0, current_var - 1);
+        edges[1] = mv_mul_or_zero(m11, y1, current_var - 1);
+        return finalize_result(edges);
+    }
+
+    if (m00.w.isApproximatelyZero() && m11.w.isApproximatelyZero()) {
+        edges[0] = mv_mul_or_zero(m01, y1, current_var - 1);
+        edges[1] = mv_mul_or_zero(m10, y0, current_var - 1);
+        return finalize_result(edges);
+    }
 
     for (auto i = 0; i < 2; i++) {
         std::array<vEdge, 2> product;
@@ -1201,21 +1272,12 @@ static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_va
             } else {
                 y = rcopy;
             }
-                product[k] = mv_multiply2(x, y, current_var - 1);
+            product[k] = mv_mul_or_zero(x, y, current_var - 1);
         }
-        edges[i] = vv_add2(product[0], product[1], current_var - 1);
+        edges[i] = vv_add_or_other(product[0], product[1], current_var - 1);
     }
 
-    result = makeVEdge(current_var, edges);
-    _mCache.set(lhs.n, rhs.n, result);
-    result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero()) {
-        return vEdge::zero;
-    }
-    if (result.w.isApproximatelyOne()) {
-        result.w = {1.0, 0.0};
-    }
-    return result;
+    return finalize_result(edges);
 }
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs) {
