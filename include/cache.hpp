@@ -8,8 +8,6 @@
 #include "dd.h"
 #include <cassert>
 #include <random>
-#include <shared_mutex>
-#include <thread>
 
 
 #ifdef __cpp_lib_hardware_interference_size

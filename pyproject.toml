@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "scikit-build-core>=0.10",
-    "pybind11>=2.12",
+    "nanobind>=2.0",
     "setuptools-scm",
 ]
 build-backend = "scikit_build_core.build"
@@ -28,12 +28,21 @@ dependencies = [
     "qiskit~=2.2.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Fujitsu-UTokyo-QDD/QDD"
+Documentation = "https://fujitsu-utokyo-qdd.github.io/QDD/"
+Repository = "https://github.com/Fujitsu-UTokyo-QDD/QDD"
+Issues = "https://github.com/Fujitsu-UTokyo-QDD/QDD/issues"
+
 # Optional dependency groups for local development and documentation builds.
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.2",
-    "pybind11>=2.10.4",
     "qiskit-aer>=0.13.3",
+    "scipy>=1.10",
+    "qiskit-algorithms>=0.3",
+    "qiskit-nature>=0.7",
+    "pyscf>=2.4",
 ]
 docs = [
     "sphinx>=7.4",
@@ -44,7 +53,7 @@ docs = [
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
-cmake.version = ">=3.25"
+cmake.version = ">=3.26"
 cmake.build-type = "Release"
 wheel.packages = ["qdd"]
 

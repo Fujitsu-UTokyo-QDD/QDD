@@ -27,7 +27,9 @@ pip uninstall qdd
 CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
 ```
 
-See {doc}`mpi` for MPI prerequisites and build details.
+Python runs that set `use_mpi=True` also need `mpi4py` installed for the same
+MPI implementation. See {doc}`mpi` for prerequisites, build details, and a
+complete `mpirun -n 2 python ...` example.
 
 ## Supported Environment
 

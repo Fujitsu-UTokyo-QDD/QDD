@@ -15,7 +15,9 @@ and API references.
 installation
 quickstart
 usage
+performance-characteristics
 mpi
+citation
 ```
 
 ```{toctree}

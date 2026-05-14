@@ -7,10 +7,11 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
-#include <mutex>
-#include <atomic>
+#include <memory>
 #include <random>
 #include <stdio.h>
+#include <type_traits>
+#include <utility>
 
 /*
  * CL_MASK and CL_MASK_R are for the probe sequence calculation.
@@ -45,15 +46,14 @@ class CHashTable {
         }
 
         if (_cache.chunkIt == _cache.chunkEndIt) {
-            _cache.chunks.emplace_back(_cache.allocationSize);
-            _cache.allocations += _cache.allocationSize;
+            _cache.addChunk(_cache.allocationSize);
             _cache.allocationSize *= GROWTH_FACTOR;
-            _cache.chunkID++;
-            _cache.chunkIt = _cache.chunks[_cache.chunkID].begin();
-            _cache.chunkEndIt = _cache.chunks[_cache.chunkID].end();
         }
 
-        auto p = &(*_cache.chunkIt);
+        auto p = _cache.chunkIt;
+        std::allocator_traits<typename Cache::Allocator>::construct(
+            _cache.allocator, p);
+        ++_cache.chunks[_cache.chunkID].constructed;
         p->next = nullptr;
         ++_cache.chunkIt;
         return p;
@@ -63,36 +63,29 @@ class CHashTable {
         if constexpr (std::is_same_v<T, mNode>) {
             if (p == mNode::terminal)
                 return;
+        } else if constexpr (std::is_same_v<T, vNode>) {
+            if (p == vNode::terminal)
+                return;
         }
 
         p->v = -2;
 
         p->next = _cache.available;
-        p->previous = nullptr;
         _cache.available = p;
     }
 
     T *register_wo_lookup(T *node){
         // Assuming single threaded
-        const auto key = Hash()(*node) % NBUCKETS;
+        const auto key = bucket_index(Hash()(*node));
         const Qubit v = node->v;
 
-         T *current = _tables[v]._table[key].node;
-        //T *previous = current;
-
-        if (current == nullptr) {
-            _tables[v]._table[key].node = node;
-            return node;
-        }
-
-        node->previous = _tables[v]._table[key].node;
-        _tables[v]._table[key].node->next = node;
+        node->next = _tables[v]._table[key].node;
         _tables[v]._table[key].node = node;
         return node;
     }
 
     T *lookup(T *node) {
-        const auto key = Hash()(*node) % NBUCKETS;
+        const auto key = bucket_index(Hash()(*node));
         const Qubit v = node->v;      
         T *current = _tables[v]._table[key].node;
 
@@ -108,11 +101,10 @@ class CHashTable {
                 returnNode(node);
                 return current;
             }
-            current = current->previous;
+            current = current->next;
         }
 
-        node->previous = _tables[v]._table[key].node;
-        _tables[v]._table[key].node->next = node;
+        node->next = _tables[v]._table[key].node;
         _tables[v]._table[key].node = node;
         return node;
     }
@@ -126,11 +118,21 @@ class CHashTable {
     }
 
   private:
+    static constexpr bool is_power_of_two(std::size_t x) noexcept {
+        return x != 0 && (x & (x - 1)) == 0;
+    }
+
+    static_assert(is_power_of_two(NBUCKETS),
+                  "NBUCKETS must be a power of two");
+
+    static constexpr std::size_t bucket_index(std::size_t h) noexcept {
+        return h & (NBUCKETS - 1);
+    }
 
     struct NodeSlot {
         T *node;
-        std::atomic_flag locked;
     };
+    static_assert(sizeof(NodeSlot) == sizeof(T*));
     
     struct Table {
         NodeSlot _table[NBUCKETS] = {nullptr};
@@ -139,14 +141,108 @@ class CHashTable {
     std::vector<Table> _tables;
 
     struct Cache {
+        using Allocator = std::allocator<T>;
+        using AllocatorTraits = std::allocator_traits<Allocator>;
+
+        struct Chunk {
+            T *data{nullptr};
+            std::size_t capacity{0};
+            std::size_t constructed{0};
+        };
+
         T *available{};
-        std::vector<std::vector<T>> chunks{
-            1, std::vector<T>{INITIAL_ALLOCATION_SIZE}};
+        std::vector<Chunk> chunks{};
         std::size_t chunkID{0};
-        typename std::vector<T>::iterator chunkIt{chunks[0].begin()};
-        typename std::vector<T>::iterator chunkEndIt{chunks[0].end()};
+        T *chunkIt{nullptr};
+        T *chunkEndIt{nullptr};
         std::size_t allocationSize{INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR};
-        std::size_t allocations = INITIAL_ALLOCATION_SIZE;
+        std::size_t allocations{0};
+        Allocator allocator{};
+
+        Cache() {
+            addChunk(INITIAL_ALLOCATION_SIZE);
+        }
+
+        ~Cache() {
+            clear();
+        }
+
+        Cache(const Cache &) = delete;
+        Cache &operator=(const Cache &) = delete;
+
+        Cache(Cache &&other) noexcept {
+            moveFrom(std::move(other));
+        }
+
+        Cache &operator=(Cache &&other) noexcept {
+            if (this != &other) {
+                clear();
+                moveFrom(std::move(other));
+            }
+            return *this;
+        }
+
+        void addChunk(std::size_t capacity) {
+            T *data = AllocatorTraits::allocate(allocator, capacity);
+            Chunk chunk{data, capacity, 0};
+            try {
+                chunks.push_back(chunk);
+            } catch (...) {
+                AllocatorTraits::deallocate(allocator, data, capacity);
+                throw;
+            }
+
+            allocations += capacity;
+            chunkID = chunks.size() - 1;
+            chunkIt = data;
+            chunkEndIt = data + capacity;
+        }
+
+      private:
+        void clear() noexcept {
+            for (auto &chunk : chunks) {
+                if (chunk.data == nullptr) {
+                    continue;
+                }
+
+                if constexpr (!std::is_trivially_destructible_v<T>) {
+                    for (std::size_t i = 0; i < chunk.constructed; ++i) {
+                        AllocatorTraits::destroy(allocator, chunk.data + i);
+                    }
+                }
+                AllocatorTraits::deallocate(allocator, chunk.data,
+                                            chunk.capacity);
+            }
+
+            chunks.clear();
+            available = nullptr;
+            chunkID = 0;
+            chunkIt = nullptr;
+            chunkEndIt = nullptr;
+            allocations = 0;
+        }
+
+        void moveFrom(Cache &&other) noexcept {
+            available = other.available;
+            chunks = std::move(other.chunks);
+            chunkID = other.chunkID;
+            chunkIt = other.chunkIt;
+            chunkEndIt = other.chunkEndIt;
+            allocationSize = other.allocationSize;
+            allocations = other.allocations;
+            allocator = std::move(other.allocator);
+
+            other.available = nullptr;
+            for (auto &chunk : other.chunks) {
+                chunk = {};
+            }
+            other.chunks.clear();
+            other.chunkID = 0;
+            other.chunkIt = nullptr;
+            other.chunkEndIt = nullptr;
+            other.allocationSize = INITIAL_ALLOCATION_SIZE * GROWTH_FACTOR;
+            other.allocations = 0;
+        }
     };
 
     std::size_t collected;

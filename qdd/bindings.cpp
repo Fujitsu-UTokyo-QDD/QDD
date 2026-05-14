@@ -1,7 +1,10 @@
-#include <pybind11/complex.h>
-#include <pybind11/eigen.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <nanobind/eigen/dense.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/array.h>
+#include <nanobind/stl/complex.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 #include <map>
 #ifdef isMPI
@@ -9,7 +12,7 @@
 #endif
 #include "common.h"
 #include "dd.h"
-namespace py = pybind11;
+namespace nb = nanobind;
 
 std::map<std::string, GateMatrix> gateMap{
     {"I", Imat},       {"H", Hmat},   {"X", Xmat},         {"Y", Ymat},
@@ -162,8 +165,8 @@ std::vector<double> _probabilities(const vEdge &rootEdge) {
     return result;
 }
 
-PYBIND11_MODULE(pyQDD, m) {
-    py::class_<vEdge>(m, "vEdge")
+NB_MODULE(pyQDD, m) {
+    nb::class_<vEdge>(m, "vEdge")
         .def("getEigenVector", &vEdge::getEigenVector)
         .def("printVector", &vEdge::printVector)
         .def("printVector_sparse", &vEdge::printVector_sparse)
@@ -171,29 +174,29 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("printVectorMPI", _printVectorMPI)
 #endif
         ;
-    py::class_<mEdge>(m, "mEdge")
+    nb::class_<mEdge>(m, "mEdge")
         .def("printMatrix", &mEdge::printMatrix)
         .def("getEigenMatrix", &mEdge::getEigenMatrix);
     m.def("makeZeroState", makeZeroState);
     m.def("mv_multiply", mv_multiply).def("mm_multiply", mm_multiply);
     m.def("get_nNodes", get_nNodes)
-        .def("gc", py::overload_cast<std::vector<vEdge>, bool>(&gc))
-        .def("gc", py::overload_cast<vEdge, bool>(&gc))
-        .def("gc_mat", py::overload_cast<std::vector<mEdge>, bool>(&gc_mat))
-        .def("gc_mat", py::overload_cast<mEdge, bool>(&gc_mat))
+        .def("gc", nb::overload_cast<std::vector<vEdge>, bool>(&gc))
+        .def("gc", nb::overload_cast<vEdge, bool>(&gc))
+        .def("gc_mat", nb::overload_cast<std::vector<mEdge>, bool>(&gc_mat))
+        .def("gc_mat", nb::overload_cast<mEdge, bool>(&gc_mat))
         .def("set_gc_thr", set_gc_thr);
-    m.def("applyGlobal", py::overload_cast<mEdge, double>(&applyGlobal))
-     .def("applyGlobal", py::overload_cast<vEdge, double>(&applyGlobal));
+    m.def("applyGlobal", nb::overload_cast<mEdge, double>(&applyGlobal))
+     .def("applyGlobal", nb::overload_cast<vEdge, double>(&applyGlobal));
 
     // Gates
     m.def("makeGate",
-          py::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
-        .def("makeGate", py::overload_cast<QubitCount, GateMatrix, Qubit,
+          nb::overload_cast<QubitCount, GateMatrix, Qubit>(&makeGate))
+        .def("makeGate", nb::overload_cast<QubitCount, GateMatrix, Qubit,
                                            const std::vector<Qubit>>(&makeGate))
         .def("makeGate",
-             py::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
+             nb::overload_cast<QubitCount, std::string, Qubit>(&makeGate))
         .def("makeGate",
-             py::overload_cast<QubitCount, std::string, Qubit,
+             nb::overload_cast<QubitCount, std::string, Qubit,
                                const std::vector<Qubit>>(&makeGate));
     m.def("RX", RX).def("RY", RY).def("RZ", RZ).def("CX", CX);
     m.def("rxmat", rx)
@@ -207,10 +210,10 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("r", r);
 
     m.def("makeTwoQubitGate",
-          py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit>(
+          nb::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit>(
               &makeTwoQubitGate))
         .def("makeTwoQubitGate",
-             py::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit,
+             nb::overload_cast<QubitCount, TwoQubitGateMatrix, Qubit, Qubit,
                                const std::vector<Qubit>>(&makeTwoQubitGate));
     m.def("RXX", RXX)
         .def("RYY", RYY)
@@ -227,9 +230,9 @@ PYBIND11_MODULE(pyQDD, m) {
         .def("iswapmat", iswap_matrix);
 
     m.def("unitary",
-          py::overload_cast<QubitCount, ComplexMatrix &>(makeLargeGate))
+          nb::overload_cast<QubitCount, ComplexMatrix &>(makeLargeGate))
         .def("unitary",
-             py::overload_cast<QubitCount, ComplexMatrix &,
+             nb::overload_cast<QubitCount, ComplexMatrix &,
                                const std::vector<Qubit> &>(makeLargeGate));
 
     // Measure
@@ -240,8 +243,8 @@ PYBIND11_MODULE(pyQDD, m) {
     m.def("measureOne", _measureOne);
 
     // Others
-    m.def("genDot", py::overload_cast<vEdge &>(&genDot))
-        .def("genDot", py::overload_cast<mEdge &>(&genDot));
+    m.def("genDot", nb::overload_cast<vEdge &>(&genDot))
+        .def("genDot", nb::overload_cast<mEdge &>(&genDot));
 
 #ifdef isMPI
     // MPI
