@@ -16,7 +16,12 @@ if(NOT EXISTS ${EIGEN_PATH})
 endif()
 add_compile_definitions(EIGEN_DONT_VECTORIZE)
 
-add_compile_definitions(_GUN_SOURCE)
+add_compile_definitions(_GNU_SOURCE)
+if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        add_compile_options(-fno-omit-frame-pointer)
+    endif()
+endif()
 
 enable_testing()
 
