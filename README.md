@@ -9,20 +9,11 @@ decision diagram representation remains compact.
 
 ## Installation
 
-Install the standard package from PyPI:
+Install QDD from PyPI:
 
 ```sh
 pip install qdd
 ```
-
-Install the MPI-enabled package from PyPI:
-
-```sh
-CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
-```
-
-The `qdd` and `qdd-mpi` distributions provide the same `import qdd` Python
-package namespace. Do not install both in the same environment.
 
 Supported environment:
 
@@ -35,27 +26,84 @@ QDD works as a Qiskit backend.
 
 ```python
 from qiskit import QuantumCircuit
-from qiskit.primitives import BackendSampler
 
 from qdd import QddProvider
 
-backend = QddProvider().get_backend()
+backend = QddProvider().get_backend("qasm_simulator")
 
 circuit = QuantumCircuit(3)
 circuit.h(0)
 circuit.cx(0, 1)
 circuit.measure_all()
 
-sampler = BackendSampler(backend=backend)
-job = sampler.run(circuits=circuit)
-print(job.result())
+job = backend.run(circuit, shots=1024, seed_simulator=1234)
+print(job.result().get_counts())
 ```
 
 For statevector simulation:
 
 ```python
+from qiskit import QuantumCircuit
+
+from qdd import QddProvider
+
 backend = QddProvider().get_backend("statevector_simulator")
+
+circuit = QuantumCircuit(2)
+circuit.h(0)
+circuit.cx(0, 1)
+
+statevector = backend.run(circuit).result().get_statevector()
+print(statevector)
 ```
+
+## MPI Usage
+
+MPI support is optional. Use the MPI-enabled `qdd-mpi` distribution only when
+you want to run QDD across MPI ranks.
+
+The `qdd` and `qdd-mpi` distributions provide the same `import qdd` Python
+package namespace. Do not install both in the same environment.
+
+Install the MPI-enabled package from PyPI:
+
+```sh
+pip install mpi4py
+CC=mpicc CXX=mpicxx pip install qdd-mpi --no-binary qdd-mpi
+```
+
+Minimal MPI run with Qiskit:
+
+```python
+# mpi_bell.py
+from mpi4py import MPI
+from qiskit import QuantumCircuit
+
+from qdd import QddProvider
+
+backend = QddProvider().get_backend("qasm_simulator")
+backend.set_options(use_mpi=True)
+
+circuit = QuantumCircuit(3)
+circuit.h(0)
+circuit.cx(0, 1)
+circuit.cx(1, 2)
+circuit.measure_all()
+
+result = backend.run(circuit, shots=1024).result()
+if MPI.COMM_WORLD.Get_rank() == 0:
+    print(result.get_counts())
+```
+
+Run the script under MPI:
+
+```sh
+mpirun -n 2 python mpi_bell.py
+```
+
+You can also pass `use_mpi=True` per run, or through QDD primitive backend
+options such as `Sampler(backend_options={"use_mpi": True})` and
+`Estimator(backend_options={"use_mpi": True})`.
 
 ## Documentation
 
@@ -65,6 +113,20 @@ API references, is published with GitHub Pages:
 https://fujitsu-utokyo-qdd.github.io/QDD/
 
 The documentation source is in `docs/source`.
+
+## Citation
+
+If you use QDD in academic work, please cite:
+
+- "Accelerating Decision Diagram-based Multi-node Quantum Simulation with Ring
+  Communication and Automatic SWAP Insertion," IEEE QSW 2024: [10.1109/QSW62656.2024.00025](https://doi.org/10.1109/QSW62656.2024.00025)
+
+Additional references:
+
+- "Variable ordering and multi-node ring communication", IEEE TQE:
+  [10.1109/TQE.2026.3654543](https://doi.org/10.1109/TQE.2026.3654543)
+- Decision-diagram and state-vector simulator characteristics, IEEE QCE 2024:
+  [10.1109/QCE60285.2024.00095](https://doi.org/10.1109/QCE60285.2024.00095)
 
 ## License
 
