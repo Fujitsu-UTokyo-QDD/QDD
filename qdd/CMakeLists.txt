@@ -1,5 +1,5 @@
 if (BINDINGS)
-  pybind11_add_module(pyQDD bindings.cpp)
+  nanobind_add_module(pyQDD STABLE_ABI bindings.cpp)
   target_link_libraries(pyQDD PUBLIC engine)
   install(TARGETS pyQDD LIBRARY DESTINATION qdd)
 endif()
