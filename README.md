@@ -114,6 +114,20 @@ https://fujitsu-utokyo-qdd.github.io/QDD/
 
 The documentation source is in `docs/source`.
 
+## Citation
+
+If you use QDD in academic work, please cite:
+
+- "Accelerating Decision Diagram-based Multi-node Quantum Simulation with Ring
+  Communication and Automatic SWAP Insertion," IEEE QSW 2024: [10.1109/QSW62656.2024.00025](https://doi.org/10.1109/QSW62656.2024.00025)
+
+Additional references:
+
+- "Variable ordering and multi-node ring communication", IEEE TQE:
+  [10.1109/TQE.2026.3654543](https://doi.org/10.1109/TQE.2026.3654543)
+- Decision-diagram and state-vector simulator characteristics, IEEE QCE 2024:
+  [10.1109/QCE60285.2024.00095](https://doi.org/10.1109/QCE60285.2024.00095)
+
 ## License
 
 BSD 3-Clause Clear License

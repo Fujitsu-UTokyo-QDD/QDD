@@ -17,6 +17,7 @@ quickstart
 usage
 performance-characteristics
 mpi
+citation
 ```
 
 ```{toctree}
