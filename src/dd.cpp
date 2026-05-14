@@ -162,14 +162,6 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
     return e;
 }
 
-Qubit mEdge::getVar() const { return n->v; }
-
-Qubit vEdge::getVar() const { return n->v; }
-
-bool mEdge::isTerminal() const { return n == mNode::terminal; }
-
-bool vEdge::isTerminal() const { return n == vNode::terminal; }
-
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
     if ( (1 << (edge.getVar()+1)) == dim) {
@@ -676,7 +668,7 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
                : lhs.getVar();
 }
 
-mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+static mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return (lhs==mEdge::zero)? rhs : lhs;
     }
@@ -754,7 +746,7 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
     return mm_add2(lhs, rhs, root);
 }
 
-mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+static mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return mEdge::zero;
     }else if(lhs.isTerminal()){
@@ -876,7 +868,7 @@ static void printVector2(const vEdge &edge, std::size_t row,
     printVector2(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
 }
 
-mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
+static mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -905,7 +897,7 @@ mEdge mm_kronecker(const mEdge &lhs, const mEdge &rhs) {
     return mm_kronecker2(lhs, rhs);
 }
 
-vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
+static vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         if (rhs.w.isApproximatelyZero()) {
             return vEdge::zero;
@@ -970,7 +962,7 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs) {
     return vv_add2(lhs, rhs, rhs.getVar());
 }
 
-vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
+static vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -1146,7 +1138,7 @@ VectorXcf vEdge::getEigenVector() {
     return V;
 }
 
-vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero){
         return vEdge::zero;
     }else if(lhs.isTerminal()){
@@ -1235,7 +1227,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     return v;
 }
 
-double assignProbabilities(const vEdge &edge) {
+static double assignProbabilities(const vEdge &edge) {
     auto it = probs.find(edge.n);
     if (it != probs.end()) {
         return edge.w.mag2() * it->second;

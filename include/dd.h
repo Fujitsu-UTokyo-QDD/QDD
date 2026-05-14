@@ -171,8 +171,8 @@ struct vEdge {
     static vEdge one;
     static vEdge zero;
 
-    Qubit getVar() const;
-    bool isTerminal() const;
+    Qubit getVar() const noexcept;
+    bool isTerminal() const noexcept;
     vNode *getNode() const { return n; };
 
     void printVector() const;
@@ -260,8 +260,8 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    Qubit getVar() const;
-    bool isTerminal() const;
+    Qubit getVar() const noexcept;
+    bool isTerminal() const noexcept;
     mNode *getNode() const { return n; };
 
     void printMatrix(Qubit nQubits = -1) const;
@@ -363,6 +363,14 @@ struct mNode {
     mNode *next{nullptr};
 
 };
+
+inline Qubit vEdge::getVar() const noexcept { return n->v; }
+
+inline bool vEdge::isTerminal() const noexcept { return n == vNode::terminal; }
+
+inline Qubit mEdge::getVar() const noexcept { return n->v; }
+
+inline bool mEdge::isTerminal() const noexcept { return n == mNode::terminal; }
 
 template <> struct std::hash<mNode> {
     std::size_t operator()(const mNode &n) const noexcept {
