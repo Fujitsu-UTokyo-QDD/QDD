@@ -49,7 +49,9 @@ const int MINUS = 6;
 static mEdge normalizeM(const mEdge &e) {
     // check for all zero weights
     if (std::all_of(e.n->children.begin(), e.n->children.end(),
-                    [](const mEdge &e) { return norm(e.w) == 0.0; })) {
+                    [](const mEdge &e) {
+                        return e.w.isApproximatelyZero();
+                    })) {
         mUnique.returnNode(e.n);
         return mEdge::zero;
     }
@@ -59,11 +61,11 @@ static mEdge normalizeM(const mEdge &e) {
                                        return norm2(lhs.w) < norm2(rhs.w);
                                    });
 
-    std_complex max_weight = result->w;
+    std_complex max_weight = canonicalize_complex(result->w);
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
     // parents weight
-    std_complex new_weight = max_weight * e.w;
+    std_complex new_weight = canonicalize_complex(max_weight * e.w);
     if (new_weight.isApproximatelyZero()) {
         mUnique.returnNode(e.n);
         return mEdge::zero;
@@ -72,7 +74,8 @@ static mEdge normalizeM(const mEdge &e) {
     }
 
     for (int i = 0; i < 4; i++) {
-        std_complex r = e.n->children[i].w / max_weight;
+        std_complex r =
+                canonicalize_complex(e.n->children[i].w / max_weight);
         if (r.isApproximatelyZero()) {
             e.n->children[i] = mEdge::zero;
         } else {
@@ -103,10 +106,10 @@ static vEdge normalizeV(const vEdge &e) {
                                ? 1
                                : 0);
     const std::size_t min_idx = 1 - max_idx;
-    std_complex max_weight = e.n->children[max_idx].w;
+    std_complex max_weight = canonicalize_complex(e.n->children[max_idx].w);
 
     // parents weight
-    std_complex new_weight = max_weight * e.w;
+    std_complex new_weight = canonicalize_complex(max_weight * e.w);
     if (new_weight.isApproximatelyZero()) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
@@ -121,7 +124,8 @@ static vEdge normalizeV(const vEdge &e) {
     if (e.n->children[min_idx].w.isApproximatelyZero()) {
         e.n->children[min_idx] = vEdge::zero;
     } else {
-        e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
+        e.n->children[min_idx].w = canonicalize_complex(
+                e.n->children[min_idx].w / max_weight);
         if (e.n->children[min_idx].w.isApproximatelyOne()) {
             e.n->children[min_idx].w = {1.0, 0.0};
         } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
@@ -137,7 +141,11 @@ static vEdge normalizeV(const vEdge &e) {
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
     // Identity Stripping
     if( c[0].n==c[3].n && c[1].w.isApproximatelyZero() && c[2].w.isApproximatelyZero() && c[0].w.isApproximatelyEqual(c[3].w)){
-        return {c[0].w, c[0].n};
+        const std_complex w = canonicalize_complex(c[0].w);
+        if (w.isApproximatelyZero()) {
+            return mEdge::zero;
+        }
+        return {w, c[0].n};
     }
 
     mNode *node = mUnique.getNode();

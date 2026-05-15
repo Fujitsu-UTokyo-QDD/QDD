@@ -66,6 +66,22 @@ bool isNearlyEqual(std_complex lhs, std::complex<double> rhs) {
     return false;
 }
 
+TEST(QddTest, CanonicalizesVectorNodeWeightsForUniqueTable) {
+    const double eps = Complex::TOLERANCE * 0.5;
+    const vEdge near_one{{1.0 + eps, eps}, vNode::terminal};
+    const vEdge near_zero{{eps, -eps}, vNode::terminal};
+
+    vEdge exact = makeVEdge(0, {vEdge::one, vEdge::zero});
+    vEdge rounded = makeVEdge(0, {near_one, near_zero});
+
+    ASSERT_EQ(rounded.n, exact.n);
+    ASSERT_TRUE(rounded.w == std_complex(1.0, 0.0));
+
+    vEdge all_zero = makeVEdge(0, {near_zero, near_zero});
+    ASSERT_EQ(all_zero.n, vNode::terminal);
+    ASSERT_TRUE(all_zero.w == std_complex(0.0, 0.0));
+}
+
 TEST(QddTest, GateTest) {
     {
         mEdge m = makeGate(1, Xmat, 0);

@@ -252,8 +252,8 @@ class CHashTable {
 
 };
 
-using mNodeTable = CHashTable<mNode>;
+using mNodeTable = CHashTable<mNode, std::hash<mNode>, MNodeExactEqual>;
 extern mNodeTable mUnique;
 
-using vNodeTable = CHashTable<vNode>;
+using vNodeTable = CHashTable<vNode, std::hash<vNode>, VNodeExactEqual>;
 extern vNodeTable vUnique;
