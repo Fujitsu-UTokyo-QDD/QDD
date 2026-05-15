@@ -4,6 +4,8 @@
 #include "common.h"
 #include <cmath>
 #include <complex>
+#include <cstdint>
+#include <cstring>
 #include <limits>
 #include <random>
 #include <vector>
@@ -163,12 +165,72 @@ inline double canonicalize_component(double x) noexcept {
     if (std::abs(x + 1.0) <= Complex::TOLERANCE) {
         return -1.0;
     }
+
+    uint64_t bits = 0;
+    std::memcpy(&bits, &x, sizeof(bits));
+    const uint64_t sign = bits & (uint64_t{1} << 63);
+    uint64_t magnitude = bits & ~(uint64_t{1} << 63);
+    const int exponent =
+            static_cast<int>((magnitude >> 52) & uint64_t{0x7ff}) - 1023;
+
+    const int drop_bits = 10 - exponent;
+    if (drop_bits <= 0 || drop_bits >= 52) {
+        return x;
+    }
+
+    const uint64_t low_mask = (uint64_t{1} << drop_bits) - 1;
+    magnitude += uint64_t{1} << (drop_bits - 1);
+    magnitude &= ~low_mask;
+
+    double rounded = 0.0;
+    const uint64_t rounded_bits = sign | magnitude;
+    std::memcpy(&rounded, &rounded_bits, sizeof(rounded));
+    if (std::abs(rounded) <= Complex::TOLERANCE) {
+        return 0.0;
+    }
+    return rounded;
+}
+
+inline double canonicalize_special_component(double x) noexcept {
+    if (!std::isfinite(x)) {
+        return x;
+    }
+    if (std::abs(x) <= Complex::TOLERANCE) {
+        return 0.0;
+    }
+    if (std::abs(x - 1.0) <= Complex::TOLERANCE) {
+        return 1.0;
+    }
+    if (std::abs(x + 1.0) <= Complex::TOLERANCE) {
+        return -1.0;
+    }
     return x;
 }
 
 inline std_complex canonicalize_complex(std_complex z) noexcept {
     z.r = canonicalize_component(z.r);
     z.i = canonicalize_component(z.i);
+    if (z.isApproximatelyZero()) {
+        return {0.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({1.0, 0.0})) {
+        return {1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({-1.0, 0.0})) {
+        return {-1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({0.0, 1.0})) {
+        return {0.0, 1.0};
+    }
+    if (z.isApproximatelyEqual({0.0, -1.0})) {
+        return {0.0, -1.0};
+    }
+    return z;
+}
+
+inline std_complex canonicalize_special_complex(std_complex z) noexcept {
+    z.r = canonicalize_special_component(z.r);
+    z.i = canonicalize_special_component(z.i);
     if (z.isApproximatelyZero()) {
         return {0.0, 0.0};
     }
@@ -331,9 +393,8 @@ inline void swap(mEdge &lhs, mEdge &rhs) {
 
 template <> struct std::hash<std_complex> {
     std::size_t operator()(const std_complex &v) const noexcept {
-        const std_complex z = canonicalize_complex(v);
-        auto h1 = std::hash<double>()(z.real());
-        auto h2 = std::hash<double>()(z.imag());
+        auto h1 = std::hash<double>()(v.real());
+        auto h2 = std::hash<double>()(v.imag());
         return hash_combine(h1, h2);
     }
 };
