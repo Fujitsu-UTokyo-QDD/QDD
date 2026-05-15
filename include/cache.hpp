@@ -311,7 +311,7 @@ class MulCache{
                 uintptr_t l = reinterpret_cast<uintptr_t>(lhs);
                 uintptr_t r = reinterpret_cast<uintptr_t>(rhs);
 
-                std::size_t key = murmur_hash(l) % NBUCKETS; 
+                std::size_t key = bucket_key(l, r); 
 
                 return find_in_bucket<RetT>(t, key ,l, r);
 
@@ -337,7 +337,7 @@ class MulCache{
                 uintptr_t l = reinterpret_cast<uintptr_t>(lhs);
                 uintptr_t r = reinterpret_cast<uintptr_t>(rhs);
 
-                std::size_t key = murmur_hash(l) % NBUCKETS; 
+                std::size_t key = bucket_key(l, r); 
 
                 return set_in_bucket<ResT>(t, key ,l, r, result);
                 
@@ -430,6 +430,12 @@ class MulCache{
         std::size_t lookups{0};
         std::size_t hits{0};
 
+
+        static std::size_t bucket_key(uintptr_t l, uintptr_t r) noexcept {
+            static_assert((NBUCKETS & (NBUCKETS - 1)) == 0,
+                          "NBUCKETS must be a power of two");
+            return hash_combine(murmur_hash(l), murmur_hash(r)) & (NBUCKETS - 1);
+        }
 
         Bucket* getBucket() {
             if (c.chunkIt == c.chunkEndIt) {
@@ -530,48 +536,22 @@ class MulCache{
                 if(t._table[key] == nullptr) t._table[key] = getBucket();
                 Bucket* b = t._table[key];
 
-
-                if constexpr(std::is_same_v<ResT, mEdge>){
-                    
-                    for(Entry& e : b->es){
-                        if(e.result.m.n == nullptr){
-                            set(e, l, r, result);
-                            return;
-                        }
+                for(Entry& e : b->es){
+                    if(!e.valid){
+                        set(e, l, r, result);
+                        return;
                     }
-
-                    int idx = 0;
-                    int min_picked = b->es[0].picked;
-                    for(int i = 1; i < 4; i++){
-                        if(b->es[i].picked < min_picked){
-                            idx = i;
-                            min_picked = b->es[i].picked;
-                        }
-                    
-                    }
-                    return set(b->es[idx], l, r, result);            
-
-
-                }else{
-                    for(Entry& e : b->es){
-                        if(e.result.v.n == nullptr){
-                            set(e, l, r, result);
-                            return;
-                        }
-                    }
-                    int idx = 0;
-                    int min_picked = b->es[0].picked;
-                    for(int i = 1; i < 4; i++){
-                        if(b->es[i].picked < min_picked){
-                            idx = i;
-                            min_picked = b->es[i].picked;
-                        }
-                    
-                    }
-                    return set(b->es[idx], l, r, result);            
-
-                
                 }
+
+                int idx = 0;
+                int min_picked = b->es[0].picked;
+                for(int i = 1; i < 4; i++){
+                    if(b->es[i].picked < min_picked){
+                        idx = i;
+                        min_picked = b->es[i].picked;
+                    }
+                }
+                return set(b->es[idx], l, r, result);
             }
 
 

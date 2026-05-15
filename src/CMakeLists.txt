@@ -1,6 +1,7 @@
 add_library(engine STATIC dd.cpp)
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR})
 target_include_directories(engine PUBLIC ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0 ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0/unsupported)
+target_compile_options(engine PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-fno-semantic-interposition -fno-plt>)
 if(isMPI)
   target_link_libraries(engine PUBLIC ${Boost_LIBRARIES})
 endif()

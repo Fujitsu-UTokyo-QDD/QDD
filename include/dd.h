@@ -2,7 +2,11 @@
 
 #include "Eigen/Dense"
 #include "common.h"
+#include <cmath>
 #include <complex>
+#include <cstdint>
+#include <cstring>
+#include <limits>
 #include <random>
 #include <vector>
 using Eigen::MatrixXcf;
@@ -148,6 +152,103 @@ inline double norm2(const Complex &c) {
 // using std_complex = std::complex<double>;
 using std_complex = Complex;
 
+inline double canonicalize_component(double x) noexcept {
+    if (!std::isfinite(x)) {
+        return x;
+    }
+    if (std::abs(x) <= Complex::TOLERANCE) {
+        return 0.0;
+    }
+    if (std::abs(x - 1.0) <= Complex::TOLERANCE) {
+        return 1.0;
+    }
+    if (std::abs(x + 1.0) <= Complex::TOLERANCE) {
+        return -1.0;
+    }
+
+    uint64_t bits = 0;
+    std::memcpy(&bits, &x, sizeof(bits));
+    const uint64_t sign = bits & (uint64_t{1} << 63);
+    uint64_t magnitude = bits & ~(uint64_t{1} << 63);
+    const int exponent =
+            static_cast<int>((magnitude >> 52) & uint64_t{0x7ff}) - 1023;
+
+    const int drop_bits = 10 - exponent;
+    if (drop_bits <= 0 || drop_bits >= 52) {
+        return x;
+    }
+
+    const uint64_t low_mask = (uint64_t{1} << drop_bits) - 1;
+    magnitude += uint64_t{1} << (drop_bits - 1);
+    magnitude &= ~low_mask;
+
+    double rounded = 0.0;
+    const uint64_t rounded_bits = sign | magnitude;
+    std::memcpy(&rounded, &rounded_bits, sizeof(rounded));
+    if (std::abs(rounded) <= Complex::TOLERANCE) {
+        return 0.0;
+    }
+    return rounded;
+}
+
+inline double canonicalize_special_component(double x) noexcept {
+    if (!std::isfinite(x)) {
+        return x;
+    }
+    if (std::abs(x) <= Complex::TOLERANCE) {
+        return 0.0;
+    }
+    if (std::abs(x - 1.0) <= Complex::TOLERANCE) {
+        return 1.0;
+    }
+    if (std::abs(x + 1.0) <= Complex::TOLERANCE) {
+        return -1.0;
+    }
+    return x;
+}
+
+inline std_complex canonicalize_complex(std_complex z) noexcept {
+    z.r = canonicalize_component(z.r);
+    z.i = canonicalize_component(z.i);
+    if (z.isApproximatelyZero()) {
+        return {0.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({1.0, 0.0})) {
+        return {1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({-1.0, 0.0})) {
+        return {-1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({0.0, 1.0})) {
+        return {0.0, 1.0};
+    }
+    if (z.isApproximatelyEqual({0.0, -1.0})) {
+        return {0.0, -1.0};
+    }
+    return z;
+}
+
+inline std_complex canonicalize_special_complex(std_complex z) noexcept {
+    z.r = canonicalize_special_component(z.r);
+    z.i = canonicalize_special_component(z.i);
+    if (z.isApproximatelyZero()) {
+        return {0.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({1.0, 0.0})) {
+        return {1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({-1.0, 0.0})) {
+        return {-1.0, 0.0};
+    }
+    if (z.isApproximatelyEqual({0.0, 1.0})) {
+        return {0.0, 1.0};
+    }
+    if (z.isApproximatelyEqual({0.0, -1.0})) {
+        return {0.0, -1.0};
+    }
+    return z;
+}
+
 struct mNode;
 struct vNode;
 
@@ -171,8 +272,8 @@ struct vEdge {
     static vEdge one;
     static vEdge zero;
 
-    Qubit getVar() const;
-    bool isTerminal() const;
+    Qubit getVar() const noexcept;
+    bool isTerminal() const noexcept;
     vNode *getNode() const { return n; };
 
     void printVector() const;
@@ -260,8 +361,8 @@ struct mEdge {
     static mEdge one;
     static mEdge zero;
 
-    Qubit getVar() const;
-    bool isTerminal() const;
+    Qubit getVar() const noexcept;
+    bool isTerminal() const noexcept;
     mNode *getNode() const { return n; };
 
     void printMatrix(Qubit nQubits = -1) const;
@@ -364,6 +465,14 @@ struct mNode {
 
 };
 
+inline Qubit vEdge::getVar() const noexcept { return n->v; }
+
+inline bool vEdge::isTerminal() const noexcept { return n == vNode::terminal; }
+
+inline Qubit mEdge::getVar() const noexcept { return n->v; }
+
+inline bool mEdge::isTerminal() const noexcept { return n == mNode::terminal; }
+
 template <> struct std::hash<mNode> {
     std::size_t operator()(const mNode &n) const noexcept {
         std::size_t h =
@@ -383,6 +492,48 @@ template <> struct std::hash<vNode> {
             h = hash_combine(h, std::hash<vEdge>()(e));
         }
         return h;
+    }
+};
+
+struct MEdgeExactEqual {
+    bool operator()(const mEdge &lhs, const mEdge &rhs) const noexcept {
+        return lhs.n == rhs.n && lhs.w == rhs.w;
+    }
+};
+
+struct VEdgeExactEqual {
+    bool operator()(const vEdge &lhs, const vEdge &rhs) const noexcept {
+        return lhs.n == rhs.n && lhs.w == rhs.w;
+    }
+};
+
+struct MNodeExactEqual {
+    bool operator()(const mNode &lhs, const mNode &rhs) const noexcept {
+        if (lhs.v != rhs.v) {
+            return false;
+        }
+        MEdgeExactEqual eq;
+        for (std::size_t i = 0; i < lhs.children.size(); ++i) {
+            if (!eq(lhs.children[i], rhs.children[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+
+struct VNodeExactEqual {
+    bool operator()(const vNode &lhs, const vNode &rhs) const noexcept {
+        if (lhs.v != rhs.v) {
+            return false;
+        }
+        VEdgeExactEqual eq;
+        for (std::size_t i = 0; i < lhs.children.size(); ++i) {
+            if (!eq(lhs.children[i], rhs.children[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 };
 
