@@ -6,8 +6,12 @@ The following gates are tested in tests/test_conversion.py.
 """
 
 from qiskit import QuantumCircuit
-from qiskit.synthesis import synth_mcx_noaux_v24
 from qiskit_aer import Aer
+
+try:
+    from qiskit.synthesis import synth_mcx_noaux_v24
+except ImportError:
+    synth_mcx_noaux_v24 = None
 
 from qdd import QddProvider
 from test.python.helpers.circuit_helper import (
@@ -38,11 +42,14 @@ def test_gates_1_to_many_mapping():
         circ.h(2)
         if qiskit_gate_name == "mcx":
             controls, target = target_qubits
-            circ.compose(
-                synth_mcx_noaux_v24(len(controls)),
-                [*controls, target],
-                inplace=True,
-            )
+            if synth_mcx_noaux_v24 is None:
+                circ.mcx(controls, target)
+            else:
+                circ.compose(
+                    synth_mcx_noaux_v24(len(controls)),
+                    [*controls, target],
+                    inplace=True,
+                )
         else:
             qiskit_gate_method = getattr(circ, qiskit_gate_name)
             qiskit_gate_method(*gate_params, *target_qubits)

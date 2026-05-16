@@ -18,7 +18,7 @@ pip install qdd
 Supported environment:
 
 - Linux x86_64 and aarch64
-- Python 3.10 through 3.14
+- Python 3.9 through 3.14
 
 ## Quick Start
 
