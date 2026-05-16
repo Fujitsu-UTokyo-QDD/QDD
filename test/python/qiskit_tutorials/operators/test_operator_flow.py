@@ -44,7 +44,7 @@ def test_circuit_sampler():
     bell = QuantumCircuit(2)
     bell.h(0)
     bell.cx(0, 1)
-    evo_circ = bell.compose(evo_gate)
+    evo_circ = bell.compose(evo_gate).decompose()
 
     estimator = Estimator()
     estimator_qiskit = QiskitEstimator()

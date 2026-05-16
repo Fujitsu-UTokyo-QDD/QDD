@@ -47,7 +47,7 @@ add_subdirectory(test)
 
 option(BINDINGS "Configure for building Python bindings" ON)
 if (BINDINGS)
-  find_package(Python 3.9 COMPONENTS Interpreter Development.Module REQUIRED)
+  find_package(Python 3.10 COMPONENTS Interpreter Development.Module REQUIRED)
   execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE

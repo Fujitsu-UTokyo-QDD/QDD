@@ -33,5 +33,5 @@ complete `mpirun -n 2 python ...` example.
 
 ## Supported Environment
 
-QDD currently targets Linux on x86_64 and aarch64 with Python 3.9 through 3.13.
+QDD currently targets Linux on x86_64 and aarch64 with Python 3.10 through 3.14.
 Source builds require a C++17 compiler and CMake 3.25 or newer.
