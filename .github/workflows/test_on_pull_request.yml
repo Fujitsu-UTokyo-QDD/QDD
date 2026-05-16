@@ -18,11 +18,11 @@ jobs:
             arch: aarch64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -30,7 +30,7 @@ jobs:
         run: python -m pip install --upgrade pip build
 
       - name: Install package and test dependencies
-        run: python -m pip install .[test]
+        run: python -m pip install '.[test]'
 
       - name: Run pytest
         run: |
@@ -55,7 +55,7 @@ jobs:
             arch: aarch64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Show CMake version
         run: cmake --version
