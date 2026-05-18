@@ -1,7 +1,7 @@
 # The code in this file has been written using part of the code in the Qiskit tutorial:
 # https://learning.quantum.ibm.com/tutorial/quantum-approximate-optimization-algorithm
 import numpy as np
-from qiskit.circuit.library import QAOAAnsatz
+from qiskit.circuit.library import qaoa_ansatz
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from scipy.optimize import minimize
@@ -48,7 +48,7 @@ def test_qaoa():
 
     cost_hamiltonian = SparsePauliOp.from_list(max_cut_paulis)
 
-    circuit = QAOAAnsatz(cost_operator=cost_hamiltonian, reps=2)
+    circuit = qaoa_ansatz(cost_operator=cost_hamiltonian, reps=2)
     circuit.measure_all()
 
     backend = QddProvider().get_backend()

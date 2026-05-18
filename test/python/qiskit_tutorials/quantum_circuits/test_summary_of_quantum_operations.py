@@ -8,6 +8,11 @@ The following gates are tested in tests/test_conversion.py.
 from qiskit import QuantumCircuit
 from qiskit_aer import Aer
 
+try:
+    from qiskit.synthesis import synth_mcx_noaux_v24
+except ImportError:
+    synth_mcx_noaux_v24 = None
+
 from qdd import QddProvider
 from test.python.helpers.circuit_helper import (
     assert_probabilities_are_close,
@@ -35,8 +40,19 @@ def test_gates_1_to_many_mapping():
         circ = QuantumCircuit(6)
         circ.h(1)
         circ.h(2)
-        qiskit_gate_method = getattr(circ, qiskit_gate_name)
-        qiskit_gate_method(*gate_params, *target_qubits)
+        if qiskit_gate_name == "mcx":
+            controls, target = target_qubits
+            if synth_mcx_noaux_v24 is None:
+                circ.mcx(controls, target)
+            else:
+                circ.compose(
+                    synth_mcx_noaux_v24(len(controls)),
+                    [*controls, target],
+                    inplace=True,
+                )
+        else:
+            qiskit_gate_method = getattr(circ, qiskit_gate_name)
+            qiskit_gate_method(*gate_params, *target_qubits)
         circ.measure_all()
         _, aer_counts = get_counts(
             circ, aer_backend, n_shots=5000, optimization_level=0

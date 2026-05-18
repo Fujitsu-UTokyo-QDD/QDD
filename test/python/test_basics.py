@@ -10,7 +10,7 @@ Especially, the following test viewpoints are tested.
 import cmath, math
 import pytest
 from qiskit import QiskitError, QuantumCircuit, transpile
-from qiskit_aer import Aer
+from qiskit_aer import Aer, AerSimulator
 from qiskit.circuit import Parameter
 from qiskit.circuit.random import random_circuit
 from qiskit.transpiler import TranspilerError
@@ -281,9 +281,9 @@ def test_gc_mat_correctness():
     backend = QddProvider().get_backend()
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=i * i)
 
-        circ = transpile(circ, backend=backend)
+        circ = transpile(circ, backend=backend, optimization_level=0)
         result_medge = backend.merge_circuit(circ, 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
@@ -340,7 +340,7 @@ def test_mv_multiply_count():
 
 def test_mm_multiply():
     backend = QddProvider().get_backend()
-    aer_backend = Aer.get_backend("unitary_simulator")
+    aer_backend = AerSimulator(method="unitary")
     for i in range(10):
         nQubits = 10
         circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=i*i)
@@ -349,7 +349,9 @@ def test_mm_multiply():
         result_medge = backend.merge_circuit(circ1, 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
-        circ2 = transpile(circ, backend=aer_backend, optimization_level=0)
+        circ_aer = circ.copy()
+        circ_aer.save_unitary()
+        circ2 = transpile(circ_aer, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(circ2).result()
         aer_unitary = aer_result.get_unitary(circ2)
         aer_unitary_np = np.asarray(aer_unitary)
@@ -367,7 +369,13 @@ def test_qdd_gate():
     backend = QddProvider().get_backend("statevector_simulator")
     for i in range(10):
         nQubits = 10
-        circ = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+        circ = transpile(
+            random_circuit(
+                num_qubits=nQubits, depth=3, max_operands=2, seed=i * i
+            ),
+            backend=backend,
+            optimization_level=0,
+        )
         result1 = backend.run(circ).result().to_dict()["results"][0]["edge"]
         vector1 = result1.getEigenVector()
 
@@ -388,11 +396,23 @@ def test_qdd_gate():
 
 def test_qdd_gate_merge():
     backend = QddProvider().get_backend()
-    aer_backend = Aer.get_backend("unitary_simulator")
+    aer_backend = AerSimulator(method="unitary")
     for i in range(10):
         nQubits = 10
-        circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
-        circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend, optimization_level=0)
+        circ1 = transpile(
+            random_circuit(
+                num_qubits=nQubits, depth=3, max_operands=2, seed=i * i
+            ),
+            backend=backend,
+            optimization_level=0,
+        )
+        circ2 = transpile(
+            random_circuit(
+                num_qubits=nQubits, depth=3, max_operands=2, seed=1000 + i * i
+            ),
+            backend=backend,
+            optimization_level=0,
+        )
 
         result_medge2 = backend.merge_circuit(circ2, 100000)
         qgate2 = QDDGate(nQubits, result_medge2)
@@ -404,7 +424,9 @@ def test_qdd_gate_merge():
         unitary_merged = result_all.getEigenMatrix(nQubits)
 
         circ1.append(circ2, list(range(nQubits)))
-        all_circ = transpile(circ1, backend=aer_backend, optimization_level=0)
+        circ_aer = circ1.copy()
+        circ_aer.save_unitary()
+        all_circ = transpile(circ_aer, backend=aer_backend, optimization_level=0)
         aer_result = aer_backend.run(all_circ).result()
         aer_unitary = aer_result.get_unitary(all_circ)
         aer_unitary_np = np.asarray(aer_unitary)
@@ -418,11 +440,17 @@ def test_qdd_gate_merge():
 def test_qddgate_error():
     backend = QddProvider().get_backend()
     nQubits = 10
-    circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
-    circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+    circ1 = transpile(
+        random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=0),
+        backend=backend,
+    )
+    circ2 = transpile(
+        random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=1),
+        backend=backend,
+    )
 
     result_medge2 = backend.merge_circuit(circ2, 100000)
     qgate2 = QDDGate(nQubits, result_medge2)
     circ1.append(qgate2, list(range(nQubits)))
-    with pytest.raises(TypeError):
+    with pytest.raises((TypeError, TranspilerError)):
         circ1 = transpile(circ1, backend=backend, optimization_level=0)

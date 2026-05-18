@@ -17,6 +17,9 @@ import random
 import scipy.stats
 
 sampler_qdd = qdd_sampler()
+# MPI backend broadcasts rank 0's circuit; every rank must build the same oracle circuit.
+rng = random.Random(1234)
+unitary_rng = np.random.RandomState(1234)
 
 qc_size = 6
 
@@ -41,7 +44,7 @@ def test_1q_0param_gates():
         qis_gate = qis()
         num_qubits = qis_gate.num_qubits
         for _ in range(3):
-            targets = random.sample(range(qc_size), num_qubits)
+            targets = rng.sample(range(qc_size), num_qubits)
             qc = QuantumCircuit(qc_size)
             qc.h(range(qc_size))
             qc.append(qis_gate, targets)
@@ -54,11 +57,11 @@ def test_1q_1param_gates():
         if qis == qiskit_gates.MCPhaseGate:
             continue
         for _ in range(10):
-            para = random.uniform(-math.pi, math.pi)
+            para = rng.uniform(-math.pi, math.pi)
             qis_gate = qis(para)
             num_qubits = qis_gate.num_qubits
             for _ in range(3):
-                targets = random.sample(range(qc_size), num_qubits)
+                targets = rng.sample(range(qc_size), num_qubits)
                 qc = QuantumCircuit(qc_size)
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
@@ -69,12 +72,12 @@ def test_1q_1param_gates():
 def test_1q_2param_gates():
     for qis, _ in _qiskit_gates_1q_2param.items():
         for _ in range(20):
-            para1 = random.uniform(-math.pi, math.pi)
-            para2 = random.uniform(-math.pi, math.pi)
+            para1 = rng.uniform(-math.pi, math.pi)
+            para2 = rng.uniform(-math.pi, math.pi)
             qis_gate = qis(para1, para2)
             num_qubits = qis_gate.num_qubits
             for _ in range(3):
-                targets = random.sample(range(qc_size), num_qubits)
+                targets = rng.sample(range(qc_size), num_qubits)
                 qc = QuantumCircuit(qc_size)
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
@@ -85,13 +88,13 @@ def test_1q_2param_gates():
 def test_1q_3param_gates():
     for qis, _ in _qiskit_gates_1q_3param.items():
         for _ in range(30):
-            para1 = random.uniform(-math.pi, math.pi)
-            para2 = random.uniform(-math.pi, math.pi)
-            para3 = random.uniform(-math.pi, math.pi)
+            para1 = rng.uniform(-math.pi, math.pi)
+            para2 = rng.uniform(-math.pi, math.pi)
+            para3 = rng.uniform(-math.pi, math.pi)
             qis_gate = qis(para1, para2, para3)
             num_qubits = qis_gate.num_qubits
             for _ in range(3):
-                targets = random.sample(range(qc_size), num_qubits)
+                targets = rng.sample(range(qc_size), num_qubits)
                 qc = QuantumCircuit(qc_size)
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
@@ -102,14 +105,14 @@ def test_1q_3param_gates():
 def test_1q_4param_gates():
     for qis, _ in _qiskit_gates_1q_4param.items():
         for _ in range(40):
-            para1 = random.uniform(-math.pi, math.pi)
-            para2 = random.uniform(-math.pi, math.pi)
-            para3 = random.uniform(-math.pi, math.pi)
-            para4 = random.uniform(-math.pi, math.pi)
+            para1 = rng.uniform(-math.pi, math.pi)
+            para2 = rng.uniform(-math.pi, math.pi)
+            para3 = rng.uniform(-math.pi, math.pi)
+            para4 = rng.uniform(-math.pi, math.pi)
             qis_gate = qis(para1, para2, para3, para4)
             num_qubits = qis_gate.num_qubits
             for _ in range(3):
-                targets = random.sample(range(qc_size), num_qubits)
+                targets = rng.sample(range(qc_size), num_qubits)
                 qc = QuantumCircuit(qc_size)
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
@@ -122,7 +125,7 @@ def test_2q_0param_gates():
         qis_gate = qis()
         num_qubits = qis_gate.num_qubits
         for _ in range(3):
-            targets = random.sample(range(qc_size), num_qubits)
+            targets = rng.sample(range(qc_size), num_qubits)
             qc = QuantumCircuit(qc_size)
             qc.h(range(qc_size))
             qc.append(qis_gate, targets)
@@ -133,11 +136,11 @@ def test_2q_0param_gates():
 def test_2q_1param_gates():
     for qis, _ in _qiskit_gates_2q_1param.items():
         for _ in range(10):
-            para = random.uniform(-math.pi, math.pi)
+            para = rng.uniform(-math.pi, math.pi)
             qis_gate = qis(para)
             num_qubits = qis_gate.num_qubits
             for _ in range(3):
-                targets = random.sample(range(qc_size), num_qubits)
+                targets = rng.sample(range(qc_size), num_qubits)
                 qc = QuantumCircuit(qc_size)
                 qc.h(range(qc_size))
                 qc.append(qis_gate, targets)
@@ -148,9 +151,9 @@ def test_2q_1param_gates():
 def test_unitary():
     bit = 3
     for _ in range(10):
-        random_matrix = scipy.stats.unitary_group.rvs(2**bit)
+        random_matrix = scipy.stats.unitary_group.rvs(2**bit, random_state=unitary_rng)
         for _ in range(3):
-            targets = random.sample(range(qc_size), bit)
+            targets = rng.sample(range(qc_size), bit)
             qc = QuantumCircuit(qc_size)
             qc.h(range(qc_size))
             qc.append(qiskit_gates.UnitaryGate(random_matrix), targets)

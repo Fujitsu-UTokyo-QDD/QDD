@@ -34,7 +34,7 @@ def test_using_operators_in_circuits():
 
     backend = QddProvider().get_backend()
     circ = transpile(
-        circ, backend, basis_gates=["rx", "ry", "rz", "cx"], seed_transpiler=50
+        circ, basis_gates=["rx", "ry", "rz", "cx"], seed_transpiler=50
     )
     job = backend.run(circ, seed_simulator=80)
     assert job.result().get_counts(0) == {"11": 1024}
