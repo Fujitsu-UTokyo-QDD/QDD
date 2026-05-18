@@ -3,7 +3,7 @@
 
 import numpy as np
 import pytest
-from qiskit.circuit.library import EfficientSU2
+from qiskit.circuit.library import efficient_su2
 from qiskit.primitives import StatevectorEstimator as QiskitEstimator
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
@@ -23,7 +23,7 @@ def test_vqe():
         [("YZ", 0.3980), ("ZI", -0.3980), ("ZZ", -0.0113), ("XX", 0.1810)]
     )
 
-    ansatz = EfficientSU2(hamiltonian.num_qubits)
+    ansatz = efficient_su2(hamiltonian.num_qubits)
     num_params = ansatz.num_parameters
 
     pm = generate_preset_pass_manager(backend=backend, optimization_level=3)

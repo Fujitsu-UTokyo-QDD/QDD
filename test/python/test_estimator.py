@@ -3,13 +3,13 @@
 from math import sqrt
 import pytest
 from qiskit.primitives import StatevectorEstimator as QiskitEstimator
-from qiskit.circuit.library import RealAmplitudes
+from qiskit.circuit.library import real_amplitudes
 from qiskit.quantum_info import SparsePauliOp
 from qdd.qdd_estimator import Estimator
 
 
 def test_estimator():
-    psi1 = RealAmplitudes(num_qubits=2, reps=2)
+    psi1 = real_amplitudes(num_qubits=2, reps=2)
 
     H1 = SparsePauliOp.from_list([("II", 1), ("IZ", 2), ("XI", 3)])
 
@@ -47,8 +47,8 @@ def test_estimator2():
     #             <psi2(theta2)|H2|psi2(theta2)>,
     #             <psi1(theta3)|H3|psi1(theta3)> ]
 
-    psi1 = RealAmplitudes(num_qubits=2, reps=2)
-    psi2 = RealAmplitudes(num_qubits=2, reps=3)
+    psi1 = real_amplitudes(num_qubits=2, reps=2)
+    psi2 = real_amplitudes(num_qubits=2, reps=3)
 
     H1 = SparsePauliOp.from_list([("II", 1), ("IZ", 2), ("XI", 3)])
     H2 = SparsePauliOp.from_list([("IZ", 1)])

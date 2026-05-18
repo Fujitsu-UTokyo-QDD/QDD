@@ -49,7 +49,9 @@ const int MINUS = 6;
 static mEdge normalizeM(const mEdge &e) {
     // check for all zero weights
     if (std::all_of(e.n->children.begin(), e.n->children.end(),
-                    [](const mEdge &e) { return norm(e.w) == 0.0; })) {
+                    [](const mEdge &e) {
+                        return e.w.isApproximatelyZero();
+                    })) {
         mUnique.returnNode(e.n);
         return mEdge::zero;
     }
@@ -63,7 +65,7 @@ static mEdge normalizeM(const mEdge &e) {
     const std::size_t idx = std::distance(e.n->children.begin(), result);
 
     // parents weight
-    std_complex new_weight = max_weight * e.w;
+    std_complex new_weight = canonicalize_special_complex(max_weight * e.w);
     if (new_weight.isApproximatelyZero()) {
         mUnique.returnNode(e.n);
         return mEdge::zero;
@@ -72,7 +74,8 @@ static mEdge normalizeM(const mEdge &e) {
     }
 
     for (int i = 0; i < 4; i++) {
-        std_complex r = e.n->children[i].w / max_weight;
+        std_complex r =
+                canonicalize_complex(e.n->children[i].w / max_weight);
         if (r.isApproximatelyZero()) {
             e.n->children[i] = mEdge::zero;
         } else {
@@ -90,21 +93,23 @@ static mEdge normalizeM(const mEdge &e) {
 }
 
 static vEdge normalizeV(const vEdge &e) {
-    // check for all zero weights
-    if (std::all_of(e.n->children.begin(), e.n->children.end(),
-                    [](const vEdge &e) { return e.w.isApproximatelyZero(); })) {
+    const bool z0 = e.n->children[0].w.isApproximatelyZero();
+    const bool z1 = e.n->children[1].w.isApproximatelyZero();
+    if (z0 && z1) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
     }
 
-    auto result = std::max_element(e.n->children.begin(), e.n->children.end(),
-                                   [](const vEdge &lhs, const vEdge &rhs) {
-                                       return norm2(lhs.w) < norm2(rhs.w);
-                                   });
-    std_complex max_weight = result->w;
+    const std::size_t max_idx =
+            z0 ? 1 : z1 ? 0 : (norm2(e.n->children[0].w) <
+                                       norm2(e.n->children[1].w)
+                               ? 1
+                               : 0);
+    const std::size_t min_idx = 1 - max_idx;
+    std_complex max_weight = e.n->children[max_idx].w;
 
     // parents weight
-    std_complex new_weight = max_weight * e.w;
+    std_complex new_weight = canonicalize_special_complex(max_weight * e.w);
     if (new_weight.isApproximatelyZero()) {
         vUnique.returnNode(e.n);
         return vEdge::zero;
@@ -113,16 +118,19 @@ static vEdge normalizeV(const vEdge &e) {
     }
 
     // child weight (larger one)
-    size_t max_idx = (result == &(e.n->children[1])) ? 1 : 0;
     e.n->children[max_idx].w = {1.0, 0.0};
 
     // child weight (smaller one)
-    size_t min_idx = (max_idx == 1) ? 0 : 1;
-    e.n->children[min_idx].w = e.n->children[min_idx].w / max_weight;
-    if (e.n->children[min_idx].w.isApproximatelyOne()) {
-        e.n->children[min_idx].w = {1.0, 0.0};
-    } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
+    if (e.n->children[min_idx].w.isApproximatelyZero()) {
         e.n->children[min_idx] = vEdge::zero;
+    } else {
+        e.n->children[min_idx].w = canonicalize_complex(
+                e.n->children[min_idx].w / max_weight);
+        if (e.n->children[min_idx].w.isApproximatelyOne()) {
+            e.n->children[min_idx].w = {1.0, 0.0};
+        } else if (e.n->children[min_idx].w.isApproximatelyZero()) {
+            e.n->children[min_idx] = vEdge::zero;
+        }
     }
 
     // making new node
@@ -133,7 +141,11 @@ static vEdge normalizeV(const vEdge &e) {
 mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
     // Identity Stripping
     if( c[0].n==c[3].n && c[1].w.isApproximatelyZero() && c[2].w.isApproximatelyZero() && c[0].w.isApproximatelyEqual(c[3].w)){
-        return {c[0].w, c[0].n};
+        const std_complex w = canonicalize_special_complex(c[0].w);
+        if (w.isApproximatelyZero()) {
+            return mEdge::zero;
+        }
+        return {w, c[0].n};
     }
 
     mNode *node = mUnique.getNode();
@@ -146,6 +158,12 @@ mEdge makeMEdge(Qubit q, const std::array<mEdge, 4> &c) {
 }
 
 vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
+    const bool z0 = c[0].w.isApproximatelyZero();
+    const bool z1 = c[1].w.isApproximatelyZero();
+    if (z0 && z1) {
+        return vEdge::zero;
+    }
+
     vNode *node = vUnique.getNode();
     node->v = q;
     node->children = c;
@@ -161,14 +179,6 @@ vEdge makeVEdge(Qubit q, const std::array<vEdge, 2> &c) {
 
     return e;
 }
-
-Qubit mEdge::getVar() const { return n->v; }
-
-Qubit vEdge::getVar() const { return n->v; }
-
-bool mEdge::isTerminal() const { return n == mNode::terminal; }
-
-bool vEdge::isTerminal() const { return n == vNode::terminal; }
 
 static void fillMatrix(const mEdge &edge, size_t row, size_t col,
                        const std_complex &w, uint64_t dim, std_complex **m) {
@@ -676,7 +686,7 @@ static Qubit rootVar(const mEdge &lhs, const mEdge &rhs) {
                : lhs.getVar();
 }
 
-mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+static mEdge mm_add2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return (lhs==mEdge::zero)? rhs : lhs;
     }
@@ -754,7 +764,7 @@ mEdge mm_add(const mEdge &lhs, const mEdge &rhs) {
     return mm_add2(lhs, rhs, root);
 }
 
-mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
+static mEdge mm_multiply2(const mEdge &lhs, const mEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero || rhs == mEdge::zero){
         return mEdge::zero;
     }else if(lhs.isTerminal()){
@@ -876,7 +886,7 @@ static void printVector2(const vEdge &edge, std::size_t row,
     printVector2(node->getEdge(1), (row << 1) | 1, wp, left - 1, m);
 }
 
-mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
+static mEdge mm_kronecker2(const mEdge &lhs, const mEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -905,7 +915,7 @@ mEdge mm_kronecker(const mEdge &lhs, const mEdge &rhs) {
     return mm_kronecker2(lhs, rhs);
 }
 
-vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
+static vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if (lhs.w.isApproximatelyZero()) {
         if (rhs.w.isApproximatelyZero()) {
             return vEdge::zero;
@@ -937,18 +947,21 @@ vEdge vv_add2(const vEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
+    // current_var >= 0 here, so lv/rv == current_var implies a non-terminal edge.
+    const bool lhs_expands = (lv == current_var);
+    const bool rhs_expands = (rv == current_var);
     vNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     std::array<vEdge, 2> edges;
 
     for (auto i = 0; i < 2; i++) {
-        if (lv == current_var && !lhs.isTerminal()) {
+        if (lhs_expands) {
             x = lnode->getEdge(i);
             x.w = lhs.w * x.w;
         } else {
             x = lhs;
         }
-        if (rv == current_var && !rhs.isTerminal()) {
+        if (rhs_expands) {
             y = rnode->getEdge(i);
             y.w = rhs.w * y.w;
         } else {
@@ -970,7 +983,32 @@ vEdge vv_add(const vEdge &lhs, const vEdge &rhs) {
     return vv_add2(lhs, rhs, rhs.getVar());
 }
 
-vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
+static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs,
+                          int32_t current_var);
+
+static inline vEdge mv_mul_or_zero(const mEdge &x, const vEdge &y,
+                                   int32_t next_var) {
+    if (x.w.isApproximatelyZero() || y.w.isApproximatelyZero()) {
+        return vEdge::zero;
+    }
+    return mv_multiply2(x, y, next_var);
+}
+
+static inline vEdge vv_add_or_other(const vEdge &a, const vEdge &b,
+                                    int32_t next_var) {
+    if (a.w.isApproximatelyZero()) {
+        if (b.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
+        return b;
+    }
+    if (b.w.isApproximatelyZero()) {
+        return a;
+    }
+    return vv_add2(a, b, next_var);
+}
+
+static vEdge vv_kronecker2(const vEdge &lhs, const vEdge &rhs) {
     if (lhs.isTerminal()) {
         return {lhs.w * rhs.w, rhs.n};
     }
@@ -1146,7 +1184,7 @@ VectorXcf vEdge::getEigenVector() {
     return V;
 }
 
-vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
+static vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     if(lhs == mEdge::zero){
         return vEdge::zero;
     }else if(lhs.isTerminal()){
@@ -1181,6 +1219,9 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
 
     Qubit lv = lhs.getVar();
     Qubit rv = rhs.getVar();
+    // current_var >= 0 here, so lv/rv == current_var implies a non-terminal edge.
+    const bool lhs_expands = (lv == current_var);
+    const bool rhs_expands = (rv == current_var);
     mNode *lnode = lhs.getNode();
     vNode *rnode = rhs.getNode();
     mEdge x;
@@ -1191,11 +1232,57 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
     rcopy.w = {1.0, 0.0};
 
     std::array<vEdge, 2> edges;
+    auto finalize_result = [&](const std::array<vEdge, 2> &result_edges) {
+        result = makeVEdge(current_var, result_edges);
+        _mCache.set(lhs.n, rhs.n, result);
+        result.w = result.w * lhs.w * rhs.w;
+        if (result.w.isApproximatelyZero()) {
+            return vEdge::zero;
+        }
+        if (result.w.isApproximatelyOne()) {
+            result.w = {1.0, 0.0};
+        }
+        return result;
+    };
+
+    mEdge m00, m01, m10, m11;
+    if (lhs_expands) {
+        m00 = lnode->getEdge(0);
+        m01 = lnode->getEdge(1);
+        m10 = lnode->getEdge(2);
+        m11 = lnode->getEdge(3);
+    } else {
+        m00 = lcopy;
+        m01 = mEdge::zero;
+        m10 = mEdge::zero;
+        m11 = lcopy;
+    }
+
+    vEdge y0, y1;
+    if (rhs_expands) {
+        y0 = rnode->getEdge(0);
+        y1 = rnode->getEdge(1);
+    } else {
+        y0 = rcopy;
+        y1 = rcopy;
+    }
+
+    if (m01.w.isApproximatelyZero() && m10.w.isApproximatelyZero()) {
+        edges[0] = mv_mul_or_zero(m00, y0, current_var - 1);
+        edges[1] = mv_mul_or_zero(m11, y1, current_var - 1);
+        return finalize_result(edges);
+    }
+
+    if (m00.w.isApproximatelyZero() && m11.w.isApproximatelyZero()) {
+        edges[0] = mv_mul_or_zero(m01, y1, current_var - 1);
+        edges[1] = mv_mul_or_zero(m10, y0, current_var - 1);
+        return finalize_result(edges);
+    }
 
     for (auto i = 0; i < 2; i++) {
         std::array<vEdge, 2> product;
         for (auto k = 0; k < 2; k++) {
-            if (lv == current_var && !lhs.isTerminal()) {
+            if (lhs_expands) {
                 x = lnode->getEdge((i << 1) | k);
             } else {
                 if( ((i << 1) | k)==0 || ((i << 1) | k)==3 )
@@ -1204,26 +1291,17 @@ vEdge mv_multiply2(const mEdge &lhs, const vEdge &rhs, int32_t current_var) {
                     x = mEdge::zero;
             }
 
-            if (rv == current_var && !rhs.isTerminal()) {
+            if (rhs_expands) {
                 y = rnode->getEdge(k);
             } else {
                 y = rcopy;
             }
-                product[k] = mv_multiply2(x, y, current_var - 1);
+            product[k] = mv_mul_or_zero(x, y, current_var - 1);
         }
-        edges[i] = vv_add2(product[0], product[1], current_var - 1);
+        edges[i] = vv_add_or_other(product[0], product[1], current_var - 1);
     }
 
-    result = makeVEdge(current_var, edges);
-    _mCache.set(lhs.n, rhs.n, result);
-    result.w = result.w * lhs.w * rhs.w;
-    if (result.w.isApproximatelyZero()) {
-        return vEdge::zero;
-    }
-    if (result.w.isApproximatelyOne()) {
-        result.w = {1.0, 0.0};
-    }
-    return result;
+    return finalize_result(edges);
 }
 
 vEdge mv_multiply(mEdge lhs, vEdge rhs) {
@@ -1235,7 +1313,7 @@ vEdge mv_multiply(mEdge lhs, vEdge rhs) {
     return v;
 }
 
-double assignProbabilities(const vEdge &edge) {
+static double assignProbabilities(const vEdge &edge) {
     auto it = probs.find(edge.n);
     if (it != probs.end()) {
         return edge.w.mag2() * it->second;

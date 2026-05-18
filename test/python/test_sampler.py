@@ -3,7 +3,7 @@
 import pytest
 from qiskit.primitives import StatevectorSampler as QiskitSampler
 from qiskit import QuantumCircuit
-from qiskit.circuit.library import RealAmplitudes
+from qiskit.circuit.library import real_amplitudes
 from qiskit.result import QuasiDistribution
 
 from qdd.qdd_sampler import Sampler
@@ -56,9 +56,9 @@ def test_sampler():
 def test_sampler_param():
 
     # two parameterized circuits
-    pqc = RealAmplitudes(num_qubits=2, reps=2)
+    pqc = real_amplitudes(num_qubits=2, reps=2)
     pqc.measure_all()
-    pqc2 = RealAmplitudes(num_qubits=2, reps=3)
+    pqc2 = real_amplitudes(num_qubits=2, reps=3)
     pqc2.measure_all()
 
     theta1 = [0, 1, 1, 2, 3, 5]

@@ -3,12 +3,22 @@ name: MPI test on pull request
 on: pull_request
 
 jobs:
-  mpi_test:
-    name: MPI test
-    runs-on: ubuntu-latest
+  mpi_python_test:
+    name: Python MPI test (${{ matrix.os }} ${{ matrix.arch }} / py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -21,9 +31,57 @@ jobs:
             libboost-mpi-dev \
             libboost-serialization-dev
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install qdd with MPI bindings
+        run: |
+          python -m pip install --upgrade pip build
+          python -m pip install mpi4py
+          CMAKE_ARGS="-DisMPI=ON" CC=mpicc CXX=mpicxx python -m pip install '.[test]'
+
+      - name: Run Python MPI tests
+        run: |
+          rm -rf /tmp/qdd-mpi-tests
+          mkdir -p /tmp/qdd-mpi-tests
+          cp pyproject.toml /tmp/qdd-mpi-tests/pyproject.toml
+          cp -r test /tmp/qdd-mpi-tests/test
+          cd /tmp/qdd-mpi-tests
+          export QDD_TEST_USE_MPI=1
+          mpirun --oversubscribe -np 2 python -m pytest \
+            -o addopts="" \
+            test/python \
+            -m "not slow and not no_mpi_support" \
+            --strict-markers
+
+  mpi_cpp_test:
+    name: C++ MPI test (${{ matrix.os }} ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install OpenMPI and Boost
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libopenmpi-dev \
+            openmpi-bin \
+            libboost-mpi-dev \
+            libboost-serialization-dev
 
       - name: Build C++ MPI tests
         run: |
@@ -41,18 +99,3 @@ jobs:
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test_grover 6
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_qcbm 6
-
-      - name: Install qdd with MPI bindings
-        run: |
-          python -m pip install --upgrade pip build
-          python -m pip install mpi4py
-          CMAKE_ARGS="-DisMPI=ON" CC=mpicc CXX=mpicxx python -m pip install .[test]
-
-      - name: Run Python MPI tests
-        run: |
-          rm -rf /tmp/qdd-mpi-tests
-          mkdir -p /tmp/qdd-mpi-tests
-          cp pyproject.toml /tmp/qdd-mpi-tests/pyproject.toml
-          cp -r test /tmp/qdd-mpi-tests/test
-          cd /tmp/qdd-mpi-tests
-          mpirun --oversubscribe -np 2 python -m pytest -o addopts="" test/python/test_mpi.py
