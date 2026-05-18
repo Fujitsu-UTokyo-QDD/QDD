@@ -9,8 +9,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
-        qiskit-version: ["2.0", "2.1", "2.2", "2.3", "2.4"]
+        include:
+          - qiskit-version: "2.0"
+            python-version: "3.13"
+          - qiskit-version: "2.1"
+            python-version: "3.13"
+          - qiskit-version: "2.2"
+            python-version: "3.13"
+          - qiskit-version: "2.3"
+            python-version: "3.13"
+          - qiskit-version: "2.4"
+            python-version: "3.14"
 
     steps:
       - uses: actions/checkout@v6
