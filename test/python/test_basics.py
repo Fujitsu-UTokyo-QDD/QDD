@@ -281,9 +281,9 @@ def test_gc_mat_correctness():
     backend = QddProvider().get_backend()
     for i in range(10):
         nQubits = 10
-        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2)
+        circ = random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=i * i)
 
-        circ = transpile(circ, backend=backend)
+        circ = transpile(circ, backend=backend, optimization_level=0)
         result_medge = backend.merge_circuit(circ, 100000)
         qdd_unitary = result_medge.getEigenMatrix(nQubits)
 
@@ -440,8 +440,14 @@ def test_qdd_gate_merge():
 def test_qddgate_error():
     backend = QddProvider().get_backend()
     nQubits = 10
-    circ1 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
-    circ2 = transpile(random_circuit(num_qubits=nQubits, depth=3, max_operands=2), backend=backend)
+    circ1 = transpile(
+        random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=0),
+        backend=backend,
+    )
+    circ2 = transpile(
+        random_circuit(num_qubits=nQubits, depth=3, max_operands=2, seed=1),
+        backend=backend,
+    )
 
     result_medge2 = backend.merge_circuit(circ2, 100000)
     qgate2 = QDDGate(nQubits, result_medge2)
