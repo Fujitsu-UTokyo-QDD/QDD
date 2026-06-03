@@ -78,6 +78,11 @@ manylinux-aarch64-image = "manylinux_2_28"
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
 
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
+environment = { CC = "clang-cl", CXX = "clang-cl" }
+before-build = "pip install ninja"
+
 [tool.pytest.ini_options]
 testpaths = [
     "test/python",

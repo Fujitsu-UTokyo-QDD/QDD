@@ -43,3 +43,48 @@ The repository includes a helper script for local builds and tests:
 
 If no virtual environment is active, the script creates one under the project
 root.
+
+## Windows (x86_64) Build with clang-cl
+
+Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI.
+`cl.exe` is not used.
+
+### Install LLVM
+
+```powershell
+choco install llvm --version=18.1.8 -y
+```
+
+Add `C:\Program Files\LLVM\bin` to `PATH`.
+
+### Install Ninja
+
+```sh
+pip install ninja
+```
+
+### Configure and Build
+
+```powershell
+cmake -S . -B build -G Ninja `
+  -DCMAKE_C_COMPILER=clang-cl `
+  -DCMAKE_CXX_COMPILER=clang-cl `
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+```
+
+### Run C++ Tests
+
+```sh
+ctest --test-dir build --output-on-failure -C Release
+```
+
+### Build and Install Python Wheel
+
+```powershell
+$env:CMAKE_ARGS = "-G Ninja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl"
+pip install ".[test]"
+pytest test/python -m "not slow and not mpi"
+```
+
+> **Note:** MPI is not supported on Windows.

@@ -17,14 +17,24 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_definitions(_GNU_SOURCE)
 endif()
 if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT MSVC)
         add_compile_options(-fno-omit-frame-pointer)
     endif()
+endif()
+
+# clang-cl (LLVM on Windows with MSVC ABI)
+if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_definitions(_USE_MATH_DEFINES)
+    add_compile_options(/O2 /fp:fast /clang:-flto=thin)
+    add_link_options(/clang:-flto=thin)
 endif()
 
 enable_testing()
 
 include(FetchContent)
+# On Windows with MSVC ABI (including clang-cl), GoogleTest must link against
+# the shared CRT to match the runtime used by the rest of the build.
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
