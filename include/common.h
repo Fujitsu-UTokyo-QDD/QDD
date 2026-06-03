@@ -11,16 +11,19 @@
 #include <vector>
 #include <complex>
 #include <chrono>
+
+
+#ifdef __cpp_lib_hardware_interference_size
+    using std::hardware_constructive_interference_size;
+    using std::hardware_destructive_interference_size;
+#else
+    // 64 bytes on x86-64 │ L1_CACHE_BYTES │ L1_CACHE_SHIFT │ __cacheline_aligned │ ...
+    constexpr std::size_t hardware_constructive_interference_size = 64;
+    constexpr std::size_t hardware_destructive_interference_size = 64;
+#endif
+
 #ifndef LINE_SIZE
-#define LINE_SIZE 64
-#endif
-
-#ifndef WORKERS
-#define WORKERS 8
-#endif
-
-#ifndef cas
-#define cas(ptr, old, new) (__sync_bool_compare_and_swap((ptr),(old),(new)))
+#define LINE_SIZE hardware_constructive_interference_size
 #endif
 
 using duration_micro = std::chrono::duration<double, std::micro>;
