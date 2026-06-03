@@ -5,9 +5,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX)
 
 
-get_filename_component(USER $ENV{HOME} NAME)
-
-
 set(EIGEN_PATH ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0)
 
 if(NOT EXISTS ${EIGEN_PATH})
@@ -16,7 +13,9 @@ if(NOT EXISTS ${EIGEN_PATH})
 endif()
 add_compile_definitions(EIGEN_DONT_VECTORIZE)
 
-add_compile_definitions(_GNU_SOURCE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_compile_definitions(_GNU_SOURCE)
+endif()
 if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         add_compile_options(-fno-omit-frame-pointer)
