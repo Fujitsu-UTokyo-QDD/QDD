@@ -41,7 +41,7 @@ FetchContent_Declare(
   GIT_TAG        v1.13.0
   FIND_PACKAGE_ARGS NAMES GTest
 )
-FetchContent_MakeAvailable(googletest)
+FetchContent_MakeAvailable(googletest SYSTEM)
 
 option(isMPI "Configure for using MPI" OFF)
 if (isMPI)
