@@ -44,7 +44,6 @@ test = [
     "scipy>=1.10",
     "qiskit-algorithms>=0.3",
     "qiskit-nature>=0.7",
-    "pyscf>=2.4",
 ]
 docs = [
     "sphinx>=7.4",
