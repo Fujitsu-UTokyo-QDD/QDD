@@ -101,7 +101,14 @@ jobs:
         run: python -m pip install ".[test]"
 
       - name: Run pytest
-        run: python -m pytest test/python -m "not slow and not mpi"
+        shell: pwsh
+        run: |
+          $tmp = "$env:RUNNER_TEMP\qdd-tests"
+          New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+          Copy-Item pyproject.toml "$tmp\pyproject.toml"
+          Copy-Item -Recurse test "$tmp\test"
+          Set-Location $tmp
+          python -m pytest test/python -m "not slow and not mpi"
 
   windows_cpp_test:
     name: C++ test (windows-latest x86_64)
