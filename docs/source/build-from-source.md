@@ -52,7 +52,7 @@ Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI.
 ### Install LLVM
 
 ```powershell
-choco install llvm --version=18.1.8 -y
+choco install llvm
 ```
 
 Add `C:\Program Files\LLVM\bin` to `PATH`.
