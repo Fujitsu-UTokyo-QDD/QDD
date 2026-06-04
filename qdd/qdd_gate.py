@@ -1,4 +1,4 @@
-from qdd import pyQDD
+from . import pyQDD
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.exceptions import CircuitError
 

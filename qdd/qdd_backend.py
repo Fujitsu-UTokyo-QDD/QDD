@@ -18,7 +18,7 @@ from qiskit.result import Result
 from qiskit.transpiler import Target
 
 from qdd import __version__ as qdd_version
-from qdd import pyQDD
+from . import pyQDD
 from qdd.qdd_failed_job import QddFailedJob
 from qdd.qdd_job import QddJob
 from qdd.qdd_gate import QDDGate
