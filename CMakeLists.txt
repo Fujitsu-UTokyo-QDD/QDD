@@ -50,6 +50,9 @@ foreach(_gtest_target gtest gtest_main gmock gmock_main)
       set_target_properties(${_gtest_target} PROPERTIES
         INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_inc}")
     endif()
+    if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      target_compile_options(${_gtest_target} PRIVATE /clang:-Wno-nan-infinity-disabled)
+    endif()
   endif()
 endforeach()
 
