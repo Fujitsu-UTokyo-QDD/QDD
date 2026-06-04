@@ -41,7 +41,17 @@ FetchContent_Declare(
   GIT_TAG        v1.13.0
   FIND_PACKAGE_ARGS NAMES GTest
 )
-FetchContent_MakeAvailable(googletest SYSTEM)
+FetchContent_MakeAvailable(googletest)
+# Mark GoogleTest headers as SYSTEM to suppress warnings from its headers
+foreach(_gtest_target gtest gtest_main gmock gmock_main)
+  if(TARGET ${_gtest_target})
+    get_target_property(_inc ${_gtest_target} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_inc)
+      set_target_properties(${_gtest_target} PROPERTIES
+        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_inc}")
+    endif()
+  endif()
+endforeach()
 
 option(isMPI "Configure for using MPI" OFF)
 if (isMPI)
