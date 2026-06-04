@@ -26,7 +26,6 @@ endif()
 if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_definitions(_USE_MATH_DEFINES)
     add_compile_options(/O2 /fp:fast /clang:-flto=thin)
-    add_link_options(/clang:-flto=thin)
 endif()
 
 enable_testing()
