@@ -60,9 +60,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-13
+          - os: macos-15-intel
             arch: x86_64
-          - os: macos-14
+          - os: macos-15
             arch: arm64
         python-tag: ["39", "310", "311", "312", "313", "314"]
     steps:
