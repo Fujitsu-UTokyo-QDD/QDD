@@ -48,6 +48,10 @@ jobs:
       - uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_BUILD: cp${{ matrix.python-tag }}-win_amd64
+          CMAKE_ARGS: >-
+            -G Ninja
+            -DCMAKE_C_COMPILER=clang-cl
+            -DCMAKE_CXX_COMPILER=clang-cl
       - uses: actions/upload-artifact@v7
         with:
           name: wheels-win_amd64-cp${{ matrix.python-tag }}
