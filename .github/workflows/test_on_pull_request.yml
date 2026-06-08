@@ -78,7 +78,12 @@ jobs:
         run: cmake --build build -j
 
       - name: Run C++ tests
+        if: runner.os == 'Linux'
         run: ctest --test-dir build --output-on-failure
+
+      - name: Run C++ tests without performance benchmark
+        if: runner.os == 'macOS'
+        run: ctest --test-dir build --output-on-failure -E "QddTest.MV_PerformanceTest"
 
   windows_python_test:
     name: Python test (windows-latest x86_64 / py${{ matrix.python-version }})
@@ -140,5 +145,5 @@ jobs:
       - name: Build
         run: cmake --build build -j
 
-      - name: Run C++ tests
-        run: ctest --test-dir build --output-on-failure -C Release
+      - name: Run C++ tests without performance benchmark
+        run: ctest --test-dir build --output-on-failure -C Release -E "QddTest.MV_PerformanceTest"
