@@ -88,3 +88,38 @@ pytest test/python -m "not slow and not mpi"
 ```
 
 > **Note:** MPI is not supported on Windows.
+
+## macOS Build
+
+macOS builds use AppleClang. Both Intel (`x86_64`) and Apple Silicon (`arm64`)
+are built as native, architecture-specific wheels rather than Universal2
+wheels.
+
+### Install Build Tools
+
+```sh
+brew install cmake
+python -m pip install --upgrade pip build
+```
+
+### Configure and Build
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+```
+
+### Run C++ Tests
+
+```sh
+ctest --test-dir build --output-on-failure
+```
+
+### Build and Test Python Package
+
+```sh
+pip install ".[test]"
+pytest test/python -m "not slow and not mpi"
+```
+
+> **Note:** MPI is not supported on macOS.

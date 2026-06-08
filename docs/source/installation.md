@@ -36,9 +36,10 @@ complete `mpirun -n 2 python ...` example.
 | Platform | Architecture | Python |
 |----------|-------------|--------|
 | Linux    | x86_64, aarch64 | 3.9 – 3.14 |
-| Windows  | x86_64 (AMD64)  | 3.9 – 3.13 |
+| macOS    | x86_64 (Intel), arm64 (Apple Silicon) | 3.9 – 3.14 |
+| Windows  | x86_64 (AMD64)  | 3.9 – 3.14 |
 
 Source builds require a C++17 compiler and CMake 3.25 or newer.
 
 > **Note:** MPI support is available on Linux only. The `qdd-mpi` package is not
-> available for Windows.
+> available for macOS or Windows.

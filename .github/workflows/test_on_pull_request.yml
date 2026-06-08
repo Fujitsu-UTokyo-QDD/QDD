@@ -9,13 +9,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           - os: ubuntu-latest
             arch: x86_64
           - os: ubuntu-24.04-arm
             arch: aarch64
+          - os: macos-13
+            arch: x86_64
+          - os: macos-14
+            arch: arm64
         exclude:
           - os: ubuntu-24.04-arm
             python-version: "3.14"
@@ -50,12 +54,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14]
         include:
           - os: ubuntu-latest
             arch: x86_64
           - os: ubuntu-24.04-arm
             arch: aarch64
+          - os: macos-13
+            arch: x86_64
+          - os: macos-14
+            arch: arm64
 
     steps:
       - uses: actions/checkout@v6
@@ -78,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v6
