@@ -35,26 +35,36 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_wheels_windows:
-    name: Build wheels (windows-latest x86_64 / cp${{ matrix.python-tag }})
-    runs-on: windows-latest
+    name: Build wheels (${{ matrix.os }} ${{ matrix.arch }} / cp${{ matrix.python-tag }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [windows-latest, windows-11-arm]
         python-tag: ["39", "310", "311", "312", "313", "314"]
+        include:
+          - os: windows-latest
+            arch: AMD64
+            wheel-platform: win_amd64
+          - os: windows-11-arm
+            arch: ARM64
+            wheel-platform: win_arm64
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: pypa/cibuildwheel@v3.3.0
         env:
-          CIBW_BUILD: cp${{ matrix.python-tag }}-win_amd64
+          CIBW_ARCHS_WINDOWS: ${{ matrix.arch }}
+          CIBW_BUILD: cp${{ matrix.python-tag }}-${{ matrix.wheel-platform }}
+          CIBW_TEST_SKIP: "*-win_arm64"
           CMAKE_ARGS: >-
             -G Ninja
             -DCMAKE_C_COMPILER=clang-cl
             -DCMAKE_CXX_COMPILER=clang-cl
       - uses: actions/upload-artifact@v7
         with:
-          name: wheels-win_amd64-cp${{ matrix.python-tag }}
+          name: wheels-${{ matrix.wheel-platform }}-cp${{ matrix.python-tag }}
           path: ./wheelhouse/*.whl
 
   build_wheels_macos:
@@ -63,12 +73,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-15-intel, macos-15]
+        python-tag: ["39", "310", "311", "312", "313", "314"]
         include:
           - os: macos-15-intel
             arch: x86_64
           - os: macos-15
             arch: arm64
-        python-tag: ["39", "310", "311", "312", "313", "314"]
     steps:
       - uses: actions/checkout@v6
         with:

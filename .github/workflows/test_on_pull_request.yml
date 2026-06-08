@@ -124,8 +124,16 @@ jobs:
           python -m pytest test/python -m "not slow and not mpi"
 
   windows_cpp_test:
-    name: C++ test (windows-latest x86_64)
-    runs-on: windows-latest
+    name: C++ test (${{ matrix.os }} ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x86_64
+          - os: windows-11-arm
+            arch: arm64
 
     steps:
       - uses: actions/checkout@v6

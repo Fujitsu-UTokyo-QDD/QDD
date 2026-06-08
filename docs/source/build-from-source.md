@@ -44,9 +44,10 @@ The repository includes a helper script for local builds and tests:
 If no virtual environment is active, the script creates one under the project
 root.
 
-## Windows (x86_64) Build with clang-cl
+## Windows Build with clang-cl
 
-Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI.
+Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI on
+x86_64 and ARM64.
 `cl.exe` is not used.
 
 ### Install LLVM
