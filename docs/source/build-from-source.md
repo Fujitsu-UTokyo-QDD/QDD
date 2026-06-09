@@ -44,9 +44,10 @@ The repository includes a helper script for local builds and tests:
 If no virtual environment is active, the script creates one under the project
 root.
 
-## Windows (x86_64) Build with clang-cl
+## Windows Build with clang-cl
 
-Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI.
+Windows builds use clang-cl (LLVM 18 or later) to target the MSVC ABI on
+x86_64 and ARM64.
 `cl.exe` is not used.
 
 ### Install LLVM
@@ -95,7 +96,7 @@ macOS builds use AppleClang. Both Intel (`x86_64`) and Apple Silicon (`arm64`)
 are built as native, architecture-specific wheels rather than Universal2
 wheels.
 
-Release wheels target macOS 10.12 or newer on Intel and macOS 11.0 or newer on
+Release wheels target macOS 10.13 or newer on Intel and macOS 11.0 or newer on
 Apple Silicon.
 
 ### Install Build Tools
