@@ -96,7 +96,7 @@ macOS builds use AppleClang. Both Intel (`x86_64`) and Apple Silicon (`arm64`)
 are built as native, architecture-specific wheels rather than Universal2
 wheels.
 
-Release wheels target macOS 10.12 or newer on Intel and macOS 11.0 or newer on
+Release wheels target macOS 10.13 or newer on Intel and macOS 11.0 or newer on
 Apple Silicon.
 
 ### Install Build Tools
