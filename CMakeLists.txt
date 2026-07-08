@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX)
-
-
-get_filename_component(USER $ENV{HOME} NAME)
 
 
 set(EIGEN_PATH ${PROJECT_SOURCE_DIR}/lib/eigen-3.4.0)
@@ -16,16 +13,27 @@ if(NOT EXISTS ${EIGEN_PATH})
 endif()
 add_compile_definitions(EIGEN_DONT_VECTORIZE)
 
-add_compile_definitions(_GNU_SOURCE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_compile_definitions(_GNU_SOURCE)
+endif()
 if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT MSVC)
         add_compile_options(-fno-omit-frame-pointer)
     endif()
+endif()
+
+# clang-cl (LLVM on Windows with MSVC ABI)
+if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_definitions(_USE_MATH_DEFINES)
+    add_compile_options(/O2 /fp:fast /clang:-flto=thin)
 endif()
 
 enable_testing()
 
 include(FetchContent)
+# On Windows with MSVC ABI (including clang-cl), GoogleTest must link against
+# the shared CRT to match the runtime used by the rest of the build.
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
@@ -33,6 +41,19 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES GTest
 )
 FetchContent_MakeAvailable(googletest)
+# Mark GoogleTest headers as SYSTEM to suppress warnings from its headers
+foreach(_gtest_target gtest gtest_main gmock gmock_main)
+  if(TARGET ${_gtest_target})
+    get_target_property(_inc ${_gtest_target} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_inc)
+      set_target_properties(${_gtest_target} PROPERTIES
+        INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_inc}")
+    endif()
+    if(MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      target_compile_options(${_gtest_target} PRIVATE /clang:-Wno-nan-infinity-disabled)
+    endif()
+  endif()
+endforeach()
 
 option(isMPI "Configure for using MPI" OFF)
 if (isMPI)

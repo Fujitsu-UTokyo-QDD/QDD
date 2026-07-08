@@ -530,7 +530,7 @@ mEdge makeLargeGate(QubitCount q, ComplexMatrix &g,
         [&targets](size_t a, size_t b) { return targets[a] < targets[b]; });
     std::vector<std::size_t> conversionMap;
     conversionMap.push_back(0);
-    for (int i = 0; i < rows; i++) {
+    for (int i = 0; i < (int)targets.size(); i++) {
         size_t addition = 1 << target_compresed[i];
         int rep = conversionMap.size();
         for (int j = 0; j < rep; j++) {
