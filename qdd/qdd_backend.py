@@ -847,7 +847,10 @@ class QddBackend(BackendV2):
             hex_sampled_counts = Counter(sampled_values)
             result_data: Dict[str, Any] = {"counts": hex_sampled_counts}
             if options["memory"]:
-                result_data["memory"] = sampled_values
+                # Qiskit consumers interpret raw level-2 memory as hexadecimal.
+                result_data["memory"] = [
+                    hex(int(value or "0", 2)) for value in sampled_values
+                ]
             if self._save_SV:
                 result_data["statevector"] = (
                     pyQDD.getVector(current)
