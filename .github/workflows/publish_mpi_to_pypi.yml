@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment:
       name: pypi-mpi
       url: https://pypi.org/p/qdd-mpi

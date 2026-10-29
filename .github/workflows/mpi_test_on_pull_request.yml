@@ -10,13 +10,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.15"]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
+          - os: ubuntu-26.04-arm
+            arch: aarch64
+          # setup-python does not provide Python 3.9 for Ubuntu 26.04.
+          - os: ubuntu-24.04
+            arch: x86_64
+            python-version: "3.9"
           - os: ubuntu-24.04-arm
             arch: aarch64
+            python-version: "3.9"
+        exclude:
+          - os: ubuntu-26.04
+            python-version: "3.9"
+          - os: ubuntu-26.04-arm
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -62,11 +74,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: aarch64
 
     steps:
@@ -99,3 +111,21 @@ jobs:
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_test_grover 6
           mpirun --oversubscribe -np 2 ./build-mpi/test/mpi_qcbm 6
+
+  required_check:
+    # Keep this check name stable for branch protection.
+    name: QDD MPI tests passed
+    if: ${{ always() }}
+    needs: [mpi_python_test, mpi_cpp_test]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require all test jobs to succeed
+        shell: bash
+        env:
+          JOB_RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $JOB_RESULTS"
+          test -n "$JOB_RESULTS"
+          for result in $JOB_RESULTS; do
+            test "$result" = success || exit 1
+          done
