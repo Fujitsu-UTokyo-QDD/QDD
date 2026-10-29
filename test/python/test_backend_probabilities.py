@@ -1,8 +1,11 @@
 import pytest
-from qiskit import ClassicalRegister, QuantumCircuit
+from qiskit import ClassicalRegister, QiskitError, QuantumCircuit
+from qiskit.quantum_info import SparsePauliOp
 
 from qdd import QddProvider
+from qdd.qdd_estimator import Estimator
 from qdd.qdd_sampler import Sampler
+from test.python.helpers.circuit_helper import assert_job_failed
 
 
 def _assert_exact_measurement_probabilities(circuit, expected):
@@ -104,3 +107,94 @@ def test_statevector_exact_probabilities_without_measurements():
 
     assert result.success
     assert result.data()["probabilities"] == pytest.approx({0: 0, 1: 0, 2: 1, 3: 0})
+
+
+def _dynamic_measurement_circuit(operation):
+    circuit = QuantumCircuit(2, 2)
+    circuit.h(0)
+    circuit.cx(0, 1)
+    if operation == "reset":
+        circuit.reset(0)
+    elif operation == "mid_measurement":
+        circuit.measure(0, 0)
+        circuit.x(0)
+    elif operation == "classical_control":
+        circuit.measure(0, 0)
+        with circuit.if_test((circuit.clbits[0], 1)):
+            circuit.x(1)
+    circuit.measure([0, 1], [0, 1])
+    return circuit
+
+
+@pytest.mark.parametrize("backend_name", ["qasm_simulator", "statevector_simulator"])
+@pytest.mark.parametrize("operation", ["reset", "mid_measurement", "classical_control"])
+def test_exact_probabilities_reject_dynamic_circuits(backend_name, operation):
+    circuit = _dynamic_measurement_circuit(operation)
+    backend = QddProvider().get_backend(backend_name)
+
+    job = backend.run(circuit, shots=None)
+
+    assert_job_failed(job)
+    assert "shots=None" in job.result().status
+    assert "finite shot count" in job.result().status
+
+
+@pytest.mark.parametrize("primitive", ["sampler", "estimator"])
+def test_exact_primitives_report_unsupported_reset(primitive):
+    circuit = _dynamic_measurement_circuit("reset")
+
+    with pytest.raises(QiskitError, match="shots=None.*reset"):
+        if primitive == "sampler":
+            Sampler().run([circuit], is_exact=True).result()
+        else:
+            circuit.remove_final_measurements()
+            Estimator().run([(circuit, [SparsePauliOp("ZI")])], precision=0).result()
+
+
+def test_finite_shots_still_support_reset():
+    circuit = _dynamic_measurement_circuit("reset")
+    backend = QddProvider().get_backend()
+    shots = 32
+
+    result = backend.run(circuit, shots=shots).result()
+
+    assert result.success
+    counts = result.get_counts()
+    assert sum(counts.values()) == shots
+    assert set(counts) <= {"00", "10"}
+
+
+def test_exact_probabilities_terminal_barriers():
+    circuit = QuantumCircuit(2, 2)
+    circuit.h(0)
+    circuit.cx(0, 1)
+    circuit.measure(0, 0)
+    circuit.barrier()
+    circuit.measure(1, 1)
+    circuit.barrier()
+
+    _assert_exact_measurement_probabilities(circuit, {0: 0.5, 3: 0.5})
+
+
+def test_exact_probabilities_deferred_measurement():
+    circuit = QuantumCircuit(2, 2)
+    circuit.h(0)
+    circuit.cx(0, 1)
+    circuit.measure(0, 0)
+    # This gate acts only on an unmeasured qubit, so q0's measurement can be deferred.
+    circuit.x(1)
+    circuit.measure(1, 1)
+
+    _assert_exact_measurement_probabilities(circuit, {1: 0.5, 2: 0.5})
+
+
+def test_exact_probabilities_reject_batch_with_dynamic_circuit():
+    supported = QuantumCircuit(2, 2)
+    supported.measure([0, 1], [0, 1])
+    unsupported = _dynamic_measurement_circuit("reset")
+    backend = QddProvider().get_backend()
+
+    job = backend.run([supported, unsupported], shots=None)
+
+    assert_job_failed(job)
+    assert "shots=None" in job.result().status

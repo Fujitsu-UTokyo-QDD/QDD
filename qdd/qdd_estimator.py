@@ -27,6 +27,7 @@ from warnings import warn
 import numpy as np
 from qiskit.circuit import QuantumCircuit
 from qiskit.compiler import transpile
+from qiskit.exceptions import QiskitError
 from qiskit.primitives import BaseEstimatorV2
 from qiskit.primitives.containers import (
     DataBin,
@@ -290,15 +291,14 @@ class Estimator(BaseEstimatorV2):
 
         # Run experiments
         if experiments:
-            results = (
-                self._backend.run(
-                    circuits=experiments,
-                    parameter_binds=parameter_binds if any(parameter_binds) else None,
-                    **self._run_options.__dict__,
-                )
-                .result()
-                .results
-            )
+            backend_result = self._backend.run(
+                circuits=experiments,
+                parameter_binds=parameter_binds if any(parameter_binds) else None,
+                **self._run_options.__dict__,
+            ).result()
+            if not backend_result.success:
+                raise QiskitError(backend_result.status)
+            results = backend_result.results
         else:
             results = []
 

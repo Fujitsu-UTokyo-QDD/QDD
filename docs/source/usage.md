@@ -133,6 +133,12 @@ For circuits with terminal measurements, exact probabilities are indexed by
 classical outcomes. Unmeasured qubits are marginalized, and the measurement
 mapping determines each outcome's classical bit order.
 
+Exact mode does not support reset, classical control flow, or operations on
+previously measured qubits. The backend returns a failed job with an explanatory
+status, and Sampler and Estimator raise `QiskitError` when retrieving such results.
+Use finite shots for these circuits. Barriers and measurements that can be
+deferred to the end of the circuit remain supported in exact mode.
+
 Pass backend options, transpile options, or skip Qiskit transpilation in the
 constructor. For example, this sets QDD backend shots and asks Qiskit
 transpilation to use optimization level 1:

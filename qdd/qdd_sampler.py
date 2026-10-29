@@ -148,6 +148,8 @@ class Sampler(BaseSamplerV2):
             shots=shots,
             memory=True,
         ).result()
+        if not result.success:
+            raise QiskitError(result.status)
 
         results = []
         # Postprocessing
