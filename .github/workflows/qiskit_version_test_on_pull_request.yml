@@ -23,7 +23,7 @@ jobs:
           - qiskit-version: "2.5"
             python-version: "3.14"
           - qiskit-version: "2.6"
-            python-version: "3.14"
+            python-version: "3.15"
 
     steps:
       - uses: actions/checkout@v6

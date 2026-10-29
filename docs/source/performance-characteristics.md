@@ -236,11 +236,11 @@ python bench/compare_simulators.py --benchmark all
 The VQE benchmark builds molecular Hamiltonians with Qiskit Nature. By default it
 uses a deeper `EfficientSU2` ansatz to make the small-angle-rotation workload
 large enough to time; pass `--vqe-ansatz uccsd` to use the chemistry-specific
-UCCSD ansatz instead. Install the project with the `test` extra before running
-the benchmark:
+UCCSD ansatz instead. Install the project with the `test` extra and Qiskit
+Nature before running the benchmark:
 
 ```sh
-pip install .[test]
+pip install '.[test]' 'qiskit-nature>=0.7'
 ```
 
 The defaults are intentionally larger than smoke tests so the timing
