@@ -44,6 +44,9 @@ class Sampler(BaseSamplerV2):
 
     The sampler evaluates circuits with the QDD qasm backend and returns
     quasi-distributions, and shot memory when finite shots are requested.
+    Shot memory is exposed as a BitArray under each classical register's name.
+    If a register is named ``quasi_dist``, the joint quasi-distribution is
+    stored in the pub result's metadata instead of its data.
     """
 
     def __init__(
@@ -164,16 +167,28 @@ class Sampler(BaseSamplerV2):
                     {k.replace(" ", ""): v / shots for k, v in counts.items()},
                     shots=shots,
                 )
-                memory = result.get_memory(i)
+                circuit = experiment_circuits[i]
+                # Raw memory has no register separators and follows circuit bit order.
+                memory = result.data(i)["memory"]
                 bit_array = BitArray.from_samples(
-                    memory, num_bits=experiment_circuits[i].num_clbits
+                    memory, num_bits=circuit.num_clbits
                 )
+                register_data = {
+                    register.name: bit_array.slice_bits(
+                        [circuit.find_bit(bit).index for bit in register]
+                    )
+                    for register in circuit.cregs
+                }
 
-                data = DataBin(quasi_dist=quasi_dist, meas=bit_array)
                 metadata = {
                     "shots": shots,
                     "simulator_metadata": result.results[i]._metadata,
                 }
+                if "quasi_dist" in register_data:
+                    metadata["quasi_dist"] = quasi_dist
+                else:
+                    register_data["quasi_dist"] = quasi_dist
+                data = DataBin(**register_data)
                 results.append(SamplerPubResult(data, metadata))
 
         return results

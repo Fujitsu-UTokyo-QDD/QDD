@@ -1,5 +1,7 @@
 # The code in this file has been written using part of the code in the Qiskit API documentation.
 # https://docs.quantum.ibm.com/api/qiskit/qiskit.primitives.BaseSamplerV1
+from collections import Counter
+
 import pytest
 from qiskit.primitives import StatevectorSampler as QiskitSampler
 from qiskit import ClassicalRegister, QuantumCircuit
@@ -9,10 +11,10 @@ from qiskit.result import QuasiDistribution
 from qdd.qdd_sampler import Sampler
 
 
-def _basis_state_measurement_circuit(bits):
+def _basis_state_measurement_circuit(bits, register_name="meas"):
     # Keep at least two qubits so one-bit measurements also work with two MPI ranks.
     circuit = QuantumCircuit(max(2, len(bits)))
-    circuit.add_register(ClassicalRegister(len(bits), "meas"))
+    circuit.add_register(ClassicalRegister(len(bits), register_name))
     for qubit, bit in enumerate(reversed(bits)):
         if bit == "1":
             circuit.x(qubit)
@@ -60,6 +62,108 @@ def test_sampler_bit_array_width_per_circuit():
     for result, bits in zip(results, bitstrings):
         assert result.data.meas.num_bits == len(bits)
         assert result.data.meas.get_bitstrings() == [bits] * shots
+
+
+@pytest.mark.parametrize("register_name", ["readout", "quasi_dist"])
+def test_sampler_register_name(register_name):
+    circuit = _basis_state_measurement_circuit("100", register_name)
+    shots = 8
+
+    result = Sampler().run([circuit], shots=shots).result()[0]
+
+    assert "meas" not in result.data
+    assert result.data[register_name].num_bits == 3
+    assert result.data[register_name].get_bitstrings() == ["100"] * shots
+    if register_name == "quasi_dist":
+        assert result.metadata["quasi_dist"].binary_probabilities() == {"100": 1.0}
+    else:
+        assert result.data.quasi_dist.binary_probabilities() == {"100": 1.0}
+
+
+@pytest.mark.parametrize("with_reset", [False, True])
+def test_sampler_multiple_registers(with_reset):
+    circuit = QuantumCircuit(3)
+    left = ClassicalRegister(2, "left")
+    right = ClassicalRegister(9, "right")
+    circuit.add_register(left, right)
+    if with_reset:
+        # Select the per-shot execution path without changing the initial state.
+        circuit.reset(0)
+    circuit.x([0, 2])
+    circuit.measure(0, right[8])
+    circuit.measure(0, right[0])
+    circuit.measure(1, right[4])
+    circuit.measure(2, left[1])
+    circuit.measure(1, left[0])
+    shots = 8
+
+    result = Sampler().run([circuit], shots=shots).result()[0]
+    reference = QiskitSampler().run([circuit], shots=shots).result()[0]
+
+    assert set(result.data) == {"left", "right", "quasi_dist"}
+    for name, width in [("left", 2), ("right", 9)]:
+        assert result.data[name].num_bits == width
+        assert result.data[name].num_shots == shots
+        assert result.data[name].get_bitstrings() == reference.data[name].get_bitstrings()
+    assert result.data.left.get_counts() == {"10": shots}
+    assert result.data.right.get_counts() == {"100000001": shots}
+    assert result.data.quasi_dist.binary_probabilities() == {"10000000110": 1.0}
+
+
+def test_sampler_register_shot_alignment():
+    circuit = QuantumCircuit(2)
+    left = ClassicalRegister(1, "left")
+    right = ClassicalRegister(1, "right")
+    circuit.add_register(left, right)
+    circuit.h(0)
+    circuit.cx(0, 1)
+    circuit.measure(0, left[0])
+    circuit.measure(1, right[0])
+    shots = 32
+
+    result = Sampler().run([circuit], shots=shots).result()[0]
+
+    left_bits = result.data.left.get_bitstrings()
+    right_bits = result.data.right.get_bitstrings()
+    assert left_bits == right_bits
+    joint_counts = Counter(right + left for left, right in zip(left_bits, right_bits))
+    assert result.data.quasi_dist.binary_probabilities(num_bits=2) == {
+        bits: count / shots for bits, count in joint_counts.items()
+    }
+
+
+def test_sampler_register_names_per_circuit():
+    circuits = [
+        _basis_state_measurement_circuit("1", "first"),
+        _basis_state_measurement_circuit("100000000", "second"),
+    ]
+    shots = 8
+
+    results = Sampler().run(circuits, shots=shots).result()
+
+    assert set(results[0].data) == {"first", "quasi_dist"}
+    assert set(results[1].data) == {"second", "quasi_dist"}
+    assert results[0].data.first.get_bitstrings() == ["1"] * shots
+    assert results[1].data.second.get_bitstrings() == ["100000000"] * shots
+
+
+def test_sampler_register_bit_mapping():
+    circuit = QuantumCircuit(2)
+    base = ClassicalRegister(3, "base")
+    # Register-local bit order can differ from the circuit's classical bit order.
+    alias = ClassicalRegister(bits=[base[2], base[0]], name="alias")
+    circuit.add_register(base, alias)
+    circuit.x(0)
+    circuit.measure(0, base[2])
+    circuit.measure(1, base[0])
+    shots = 8
+
+    result = Sampler().run([circuit], shots=shots).result()[0]
+
+    assert result.data.base.num_bits == 3
+    assert result.data.alias.num_bits == 2
+    assert result.data.base.get_bitstrings() == ["100"] * shots
+    assert result.data.alias.get_bitstrings() == ["01"] * shots
 
 
 def test_sampler():

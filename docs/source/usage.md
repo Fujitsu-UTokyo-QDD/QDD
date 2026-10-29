@@ -114,6 +114,13 @@ print(result.data.quasi_dist.binary_probabilities())
 print(result.metadata["shots"])
 ```
 
+For finite shots, each classical register is available as a `BitArray` under
+its own name, such as `result.data.meas` or `result.data.readout`. Multiple
+registers are returned separately, preserving their bit order and shot alignment.
+The joint quasi-distribution remains available as `result.data.quasi_dist`.
+If a classical register is named `quasi_dist`, that field contains its `BitArray`
+and the joint quasi-distribution is available as `result.metadata["quasi_dist"]`.
+
 Use `is_exact=True` to request exact probabilities with `shots=None`:
 
 ```python
