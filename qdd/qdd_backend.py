@@ -371,6 +371,14 @@ class QddBackend(BackendV2):
         circ_props = QddBackend._validate_and_get_circuit_properties(
             param_bound_qiskit_circs, self._save_SV == False
         )
+        if actual_options["shots"] is None:
+            for circuit, prop in zip(param_bound_qiskit_circs, circ_props):
+                if not prop.stable_final_state:
+                    raise RuntimeError(
+                        f'Exact simulation with shots=None is not supported for circuit "{circuit.name}": '
+                        "reset, classical control flow, or operations on measured qubits "
+                        "require a finite shot count."
+                    )
         experiments = QddExperiments(
             circs=param_bound_qiskit_circs,
             circuit_props=circ_props,
@@ -789,18 +797,6 @@ class QddBackend(BackendV2):
             sampled_values = [None] * options["shots"]
         #        print(len(circ.data), " gates")
 
-        if options["shots"] is None:
-            has_classical_condition = False
-            for ci in circ.data:
-                i, qargs, cargs = ci.operation, ci.qubits, ci.clbits
-                if getattr(i, "condition", None):
-                    has_classical_condition = True
-                    break
-            if has_classical_condition:
-                raise RuntimeError(
-                    "ERROR: Classical condition is not supported when shots=None"
-                )
-
         reps = 1
         if circ_prop.stable_final_state == False and isinstance(options["shots"], int):
             reps = options["shots"]
@@ -847,7 +843,10 @@ class QddBackend(BackendV2):
             hex_sampled_counts = Counter(sampled_values)
             result_data: Dict[str, Any] = {"counts": hex_sampled_counts}
             if options["memory"]:
-                result_data["memory"] = sampled_values
+                # Qiskit consumers interpret raw level-2 memory as hexadecimal.
+                result_data["memory"] = [
+                    hex(int(value or "0", 2)) for value in sampled_values
+                ]
             if self._save_SV:
                 result_data["statevector"] = (
                     pyQDD.getVector(current)
@@ -856,23 +855,30 @@ class QddBackend(BackendV2):
                 )
 
         else:
-            if circ_prop.stable_final_state:
-                prob = (
-                    pyQDD.probabilities(current)
-                    if use_mpi == False
-                    else pyQDD.probabilitiesMPI(current)
-                )
-            else:
-                prob = [1] * (2**n_cbit)
-                for i in range(2**n_cbit):
-                    for j in range(n_cbit):
-                        if i & (1 << j):
-                            prob[i] *= 1 - prob_cbit[j]
-                        else:
-                            prob[i] *= prob_cbit[j]
+            prob = (
+                pyQDD.probabilities(current)
+                if use_mpi == False
+                else pyQDD.probabilitiesMPI(current)
+            )
+            measurement_map = [
+                (self.get_qID(qubit), self.get_cID(cbit))
+                for cbit, qubit in circ_prop.clbit_final_values.items()
+            ]
+            # Full identity measurements already use classical outcome order.
+            # With no measurements, preserve the statevector probability output.
+            needs_remapping = bool(measurement_map) and (
+                len(measurement_map) != n_qubit
+                or any(qubit != cbit for qubit, cbit in measurement_map)
+            )
             probabilities = {}
-            for i, p in enumerate(prob):
-                probabilities[i] = p
+            for outcome, p in enumerate(prob):
+                if needs_remapping:
+                    outcome = sum(
+                        ((outcome >> qubit) & 1) << cbit
+                        for qubit, cbit in measurement_map
+                    )
+                # Sum quantum outcomes that produce the same classical result.
+                probabilities[outcome] = probabilities.get(outcome, 0.0) + p
             result_data: Dict[str, Any] = {"probabilities": probabilities}
             if self._save_SV:
                 result_data["statevector"] = (
@@ -946,6 +952,9 @@ class QddBackend(BackendV2):
         )  # for each clbit, this holds the qubit last assigned to the clbit.
         for i, ci in enumerate(circ.data):
             inst, qargs, cargs = ci.operation, ci.qubits, ci.clbits
+            # Barriers do not change the state or prevent deferring measurements.
+            if inst.base_class == Barrier:
+                continue
             if inst.base_class == Measure:
                 # For a Measure instruction, both qargs and cargs always have a size of 1.
                 # (Multi-target measurements (Measure([...], [...]) is decomposed to single-target measurement gates.)

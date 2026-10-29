@@ -94,7 +94,8 @@ print(statevector)
 ## QDD Sampler
 
 QDD also provides a Sampler implementation for Qiskit primitive-style inputs.
-Each pub is a tuple of `(circuit, parameter_values)`.
+Each pub is a tuple of `(circuit, parameter_values)` with an optional third
+element specifying its shot count: `(circuit, parameter_values, shots)`.
 
 ```python
 from qiskit import QuantumCircuit
@@ -114,13 +115,42 @@ print(result.data.quasi_dist.binary_probabilities())
 print(result.metadata["shots"])
 ```
 
-Use `is_exact=True` to request exact probabilities with `shots=None`:
+A pub's shot count takes precedence over `run(shots=...)`. Pubs without their
+own shot count use the run value, or the sampler's backend default if it is omitted.
+Results preserve the input pub order. For example:
+
+```python
+results = sampler.run(
+    [(circuit, None, 7), (circuit, None, 11), (circuit, None)], shots=16
+).result()
+print([result.metadata["shots"] for result in results])  # [7, 11, 16]
+```
+
+For finite shots, each classical register is available as a `BitArray` under
+its own name, such as `result.data.meas` or `result.data.readout`. Multiple
+registers are returned separately, preserving their bit order and shot alignment.
+The joint quasi-distribution remains available as `result.data.quasi_dist`.
+If a classical register is named `quasi_dist`, that field contains its `BitArray`
+and the joint quasi-distribution is available as `result.metadata["quasi_dist"]`.
+
+Use `is_exact=True` to request exact probabilities with `shots=None` for every
+pub, overriding both pub and run shot counts:
 
 ```python
 exact_job = sampler.run(pubs=[(circuit, [])], is_exact=True)
 exact_result = exact_job.result()[0]
 print(exact_result.data.quasi_dist.binary_probabilities())
 ```
+
+For circuits with terminal measurements, exact probabilities are indexed by
+classical outcomes. Unmeasured qubits are marginalized, and the measurement
+mapping determines each outcome's classical bit order.
+
+Exact mode does not support reset, classical control flow, or operations on
+previously measured qubits. The backend returns a failed job with an explanatory
+status, and Sampler and Estimator raise `QiskitError` when retrieving such results.
+Use finite shots for these circuits. Barriers and measurements that can be
+deferred to the end of the circuit remain supported in exact mode.
 
 Pass backend options, transpile options, or skip Qiskit transpilation in the
 constructor. For example, this sets QDD backend shots and asks Qiskit
@@ -165,6 +195,28 @@ result = job.result()[0]
 print(result.data.evs)
 print(result.data.stds)
 ```
+
+Each Estimator pub can specify its own precision as a fourth element:
+`(circuit, observables, parameter_values, precision)`. This takes precedence over
+`run(precision=...)`, followed by `default_precision` when neither is specified.
+Zero requests exact evaluation, including when other pubs in the same run use
+positive precision. For example:
+
+```python
+results = estimator.run(
+    [(ansatz, [observable], theta, 0.25),
+     (ansatz, [observable], theta, 0.0),
+     (ansatz, [observable], theta)],
+    precision=0.5,
+).result()
+print([result.metadata["shots"] for result in results])  # [16, None, 4]
+```
+
+Positive precision values request `ceil(1 / precision**2)` shots per measurement
+circuit, capped at the backend's maximum shot count. When capped, QDD warns that
+the target precision may not be achieved. The reported standard deviation uses
+the actual shot count. Each pub result's metadata includes `target_precision`
+and `shots`; precision values must be finite and non-negative.
 
 Backend options are accepted by both primitives. With the `qdd-mpi` package,
 pass `{"use_mpi": True}` and launch the Python process with `mpirun`; see
