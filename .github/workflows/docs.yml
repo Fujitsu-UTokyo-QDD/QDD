@@ -43,6 +43,25 @@ jobs:
         with:
           path: docs/build/html
 
+  required_check:
+    # Keep this check name stable for branch protection.
+    name: QDD documentation passed
+    if: ${{ always() }}
+    # Deployment is intentionally skipped on pull requests.
+    needs: [build]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require the documentation build to succeed
+        shell: bash
+        env:
+          JOB_RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $JOB_RESULTS"
+          test -n "$JOB_RESULTS"
+          for result in $JOB_RESULTS; do
+            test "$result" = success || exit 1
+          done
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: build

@@ -164,3 +164,21 @@ jobs:
 
       - name: Run C++ tests without performance benchmark
         run: ctest --test-dir build --output-on-failure -C Release -E "QddTest.MV_PerformanceTest"
+
+  required_check:
+    # Keep this check name stable for branch protection.
+    name: QDD tests passed
+    if: ${{ always() }}
+    needs: [python_test, cpp_test, windows_python_test, windows_cpp_test]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require all test jobs to succeed
+        shell: bash
+        env:
+          JOB_RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $JOB_RESULTS"
+          test -n "$JOB_RESULTS"
+          for result in $JOB_RESULTS; do
+            test "$result" = success || exit 1
+          done

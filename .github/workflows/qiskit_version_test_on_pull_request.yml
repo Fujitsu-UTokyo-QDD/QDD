@@ -49,3 +49,21 @@ jobs:
           cp -r test /tmp/qdd-qiskit-tests/test
           cd /tmp/qdd-qiskit-tests
           python -m pytest -m "not slow and not mpi"
+
+  required_check:
+    # Keep this check name stable for branch protection.
+    name: QDD Qiskit compatibility passed
+    if: ${{ always() }}
+    needs: [qiskit_version_test]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require all test jobs to succeed
+        shell: bash
+        env:
+          JOB_RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $JOB_RESULTS"
+          test -n "$JOB_RESULTS"
+          for result in $JOB_RESULTS; do
+            test "$result" = success || exit 1
+          done
