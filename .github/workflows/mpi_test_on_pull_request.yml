@@ -10,13 +10,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.15"]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
+          - os: ubuntu-26.04-arm
+            arch: aarch64
+          # setup-python does not provide Python 3.9 for Ubuntu 26.04.
+          - os: ubuntu-24.04
+            arch: x86_64
+            python-version: "3.9"
           - os: ubuntu-24.04-arm
             arch: aarch64
+            python-version: "3.9"
+        exclude:
+          - os: ubuntu-26.04
+            python-version: "3.9"
+          - os: ubuntu-26.04-arm
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -62,11 +74,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: aarch64
 
     steps:

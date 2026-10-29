@@ -13,12 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
         python-tag: ["39", "310", "311", "312", "313", "314", "315"]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: aarch64
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +28,6 @@ jobs:
         env:
           CIBW_ARCHS_LINUX: ${{ matrix.arch }}
           CIBW_BUILD: cp${{ matrix.python-tag }}-manylinux_${{ matrix.arch }}
-          CIBW_TEST_SKIP: cp314-manylinux_aarch64
       - uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.arch }}-cp${{ matrix.python-tag }}
@@ -40,10 +39,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-11-arm]
+        os: [windows-2025, windows-11-arm]
         python-tag: ["39", "310", "311", "312", "313", "314", "315"]
         include:
-          - os: windows-latest
+          - os: windows-2025
             arch: AMD64
             wheel-platform: win_amd64
           - os: windows-11-arm
@@ -94,7 +93,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_sdist:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
         with:
@@ -109,7 +108,7 @@ jobs:
   publish-to-pypi:
     needs: [build_wheels, build_wheels_windows, build_wheels_macos, build_sdist]
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment:
       name: pypi
       url: https://pypi.org/p/qdd
