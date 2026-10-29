@@ -9,6 +9,32 @@ use names such as `feature/add-circuit`; bug-fix branches use names such as
 Release preparation is merged from `develop` to `main`. Version tags are created
 from `main`.
 
+## Required CI Checks
+
+Use these aggregate checks in the branch protection rules for `develop` and
+`main`, instead of individual matrix job names:
+
+| Workflow | Required check |
+|----------|----------------|
+| `test_on_pull_request.yml` | `QDD tests passed` |
+| `mpi_test_on_pull_request.yml` | `QDD MPI tests passed` |
+| `qiskit_version_test_on_pull_request.yml` | `QDD Qiskit compatibility passed` |
+| `docs.yml` | `QDD documentation passed` |
+
+Each aggregate check succeeds only when all of its required jobs succeed.
+Failed, cancelled, or skipped test jobs make the aggregate check fail. The
+documentation check requires the build; deployment is intentionally skipped on
+pull requests.
+
+Keep these check names stable when changing operating systems or Python/Qiskit
+versions. When adding a new test job, also add its job ID to the aggregate
+job's `needs` list. Matrix entries are included automatically.
+
+For the initial migration, run the workflows on a pull request containing the
+aggregate jobs, then replace the old required checks with the names above on
+each protected branch. PyPI publishing workflows run only for tags or manual
+invocations and must not be required for pull requests.
+
 ## Documentation
 
 Documentation is built with Sphinx. Python API pages are generated from

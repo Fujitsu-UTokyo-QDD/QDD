@@ -9,20 +9,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-15]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-15-intel, macos-15]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: aarch64
           - os: macos-15-intel
             arch: x86_64
           - os: macos-15
             arch: arm64
-        exclude:
+          # setup-python does not provide Python 3.9 for Ubuntu 26.04.
+          - os: ubuntu-24.04
+            arch: x86_64
+            python-version: "3.9"
           - os: ubuntu-24.04-arm
-            python-version: "3.14"
+            arch: aarch64
+            python-version: "3.9"
+        exclude:
+          - os: ubuntu-26.04
+            python-version: "3.9"
+          - os: ubuntu-26.04-arm
+            python-version: "3.9"
 
     steps:
       - uses: actions/checkout@v6
@@ -54,11 +63,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-15]
+        os: [ubuntu-26.04, ubuntu-26.04-arm, macos-15-intel, macos-15]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: aarch64
           - os: macos-15-intel
             arch: x86_64
@@ -86,12 +95,12 @@ jobs:
         run: ctest --test-dir build --output-on-failure -E "QddTest.MV_PerformanceTest"
 
   windows_python_test:
-    name: Python test (windows-latest x86_64 / py${{ matrix.python-version }})
-    runs-on: windows-latest
+    name: Python test (windows-2025 x86_64 / py${{ matrix.python-version }})
+    runs-on: windows-2025
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
     steps:
       - uses: actions/checkout@v6
@@ -130,7 +139,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2025
             arch: x86_64
           - os: windows-11-arm
             arch: arm64
@@ -155,3 +164,21 @@ jobs:
 
       - name: Run C++ tests without performance benchmark
         run: ctest --test-dir build --output-on-failure -C Release -E "QddTest.MV_PerformanceTest"
+
+  required_check:
+    # Keep this check name stable for branch protection.
+    name: QDD tests passed
+    if: ${{ always() }}
+    needs: [python_test, cpp_test, windows_python_test, windows_cpp_test]
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Require all test jobs to succeed
+        shell: bash
+        env:
+          JOB_RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $JOB_RESULTS"
+          test -n "$JOB_RESULTS"
+          for result in $JOB_RESULTS; do
+            test "$result" = success || exit 1
+          done
