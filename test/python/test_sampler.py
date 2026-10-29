@@ -1,11 +1,14 @@
 # The code in this file has been written using part of the code in the Qiskit API documentation.
 # https://docs.quantum.ibm.com/api/qiskit/qiskit.primitives.BaseSamplerV1
 from collections import Counter
+from math import pi
 
 import pytest
 from qiskit.primitives import StatevectorSampler as QiskitSampler
 from qiskit import ClassicalRegister, QuantumCircuit
+from qiskit.circuit import Parameter
 from qiskit.circuit.library import real_amplitudes
+from qiskit.primitives.containers.sampler_pub import SamplerPub
 from qiskit.result import QuasiDistribution
 
 from qdd.qdd_sampler import Sampler
@@ -164,6 +167,81 @@ def test_sampler_register_bit_mapping():
     assert result.data.alias.num_bits == 2
     assert result.data.base.get_bitstrings() == ["100"] * shots
     assert result.data.alias.get_bitstrings() == ["01"] * shots
+
+
+@pytest.mark.parametrize("pub_format", ["tuple", "object"])
+@pytest.mark.parametrize("run_shots", [None, 16])
+def test_sampler_pub_shots_precedence(pub_format, run_shots):
+    sampler = Sampler(backend_options={"shots": 13})
+    large = _basis_state_measurement_circuit("100")
+    zero = _basis_state_measurement_circuit("0")
+    one = _basis_state_measurement_circuit("1")
+    circuits = [large, zero, one, zero, large]
+    pub_shots = [7, 11, None, 7, 11]
+    if pub_format == "tuple":
+        pubs = [(circuit, None, shots) for circuit, shots in zip(circuits, pub_shots)]
+    else:
+        pubs = [
+            SamplerPub(circuit, shots=shots)
+            for circuit, shots in zip(circuits, pub_shots)
+        ]
+
+    results = sampler.run(pubs, shots=run_shots).result()
+
+    expected_shots = [7, 11, run_shots if run_shots is not None else 13, 7, 11]
+    assert len(results) == len(circuits)
+    for result, bits, shots in zip(results, ["100", "0", "1", "0", "100"], expected_shots):
+        assert result.metadata["shots"] == shots
+        assert result.data.meas.num_shots == shots
+        assert result.data.meas.get_counts() == {bits: shots}
+        assert result.data.quasi_dist.shots == shots
+        assert result.data.quasi_dist.binary_probabilities(num_bits=len(bits)) == {bits: 1.0}
+
+    # A run's shot settings must not replace the sampler's configured default.
+    following_result = sampler.run([one]).result()[0]
+    assert following_result.metadata["shots"] == 13
+    assert following_result.data.meas.num_shots == 13
+
+
+def test_sampler_pub_shots_preserve_parameter_bindings():
+    theta = Parameter("theta")
+    circuit = QuantumCircuit(2)
+    circuit.ry(theta, 0)
+    circuit.measure_all()
+    pubs = [(circuit, [0.0], 7), (circuit, [pi], 11), (circuit, [0.0], 7)]
+
+    results = Sampler().run(pubs, shots=16).result()
+
+    for result, bits, shots in zip(results, ["00", "01", "00"], [7, 11, 7]):
+        assert result.metadata["shots"] == shots
+        assert result.data.meas.get_counts() == {bits: shots}
+
+
+def test_sampler_exact_mode_overrides_pub_shots():
+    pubs = [
+        (_basis_state_measurement_circuit("1"), None, 7),
+        (_basis_state_measurement_circuit("100"), None, 11),
+    ]
+
+    results = Sampler().run(pubs, shots=16, is_exact=True).result()
+
+    for result, bits in zip(results, ["1", "100"]):
+        assert result.metadata["shots"] is None
+        assert "meas" not in result.data
+        assert result.data.quasi_dist.get(int(bits, 2)) == pytest.approx(1.0)
+
+
+def test_sampler_pub_shots_with_exact_backend_default():
+    circuit = _basis_state_measurement_circuit("1")
+    sampler = Sampler(backend_options={"shots": None})
+
+    results = sampler.run([(circuit, None, 7), circuit]).result()
+
+    assert results[0].metadata["shots"] == 7
+    assert results[0].data.meas.get_counts() == {"1": 7}
+    assert results[1].metadata["shots"] is None
+    assert "meas" not in results[1].data
+    assert results[1].data.quasi_dist.get(1) == pytest.approx(1.0)
 
 
 def test_sampler():

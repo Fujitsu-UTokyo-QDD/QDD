@@ -80,9 +80,10 @@ class Sampler(BaseSamplerV2):
 
         Args:
             pubs: Iterable of sampler primitive inputs accepted by Qiskit.
-            shots: Number of shots. If omitted, the backend default is used.
+            shots: Default number of shots for pubs without their own shot count.
+                If omitted, the backend default is used.
             is_exact: If true, compute exact probabilities by running with
-                ``shots=None``.
+                ``shots=None``, overriding both pub and run shot counts.
 
         Returns:
             A Qiskit ``PrimitiveJob`` whose result contains sampler results.
@@ -94,6 +95,7 @@ class Sampler(BaseSamplerV2):
         coerced_pubs = [SamplerPub.coerce(pub, shots) for pub in pubs]
         circuits = [pub.circuit for pub in coerced_pubs]
         parameter_values = [pub.parameter_values.as_array() for pub in coerced_pubs]
+        pub_shots = [None if is_exact else pub.shots for pub in coerced_pubs]
 
         from typing import List
 
@@ -116,9 +118,27 @@ class Sampler(BaseSamplerV2):
                     self._circuit_ids[key] = index
 
             circuit_indices.append(index)
-        job = PrimitiveJob(self._call, circuit_indices, parameter_values, shots)
+        job = PrimitiveJob(self._run, circuit_indices, parameter_values, pub_shots)
         job._submit()
         return job
+
+    def _run(self, circuits, parameter_values, pub_shots):
+        # The backend accepts one shot count per run; group matching pubs.
+        shot_groups = {}
+        for index, shots in enumerate(pub_shots):
+            shot_groups.setdefault(shots, []).append(index)
+
+        results = [None] * len(circuits)
+        for shots, indices in shot_groups.items():
+            pub_results = self._call(
+                [circuits[index] for index in indices],
+                [parameter_values[index] for index in indices],
+                shots,
+            )
+            # Preserve input order even when equal-shot pubs are interleaved.
+            for index, result in zip(indices, pub_results):
+                results[index] = result
+        return results
 
     def _call(
         self,

@@ -94,7 +94,8 @@ print(statevector)
 ## QDD Sampler
 
 QDD also provides a Sampler implementation for Qiskit primitive-style inputs.
-Each pub is a tuple of `(circuit, parameter_values)`.
+Each pub is a tuple of `(circuit, parameter_values)` with an optional third
+element specifying its shot count: `(circuit, parameter_values, shots)`.
 
 ```python
 from qiskit import QuantumCircuit
@@ -114,6 +115,17 @@ print(result.data.quasi_dist.binary_probabilities())
 print(result.metadata["shots"])
 ```
 
+A pub's shot count takes precedence over `run(shots=...)`. Pubs without their
+own shot count use the run value, or the sampler's backend default if it is omitted.
+Results preserve the input pub order. For example:
+
+```python
+results = sampler.run(
+    [(circuit, None, 7), (circuit, None, 11), (circuit, None)], shots=16
+).result()
+print([result.metadata["shots"] for result in results])  # [7, 11, 16]
+```
+
 For finite shots, each classical register is available as a `BitArray` under
 its own name, such as `result.data.meas` or `result.data.readout`. Multiple
 registers are returned separately, preserving their bit order and shot alignment.
@@ -121,7 +133,8 @@ The joint quasi-distribution remains available as `result.data.quasi_dist`.
 If a classical register is named `quasi_dist`, that field contains its `BitArray`
 and the joint quasi-distribution is available as `result.metadata["quasi_dist"]`.
 
-Use `is_exact=True` to request exact probabilities with `shots=None`:
+Use `is_exact=True` to request exact probabilities with `shots=None` for every
+pub, overriding both pub and run shot counts:
 
 ```python
 exact_job = sampler.run(pubs=[(circuit, [])], is_exact=True)
