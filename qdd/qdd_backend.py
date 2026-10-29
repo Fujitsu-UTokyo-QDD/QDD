@@ -859,12 +859,17 @@ class QddBackend(BackendV2):
                 )
 
         else:
+            measurement_map = []
             if circ_prop.stable_final_state:
                 prob = (
                     pyQDD.probabilities(current)
                     if use_mpi == False
                     else pyQDD.probabilitiesMPI(current)
                 )
+                measurement_map = [
+                    (self.get_qID(qubit), self.get_cID(cbit))
+                    for cbit, qubit in circ_prop.clbit_final_values.items()
+                ]
             else:
                 prob = [1] * (2**n_cbit)
                 for i in range(2**n_cbit):
@@ -873,9 +878,21 @@ class QddBackend(BackendV2):
                             prob[i] *= 1 - prob_cbit[j]
                         else:
                             prob[i] *= prob_cbit[j]
+            # Full identity measurements already use classical outcome order.
+            # With no measurements, preserve the statevector probability output.
+            needs_remapping = bool(measurement_map) and (
+                len(measurement_map) != n_qubit
+                or any(qubit != cbit for qubit, cbit in measurement_map)
+            )
             probabilities = {}
-            for i, p in enumerate(prob):
-                probabilities[i] = p
+            for outcome, p in enumerate(prob):
+                if needs_remapping:
+                    outcome = sum(
+                        ((outcome >> qubit) & 1) << cbit
+                        for qubit, cbit in measurement_map
+                    )
+                # Sum quantum outcomes that produce the same classical result.
+                probabilities[outcome] = probabilities.get(outcome, 0.0) + p
             result_data: Dict[str, Any] = {"probabilities": probabilities}
             if self._save_SV:
                 result_data["statevector"] = (

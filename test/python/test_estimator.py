@@ -2,10 +2,26 @@
 # https://docs.quantum.ibm.com/api/qiskit/qiskit.primitives.BaseEstimatorV1
 from math import sqrt
 import pytest
+from qiskit import QuantumCircuit
 from qiskit.primitives import StatevectorEstimator as QiskitEstimator
 from qiskit.circuit.library import real_amplitudes
 from qiskit.quantum_info import SparsePauliOp
 from qdd.qdd_estimator import Estimator
+
+
+@pytest.mark.parametrize(
+    ("pauli", "expected"), [("ZI", -1), ("IZ", 1), ("XI", 0), ("YI", 0), ("ZZ", -1)]
+)
+def test_exact_estimator_partial_observable(pauli, expected):
+    circuit = QuantumCircuit(2)
+    circuit.x(1)
+    pubs = [(circuit, [SparsePauliOp(pauli)])]
+
+    result = Estimator().run(pubs, precision=0).result()[0]
+    reference = QiskitEstimator().run(pubs).result()[0]
+
+    assert result.data.evs == pytest.approx(expected, abs=1e-12)
+    assert result.data.evs == pytest.approx(reference.data.evs.item(), abs=1e-12)
 
 
 def test_estimator():

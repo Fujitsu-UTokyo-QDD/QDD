@@ -129,6 +129,10 @@ exact_result = exact_job.result()[0]
 print(exact_result.data.quasi_dist.binary_probabilities())
 ```
 
+For circuits with terminal measurements, exact probabilities are indexed by
+classical outcomes. Unmeasured qubits are marginalized, and the measurement
+mapping determines each outcome's classical bit order.
+
 Pass backend options, transpile options, or skip Qiskit transpilation in the
 constructor. For example, this sets QDD backend shots and asks Qiskit
 transpilation to use optimization level 1:
