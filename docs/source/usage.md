@@ -196,6 +196,28 @@ print(result.data.evs)
 print(result.data.stds)
 ```
 
+Each Estimator pub can specify its own precision as a fourth element:
+`(circuit, observables, parameter_values, precision)`. This takes precedence over
+`run(precision=...)`, followed by `default_precision` when neither is specified.
+Zero requests exact evaluation, including when other pubs in the same run use
+positive precision. For example:
+
+```python
+results = estimator.run(
+    [(ansatz, [observable], theta, 0.25),
+     (ansatz, [observable], theta, 0.0),
+     (ansatz, [observable], theta)],
+    precision=0.5,
+).result()
+print([result.metadata["shots"] for result in results])  # [16, None, 4]
+```
+
+Positive precision values request `ceil(1 / precision**2)` shots per measurement
+circuit, capped at the backend's maximum shot count. When capped, QDD warns that
+the target precision may not be achieved. The reported standard deviation uses
+the actual shot count. Each pub result's metadata includes `target_precision`
+and `shots`; precision values must be finite and non-negative.
+
 Backend options are accepted by both primitives. With the `qdd-mpi` package,
 pass `{"use_mpi": True}` and launch the Python process with `mpirun`; see
 {doc}`mpi` for a complete MPI example.

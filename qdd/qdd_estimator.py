@@ -97,7 +97,7 @@ class Estimator(BaseEstimatorV2):
         self._run_options = Options(**run_options) if run_options else Options()
         self._default_precision = default_precision
         self._skip_transpilation = skip_transpilation
-        self._cache: dict[tuple[tuple[int], tuple[int], bool], tuple[dict, dict]] = {}
+        self._cache: dict[tuple[tuple[int], tuple[int], float], tuple[dict, dict]] = {}
         self._transpiled_circuits: dict[int, QuantumCircuit] = {}
         self._layouts: dict[int, list[int]] = {}
         self._circuit_ids: dict[tuple, int] = {}
@@ -114,47 +114,57 @@ class Estimator(BaseEstimatorV2):
 
         Args:
             pubs: Iterable of estimator primitive inputs accepted by Qiskit.
-            precision: Target precision. If omitted, ``default_precision`` from
-                the constructor is used.
+            precision: Default target precision for pubs without their own value.
+                If omitted, ``default_precision`` from the constructor is used.
 
         Returns:
             A Qiskit ``PrimitiveJob`` whose result contains expectation values.
         """
 
-        self._precision = (
-            precision if precision is not None else self._default_precision
-        )
-
-        if self._precision < 0:
-            raise ValueError("Precision must be non-negative.")
-        elif self._precision == 0:
-            self._run_options.update_options(shots=None)
-        else:
-            shots = int(math.ceil(1 / self._precision**2))
-            if shots > self._backend._MAX_SHOTS:
-                warn(
-                    f"The number of shots ({shots}) is too large. Becaus the precision is too small, "
-                    f"It sets the number of shots to the maximum value ({self._backend._MAX_SHOTS})."
-                )
-                shots = self._backend._MAX_SHOTS
-            self._run_options.update_options(
-                shots=int(math.ceil(1 / self._precision**2))
-            )
-        print(self._run_options)
-
+        precision = precision if precision is not None else self._default_precision
+        if not math.isfinite(precision) or precision < 0:
+            raise ValueError("Precision must be finite and non-negative.")
         coerced_pubs = [EstimatorPub.coerce(pub, precision) for pub in pubs]
+        run_options = dict(self._run_options)
+        pub_run_options = [
+            {**run_options, "shots": self._shots_for_precision(pub.precision)}
+            for pub in coerced_pubs
+        ]
 
         job = PrimitiveJob(
             self._run,
             coerced_pubs,
+            pub_run_options,
         )
         job._submit()
         return job
 
-    def _run(self, pubs):
-        return PrimitiveResult([self._run_pub(pub) for pub in pubs])
+    def _shots_for_precision(self, precision):
+        if not math.isfinite(precision) or precision < 0:
+            raise ValueError("Precision must be finite and non-negative.")
+        if precision == 0:
+            return None
 
-    def _run_pub(self, pub):
+        max_shots = self._backend._MAX_SHOTS
+        # Check the limit before squaring to handle very small precisions safely.
+        if precision < 1.0 / math.sqrt(max_shots):
+            warn(
+                f"Precision {precision} requires more than the maximum of {max_shots} shots; "
+                f"using {max_shots} shots. The target precision may not be achieved.",
+                stacklevel=3,
+            )
+            return max_shots
+        # Large precisions need only one shot; avoid overflowing their square.
+        if precision >= 1:
+            return 1
+        return min(max_shots, math.ceil(1.0 / precision**2))
+
+    def _run(self, pubs, pub_run_options):
+        return PrimitiveResult(
+            [self._run_pub(pub, options) for pub, options in zip(pubs, pub_run_options)]
+        )
+
+    def _run_pub(self, pub, run_options):
         circuit_indices = []
         observable_indices = []
         parameter_values = []
@@ -197,7 +207,7 @@ class Estimator(BaseEstimatorV2):
             parameter_values.append(tuple(pub.parameter_values.as_array()))
 
         expected_values, stds, metadata_list = self._compute(
-            circuit_indices, observable_indices, parameter_values, precision
+            circuit_indices, observable_indices, parameter_values, precision, run_options
         )
         if len(expected_values) == 1:
             data = DataBin(
@@ -206,11 +216,15 @@ class Estimator(BaseEstimatorV2):
         else:
             data = DataBin(evs=expected_values, stds=stds, metadata=metadata_list)
 
-        return PubResult(data=data, metadata=None)
+        return PubResult(
+            data=data,
+            metadata={"target_precision": precision, "shots": run_options["shots"]},
+        )
 
-    def _compute(self, circuits, observables, parameter_values, precision):
+    def _compute(self, circuits, observables, parameter_values, precision, run_options):
+        shots = run_options["shots"]
         # Key for cache
-        key = (tuple(circuits), tuple(observables), self._precision)
+        key = (tuple(circuits), tuple(observables), precision)
 
         # Create expectation value experiments.
         if key in self._cache:  # Use a cache
@@ -225,8 +239,8 @@ class Estimator(BaseEstimatorV2):
                 parameter_values,
                 obs_maps,
                 exp_map,
-                self._precision,
-                self._run_options.get("shots"),
+                precision,
+                shots,
             )
         else:
             self._transpile_circuits(circuits)
@@ -285,8 +299,8 @@ class Estimator(BaseEstimatorV2):
                 parameter_values,
                 obs_maps,
                 exp_map,
-                self._precision,
-                self._run_options.get("shots"),
+                precision,
+                shots,
             )
 
         # Run experiments
@@ -294,7 +308,7 @@ class Estimator(BaseEstimatorV2):
             backend_result = self._backend.run(
                 circuits=experiments,
                 parameter_binds=parameter_binds if any(parameter_binds) else None,
-                **self._run_options.__dict__,
+                **run_options,
             ).result()
             if not backend_result.success:
                 raise QiskitError(backend_result.status)
@@ -307,9 +321,9 @@ class Estimator(BaseEstimatorV2):
         metadata_list = []
         for post_processing in post_processings:
             expectation_value, metadata = post_processing.run(results)
-            if self._run_options.get("shots") is not None:
+            if shots is not None:
                 variance = metadata["variance"]
-                std = np.sqrt(variance / self._run_options["shots"])
+                std = np.sqrt(variance / shots)
             else:
                 std = 0
             expected_values.append(expectation_value)
