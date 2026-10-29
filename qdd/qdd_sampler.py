@@ -22,7 +22,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Iterable
 
-import numpy as np
 from qiskit.compiler import transpile
 from qiskit.exceptions import QiskitError
 from qiskit.primitives import SamplerResult
@@ -166,9 +165,8 @@ class Sampler(BaseSamplerV2):
                     shots=shots,
                 )
                 memory = result.get_memory(i)
-                memory_uint8 = [[np.uint8(int(mem, 2))] for mem in memory]
-                bit_array = BitArray(
-                    np.array(memory_uint8), result.results[i].meas_level
+                bit_array = BitArray.from_samples(
+                    memory, num_bits=experiment_circuits[i].num_clbits
                 )
 
                 data = DataBin(quasi_dist=quasi_dist, meas=bit_array)

@@ -2,11 +2,64 @@
 # https://docs.quantum.ibm.com/api/qiskit/qiskit.primitives.BaseSamplerV1
 import pytest
 from qiskit.primitives import StatevectorSampler as QiskitSampler
-from qiskit import QuantumCircuit
+from qiskit import ClassicalRegister, QuantumCircuit
 from qiskit.circuit.library import real_amplitudes
 from qiskit.result import QuasiDistribution
 
 from qdd.qdd_sampler import Sampler
+
+
+def _basis_state_measurement_circuit(bits):
+    # Keep at least two qubits so one-bit measurements also work with two MPI ranks.
+    circuit = QuantumCircuit(max(2, len(bits)))
+    circuit.add_register(ClassicalRegister(len(bits), "meas"))
+    for qubit, bit in enumerate(reversed(bits)):
+        if bit == "1":
+            circuit.x(qubit)
+    circuit.measure(range(len(bits)), range(len(bits)))
+    return circuit
+
+
+@pytest.mark.parametrize(
+    "bits",
+    [
+        "0",
+        "1",
+        "00",
+        "100",
+        "10000000",
+        "000000000",
+        "000000001",
+        "100000000",
+        "100000001",
+        "10000000000000001",
+    ],
+)
+def test_sampler_bit_array_width(bits):
+    circuit = _basis_state_measurement_circuit(bits)
+    shots = 8
+
+    result = Sampler().run([circuit], shots=shots).result()[0]
+
+    bit_array = result.data.meas
+    assert bit_array.num_bits == len(bits)
+    assert bit_array.num_shots == shots
+    assert bit_array.get_bitstrings() == [bits] * shots
+    assert bit_array.get_counts() == {bits: shots}
+    assert result.data.quasi_dist.binary_probabilities(num_bits=len(bits)) == {bits: 1.0}
+
+
+def test_sampler_bit_array_width_per_circuit():
+    bitstrings = ["1", "100", "100000000"]
+    circuits = [_basis_state_measurement_circuit(bits) for bits in bitstrings]
+    shots = 8
+
+    results = Sampler().run(circuits, shots=shots).result()
+
+    assert len(results) == len(bitstrings)
+    for result, bits in zip(results, bitstrings):
+        assert result.data.meas.num_bits == len(bits)
+        assert result.data.meas.get_bitstrings() == [bits] * shots
 
 
 def test_sampler():
